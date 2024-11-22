@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     /*
-    TODO : 2024/11/12 - 네이버 소셜 로그인 및 회원가입
+    TODO : 2024/11/22 - 네이버 소셜 로그인 및 회원가입
     1. 인가 코드를 통해 토큰 정보 요청
     2. 토큰을 통해 사용자 정보 요청
     3. 사용자 정보 조회 -> 회원가입 or 로그인
@@ -30,7 +30,7 @@ public class AuthController {
     }
 
     /*
-    TODO : 2024/11/12 - 구글 소셜 로그인 및 회원가입
+    TODO : 2024/11/22 - 구글 소셜 로그인 및 회원가입
     1. 인가 코드를 통해 토큰 정보 요청
     2. 토큰을 통해 사용자 정보 요청
     3. 사용자 정보 조회 -> 회원가입 or 로그인
