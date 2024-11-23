@@ -1,6 +1,6 @@
 package com.example.mate.domain.member.dto.response;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,7 +15,7 @@ public class MyGoodsRecordResponse {
     private String imageUrl;
     private Integer price;
     private String author;
-    private LocalDateTime createdAt;
+    private LocalDate createdAt;
 
     public static MyGoodsRecordResponse from() {
         return MyGoodsRecordResponse.builder()
@@ -24,7 +24,7 @@ public class MyGoodsRecordResponse {
                 .imageUrl("/images/legend-lee.png")
                 .price(50000)
                 .author("이대호가 좋아서")
-                .createdAt(LocalDateTime.now().minusDays(7))
+                .createdAt(LocalDate.now().minusDays(7))
                 .build();
     }
 }

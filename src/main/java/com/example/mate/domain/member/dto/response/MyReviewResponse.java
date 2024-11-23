@@ -1,6 +1,6 @@
 package com.example.mate.domain.member.dto.response;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,7 +15,7 @@ public class MyReviewResponse {
     private String nickname;
     private String rating;
     private String content;
-    private LocalDateTime created_at;
+    private LocalDate created_at;
 
     public static MyReviewResponse goodsFrom() {
         return MyReviewResponse.builder()
@@ -24,7 +24,7 @@ public class MyReviewResponse {
                 .nickname("볼빨간사촌형")
                 .rating("좋았어요!")
                 .content("물건 너무 이쁘고 보존 상태가 좋아요!")
-                .created_at(LocalDateTime.now().minusDays(3))
+                .created_at(LocalDate.now().minusDays(3))
                 .build();
     }
 
@@ -35,7 +35,7 @@ public class MyReviewResponse {
                 .nickname("서대문박병호")
                 .rating("좋았어요!")
                 .content("야구 지식이 풍부하시고 젠틀하십니다!")
-                .created_at(LocalDateTime.now().minusDays(3))
+                .created_at(LocalDate.now().minusDays(3))
                 .build();
     }
 }
