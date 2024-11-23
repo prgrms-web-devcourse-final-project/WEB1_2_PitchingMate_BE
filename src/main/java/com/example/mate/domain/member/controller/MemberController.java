@@ -6,7 +6,6 @@ import com.example.mate.domain.member.dto.response.JoinResponse;
 import com.example.mate.domain.member.dto.response.MemberResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -19,14 +18,13 @@ public class MemberController {
 
     /*
     TODO : 2024/11/23 - 소셜 회원가입 후, 자체 회원가입 기능
-    1. memberId or JwtToken 을 통해 사용자 정보 조회
+    1. JwtToken 을 통해 사용자 정보 조회
     2. nickname, myTeam 정보 저장
     */
-    @PostMapping("/join/{memberId}")
+    @PostMapping("/join")
     public ResponseEntity<JoinResponse> join(
-            @RequestBody JoinRequest joinRequest,
-            @PathVariable Long memberId) {
-
+            @RequestBody JoinRequest joinRequest
+    ) {
         JoinResponse joinResponse = JoinResponse.builder()
                 .name("홍길동")
                 .nickname(joinRequest.getNickname())
@@ -41,11 +39,10 @@ public class MemberController {
 
     /*
     TODO : 2024/11/23 - 회원 조회
-    1. memberId 회원 정보 조회
+    1. JwtToken 을 통해 사용자 정보 조회
     */
-    @GetMapping("/{memberId}")
-    public ResponseEntity<MemberResponse> findMemberInfo(@PathVariable Long memberId) {
-
+    @GetMapping("/me")
+    public ResponseEntity<MemberResponse> findMemberInfo() {
         MemberResponse memberResponse = MemberResponse.builder()
                 .nickname("삼성빠돌이")
                 .imageUrl("default.jpg")
@@ -61,21 +58,25 @@ public class MemberController {
 
     /*
     TODO : 2024/11/23 - 회원 정보 수정
-    1. memberId 회원 정보 조회
+    1. JwtToken 을 통해 사용자 정보 조회
     2. nickname, profileImage, aboutMe, myTeam 수정
     3. 회원 정보 update 및 저장
     */
-    @PutMapping("/{memberId}")
-    public ResponseEntity<MemberResponse> updateMemberInfo(
-            @RequestBody MemberInfoUpdateRequest updateRequest,
-            @PathVariable Long memberId) {
+    @PutMapping("/me")
+    public ResponseEntity<MemberResponse> updateMemberInfo(@RequestBody MemberInfoUpdateRequest updateRequest) {
+
+        String nickname = updateRequest.getNickname() != null ? updateRequest.getNickname() : "삼성빠돌이";
+        String imageUrl = (updateRequest.getImage() != null && updateRequest.getImage().getOriginalFilename() != null)
+                ? "upload/" + updateRequest.getImage().getOriginalFilename() : "upload/defaultImage.jpg";
+        String myTeam = updateRequest.getMyTeam() != null ? updateRequest.getMyTeam() : "삼성";
+        String aboutMe = updateRequest.getAboutMe() != null ? updateRequest.getAboutMe() : "삼성을 사랑하는 삼성빠돌이입니다!";
 
         MemberResponse memberResponse = MemberResponse.builder()
-                .nickname(updateRequest.getNickname())
-                .imageUrl("upload/" + updateRequest.getImage().getOriginalFilename())
-                .team(updateRequest.getMyTeam())
+                .nickname(nickname)
+                .imageUrl(imageUrl)
+                .team(myTeam)
                 .manner(0.3f)
-                .aboutMe(updateRequest.getAboutMe())
+                .aboutMe(aboutMe)
                 .followingCount(10)
                 .followerCount(20)
                 .build();
@@ -85,12 +86,11 @@ public class MemberController {
 
     /*
     TODO : 2024/11/23 - 회원 삭제
-    1. memberId 회원 정보 조회
+    1. JwtToken 을 통해 사용자 정보 조회
     2. 회원 삭제
     */
-    @PutMapping("/{memberId}")
-    public ResponseEntity<Void> deleteMember(@PathVariable Long memberId) {
-
+    @PutMapping("/me")
+    public ResponseEntity<Void> deleteMember() {
         return ResponseEntity.noContent().build();
     }
 }
