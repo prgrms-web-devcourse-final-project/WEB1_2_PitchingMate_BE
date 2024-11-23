@@ -1,12 +1,14 @@
 package com.example.mate.domain.member.controller;
 
 import com.example.mate.domain.member.dto.request.JoinRequest;
+import com.example.mate.domain.member.dto.request.MemberInfoUpdateRequest;
 import com.example.mate.domain.member.dto.response.JoinResponse;
 import com.example.mate.domain.member.dto.response.MemberResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -55,5 +57,40 @@ public class MemberController {
                 .build();
 
         return ResponseEntity.ok(memberResponse);
+    }
+
+    /*
+    TODO : 2024/11/23 - 회원 정보 수정
+    1. memberId 회원 정보 조회
+    2. nickname, profileImage, aboutMe, myTeam 수정
+    3. 회원 정보 update 및 저장
+    */
+    @PutMapping("/{memberId}")
+    public ResponseEntity<MemberResponse> updateMemberInfo(
+            @RequestBody MemberInfoUpdateRequest updateRequest,
+            @PathVariable Long memberId) {
+
+        MemberResponse memberResponse = MemberResponse.builder()
+                .nickname(updateRequest.getNickname())
+                .imageUrl("upload/" + updateRequest.getImage().getOriginalFilename())
+                .team(updateRequest.getMyTeam())
+                .manner(0.3f)
+                .aboutMe(updateRequest.getAboutMe())
+                .followingCount(10)
+                .followerCount(20)
+                .build();
+
+        return ResponseEntity.ok(memberResponse);
+    }
+
+    /*
+    TODO : 2024/11/23 - 회원 삭제
+    1. memberId 회원 정보 조회
+    2. 회원 삭제
+    */
+    @PutMapping("/{memberId}")
+    public ResponseEntity<Void> deleteMember(@PathVariable Long memberId) {
+
+        return ResponseEntity.noContent().build();
     }
 }
