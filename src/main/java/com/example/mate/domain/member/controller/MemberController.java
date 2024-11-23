@@ -11,7 +11,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/members")
@@ -63,12 +65,14 @@ public class MemberController {
     2. nickname, profileImage, aboutMe, myTeam 수정
     3. 회원 정보 update 및 저장
     */
-    @PutMapping("/me")
-    public ResponseEntity<MemberResponse> updateMemberInfo(@RequestBody MemberInfoUpdateRequest updateRequest) {
+    @PutMapping(value = "/me")
+    public ResponseEntity<MemberResponse> updateMemberInfo(
+            @RequestPart(value = "image", required = false) MultipartFile image,
+            @RequestPart(value = "request") MemberInfoUpdateRequest updateRequest) {
 
+        String imageUrl = (image != null && image.getOriginalFilename() != null)
+                ? "upload/" + image.getOriginalFilename() : "upload/defaultImage.jpg";
         String nickname = updateRequest.getNickname() != null ? updateRequest.getNickname() : "삼성빠돌이";
-        String imageUrl = (updateRequest.getImage() != null && updateRequest.getImage().getOriginalFilename() != null)
-                ? "upload/" + updateRequest.getImage().getOriginalFilename() : "upload/defaultImage.jpg";
         String myTeam = updateRequest.getMyTeam() != null ? updateRequest.getMyTeam() : "삼성";
         String aboutMe = updateRequest.getAboutMe() != null ? updateRequest.getAboutMe() : "삼성을 사랑하는 삼성빠돌이입니다!";
 
