@@ -5,6 +5,7 @@ import com.example.mate.domain.member.dto.request.MemberInfoUpdateRequest;
 import com.example.mate.domain.member.dto.response.JoinResponse;
 import com.example.mate.domain.member.dto.response.MemberResponse;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -89,7 +90,7 @@ public class MemberController {
     1. JwtToken 을 통해 사용자 정보 조회
     2. 회원 삭제
     */
-    @PutMapping("/me")
+    @DeleteMapping("/me")
     public ResponseEntity<Void> deleteMember() {
         return ResponseEntity.noContent().build();
     }
