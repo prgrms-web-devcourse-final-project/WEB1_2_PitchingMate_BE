@@ -5,3 +5,20 @@ spring:
       production:
       local: local
     active: local
+
+server:
+  port: 8000
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+  packages-to-scan: com.example.mate
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
+
+logging:
+  level:
+    root: INFO
+    com.example.mate: DEBUG
