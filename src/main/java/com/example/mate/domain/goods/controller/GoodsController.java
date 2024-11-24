@@ -98,8 +98,8 @@ public class GoodsController {
 
     // 굿즈 거래하기 상세 페이지 : 굿즈 거래글 삭제
     @DeleteMapping("/{goodsPostId}")
-    public ResponseEntity<Map<String, String>> deleteGoodsPost(@PathVariable Long goodsPostId) {
-        return ResponseEntity.ok(Map.of("message", "goodsPostId=" + goodsPostId + " 삭제 완료"));
+    public ResponseEntity<Void> deleteGoodsPost(@PathVariable Long goodsPostId) {
+        return ResponseEntity.noContent().build();
     }
 
     // 굿즈 채팅창 - 알럿창 : 굿즈 거래 완료

@@ -12,7 +12,7 @@ import lombok.RequiredArgsConstructor;
 public class GoodsPostSummaryResponse {
 
     private final Long id;
-    private final Long teamId;
+    private final String teamName;
     private final String title;
     private final String category;
     private final Integer price;
@@ -26,7 +26,7 @@ public class GoodsPostSummaryResponse {
     public static GoodsPostSummaryResponse createResponse(Team team) {
         return GoodsPostSummaryResponse.builder()
                 .id(1L)
-                .teamId(team.getId())
+                .teamName(team.getValue())
                 .title("NC 다이노스 배틀크러쉬 모자")
                 .category(Category.CAP.getValue())
                 .price(40000)
@@ -37,7 +37,7 @@ public class GoodsPostSummaryResponse {
     public static GoodsPostSummaryResponse createResponse(Team team, Category category) {
         return GoodsPostSummaryResponse.builder()
                 .id(1L)
-                .teamId(team.getId())
+                .teamName(team.getValue())
                 .title("NC 다이노스 배틀크러쉬 모자")
                 .category(category.getValue())
                 .price(40000)

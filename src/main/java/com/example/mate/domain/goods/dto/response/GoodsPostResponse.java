@@ -6,6 +6,7 @@ import com.example.mate.domain.goods.entity.Role;
 import com.example.mate.domain.goods.entity.Status;
 import com.example.mate.domain.goods.vo.Location;
 import com.example.mate.domain.goods.vo.MemberInfo;
+import com.example.mate.domain.members.entity.Team;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -23,7 +24,7 @@ public class GoodsPostResponse {
     private final Long id;
     private final MemberInfo seller;
     private final MemberInfo buyer;
-    private final Long teamId;
+    private final String teamName;
     private final String title;
     private final String category;
     private final Integer price;
@@ -46,13 +47,14 @@ public class GoodsPostResponse {
                         .manner(0.3F)
                         .role(Role.SELLER)
                         .build())
-                .teamId(request.getTeamId())
+                .teamName(request.getTeamName())
                 .title(request.getTitle())
                 .category(request.getCategory().getValue())
                 .price(request.getPrice())
                 .content(request.getContent())
                 .location(request.getLocation())
                 .imageUrls(upload(files))
+                .status(Status.OPEN)
                 .build();
     }
 
@@ -83,7 +85,7 @@ public class GoodsPostResponse {
                         .manner(0.3F)
                         .role(Role.SELLER)
                         .build())
-                .teamId(1L)
+                .teamName(Team.NC.getValue())
                 .title("NC 다이노스 배틀크러쉬 모자")
                 .category(Category.CLOTHING.getValue())
                 .price(40000)
@@ -94,6 +96,7 @@ public class GoodsPostResponse {
                         .roadAddressName("도로명주소")
                         .build())
                 .imageUrls(List.of("upload/image1.png", "upload/image2.png", "upload/image3.png"))
+                .status(Status.OPEN)
                 .build();
     }
 
@@ -111,13 +114,14 @@ public class GoodsPostResponse {
                         .manner(0.3F)
                         .role(Role.SELLER)
                         .build())
-                .teamId(request.getTeamId())
+                .teamName(request.getTeamName())
                 .title(request.getTitle())
                 .category(request.getCategory().getValue())
                 .price(request.getPrice())
                 .content(request.getContent())
                 .location(request.getLocation())
                 .imageUrls(upload(files))
+                .status(Status.OPEN)
                 .build();
     }
 }
