@@ -6,6 +6,7 @@ import lombok.Getter;
 @Getter
 public class GoodsReviewRequest {
 
+    private Long reviewerId;
     private Rating rating;
     private String reviewContent;
 }

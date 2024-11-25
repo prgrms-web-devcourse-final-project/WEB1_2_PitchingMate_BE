@@ -7,6 +7,7 @@ import com.example.mate.domain.goods.entity.Status;
 import com.example.mate.domain.goods.vo.Location;
 import com.example.mate.domain.goods.vo.MemberInfo;
 import com.example.mate.domain.members.entity.Team;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -47,7 +48,7 @@ public class GoodsPostResponse {
                         .manner(0.3F)
                         .role(Role.SELLER)
                         .build())
-                .teamName(request.getTeamName())
+                .teamName(getTeamName(request.getTeamId()))
                 .title(request.getTitle())
                 .category(request.getCategory().getValue())
                 .price(request.getPrice())
@@ -114,7 +115,7 @@ public class GoodsPostResponse {
                         .manner(0.3F)
                         .role(Role.SELLER)
                         .build())
-                .teamName(request.getTeamName())
+                .teamName(getTeamName(request.getTeamId()))
                 .title(request.getTitle())
                 .category(request.getCategory().getValue())
                 .price(request.getPrice())
@@ -123,5 +124,14 @@ public class GoodsPostResponse {
                 .imageUrls(upload(files))
                 .status(Status.OPEN)
                 .build();
+    }
+
+    // 요청 받은 teamId를 통해 해당 팀명 반환
+    private static String getTeamName(Long teamId) {
+        return Arrays.stream(Team.values())
+                .filter(team -> team.getId().equals(teamId))
+                .findFirst()
+                .map(Team::getValue)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid teamId = " + teamId));
     }
 }

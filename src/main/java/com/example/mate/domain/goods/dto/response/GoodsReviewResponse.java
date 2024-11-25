@@ -31,7 +31,7 @@ public class GoodsReviewResponse {
                 .id(1L)
                 .rating(request.getRating())
                 .reviewContent(request.getReviewContent())
-                .reviewer("볼빨간사촌형")
+                .reviewer("볼빨간사촌형") // request에서 reviewerId를 전달받아, 서비스에서 해당 id의 회원 닉네임 반환을 가정. 후기 보내기 이후 화면 구성에 따라 수정 필요
                 .revieweeId(1L)
                 .createdAt(LocalDateTime.now())
                 .goodsPostId(goodsPostId)

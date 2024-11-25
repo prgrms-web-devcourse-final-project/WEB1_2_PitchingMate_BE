@@ -7,7 +7,7 @@ import lombok.Getter;
 @Getter
 public class GoodsPostRequest {
 
-    private String teamName;
+    private Long teamId;
     private String title;
     private Category category;
     private Integer price;

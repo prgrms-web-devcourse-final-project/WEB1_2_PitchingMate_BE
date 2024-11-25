@@ -29,19 +29,12 @@ import org.springframework.web.multipart.MultipartFile;
 public class GoodsController {
 
     /*
-    메인 페이지 : 굿즈 거래글 요약 4개 페이징 조회
-    테스트 용도로, 가상의 데이터 10개를 생성하여 동일한 거래글 4개를 페이징 처리
+    메인 페이지 : 굿즈 거래글 요약 4개 리스트 조회
+    테스트 용도로, 가상의 동일한 거래글 데이터 4개를 생성
      */
     @GetMapping("/main")
-    public ResponseEntity<Page<GoodsPostSummaryResponse>> getGoodsPostsMain(@RequestParam Team team) {
-        List<GoodsPostSummaryResponse> list = Collections.nCopies(10, GoodsPostSummaryResponse.createResponse(team));
-
-        int start = 0;
-        int end = Math.min(start + 4, list.size());
-        List<GoodsPostSummaryResponse> pageContent = list.subList(start, end);
-        PageRequest pageable = PageRequest.of(0, 4);
-
-        return ResponseEntity.ok(new PageImpl<>(pageContent, pageable, list.size()));
+    public ResponseEntity<List<GoodsPostSummaryResponse>> getGoodsPostsMain(@RequestParam Long teamId) {
+        return ResponseEntity.ok(Collections.nCopies(4, GoodsPostSummaryResponse.createResponse(teamId)));
     }
 
     /*
@@ -51,18 +44,27 @@ public class GoodsController {
     3. 요청된 페이지에 맞는 데이터 반환
     */
     @GetMapping
-    public ResponseEntity<Page<GoodsPostSummaryResponse>> getGoodsPosts(@RequestParam Team team,
-                                                                        @RequestParam Category category,
-                                                                        @RequestParam int pageNumber) {
+    public ResponseEntity<PageResponse<GoodsPostSummaryResponse>> getGoodsPosts(@RequestParam Long teamId,
+                                                                                @RequestParam Category category,
+                                                                                @RequestParam int pageNumber,
+                                                                                @RequestParam(required = false, defaultValue = "10") int pageSize) {
         List<GoodsPostSummaryResponse> list = Collections.nCopies(24,
-                GoodsPostSummaryResponse.createResponse(team, category));
+                GoodsPostSummaryResponse.createResponse(teamId, category));
 
         int start = (pageNumber - 1) * 10;
         int end = Math.min(start + 10, list.size());
         List<GoodsPostSummaryResponse> pageContent = list.subList(start, end);
-        PageRequest pageable = PageRequest.of(pageNumber - 1, 10);
 
-        return ResponseEntity.ok(new PageImpl<>(pageContent, pageable, list.size()));
+        PageResponse<GoodsPostSummaryResponse> pageResponse = PageResponse.<GoodsPostSummaryResponse>builder()
+                .content(pageContent)
+                .totalPages((int) Math.ceil((double) list.size() / 10)) // 총 페이지 수
+                .totalElements(list.size())
+                .hasNext(end < list.size())
+                .pageNumber(pageNumber)
+                .pageSize(pageSize)
+                .build();
+
+        return ResponseEntity.ok(pageResponse);
     }
 
     /*
@@ -124,21 +126,22 @@ public class GoodsController {
         return ResponseEntity.ok(GoodsReviewResponse.createResponse(goodsPostId, request));
     }
 
-    /*
-    후기 모아보기 페이지 : 굿즈거래 후기 10개씩 페이징 조회
-    1. 가상의 데이터 24개 생성
-    2. 페이지 번호와 리스트 크기를 고려해, 시작/끝 인덱스 설정
-    3. 요청된 페이지에 맞는 데이터 반환
-     */
-    @GetMapping("/review")
-    public ResponseEntity<Page<GoodsReviewResponse>> getGoodsReviews(@RequestParam int pageNumber) {
-        List<GoodsReviewResponse> list = Collections.nCopies(24, GoodsReviewResponse.createResponse());
-
-        int start = (pageNumber - 1) * 10;
-        int end = Math.min(start + 10, list.size());
-        List<GoodsReviewResponse> pageContent = list.subList(start, end);
-        Pageable pageable = PageRequest.of(pageNumber - 1, 10);
-
-        return ResponseEntity.ok(new PageImpl<>(pageContent, pageable, list.size()));
-    }
+//    /*
+//    후기 모아보기 페이지 : 굿즈거래 후기 10개씩 페이징 조회
+//    1. 가상의 데이터 24개 생성
+//    2. 페이지 번호와 리스트 크기를 고려해, 시작/끝 인덱스 설정
+//    3. 요청된 페이지에 맞는 데이터 반환
+//     */
+//    @GetMapping("/review")
+//    public ResponseEntity<Page<GoodsReviewResponse>> getGoodsReviews(
+//            @RequestParam(required = false, defaultValue = "10") int pageNumber) {
+//        List<GoodsReviewResponse> list = Collections.nCopies(24, GoodsReviewResponse.createResponse());
+//
+//        int start = (pageNumber - 1) * 10;
+//        int end = Math.min(start + 10, list.size());
+//        List<GoodsReviewResponse> pageContent = list.subList(start, end);
+//        Pageable pageable = PageRequest.of(pageNumber - 1, 10);
+//
+//        return ResponseEntity.ok(new PageImpl<>(pageContent, pageable, list.size()));
+//    }
 }
