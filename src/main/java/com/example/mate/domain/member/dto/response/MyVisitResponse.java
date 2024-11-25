@@ -16,7 +16,6 @@ public class MyVisitResponse {
     private String awayTeamName;
     private String location;
     private LocalDate matchTime;
-    private LocalDate createdAt;
     private List<MateReviewResponse> reviews;
 
     public static MyVisitResponse from() {
@@ -25,7 +24,6 @@ public class MyVisitResponse {
                 .awayTeamName("KT")
                 .location("대구 라이온스 파크")
                 .matchTime(LocalDate.now().minusDays(10))
-                .createdAt(LocalDate.now().minusDays(3))
                 .reviews(Collections.nCopies(3, MateReviewResponse.from()))
                 .build();
     }
