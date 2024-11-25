@@ -1,16 +1,17 @@
-package com.example.mate.global.jwt;
+package com.example.mate.domain.member.dto.response;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
-@Builder
 @Getter
+@Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class JwtToken {
+public class LoginTokenResponse {
 
     private final String grantType;
     private final String accessToken;
     private final String refreshToken;
+    private final Boolean isNewMember;
 }
