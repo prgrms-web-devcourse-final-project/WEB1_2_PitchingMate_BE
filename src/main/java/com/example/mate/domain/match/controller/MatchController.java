@@ -36,16 +36,16 @@ public class MatchController {
     private static final int MAX_CLOUDINESS = 100;
 
     private static final List<TeamInfo> TEAM_LIST = Arrays.asList(
-            new TeamInfo(1L, "KIA 타이거즈", "광주-기아 챔피언스 필드"),
-            new TeamInfo(2L, "LG 트윈스", "잠실야구장"),
-            new TeamInfo(3L, "NC 다이노스", "창원NC파크"),
-            new TeamInfo(4L, "SSG 랜더스", "인천SSG랜더스필드"),
-            new TeamInfo(5L, "kt wiz", "수원 kt wiz 파크"),
-            new TeamInfo(6L, "두산 베어스", "잠실야구장"),
-            new TeamInfo(7L, "롯데 자이언츠", "사직야구장"),
-            new TeamInfo(8L, "삼성 라이온즈", "대구삼성라이온즈파크"),
-            new TeamInfo(9L, "키움 히어로즈", "고척스카이돔"),
-            new TeamInfo(10L, "한화 이글스", "한화생명이글스파크")
+            new TeamInfo(1L, "KIA", "KIA 타이거즈", "광주-기아 챔피언스 필드"),
+            new TeamInfo(2L, "LG", "LG 트윈스", "잠실야구장"),
+            new TeamInfo(3L, "NC", "NC 다이노스", "창원NC파크"),
+            new TeamInfo(4L, "SSG", "SSG 랜더스", "인천SSG랜더스필드"),
+            new TeamInfo(5L, "KT", "kt wiz", "수원 kt wiz 파크"),
+            new TeamInfo(6L, "두산", "두산 베어스", "잠실야구장"),
+            new TeamInfo(7L, "롯데", "롯데 자이언츠", "사직야구장"),
+            new TeamInfo(8L, "삼성", "삼성 라이온즈", "대구삼성라이온즈파크"),
+            new TeamInfo(9L, "키움", "키움 히어로즈", "고척스카이돔"),
+            new TeamInfo(10L, "한화", "한화 이글스", "한화생명이글스파크")
     );
 
     @Operation(summary = "경기 조회", description = "경기 일정을 조회합니다. 팀ID 지정 시 해당 팀 경기만 조회됩니다.")
@@ -55,10 +55,7 @@ public class MatchController {
             @RequestParam(required = false) Long teamId,
 
             @Parameter(description = "경기 상태 (SCHEDULED: 예정, COMPLETED: 종료, CANCELED: 취소)")
-            @RequestParam(required = false) String status,
-
-            @Parameter(description = "조회할 경기 수", example = "5")
-            @RequestParam(defaultValue = "5") @Positive int limit) {
+            @RequestParam(required = false) String status) {
 
         // 10개의 랜덤 경기 생성
         List<MatchResponse.Detail> matches = createRandomMatches(10);
@@ -73,7 +70,7 @@ public class MatchController {
         return ResponseEntity.ok(ApiResponse.success(
                 matches.stream()
                         .sorted(Comparator.comparing(MatchResponse.Detail::getMatchTime))
-                        .limit(Math.min(limit, DEFAULT_ALL_MATCHES_LIMIT))
+                        .limit(DEFAULT_ALL_MATCHES_LIMIT)
                         .collect(Collectors.toList())
         ));
     }
@@ -123,8 +120,8 @@ public class MatchController {
                 .id(1L)
                 .homeTeamId(team.getId())
                 .awayTeamId(2L)
-                .homeTeamName(team.getName())
-                .awayTeamName(getTeamById(2L).getName())
+                .homeTeamName(team.getFullName())
+                .awayTeamName(getTeamById(2L).getFullName())
                 .location(team.getStadium())
                 .matchTime(LocalDateTime.now().minusDays(1))
                 .isCanceled(false)
@@ -139,8 +136,8 @@ public class MatchController {
                 .id(2L)
                 .homeTeamId(3L)
                 .awayTeamId(team.getId())
-                .homeTeamName(getTeamById(3L).getName())
-                .awayTeamName(team.getName())
+                .homeTeamName(getTeamById(3L).getFullName())
+                .awayTeamName(team.getFullName())
                 .location(getTeamById(3L).getStadium())
                 .matchTime(LocalDateTime.now().minusDays(2))
                 .isCanceled(false)
@@ -192,7 +189,7 @@ public class MatchController {
     private TeamResponse.Simple createTeamSimple(TeamInfo teamInfo) {
         return TeamResponse.Simple.builder()
                 .id(teamInfo.getId())
-                .teamName(teamInfo.getName())
+                .teamName(teamInfo.getFullName())
                 .logoImageUrl(String.format("http://example.com/teams/%d/logo.png", teamInfo.getId()))
                 .build();
     }

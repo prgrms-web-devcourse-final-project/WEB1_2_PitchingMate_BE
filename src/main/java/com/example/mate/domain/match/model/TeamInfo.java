@@ -7,6 +7,7 @@ import lombok.Data;
 @AllArgsConstructor
 public class TeamInfo {
     private Long id;
-    private String name;
+    private final String shortName;
+    private final String fullName;
     private String stadium;
 }
