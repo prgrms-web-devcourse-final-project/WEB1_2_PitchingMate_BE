@@ -1,0 +1,48 @@
+### [Match API] ###
+####################
+
+### 1. 전체 경기 조회 ###
+# 상단 배너용 기본 조회 (5개)
+# 현재 상태: 10개의 랜덤 경기 중 필터링하여 반환
+GET http://localhost:8000/api/matches
+Content-Type: application/json
+
+# 팀별 예정 경기 필터링
+### KIA 예정 경기
+GET http://localhost:8000/api/matches?teamId=1&status=SCHEDULED&limit=3
+Content-Type: application/json
+
+### LG 예정 경기
+GET http://localhost:8000/api/matches?teamId=2&status=SCHEDULED
+Content-Type: application/json
+
+# 상태별 필터링
+### 취소된 경기 조회
+# 현재 상태: 모든 경기가 SCHEDULED 상태로 생성됨
+GET http://localhost:8000/api/matches?status=CANCELED
+Content-Type: application/json
+
+### 종료된 경기 조회
+# 현재 상태: 모든 경기가 SCHEDULED 상태로 생성됨
+GET http://localhost:8000/api/matches?status=COMPLETED
+Content-Type: application/json
+
+### 구인글 작성용 특정 팀 경기 조회
+# 메이트 구인글 작성 시 응원 팀 예정 경기 선택에 사용
+GET http://localhost:8000/api/matches?teamId=2&status=SCHEDULED
+Content-Type: application/json
+
+### 2. 팀 경기 결과 조회 ###
+### KIA 최근 경기 결과
+# 메인 페이지의 팀 최근 전적 표시용
+# 현재 상태: 2개의 경기 데이터 생성 (홈 승리 1개, 원정 무승부 1개)
+GET http://localhost:8000/api/matches/1/results
+Content-Type: application/json
+
+
+### [Team API] ###
+#################
+
+### 1. 팀 순위 조회 ###
+GET http://localhost:8000/api/teams/rankings
+Content-Type: application/json
