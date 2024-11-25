@@ -1,6 +1,7 @@
 package com.example.mate.domain.member.dto.response;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import lombok.AccessLevel;
@@ -12,21 +13,19 @@ import lombok.Getter;
 @Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class MyVisitResponse {
+    // 경기 정보
     private String homeTeamName;
     private String awayTeamName;
     private String location;
-    private LocalDate matchTime;
-    private List<MateReviewResponse> reviews;
+    private LocalDateTime matchTime;
 
-    public static MyVisitResponse from() {
-        return MyVisitResponse.builder()
-                .homeTeamName("삼성")
-                .awayTeamName("KT")
-                .location("대구 라이온스 파크")
-                .matchTime(LocalDate.now().minusDays(10))
-                .reviews(Collections.nCopies(3, MateReviewResponse.from()))
-                .build();
-    }
+    // 구인글 정보
+    private Long postId;
+    private String imageUrl;
+    private String title;
+    
+    // 리뷰 정보
+    private List<MateReviewResponse> reviews;
 
     @Getter
     @Builder
@@ -45,5 +44,18 @@ public class MyVisitResponse {
                     .content("정말 재미있는 직관이었어요. 함께해서 즐거웠습니다.")
                     .build();
         }
+    }
+
+    public static MyVisitResponse from() {
+        return MyVisitResponse.builder()
+                .homeTeamName("삼성")
+                .awayTeamName("KT")
+                .location("대구 라이온스 파크")
+                .matchTime(LocalDateTime.now().minusDays(10))
+                .postId(1L)
+                .imageUrl("upload/default.jpg")
+                .title("구인 게시글 제목!")
+                .reviews(Collections.nCopies(3, MateReviewResponse.from()))
+                .build();
     }
 }

@@ -14,4 +14,6 @@ public class LoginTokenResponse {
     private final String accessToken;
     private final String refreshToken;
     private final Boolean isNewMember;
+
+    // TODO: 사용자 정보 추가 예정
 }

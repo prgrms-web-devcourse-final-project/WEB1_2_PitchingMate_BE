@@ -8,13 +8,16 @@ import lombok.Getter;
 @Getter
 @Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class MemberResponse {
+public class MemberProfileResponse {
 
     private String nickname;
     private String imageUrl;
-    private String team;
+    private String teamName;
     private Float manner;
     private String aboutMe;
+
     private Integer followingCount;
     private Integer followerCount;
+    private Integer reviewsCount;
+    private Integer goodsSoldCount;
 }

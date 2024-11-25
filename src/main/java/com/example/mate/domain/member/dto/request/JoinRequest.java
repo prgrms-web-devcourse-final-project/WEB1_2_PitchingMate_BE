@@ -5,6 +5,6 @@ import lombok.Getter;
 @Getter
 public class JoinRequest {
 
+    private Long teamId;
     private String nickname;
-    private String myTeam;
 }
