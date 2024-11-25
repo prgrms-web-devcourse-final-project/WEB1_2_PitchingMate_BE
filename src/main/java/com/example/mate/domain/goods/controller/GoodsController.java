@@ -1,20 +1,16 @@
 package com.example.mate.domain.goods.controller;
 
+import com.example.mate.common.PageResponse;
 import com.example.mate.domain.goods.dto.request.GoodsPostRequest;
+import com.example.mate.domain.goods.dto.request.GoodsReviewFormRequest;
 import com.example.mate.domain.goods.dto.request.GoodsReviewRequest;
 import com.example.mate.domain.goods.dto.response.GoodsPostResponse;
 import com.example.mate.domain.goods.dto.response.GoodsPostSummaryResponse;
+import com.example.mate.domain.goods.dto.response.GoodsReviewFormResponse;
 import com.example.mate.domain.goods.dto.response.GoodsReviewResponse;
 import com.example.mate.domain.goods.entity.Category;
-import com.example.mate.domain.goods.entity.Status;
-import com.example.mate.domain.members.entity.Team;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -104,8 +100,21 @@ public class GoodsController {
 
     // 굿즈 채팅창 - 알럿창 : 굿즈 거래 완료
     @PostMapping("/{goodsPostId}/complete")
-    public ResponseEntity<Map<String, String>> completeGoodsPost(@PathVariable Long goodsPostId) {
-        return ResponseEntity.ok(Map.of("message", "goodsPostId=" + goodsPostId + " " + Status.CLOSED.getValue()));
+    public ResponseEntity<Void> completeGoodsPost(@PathVariable Long goodsPostId) {
+        return ResponseEntity.ok().build();
+    }
+
+    // 굿즈 거래후기 : 굿즈 거래후기 페이지 조회
+    @GetMapping("/{goodsPostId}/review")
+    public ResponseEntity<GoodsReviewFormResponse> getGoodsReviewForm(@PathVariable Long goodsPostId,
+                                                                      @RequestBody GoodsReviewFormRequest request) {
+        return ResponseEntity.ok(GoodsReviewFormResponse.builder()
+                .goodsPostId(goodsPostId)
+                .goodsPostTitle(request.getGoodsPostTitle())
+                .reviewer(request.getReviewer())
+                .reviewee(request.getReviewee())
+                .imageUrl(request.getImageUrl())
+                .build());
     }
 
     // 굿즈 거래후기 : 굿즈 거래후기 등록
