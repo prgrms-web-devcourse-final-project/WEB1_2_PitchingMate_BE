@@ -123,33 +123,6 @@ public class MateController {
         return ResponseEntity.ok(MatePostResponse.builder().id(1L).build());
     }
 
-
-    // 직관 타임라인 조회
-    @GetMapping("/{postId}/timeline")
-    public ResponseEntity<MateTimeLineResponse> getMateTimeline(
-            @PathVariable Long postId,
-            @AuthenticationPrincipal UserDetails userDetails
-    ) {
-        return ResponseEntity.ok(MateTimeLineResponse.builder()
-                .visitDate(LocalDateTime.now())
-                .stadiumName("대구 라이온스 파크")
-                .teamName("삼성")
-                .rivalTeamName("KT")
-                .participants(List.of(
-                        TimelineParticipantResponse.builder()
-                                .userId(1L)
-                                .nickname("김야구")
-                                .content(null)  // 아직 후기를 작성하지 않은 경우
-                                .build(),
-                        TimelineParticipantResponse.builder()
-                                .userId(2L)
-                                .nickname("장야구")
-                                .content("즐거웠어요!")
-                                .build()
-                ))
-                .build());
-    }
-
     // 직관 후기 작성
     @PostMapping("/{postId}/reviews")
     public ResponseEntity<MateReviewCreateResponse> createMateReview(
@@ -158,44 +131,5 @@ public class MateController {
             @RequestBody MateReviewRequest request
     ) {
         return ResponseEntity.ok(MateReviewCreateResponse.builder().id(1L).build());
-    }
-
-    // 직관 후기 조회
-    @GetMapping("/reviews/received")
-    public ResponseEntity<PageResponse<MateReviewResponse>> getReceivedReviews(
-            @AuthenticationPrincipal UserDetails userDetails,
-            @PageableDefault(size = 10) Pageable pageable
-    ) {
-        List<MateReviewResponse> reviews = List.of(
-                MateReviewResponse.builder()
-                        .reviewId(1L)
-                        .postId(100L)  // 연계된 게시글 ID
-                        .postTitle("12월 경기 메이트 찾아요")  // 게시글 제목
-                        .rating(Rating.GREAT)
-                        .content("같이 응원하는 모습이 열정적이었어요!")
-                        .reviewerNickname("응원단장")
-                        .createdAt(LocalDateTime.now().minusDays(2))
-                        .build(),
-                MateReviewResponse.builder()
-                        .reviewId(2L)
-                        .postId(101L)
-                        .postTitle("두산전 같이 가실 분")
-                        .rating(Rating.GOOD)
-                        .content("시간 약속을 잘 지켜주셨어요")
-                        .reviewerNickname("야구친구")
-                        .createdAt(LocalDateTime.now().minusDays(5))
-                        .build()
-        );
-
-        PageResponse<MateReviewResponse> pageResponse = PageResponse.<MateReviewResponse>builder()
-                .content(reviews)
-                .totalPages(5)
-                .totalElements(42L)
-                .hasNext(true)
-                .pageNumber(0)
-                .pageSize(10)
-                .build();
-
-        return ResponseEntity.ok(pageResponse);
     }
 }
