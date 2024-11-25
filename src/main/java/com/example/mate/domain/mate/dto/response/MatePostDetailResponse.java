@@ -26,4 +26,5 @@ public class MatePostDetailResponse {
     private String nickname;
     private Float manner;
     private String description;
+    private Long postId;
 }
