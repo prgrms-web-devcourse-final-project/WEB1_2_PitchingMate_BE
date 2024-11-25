@@ -6,7 +6,7 @@ import com.example.mate.domain.goods.entity.Role;
 import com.example.mate.domain.goods.entity.Status;
 import com.example.mate.domain.goods.vo.Location;
 import com.example.mate.domain.goods.vo.MemberInfo;
-import com.example.mate.domain.members.entity.Team;
+import com.example.mate.entity.Team;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -86,7 +86,7 @@ public class GoodsPostResponse {
                         .manner(0.3F)
                         .role(Role.SELLER)
                         .build())
-                .teamName(Team.NC.getValue())
+                .teamName(Team.NC.getShortName())
                 .title("NC 다이노스 배틀크러쉬 모자")
                 .category(Category.CLOTHING.getValue())
                 .price(40000)
@@ -131,7 +131,7 @@ public class GoodsPostResponse {
         return Arrays.stream(Team.values())
                 .filter(team -> team.getId().equals(teamId))
                 .findFirst()
-                .map(Team::getValue)
+                .map(Team::getShortName)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid teamId = " + teamId));
     }
 }

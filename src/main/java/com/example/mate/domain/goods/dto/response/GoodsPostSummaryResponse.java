@@ -1,7 +1,7 @@
 package com.example.mate.domain.goods.dto.response;
 
 import com.example.mate.domain.goods.entity.Category;
-import com.example.mate.domain.members.entity.Team;
+import com.example.mate.entity.Team;
 import java.util.Arrays;
 import lombok.Builder;
 import lombok.Getter;
@@ -51,7 +51,7 @@ public class GoodsPostSummaryResponse {
         return Arrays.stream(Team.values())
                 .filter(team -> team.getId().equals(teamId))
                 .findFirst()
-                .map(Team::getValue)
+                .map(Team::getShortName)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid teamId = " + teamId));
     }
 }
