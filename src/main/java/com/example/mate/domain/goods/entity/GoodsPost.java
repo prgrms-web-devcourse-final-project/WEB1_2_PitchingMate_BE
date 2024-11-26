@@ -43,9 +43,8 @@ public class GoodsPost {
     @JoinColumn(name = "buyer_id")
     private Member buyer;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "team")
-    private TeamInfo team;
+    @Column(name = "team_id")
+    private Long teamId;
 
     @OneToMany(mappedBy = "post")
     private List<GoodsPostImage> imageUrls;
