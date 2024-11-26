@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public enum Team {
+public enum TeamInfo {
 
     KIA(1L, "KIA", "KIA 타이거즈", "광주-기아 챔피언스 필드"),
     LG(2L, "LG", "LG 트윈스", "잠실야구장"),

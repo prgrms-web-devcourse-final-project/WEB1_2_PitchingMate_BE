@@ -6,7 +6,7 @@ import com.example.mate.domain.goods.entity.Role;
 import com.example.mate.domain.goods.entity.Status;
 import com.example.mate.domain.goods.vo.Location;
 import com.example.mate.domain.goods.vo.MemberInfo;
-import com.example.mate.entity.Team;
+import com.example.mate.entity.TeamInfo;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -86,7 +86,7 @@ public class GoodsPostResponse {
                         .manner(0.3F)
                         .role(Role.SELLER)
                         .build())
-                .teamName(Team.NC.getShortName())
+                .teamName(TeamInfo.NC.getShortName())
                 .title("NC 다이노스 배틀크러쉬 모자")
                 .category(Category.CLOTHING.getValue())
                 .price(40000)
@@ -128,10 +128,10 @@ public class GoodsPostResponse {
 
     // 요청 받은 teamId를 통해 해당 팀명 반환
     private static String getTeamName(Long teamId) {
-        return Arrays.stream(Team.values())
+        return Arrays.stream(TeamInfo.values())
                 .filter(team -> team.getId().equals(teamId))
                 .findFirst()
-                .map(Team::getShortName)
+                .map(TeamInfo::getShortName)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid teamId = " + teamId));
     }
 }

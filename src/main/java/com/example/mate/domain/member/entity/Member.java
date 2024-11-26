@@ -1,7 +1,7 @@
 package com.example.mate.domain.member.entity;
 
 import com.example.mate.entity.Gender;
-import com.example.mate.entity.Team;
+import com.example.mate.entity.TeamInfo;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -50,13 +50,13 @@ public class Member {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "team")
-    private Team team;
+    private TeamInfo team;
 
     @Builder.Default
     @Column(name = "manner", nullable = false)
     private Float manner = 0.300F;
 
-    @Column(name = "about_me")
+    @Column(name = "about_me", length = 100)
     private String aboutMe;
 
     public void changeNickname(String nickname) {
@@ -67,7 +67,7 @@ public class Member {
         this.imageUrl = imageUrl;
     }
 
-    public void changeTeam(Team team) {
+    public void changeTeam(TeamInfo team) {
         this.team = team;
     }
 
