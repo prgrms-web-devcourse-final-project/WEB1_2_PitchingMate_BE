@@ -1,4 +1,4 @@
-package com.example.mate.global.config;
+package com.example.mate.common.config;
 
 import java.util.List;
 import org.springframework.context.annotation.Bean;

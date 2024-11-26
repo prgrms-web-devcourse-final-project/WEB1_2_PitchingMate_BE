@@ -1,6 +1,6 @@
 package com.example.mate.domain.goods.dto.request;
 
-import com.example.mate.domain.goods.entity.Rating;
+import com.example.mate.domain.constant.Rating;
 import lombok.Getter;
 
 @Getter

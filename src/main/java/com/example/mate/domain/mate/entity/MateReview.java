@@ -1,7 +1,7 @@
 package com.example.mate.domain.mate.entity;
 
 import com.example.mate.domain.member.entity.Member;
-import com.example.mate.entity.Rating;
+import com.example.mate.domain.constant.Rating;
 import jakarta.persistence.*;
 import lombok.*;
 

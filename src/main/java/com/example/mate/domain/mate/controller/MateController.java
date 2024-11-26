@@ -1,9 +1,12 @@
 package com.example.mate.domain.mate.controller;
 
-import com.example.mate.common.PageResponse;
+import com.example.mate.domain.mate.entity.Age;
+import com.example.mate.domain.constant.Gender;
+import com.example.mate.domain.mate.entity.Status;
+import com.example.mate.domain.mate.entity.TransportType;
+import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.mate.dto.request.*;
 import com.example.mate.domain.mate.dto.response.*;
-import com.example.mate.entity.*;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;

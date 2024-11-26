@@ -1,6 +1,6 @@
 package com.example.mate.domain.mate.dto.request;
 
-import com.example.mate.entity.Rating;
+import com.example.mate.domain.constant.Rating;
 
 public class MateReviewRequest {
     private Long revieweeId;

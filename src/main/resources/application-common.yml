@@ -1,0 +1,9 @@
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+  packages-to-scan: com.example.mate
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
+

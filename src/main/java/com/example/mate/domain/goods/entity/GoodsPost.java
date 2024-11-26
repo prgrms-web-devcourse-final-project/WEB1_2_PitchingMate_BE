@@ -1,8 +1,8 @@
 package com.example.mate.domain.goods.entity;
 
+import com.example.mate.domain.constant.TeamInfo;
 import com.example.mate.domain.goods.vo.Location;
 import com.example.mate.domain.member.entity.Member;
-import com.example.mate.entity.TeamInfo;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
@@ -15,7 +15,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.util.List;
 import lombok.AccessLevel;
@@ -44,9 +43,8 @@ public class GoodsPost {
     @JoinColumn(name = "buyer_id")
     private Member buyer;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "team")
-    private TeamInfo team;
+    @Column(name = "team_id")
+    private Long teamId;
 
     @OneToMany(mappedBy = "post")
     private List<GoodsPostImage> imageUrls;

@@ -1,7 +1,7 @@
 package com.example.mate.domain.constant;
 
-import com.example.mate.global.exception.CustomException;
-import com.example.mate.global.exception.ErrorCode;
+import com.example.mate.common.error.CustomException;
+import com.example.mate.common.error.ErrorCode;
 
 import java.util.List;
 

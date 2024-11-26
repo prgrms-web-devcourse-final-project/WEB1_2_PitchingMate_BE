@@ -1,4 +1,4 @@
-package com.example.mate.entity;
+package com.example.mate.domain.mate.entity;
 
 import lombok.Getter;
 

@@ -1,5 +1,6 @@
 package com.example.mate.domain.goods.entity;
 
+import com.example.mate.domain.constant.Rating;
 import com.example.mate.domain.member.entity.Member;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
