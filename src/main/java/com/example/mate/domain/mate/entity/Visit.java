@@ -1,0 +1,41 @@
+package com.example.mate.domain.mate.entity;
+
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@Table(name = "visit")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Builder
+public class Visit {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
+    private Long id;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "post_id", nullable = false)
+    private MatePost post;
+
+    @OneToMany(mappedBy = "visit")
+    private List<VisitPart> participants = new ArrayList<>();
+
+    @OneToMany(mappedBy = "visit")
+    private List<MateReview> reviews = new ArrayList<>();
+
+    // 참여자 추가
+    public void addParticipants(List<Member> members) {
+        members.forEach(member -> {
+            VisitPart visitPart = VisitPart.builder()
+                    .member(member)
+                    .visit(this)
+                    .build();
+            this.participants.add(visitPart);
+        });
+    }
+}
