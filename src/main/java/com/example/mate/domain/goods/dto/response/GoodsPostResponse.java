@@ -5,7 +5,7 @@ import com.example.mate.domain.goods.entity.Category;
 import com.example.mate.domain.goods.entity.Role;
 import com.example.mate.domain.goods.entity.Status;
 import com.example.mate.domain.goods.vo.Location;
-import com.example.mate.domain.goods.vo.MemberInfo;
+import com.example.mate.domain.goods.dto.MemberInfo;
 import com.example.mate.entity.TeamInfo;
 import java.util.Arrays;
 import java.util.List;

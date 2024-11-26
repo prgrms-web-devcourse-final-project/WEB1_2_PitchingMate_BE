@@ -1,4 +1,4 @@
-package com.example.mate.domain.goods.vo;
+package com.example.mate.domain.goods.dto;
 
 import com.example.mate.domain.goods.entity.Role;
 import lombok.AccessLevel;
