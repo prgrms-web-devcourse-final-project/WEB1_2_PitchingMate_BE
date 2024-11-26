@@ -18,7 +18,7 @@ public class TeamRecord {
     @Column(name = "team_id")
     private Long id;
 
-    @Column(nullable = false)
+    @Column(name = "`rank`", nullable = false)  // 예약어인 rank를 backtick(`)으로 감싸서 사용
     private Integer rank;
 
     @Column
