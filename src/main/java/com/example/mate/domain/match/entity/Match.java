@@ -2,15 +2,25 @@ package com.example.mate.domain.match.entity;
 
 import com.example.mate.domain.constant.StadiumInfo;
 import com.example.mate.domain.constant.TeamInfo;
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-
 @Entity
+@Table(name = "`match`") // 테이블 이름을 backtick(`)으로 감싸서 사용
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Match {
