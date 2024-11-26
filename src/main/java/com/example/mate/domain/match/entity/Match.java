@@ -2,7 +2,6 @@ package com.example.mate.domain.match.entity;
 
 import com.example.mate.domain.constant.StadiumInfo;
 import com.example.mate.domain.constant.TeamInfo;
-import com.example.mate.entity.MatchStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;

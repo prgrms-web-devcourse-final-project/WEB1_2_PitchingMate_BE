@@ -1,7 +1,7 @@
 package com.example.mate.domain.auth.controller;
 
 import com.example.mate.domain.member.dto.response.LoginTokenResponse;
-import com.example.mate.global.jwt.JwtToken;
+import com.example.mate.common.jwt.JwtToken;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

@@ -1,6 +1,6 @@
 package com.example.mate.domain.goods.controller;
 
-import com.example.mate.common.PageResponse;
+import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.goods.dto.request.GoodsPostRequest;
 import com.example.mate.domain.goods.dto.request.GoodsReviewFormRequest;
 import com.example.mate.domain.goods.dto.request.GoodsReviewRequest;

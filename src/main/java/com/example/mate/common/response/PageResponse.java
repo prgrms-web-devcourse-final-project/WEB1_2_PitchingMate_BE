@@ -1,4 +1,4 @@
-package com.example.mate.common;
+package com.example.mate.common.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

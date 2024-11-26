@@ -1,6 +1,6 @@
-package com.example.mate.global.common.response;
+package com.example.mate.common.response;
 
-import com.example.mate.global.exception.ErrorCode;
+import com.example.mate.common.error.ErrorCode;
 import lombok.Builder;
 import lombok.Getter;
 

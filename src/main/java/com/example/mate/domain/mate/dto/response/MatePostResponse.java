@@ -1,6 +1,6 @@
 package com.example.mate.domain.mate.dto.response;
 
-import com.example.mate.entity.Status;
+import com.example.mate.domain.mate.entity.Status;
 import lombok.Builder;
 import lombok.Getter;
 

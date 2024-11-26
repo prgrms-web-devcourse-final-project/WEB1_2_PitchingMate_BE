@@ -1,4 +1,4 @@
-package com.example.mate.global.jwt;
+package com.example.mate.common.jwt;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;

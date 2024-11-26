@@ -1,4 +1,4 @@
-package com.example.mate.global.exception;
+package com.example.mate.common.error;
 
 import lombok.Getter;
 import org.springframework.http.HttpStatus;

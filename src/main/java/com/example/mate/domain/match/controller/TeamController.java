@@ -2,7 +2,7 @@ package com.example.mate.domain.match.controller;
 
 import com.example.mate.domain.match.dto.response.StadiumResponse;
 import com.example.mate.domain.match.dto.response.TeamResponse;
-import com.example.mate.global.common.response.ApiResponse;
+import com.example.mate.common.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;

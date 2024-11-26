@@ -1,9 +1,9 @@
 package com.example.mate.domain.mate.dto.response;
 
-import com.example.mate.entity.Age;
-import com.example.mate.entity.Gender;
-import com.example.mate.entity.Status;
-import com.example.mate.entity.TransportType;
+import com.example.mate.domain.mate.entity.Age;
+import com.example.mate.domain.constant.Gender;
+import com.example.mate.domain.mate.entity.Status;
+import com.example.mate.domain.mate.entity.TransportType;
 import lombok.Builder;
 import lombok.Getter;
 

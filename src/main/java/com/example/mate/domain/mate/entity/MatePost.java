@@ -1,10 +1,8 @@
 package com.example.mate.domain.mate.entity;
 
+import com.example.mate.domain.match.entity.Match;
 import com.example.mate.domain.member.entity.Member;
-import com.example.mate.entity.Age;
-import com.example.mate.entity.Gender;
-import com.example.mate.entity.Status;
-import com.example.mate.entity.TransportType;
+import com.example.mate.domain.constant.Gender;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -30,9 +28,9 @@ public class MatePost {
 //    @JoinColumn(name = "team_id", nullable = false)
 //    private Team team;
 
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "match_id", nullable = false)
-//    private Match match;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "match_id", nullable = false)
+    private Match match;
 
     @Column(name = "image_url")
     private String imageUrl;

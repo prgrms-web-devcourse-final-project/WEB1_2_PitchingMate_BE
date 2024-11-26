@@ -1,7 +1,8 @@
 package com.example.mate.domain.goods.dto.response;
 
+import com.example.mate.domain.constant.Rating;
 import com.example.mate.domain.goods.dto.request.GoodsReviewRequest;
-import com.example.mate.domain.goods.entity.Rating;
+
 import java.time.LocalDateTime;
 import lombok.Builder;
 import lombok.Getter;
