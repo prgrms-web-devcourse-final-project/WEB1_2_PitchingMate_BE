@@ -14,14 +14,8 @@ import lombok.NoArgsConstructor;
 @Embeddable
 public class Location {
 
-    @Column(name = "address_name", nullable = false, length = 100)
-    private String addressName;
-
     @Column(name = "place_name", nullable = false, length = 100)
     private String placeName;
-
-    @Column(name = "road_address_name", nullable = false, length = 100)
-    private String roadAddressName;
 
     @Column(name = "longitude", nullable = false, length = 20)
     private String longitude;
@@ -30,10 +24,8 @@ public class Location {
     private String latitude;
 
     @Builder
-    public Location(String addressName, String placeName, String roadAddressName, String longitude, String latitude) {
-        this.addressName = addressName;
+    public Location(String placeName, String longitude, String latitude) {
         this.placeName = placeName;
-        this.roadAddressName = roadAddressName;
         this.longitude = longitude;
         this.latitude = latitude;
     }

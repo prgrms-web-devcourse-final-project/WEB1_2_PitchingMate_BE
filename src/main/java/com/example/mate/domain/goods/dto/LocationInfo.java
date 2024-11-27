@@ -12,14 +12,8 @@ import lombok.ToString;
 @EqualsAndHashCode
 public class LocationInfo {
 
-    @NotEmpty(message = "지번 주소는 필수 입력 값입니다.")
-    private String addressName;
-
     @NotEmpty(message = "장소 이름은 필수 입력 값입니다.")
     private String placeName;
-
-    @NotEmpty(message = "도로명 주소는 필수 입력 값입니다.")
-    private String roadAddressName;
 
     @NotEmpty(message = "경도는 필수 입력 값입니다.")
     private String longitude;
@@ -28,19 +22,15 @@ public class LocationInfo {
     private String latitude;
 
     @Builder
-    public LocationInfo(String addressName, String placeName, String roadAddressName, String longitude, String latitude) {
-        this.addressName = addressName;
+    public LocationInfo(String placeName, String longitude, String latitude) {
         this.placeName = placeName;
-        this.roadAddressName = roadAddressName;
         this.longitude = longitude;
         this.latitude = latitude;
     }
 
     public static Location toEntity(LocationInfo locationInfo) {
         return Location.builder()
-                .addressName(locationInfo.getAddressName())
                 .placeName(locationInfo.getPlaceName())
-                .roadAddressName(locationInfo.getRoadAddressName())
                 .longitude(locationInfo.getLongitude())
                 .latitude(locationInfo.getLatitude())
                 .build();
@@ -48,9 +38,7 @@ public class LocationInfo {
 
     public static LocationInfo from(Location location) {
         return LocationInfo.builder()
-                .addressName(location.getAddressName())
                 .placeName(location.getPlaceName())
-                .roadAddressName(location.getRoadAddressName())
                 .longitude(location.getLongitude())
                 .latitude(location.getLatitude())
                 .build();

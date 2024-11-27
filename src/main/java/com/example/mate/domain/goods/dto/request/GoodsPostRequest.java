@@ -1,8 +1,6 @@
 package com.example.mate.domain.goods.dto.request;
 
 import com.example.mate.common.utils.validator.ValidEnum;
-import com.example.mate.domain.constant.TeamInfo;
-import com.example.mate.domain.constant.TeamInfo.Team;
 import com.example.mate.domain.goods.dto.LocationInfo;
 import com.example.mate.domain.goods.entity.Category;
 import com.example.mate.domain.goods.entity.GoodsPost;
@@ -12,11 +10,11 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 @Getter
-@NoArgsConstructor
+@AllArgsConstructor
 public class GoodsPostRequest {
 
     @NotNull(message = "팀 ID는 필수 입력 값입니다.")
@@ -45,12 +43,11 @@ public class GoodsPostRequest {
 
 
     public static GoodsPost toEntity(Member seller, GoodsPostRequest request) {
-        Team team = TeamInfo.getById(request.getTeamId());
         LocationInfo locationInfo = request.getLocation();
 
         return GoodsPost.builder()
                 .seller(seller)
-                .teamId(team.id)
+                .teamId(request.getTeamId())
                 .title(request.getTitle())
                 .content(request.getContent())
                 .price(request.getPrice())

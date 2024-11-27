@@ -1,5 +1,6 @@
 package com.example.mate.domain.goods.controller;
 
+import com.example.mate.common.response.ApiResponse;
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.goods.dto.request.GoodsPostRequest;
 import com.example.mate.domain.goods.dto.request.GoodsReviewFormRequest;
@@ -41,14 +42,14 @@ public class GoodsController {
     TODO: @PathVariable Long memberId -> @AuthenticationPrincipal 로 변경
      */
     @PostMapping("/{memberId}")
-    public ResponseEntity<GoodsPostResponse> registerGoodsPost(
+    public ResponseEntity<ApiResponse<GoodsPostResponse>> registerGoodsPost(
             @Validated @RequestPart("data") GoodsPostRequest request,
             @RequestPart("files") List<MultipartFile> files,
             @PathVariable Long memberId
     ) {
         log.info("request = {}", request);
-
-        return ResponseEntity.ok(goodsService.registerGoodsPost(memberId, request, files));
+        GoodsPostResponse response = goodsService.registerGoodsPost(memberId, request, files);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     /*
