@@ -10,5 +10,10 @@ Content-Type: application/json
 GET http://localhost:8000/api/matches/team/1
 Content-Type: application/json
 
+### 팀별 완료된 경기 전적 조회
+### KIA 팀 완료된 경기 전적 조회
+GET http://localhost:8000/api/matches/team/1/completed
+Content-Type: application/json
+
 ### [Team API] ###
 #################
