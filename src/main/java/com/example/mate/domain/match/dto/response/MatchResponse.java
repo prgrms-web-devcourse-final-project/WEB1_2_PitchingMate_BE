@@ -1,6 +1,10 @@
 package com.example.mate.domain.match.dto.response;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
+import com.example.mate.domain.constant.TeamInfo;
+import com.example.mate.domain.match.entity.Match;
+import com.example.mate.domain.match.entity.MatchResult;
+import com.example.mate.domain.match.entity.MatchStatus;
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -8,65 +12,50 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Getter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class MatchResponse {
-    public enum MatchStatus {
-        SCHEDULED("예정"),
-        COMPLETED("종료"),
-        CANCELED("취소");
+    private Long id;
+    private TeamResponse.Simple homeTeam;
+    private TeamResponse.Simple awayTeam;
+    private String location;
+    private LocalDateTime matchTime;
+    private Boolean isCanceled;
+    private MatchStatus status;
+    private WeatherResponse.Info weather;
+    private Integer homeScore;
+    private Integer awayScore;
+    private MatchResult result;
 
-        private final String description;
-
-        MatchStatus(String description) {
-            this.description = description;
-        }
-    }
-
-    public enum MatchResult {
-        WIN("승"),
-        LOSE("패"),
-        DRAW("무");
-
-        private final String description;
-
-        MatchResult(String description) {
-            this.description = description;
-        }
-    }
-
-    @Getter
     @Builder
-    public static class Simple {  // 종료된 경기용 Response (@@팀의 최근 전적)
-        private Long id;
-        private Long homeTeamId;
-        private Long awayTeamId;
-        private String homeTeamName;
-        private String awayTeamName;
-        private String location;
-        private LocalDateTime matchTime;
-        private Boolean isCanceled;
-        private Integer homeScore;
-        private Integer awayScore;
-        private MatchStatus status;
-        private MatchResult result;
-
+    private MatchResponse(Match match, Long viewerTeamId) {
+        this.id = match.getId();
+        this.homeTeam = TeamResponse.Simple.from(TeamInfo.getById(match.getHomeTeamId()));
+        this.awayTeam = TeamResponse.Simple.from(TeamInfo.getById(match.getAwayTeamId()));
+        this.location = match.getStadium().name;
+        this.matchTime = match.getMatchTime();
+        this.isCanceled = match.getIsCanceled();
+        this.status = match.getStatus();
+        this.weather = WeatherResponse.Info.from(match.getWeather());
+        this.homeScore = match.getHomeScore();
+        this.awayScore = match.getAwayScore();
+        this.result = calculateResult(match, viewerTeamId);
     }
 
-    @Getter
-    @Builder
-    public static class Detail {  // 예정된 경기용 Response ( 상단 배너 )
-        private Long id;
-        private TeamResponse.Simple homeTeam;
-        private TeamResponse.Simple awayTeam;
-        private String location;
-        private LocalDateTime matchTime;
-        private Boolean isCanceled;
-        private MatchStatus status;
-        private WeatherResponse.Info weather;
+    public static MatchResponse from(Match match, Long viewerTeamId) {  // viewerTeamId 파라미터 추가
+        return new MatchResponse(match, viewerTeamId);
+    }
 
-        @JsonFormat(pattern = "yyyy-MM-dd HH:mm")
-        public LocalDateTime getMatchTime() {
-            return matchTime;
+    private MatchResult calculateResult(Match match, Long teamId) {
+        if (match.getStatus() != MatchStatus.COMPLETED) return null;
+
+        // teamId가 null이면 홈팀 기준으로 결과 계산
+        if (teamId == null || match.getHomeTeamId().equals(teamId)) {
+            if (match.getHomeScore() > match.getAwayScore()) return MatchResult.WIN;
+            if (match.getHomeScore() < match.getAwayScore()) return MatchResult.LOSE;
+        } else {
+            if (match.getHomeScore() < match.getAwayScore()) return MatchResult.WIN;
+            if (match.getHomeScore() > match.getAwayScore()) return MatchResult.LOSE;
         }
+        return MatchResult.DRAW;
     }
 }
