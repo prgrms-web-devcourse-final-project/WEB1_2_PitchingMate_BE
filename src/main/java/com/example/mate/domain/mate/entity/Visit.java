@@ -24,9 +24,11 @@ public class Visit {
     private MatePost post;
 
     @OneToMany(mappedBy = "visit")
+    @Builder.Default
     private List<VisitPart> participants = new ArrayList<>();
 
     @OneToMany(mappedBy = "visit")
+    @Builder.Default
     private List<MateReview> reviews = new ArrayList<>();
 
     // 참여자 추가
