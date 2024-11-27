@@ -20,9 +20,9 @@ public enum Category {
     private final String value;
 
     @JsonCreator
-    public static Category fromEventStatus(String val) {
+    public static Category from(String value) {
         return Arrays.stream(values())
-                .filter(category -> category.getValue().equals(val))
+                .filter(category -> category.getValue().equals(value))
                 .findAny()
                 .orElse(null);
     }

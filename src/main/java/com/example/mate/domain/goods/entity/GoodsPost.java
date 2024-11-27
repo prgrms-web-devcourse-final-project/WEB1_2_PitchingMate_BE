@@ -1,5 +1,7 @@
 package com.example.mate.domain.goods.entity;
 
+import com.example.mate.common.error.CustomException;
+import com.example.mate.common.error.ErrorCode;
 import com.example.mate.domain.member.entity.Member;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -76,7 +78,7 @@ public class GoodsPost {
     // 굿즈 판매글 이미지 업로드 및 수정 메서드
     public void changeImages(List<GoodsPostImage> goodsPostImages) {
         if (goodsPostImages.isEmpty()) {
-            throw new IllegalArgumentException("goodsPostImages must not be null or empty");
+            throw new CustomException(ErrorCode.GOODS_IMAGES_ARE_EMPTY);
         }
 
         // 기존 이미지 전부 삭제
