@@ -4,6 +4,7 @@ import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
 import com.example.mate.common.utils.file.FileUploader;
 import com.example.mate.common.utils.file.FileValidator;
+import com.example.mate.domain.constant.TeamInfo;
 import com.example.mate.domain.goods.dto.request.GoodsPostRequest;
 import com.example.mate.domain.goods.dto.response.GoodsPostResponse;
 import com.example.mate.domain.goods.entity.GoodsPost;
@@ -31,16 +32,20 @@ public class GoodsService {
     private final GoodsPostImageRepository imageRepository;
 
     public GoodsPostResponse registerGoodsPost(Long memberId, GoodsPostRequest request, List<MultipartFile> files) {
-        // 사용자, 팀 정보 유효성 검증
+        // 사용자, 팀 정보, 이미지 파일 유효성 검증
         Member seller = memberRepository.findById(memberId).orElseThrow(()
                 -> new CustomException(ErrorCode.MEMBER_NOT_FOUND_BY_ID));
+
+        if (!TeamInfo.existById(request.getTeamId())) {
+            throw new CustomException(ErrorCode.TEAM_NOT_FOUND);
+        }
+        FileValidator.validateGoodsPostImages(files);
 
         // GoodsPost 엔티티 생성 & 저장
         GoodsPost goodsPost = GoodsPostRequest.toEntity(seller, request);
         GoodsPost savedPost = goodsPostRepository.save(goodsPost);
 
         // 이미지 저장 & 연관관계 설정
-        FileValidator.validateGoodsPostImages(files);
         List<GoodsPostImage> images = saveImages(files, savedPost);
         goodsPost.changeImages(images);
 
