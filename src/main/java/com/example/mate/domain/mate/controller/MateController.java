@@ -1,12 +1,19 @@
 package com.example.mate.domain.mate.controller;
 
-import com.example.mate.domain.mate.entity.Age;
+import com.example.mate.common.response.ApiResponse;
+import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.constant.Gender;
+import com.example.mate.domain.mate.dto.request.*;
+import com.example.mate.domain.mate.dto.response.MatePostDetailResponse;
+import com.example.mate.domain.mate.dto.response.MatePostResponse;
+import com.example.mate.domain.mate.dto.response.MatePostSummaryResponse;
+import com.example.mate.domain.mate.dto.response.MateReviewCreateResponse;
+import com.example.mate.domain.mate.entity.Age;
 import com.example.mate.domain.mate.entity.Status;
 import com.example.mate.domain.mate.entity.TransportType;
-import com.example.mate.common.response.PageResponse;
-import com.example.mate.domain.mate.dto.request.*;
-import com.example.mate.domain.mate.dto.response.*;
+import com.example.mate.domain.mate.service.MateService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
@@ -19,15 +26,19 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/mates")
 public class MateController {
 
+    private final MateService mateService;
+
     // 메이트 게시글 작성
     @PostMapping
-    public ResponseEntity<MatePostResponse> createMatePost(@AuthenticationPrincipal UserDetails userDetails,
-                                                                 @RequestPart("data") MatePostCreateRequest request,
-                                                                 @RequestPart("file") MultipartFile file) {
-        return ResponseEntity.ok(MatePostResponse.builder().id(1L).build());
+    public ResponseEntity<ApiResponse<MatePostResponse>> createMatePost(@Valid @RequestPart(value = "data") MatePostCreateRequest request,
+                                                                       @RequestPart(value = "file", required = false) MultipartFile file) {
+        //TODO - member 정보를 request가 아니라  @AuthenticationPrincipal Long memberId로 받도록 변경
+        MatePostResponse response = mateService.createMatePost(request, file);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     // 메이트 게시글 목록 조회(메인 페이지)
