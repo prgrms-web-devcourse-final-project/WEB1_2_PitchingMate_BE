@@ -1,6 +1,7 @@
 package com.example.mate.domain.mate.service;
 
 import com.example.mate.common.error.CustomException;
+import com.example.mate.domain.constant.TeamInfo;
 import com.example.mate.domain.match.entity.Match;
 import com.example.mate.domain.match.repository.MatchRepository;
 import com.example.mate.domain.mate.dto.request.MatePostCreateRequest;
@@ -15,8 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import static com.example.mate.common.error.ErrorCode.MATCH_NOT_FOUND_BY_ID;
-import static com.example.mate.common.error.ErrorCode.MEMBER_NOT_FOUND_BY_ID;
+import static com.example.mate.common.error.ErrorCode.*;
 
 @Service
 @Transactional
@@ -34,6 +34,10 @@ public class MateService {
 
         Match match = matchRepository.findById(request.getMatchId())
                 .orElseThrow(() -> new CustomException(MATCH_NOT_FOUND_BY_ID));
+
+        if (!TeamInfo.existById(request.getTeamId())) {
+            throw new CustomException(TEAM_NOT_FOUND);
+        }
 
         MatePost matePost = MatePost.builder()
                 .author(author)

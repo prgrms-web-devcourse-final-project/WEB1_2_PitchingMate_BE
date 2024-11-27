@@ -46,4 +46,8 @@ public final class TeamInfo {
                 .findFirst()
                 .orElseThrow(() -> new CustomException(ErrorCode.TEAM_NOT_FOUND));
     }
+
+    public static Boolean existById(Long id) {
+        return TEAMS.stream().anyMatch(team -> team.id.equals(id));
+    }
 }
