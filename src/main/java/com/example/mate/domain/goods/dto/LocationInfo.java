@@ -1,6 +1,7 @@
 package com.example.mate.domain.goods.dto;
 
 import com.example.mate.domain.goods.entity.Location;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -11,10 +12,19 @@ import lombok.ToString;
 @EqualsAndHashCode
 public class LocationInfo {
 
+    @NotEmpty(message = "지번 주소는 필수 입력 값입니다.")
     private String addressName;
+
+    @NotEmpty(message = "장소 이름은 필수 입력 값입니다.")
     private String placeName;
+
+    @NotEmpty(message = "도로명 주소는 필수 입력 값입니다.")
     private String roadAddressName;
+
+    @NotEmpty(message = "경도는 필수 입력 값입니다.")
     private String longitude;
+
+    @NotEmpty(message = "위도는 필수 입력 값입니다.")
     private String latitude;
 
     @Builder
