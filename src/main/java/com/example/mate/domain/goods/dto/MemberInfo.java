@@ -1,6 +1,7 @@
 package com.example.mate.domain.goods.dto;
 
 import com.example.mate.domain.goods.entity.Role;
+import com.example.mate.domain.member.entity.Member;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -23,5 +24,14 @@ public class MemberInfo {
         this.nickname = nickname;
         this.manner = manner;
         this.role = role;
+    }
+
+    public static MemberInfo from(Member member, Role role) {
+        return MemberInfo.builder()
+                .memberId(member.getId())
+                .nickname(member.getNickname())
+                .manner(member.getManner())
+                .role(role)
+                .build();
     }
 }

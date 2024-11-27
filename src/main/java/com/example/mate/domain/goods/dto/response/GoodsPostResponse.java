@@ -1,18 +1,15 @@
 package com.example.mate.domain.goods.dto.response;
 
 import com.example.mate.domain.constant.TeamInfo;
+import com.example.mate.domain.goods.dto.LocationInfo;
+import com.example.mate.domain.goods.dto.MemberInfo;
 import com.example.mate.domain.goods.dto.request.GoodsPostRequest;
 import com.example.mate.domain.goods.entity.Category;
+import com.example.mate.domain.goods.entity.GoodsPost;
+import com.example.mate.domain.goods.entity.GoodsPostImage;
 import com.example.mate.domain.goods.entity.Role;
 import com.example.mate.domain.goods.entity.Status;
-import com.example.mate.domain.goods.vo.Location;
-import com.example.mate.domain.goods.dto.MemberInfo;
-
-import java.util.Arrays;
 import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -31,47 +28,23 @@ public class GoodsPostResponse {
     private final String category;
     private final Integer price;
     private final String content;
-    private final Location location;
+    private final LocationInfo location;
     private final List<String> imageUrls;
-    private final Status status;
+    private final String status;
 
-    /*
-    굿즈 거래글 등록 요청을 GoodsPostResponse로 반환
-    거래글 id와 회원정보 MemberInfo는 하드코딩
-    request와 files 값에 따른 반환 값 확인
-     */
-    public static GoodsPostResponse of(GoodsPostRequest request, MultipartFile[] files) {
+    public static GoodsPostResponse of(GoodsPost goodsPost) {
         return GoodsPostResponse.builder()
-                .id(1L)
-                .seller(MemberInfo.builder()
-                        .memberId(1L)
-                        .nickname("tester")
-                        .manner(0.3F)
-                        .role(Role.SELLER)
-                        .build())
-                .teamName(getTeamName(request.getTeamId()))
-                .title(request.getTitle())
-                .category(request.getCategory().getValue())
-                .price(request.getPrice())
-                .content(request.getContent())
-                .location(request.getLocation())
-                .imageUrls(upload(files))
-                .status(Status.OPEN)
+                .id(goodsPost.getId())
+                .seller(MemberInfo.from(goodsPost.getSeller(), Role.SELLER))
+                .teamName(TeamInfo.getById(goodsPost.getTeamId()).shortName)
+                .title(goodsPost.getTitle())
+                .category(goodsPost.getCategory().getValue())
+                .price(goodsPost.getPrice())
+                .content(goodsPost.getContent())
+                .location(LocationInfo.from(goodsPost.getLocation()))
+                .imageUrls(goodsPost.getGoodsPostImages().stream().map(GoodsPostImage::getImageUrl).toList())
+                .status(goodsPost.getStatus().getValue())
                 .build();
-    }
-
-    // 업로드한 이미지 파일명 리스트 반환
-    public static List<String> upload(MultipartFile[] files) {
-        // files가 null인 경우 빈 리스트 반환
-        if (files == null || files.length == 0) {
-            return List.of();
-        }
-
-        return Stream.of(files)
-                .filter(file -> file.getContentType() != null && file.getContentType()
-                        .startsWith("image/")) // 이미지 파일만 필터링
-                .map(file -> UUID.randomUUID() + "_" + file.getOriginalFilename()) // 파일명 생성
-                .collect(Collectors.toList());
     }
 
     /*
@@ -92,13 +65,13 @@ public class GoodsPostResponse {
                 .category(Category.CLOTHING.getValue())
                 .price(40000)
                 .content("플레이스 홀더")
-                .location(Location.builder()
+                .location(LocationInfo.builder()
                         .addressName("지번주소")
                         .placeName("장소명")
                         .roadAddressName("도로명주소")
                         .build())
                 .imageUrls(List.of("upload/image1.png", "upload/image2.png", "upload/image3.png"))
-                .status(Status.OPEN)
+                .status(Status.OPEN.getValue())
                 .build();
     }
 
@@ -122,8 +95,8 @@ public class GoodsPostResponse {
                 .price(request.getPrice())
                 .content(request.getContent())
                 .location(request.getLocation())
-                .imageUrls(upload(files))
-                .status(Status.OPEN)
+//                .imageUrls(upload(files))
+                .status(Status.OPEN.getValue())
                 .build();
     }
 
