@@ -21,17 +21,28 @@ public class MatchService {
     public List<MatchResponse> getMainBannerMatches() {
         return matchRepository.findTop5ByOrderByMatchTimeDesc().stream()
                 .filter(match -> match.getMatchTime().isAfter(LocalDateTime.now()))
-                .map(match -> MatchResponse.from(match, null))  // 메인 배너는 특정 팀 시점이 없으므로 null
+                .map(match -> MatchResponse.from(match, null))
                 .collect(Collectors.toList());
     }
 
 
     public List<MatchResponse> getTeamMatches(Long teamId) {
-        TeamInfo.getById(teamId);  // 팀 존재 여부 확인
+        TeamInfo.getById(teamId);
 
         return matchRepository.findTop3ByHomeTeamIdOrAwayTeamIdOrderByMatchTimeDesc(teamId, teamId).stream()
                 .filter(match -> match.getMatchTime().isAfter(LocalDateTime.now()))
-                .map(match -> MatchResponse.from(match, teamId))  // 조회하는 팀 ID 전달
+                .map(match -> MatchResponse.from(match, teamId))
+                .collect(Collectors.toList());
+    }
+
+    public List<MatchResponse> getTeamCompletedMatches(Long teamId) {
+        TeamInfo.getById(teamId);
+
+        return matchRepository.findByStatusAndHomeTeamIdOrStatusAndAwayTeamIdOrderByMatchTimeDesc(
+                        MatchStatus.COMPLETED, teamId,
+                        MatchStatus.COMPLETED, teamId)
+                .stream()
+                .map(match -> MatchResponse.from(match, teamId))
                 .collect(Collectors.toList());
     }
 }
