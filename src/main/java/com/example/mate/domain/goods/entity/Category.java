@@ -1,5 +1,7 @@
 package com.example.mate.domain.goods.entity;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import java.util.Arrays;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -14,4 +16,12 @@ public enum Category {
     SOUVENIR("기념상품");
 
     private final String value;
+
+    @JsonCreator
+    public static Category fromEventStatus(String val) {
+        return Arrays.stream(values())
+                .filter(category -> category.getValue().equals(val))
+                .findAny()
+                .orElse(null);
+    }
 }
