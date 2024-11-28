@@ -108,6 +108,49 @@ class MatchIntegrationTest {
                 .andExpect(MockMvcResultMatchers.jsonPath("$.code").value(404));
     }
 
+    @Test
+    @DisplayName("팀별 완료된 경기 조회 - 성공")
+    void getTeamCompletedMatches_Success() throws Exception {
+        // given
+        LocalDateTime pastTime1 = LocalDateTime.now().minusDays(1);
+        LocalDateTime pastTime2 = LocalDateTime.now().minusDays(2);
+
+        Match completedMatch1 = createCompletedMatch(TeamInfo.LG.id, TeamInfo.KT.id, StadiumInfo.JAMSIL.id, pastTime1, 5, 3);
+        Match completedMatch2 = createCompletedMatch(TeamInfo.KIA.id, TeamInfo.LG.id, StadiumInfo.GWANGJU.id, pastTime2, 2, 7);
+        Match scheduledMatch = createMatch(TeamInfo.LG.id, TeamInfo.NC.id, StadiumInfo.JAMSIL.id, LocalDateTime.now().plusDays(1));
+
+        matchRepository.saveAll(Arrays.asList(completedMatch1, completedMatch2, scheduledMatch));
+
+        // when
+        ResultActions result = mockMvc.perform(MockMvcRequestBuilders.get("/api/matches/team/{teamId}/completed", TeamInfo.LG.id)
+                .accept(MediaType.APPLICATION_JSON));
+
+        // then
+        result.andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("SUCCESS"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data").isArray())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.length()").value(2))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data[0].status").value("COMPLETED"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data[0].homeTeam.id").value(TeamInfo.LG.id))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data[0].homeScore").value(5))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data[1].awayTeam.id").value(TeamInfo.LG.id))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data[1].awayScore").value(7));
+    }
+
+    private Match createCompletedMatch(Long homeTeamId, Long awayTeamId, Long stadiumId,
+                                       LocalDateTime matchTime, Integer homeScore, Integer awayScore) {
+        return Match.builder()
+                .homeTeamId(homeTeamId)
+                .awayTeamId(awayTeamId)
+                .stadiumId(stadiumId)
+                .matchTime(matchTime)
+                .isCanceled(false)
+                .status(MatchStatus.COMPLETED)
+                .homeScore(homeScore)
+                .awayScore(awayScore)
+                .build();
+    }
+
     private Match createMatch(Long homeTeamId, Long awayTeamId, Long stadiumId, LocalDateTime matchTime) {
         return Match.builder()
                 .homeTeamId(homeTeamId)
@@ -116,6 +159,8 @@ class MatchIntegrationTest {
                 .matchTime(matchTime)
                 .isCanceled(false)
                 .status(MatchStatus.SCHEDULED)
+                .homeScore(null)
+                .awayScore(null)
                 .build();
     }
 }
