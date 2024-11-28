@@ -6,6 +6,7 @@ import com.example.mate.domain.match.entity.Match;
 import com.example.mate.domain.match.repository.MatchRepository;
 import com.example.mate.domain.mate.dto.request.MatePostCreateRequest;
 import com.example.mate.domain.mate.dto.response.MatePostResponse;
+import com.example.mate.domain.mate.dto.response.MatePostSummaryResponse;
 import com.example.mate.domain.mate.entity.MatePost;
 import com.example.mate.domain.mate.entity.Status;
 import com.example.mate.domain.mate.repository.MateRepository;
@@ -13,8 +14,13 @@ import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.example.mate.common.error.ErrorCode.*;
 
@@ -54,9 +60,21 @@ public class MateService {
                 .build();
         MatePost savedPost = mateRepository.save(matePost);
 
-        return MatePostResponse.builder()
-                .id(savedPost.getId())
-                .status(savedPost.getStatus())
-                .build();
+        return MatePostResponse.from(savedPost);
+    }
+
+    public List<MatePostSummaryResponse> getMatePostMain(Long teamId) {
+        LocalDateTime now = LocalDateTime.now();
+        List<Status> validStatuses = List.of(Status.OPEN, Status.CLOSED);
+
+        List<MatePost> mainPagePosts = mateRepository.findMainPagePosts(
+                teamId,
+                now,
+                validStatuses,
+                PageRequest.of(0, 3));
+
+        return mainPagePosts.stream()
+                .map(MatePostSummaryResponse::from)
+                .collect(Collectors.toList());
     }
 }
