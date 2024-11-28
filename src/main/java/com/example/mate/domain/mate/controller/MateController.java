@@ -16,6 +16,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -42,19 +43,10 @@ public class MateController {
     }
 
     // 메이트 게시글 목록 조회(메인 페이지)
-    @GetMapping("/main")
-    public ResponseEntity<List<MatePostSummaryResponse>> getMatePostsMain(@RequestParam Long teamId) {
-        return ResponseEntity.ok(List.of(MatePostSummaryResponse.builder()
-                        .imageUrl("imageUrl")
-                        .title("12월 경기 메이트 찾아요")
-                        .status(Status.OPEN)
-                        .rivalTeamName("삼성")
-                        .rivalMatchTime(LocalDateTime.now())
-                        .maxParticipants(10)
-                        .age(Age.TWENTIES)
-                        .gender(Gender.MALE)
-                        .transportType(TransportType.PUBLIC)
-                        .build()));
+    @GetMapping(value = "/main", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponse<List<MatePostSummaryResponse>>> getMatePostsMain(@RequestParam(required = false) Long teamId) {
+        List<MatePostSummaryResponse> matePostMain = mateService.getMatePostMain(teamId);
+        return ResponseEntity.ok(ApiResponse.success(matePostMain));
     }
 
     // 메이트 게시글 목록 조회(메이트 페이지)
