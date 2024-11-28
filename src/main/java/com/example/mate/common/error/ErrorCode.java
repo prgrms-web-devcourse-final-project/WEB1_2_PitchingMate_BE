@@ -9,6 +9,11 @@ public enum ErrorCode {
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "C001", "Internal Server Error"),
     INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "C002", "Invalid Input Value"),
 
+    // Auth
+    AUTH_BAD_REQUEST(HttpStatus.BAD_REQUEST, "A001", "잘못된 인증 요청입니다. 요청 파라미터를 확인해주세요."),
+    AUTH_UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "A002", "인증에 실패했습니다. 유효한 토큰을 제공해주세요."),
+    AUTH_FORBIDDEN(HttpStatus.FORBIDDEN, "A003", "접근 권한이 없습니다. 권한을 확인해주세요."),
+
     // Team
     TEAM_NOT_FOUND(HttpStatus.NOT_FOUND, "T001", "팀을 찾을 수 없습니다"),
 

@@ -1,7 +1,10 @@
 package com.example.mate.domain.auth.controller;
 
-import com.example.mate.domain.member.dto.response.LoginTokenResponse;
 import com.example.mate.common.jwt.JwtToken;
+import com.example.mate.domain.auth.dto.response.LoginResponse;
+import com.example.mate.domain.auth.service.NaverAuthService;
+import jakarta.validation.constraints.NotEmpty;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,28 +13,31 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.view.RedirectView;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    /*
-    TODO : 2024/11/22 - 네이버 소셜 로그인 및 회원가입
-    1. 인가 코드를 통해 토큰 정보 요청
-    2. 토큰을 통해 사용자 정보 요청
-    3. 사용자 정보 조회 -> 회원가입 or 로그인
-    4. 사용자 정보 Jwt 토큰으로 반환
-    */
-    @GetMapping("/login/naver")
-    public ResponseEntity<LoginTokenResponse> loginByNaver(@RequestParam String code) {
-        LoginTokenResponse response = LoginTokenResponse.builder()
-                .grantType("Bearer")
-                .accessToken("accessToken")
-                .refreshToken("refreshToken")
-                .isNewMember(true)
-                .build();
+    private final NaverAuthService naverAuthService;
 
-        return ResponseEntity.ok(response);
+    /**
+     * 네이버 소셜 로그인 연결 : 네이버 인증 페이지로의 리다이렉트
+     */
+    @GetMapping("/connect/naver")
+    public RedirectView connectNaver() {
+        return new RedirectView(naverAuthService.getAuthUrl());
+    }
+
+    /**
+     * 네이버 소셜 로그인 콜백 : 인증 페이지에서 로그인한 뒤, 네이버 사용자 정보와 로그인 토큰을 함께 반환
+     */
+    @GetMapping("/login/naver")
+    public ResponseEntity<LoginResponse> loginByNaver(@RequestParam @NotEmpty String code,
+                                                      @RequestParam String state) {
+        // TODO : 2024/11/27 - 로그인 회원 조회 결과에 따라 회원가입/로그인완료 연결 필요
+        return ResponseEntity.ok(naverAuthService.authenticateNaver(code, state));
     }
 
     /*
@@ -42,8 +48,8 @@ public class AuthController {
     4. 사용자 정보 Jwt 토큰으로 반환
     */
     @GetMapping("/login/google")
-    public ResponseEntity<LoginTokenResponse> loginByGoogle(@RequestParam String code) {
-        LoginTokenResponse response = LoginTokenResponse.builder()
+    public ResponseEntity<LoginResponse> loginByGoogle(@RequestParam String code) {
+        LoginResponse response = LoginResponse.builder()
                 .grantType("Bearer")
                 .accessToken("accessToken")
                 .refreshToken("refreshToken")
@@ -70,4 +76,3 @@ public class AuthController {
         return ResponseEntity.ok(jwtToken);
     }
 }
-
