@@ -14,7 +14,6 @@ import com.example.mate.domain.goods.service.GoodsService;
 import java.util.Collections;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -32,7 +31,6 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/api/goods")
 @RequiredArgsConstructor
-@Slf4j
 public class GoodsController {
 
     private final GoodsService goodsService;
@@ -47,8 +45,23 @@ public class GoodsController {
             @RequestPart("files") List<MultipartFile> files,
             @PathVariable Long memberId
     ) {
-        log.info("request = {}", request);
         GoodsPostResponse response = goodsService.registerGoodsPost(memberId, request, files);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    /*
+    굿즈 거래하기 상세 페이지 : 굿즈 거래글 수정
+    TODO: @PathVariable Long memberId -> @AuthenticationPrincipal 로 변경
+    "/api/goods/{goodsPostId}" 로 변경 예정
+     */
+    @PutMapping("/{memberId}/post/{goodsPostId}")
+    public ResponseEntity<ApiResponse<GoodsPostResponse>> updateGoodsPost(
+            @PathVariable Long memberId,
+            @PathVariable Long goodsPostId,
+            @RequestPart("data") GoodsPostRequest request,
+            @RequestPart("files") List<MultipartFile> files
+    ) {
+        GoodsPostResponse response = goodsService.updateGoodsPost(memberId, goodsPostId, request, files);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
@@ -97,19 +110,6 @@ public class GoodsController {
     @GetMapping("/{goodsPostId}")
     public ResponseEntity<GoodsPostResponse> getGoodsPost(@PathVariable Long goodsPostId) {
         return ResponseEntity.ok(GoodsPostResponse.createResponse(goodsPostId));
-    }
-
-    /*
-    굿즈 거래하기 상세 페이지 : 굿즈 거래글 수정
-    요청 Body를 form-data 형식으로 설정하여, Key를 값을 넣은 "data"와 사진 파일 "files"로 구분
-     */
-    @PutMapping("/{goodsPostId}")
-    public ResponseEntity<GoodsPostResponse> updateGoodsPost(
-            @PathVariable Long goodsPostId,
-            @RequestPart("data") GoodsPostRequest request,
-            @RequestPart("files") MultipartFile[] files
-    ) {
-        return ResponseEntity.ok(GoodsPostResponse.updateResponse(goodsPostId, request, files));
     }
 
     // 굿즈 거래하기 상세 페이지 : 굿즈 거래글 삭제

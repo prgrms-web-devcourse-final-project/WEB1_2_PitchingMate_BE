@@ -89,4 +89,14 @@ public class GoodsPost {
             goodsPostImage.changePost(this);
         }
     }
+
+    // 굿즈 판매글 수정 메서드
+    public void update(GoodsPost post) {
+        this.teamId = post.getTeamId();
+        this.title = post.getTitle();
+        this.content = post.getContent();
+        this.price = post.getPrice();
+        this.category = post.getCategory();
+        this.location = post.getLocation();
+    }
 }

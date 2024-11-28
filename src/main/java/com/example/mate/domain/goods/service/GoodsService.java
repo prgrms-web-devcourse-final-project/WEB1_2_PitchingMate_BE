@@ -16,7 +16,6 @@ import com.example.mate.domain.member.repository.MemberRepository;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -24,7 +23,6 @@ import org.springframework.web.multipart.MultipartFile;
 @Service
 @Transactional
 @RequiredArgsConstructor
-@Slf4j
 public class GoodsService {
 
     private final MemberRepository memberRepository;
@@ -33,12 +31,8 @@ public class GoodsService {
 
     public GoodsPostResponse registerGoodsPost(Long memberId, GoodsPostRequest request, List<MultipartFile> files) {
         // 사용자, 팀 정보, 이미지 파일 유효성 검증
-        Member seller = memberRepository.findById(memberId).orElseThrow(()
-                -> new CustomException(ErrorCode.MEMBER_NOT_FOUND_BY_ID));
-
-        if (!TeamInfo.existById(request.getTeamId())) {
-            throw new CustomException(ErrorCode.TEAM_NOT_FOUND);
-        }
+        Member seller = getSellerAndValidate(memberId);
+        validateTeamInfo(request.getTeamId());
         FileValidator.validateGoodsPostImages(files);
 
         // GoodsPost 엔티티 생성 & 저장
@@ -52,8 +46,59 @@ public class GoodsService {
         return GoodsPostResponse.of(goodsPost);
     }
 
+    public GoodsPostResponse updateGoodsPost(Long memberId, Long goodsPostId, GoodsPostRequest request, List<MultipartFile> files) {
+        // 사용자, 판매글 정보, 팀 정보, 이미지 파일 유효성 검증
+        Member seller = getSellerAndValidate(memberId);
+        GoodsPost goodsPost = getGoodsPostAndValidate(seller, goodsPostId);
+        validateTeamInfo(request.getTeamId());
+        FileValidator.validateGoodsPostImages(files);
+
+        // 판매글 정보 업데이트
+        GoodsPost updatedPost = GoodsPostRequest.toEntity(seller, request);
+        goodsPost.update(updatedPost);
+        deleteExistingImages(goodsPostId);
+
+        // 이미지 업로드 & 저장
+        List<GoodsPostImage> images = saveImages(files, goodsPost);
+        goodsPost.changeImages(images);
+
+        return GoodsPostResponse.of(goodsPost);
+    }
+
+    private Member getSellerAndValidate(Long memberId) {
+        return memberRepository.findById(memberId).orElseThrow(()
+                -> new CustomException(ErrorCode.MEMBER_NOT_FOUND_BY_ID));
+    }
+
+    private void validateTeamInfo(Long teamId) {
+        if (!TeamInfo.existById(teamId)) {
+            throw new CustomException(ErrorCode.TEAM_NOT_FOUND);
+        }
+    }
+
+    private GoodsPost getGoodsPostAndValidate(Member seller, Long goodsPostId) {
+        GoodsPost goodsPost = goodsPostRepository.findById(goodsPostId).orElseThrow(()
+                -> new CustomException(ErrorCode.GOODS_NOT_FOUND_BY_ID));
+
+        if (goodsPost.getSeller() != seller) {
+            throw new CustomException(ErrorCode.GOODS_UPDATE_NOT_ALLOWED);
+        }
+        return goodsPost;
+    }
+
+    private void deleteExistingImages(Long goodsPostId) {
+        List<String> imageUrls = imageRepository.getImageUrlsByPostId(goodsPostId);
+        imageUrls.forEach(url -> {
+            if (!FileUploader.deleteFile(url)) {
+                throw new CustomException(ErrorCode.FILE_UPLOAD_ERROR);
+            }
+        });
+        imageRepository.deleteAllByPostId(goodsPostId);
+    }
+
     private List<GoodsPostImage> saveImages(List<MultipartFile> files, GoodsPost savedPost) {
         List<GoodsPostImage> images = new ArrayList<>();
+
         for (MultipartFile file : files) {
             String uploadUrl = FileUploader.uploadFile(file);
             GoodsPostImage image = GoodsPostImage.builder()
@@ -63,6 +108,8 @@ public class GoodsService {
             GoodsPostImage savedImage = imageRepository.save(image);
             images.add(savedImage);
         }
+        // 대표사진 지정
+        images.get(0).setAsMainImage();
         return images;
     }
 }
