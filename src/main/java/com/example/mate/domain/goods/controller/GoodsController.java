@@ -66,6 +66,17 @@ public class GoodsController {
     }
 
     /*
+    굿즈 거래하기 상세 페이지 : 굿즈 거래글 삭제
+    TODO: @PathVariable Long memberId -> @AuthenticationPrincipal 로 변경
+    "/api/goods/{goodsPostId}" 로 변경 예정
+     */
+    @DeleteMapping("/{memberId}/post/{goodsPostId}")
+    public ResponseEntity<Void> deleteGoodsPost(@PathVariable Long memberId, @PathVariable Long goodsPostId) {
+        goodsService.deleteGoodsPost(memberId, goodsPostId);
+        return ResponseEntity.noContent().build();
+    }
+
+    /*
     메인 페이지 : 굿즈 거래글 요약 4개 리스트 조회
     테스트 용도로, 가상의 동일한 거래글 데이터 4개를 생성
      */
@@ -110,12 +121,6 @@ public class GoodsController {
     @GetMapping("/{goodsPostId}")
     public ResponseEntity<GoodsPostResponse> getGoodsPost(@PathVariable Long goodsPostId) {
         return ResponseEntity.ok(GoodsPostResponse.createResponse(goodsPostId));
-    }
-
-    // 굿즈 거래하기 상세 페이지 : 굿즈 거래글 삭제
-    @DeleteMapping("/{goodsPostId}")
-    public ResponseEntity<Void> deleteGoodsPost(@PathVariable Long goodsPostId) {
-        return ResponseEntity.noContent().build();
     }
 
     // 굿즈 채팅창 - 알럿창 : 굿즈 거래 완료
