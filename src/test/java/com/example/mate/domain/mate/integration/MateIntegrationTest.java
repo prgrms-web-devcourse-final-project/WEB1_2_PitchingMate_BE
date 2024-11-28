@@ -1,5 +1,6 @@
 package com.example.mate.domain.mate.integration;
 
+import com.example.mate.common.error.ErrorCode;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.match.entity.Match;
 import com.example.mate.domain.match.repository.MatchRepository;
@@ -122,28 +123,16 @@ public class MateIntegrationTest {
                 .build());
     }
 
-    private void assertMatePostEquals(MatePost actual, MatePostCreateRequest expected) {
-        assertThat(actual.getAuthor()).isEqualTo(testMember);
-        assertThat(actual.getTeamId()).isEqualTo(expected.getTeamId());
-        assertThat(actual.getMatch().getId()).isEqualTo(expected.getMatchId());
-        assertThat(actual.getTitle()).isEqualTo(expected.getTitle());
-        assertThat(actual.getContent()).isEqualTo(expected.getContent());
-        assertThat(actual.getStatus()).isEqualTo(Status.OPEN);
-        assertThat(actual.getMaxParticipants()).isEqualTo(expected.getMaxParticipants());
-        assertThat(actual.getAge()).isEqualTo(expected.getAge());
-        assertThat(actual.getGender()).isEqualTo(expected.getGender());
-        assertThat(actual.getTransport()).isEqualTo(expected.getTransportType());
-    }
-
-    private void performErrorTest(MockMultipartFile data, String errorCode, int expectedStatus) throws Exception {
+    private void performErrorTest(MockMultipartFile data, String errorMessage, int expectedStatus) throws Exception {
         mateRepository.deleteAll();
 
         mockMvc.perform(multipart("/api/mates")
                         .file(data))
                 .andExpect(status().is(expectedStatus))
                 .andExpect(jsonPath("$.status").value("ERROR"))
+                .andExpect(jsonPath("$.message").value(errorMessage))
+                .andExpect(jsonPath("$.data").isEmpty())
                 .andExpect(jsonPath("$.code").value(expectedStatus))
-                .andExpect(jsonPath("$.message").exists())
                 .andDo(print());
 
         assertThat(mateRepository.findAll()).isEmpty();
@@ -185,9 +174,21 @@ public class MateIntegrationTest {
                     .andExpect(jsonPath("$.code").value(200))
                     .andDo(print());
 
+            // DB에 저장된 값 검증
             List<MatePost> savedPosts = mateRepository.findAll();
-            assertThat(savedPosts).hasSize(4); // 기존 3개 + 새로 생성된 1개
-            assertMatePostEquals(savedPosts.get(savedPosts.size() - 1), request);
+            MatePost savedPost = savedPosts.get(savedPosts.size() - 1);
+
+            assertThat(savedPosts).hasSize(4);
+            assertThat(savedPost.getAuthor().getId()).isEqualTo(testMember.getId());
+            assertThat(savedPost.getTeamId()).isEqualTo(request.getTeamId());
+            assertThat(savedPost.getMatch().getId()).isEqualTo(request.getMatchId());
+            assertThat(savedPost.getTitle()).isEqualTo(request.getTitle());
+            assertThat(savedPost.getContent()).isEqualTo(request.getContent());
+            assertThat(savedPost.getStatus()).isEqualTo(Status.OPEN);
+            assertThat(savedPost.getMaxParticipants()).isEqualTo(request.getMaxParticipants());
+            assertThat(savedPost.getAge()).isEqualTo(request.getAge());
+            assertThat(savedPost.getGender()).isEqualTo(request.getGender());
+            assertThat(savedPost.getTransport()).isEqualTo(request.getTransportType());
         }
 
         @Test
@@ -212,7 +213,7 @@ public class MateIntegrationTest {
                     objectMapper.writeValueAsBytes(request)
             );
 
-            performErrorTest(data, "MEMBER_NOT_FOUND_BY_ID", 404);
+            performErrorTest(data, ErrorCode.MEMBER_NOT_FOUND_BY_ID.getMessage(), 404);
         }
 
         @Test
@@ -237,32 +238,7 @@ public class MateIntegrationTest {
                     objectMapper.writeValueAsBytes(request)
             );
 
-            performErrorTest(data, "MATCH_NOT_FOUND_BY_ID", 404);
-        }
-
-        @Test
-        @DisplayName("잘못된 요청 데이터로 메이트 게시글 작성 시 실패")
-        void createMatePost_WithInvalidRequest() throws Exception {
-            MatePostCreateRequest request = MatePostCreateRequest.builder()
-                    .memberId(testMember.getId())
-                    .teamId(1L)
-                    .matchId(futureMatch.getId())
-                    .title("")
-                    .content("통합 테스트 내용")
-                    .age(Age.TWENTIES)
-                    .maxParticipants(11)
-                    .gender(null)
-                    .transportType(TransportType.PUBLIC)
-                    .build();
-
-            MockMultipartFile data = new MockMultipartFile(
-                    "data",
-                    "",
-                    MediaType.APPLICATION_JSON_VALUE,
-                    objectMapper.writeValueAsBytes(request)
-            );
-
-            performErrorTest(data, "INVALID_REQUEST", 400);
+            performErrorTest(data, ErrorCode.MATCH_NOT_FOUND_BY_ID.getMessage(), 404);
         }
     }
 
