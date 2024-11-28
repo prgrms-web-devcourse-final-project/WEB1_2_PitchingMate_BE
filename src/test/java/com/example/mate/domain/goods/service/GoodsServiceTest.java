@@ -22,7 +22,9 @@ import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
 import java.util.List;
 import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -47,8 +49,21 @@ class GoodsServiceTest {
     @Mock
     private MemberRepository memberRepository;
 
-    private Member createTestMember() {
-        return Member.builder()
+    private Member member;
+
+    private GoodsPost goodsPost;
+
+    private GoodsPostImage goodsPostImage;
+
+    @BeforeEach
+    void setUp() {
+        createTestMember();
+        createGoodsPost();
+        createGoodsPostImage(goodsPost);
+    }
+
+    private void createTestMember() {
+        member = Member.builder()
                 .id(1L)
                 .name("홍길동")
                 .email("test@gmail.com")
@@ -56,18 +71,28 @@ class GoodsServiceTest {
                 .build();
     }
 
-    private GoodsPostRequest createGoodsPostRequest() {
-        LocationInfo location = LocationInfo.builder()
+    private void createGoodsPost() {
+        goodsPost = GoodsPost.builder()
+                .seller(member)
+                .teamId(1L)
+                .title("test title")
+                .content("test content")
+                .price(10_000)
+                .category(Category.ACCESSORY)
+                .location(LocationInfo.toEntity(createLocationInfo()))
+                .build();
+    }
+
+    private LocationInfo createLocationInfo() {
+        return LocationInfo.builder()
                 .placeName("Stadium Plaza")
                 .longitude("127.12345")
                 .latitude("37.56789")
                 .build();
-
-        return new GoodsPostRequest(1L, "title", Category.ACCESSORY, 10_000, "content", location);
     }
 
-    private GoodsPostImage createGoodsPostImage(GoodsPost post) {
-        return GoodsPostImage.builder()
+    private void createGoodsPostImage(GoodsPost post) {
+        goodsPostImage = GoodsPostImage.builder()
                 .imageUrl("upload/test_img_url")
                 .post(post)
                 .build();
@@ -82,68 +107,152 @@ class GoodsServiceTest {
         );
     }
 
-    @Test
-    @DisplayName("굿즈거래 판매글 작성 성공")
-    void register_goods_post_success() {
-        // given
-        Member member = createTestMember();
-        GoodsPostRequest request = createGoodsPostRequest();
-        List<MultipartFile> files = List.of(createFile(MediaType.IMAGE_JPEG_VALUE));
+    @Nested
+    @DisplayName("굿즈거래 판매글 작성 테스트")
+    class GoodsServiceRegisterTest {
+        @Test
+        @DisplayName("굿즈거래 판매글 작성 성공")
+        void register_goods_post_success() {
+            // given
+            GoodsPostRequest request = new GoodsPostRequest(1L, "title", Category.ACCESSORY, 10_000, "content", createLocationInfo());
+            List<MultipartFile> files = List.of(createFile(MediaType.IMAGE_JPEG_VALUE));
 
-        GoodsPost post = GoodsPostRequest.toEntity(member, request);
-        GoodsPostImage goodsPostImage = createGoodsPostImage(post);
+            GoodsPost post = GoodsPostRequest.toEntity(member, request);
+            GoodsPostImage image = goodsPostImage;
 
-        given(memberRepository.findById(member.getId())).willReturn(Optional.of(member));
-        given(goodsPostRepository.save(any(GoodsPost.class))).willReturn(post);
-        given(imageRepository.save(any(GoodsPostImage.class))).willReturn(goodsPostImage);
+            given(memberRepository.findById(member.getId())).willReturn(Optional.of(member));
+            given(goodsPostRepository.save(any(GoodsPost.class))).willReturn(post);
+            given(imageRepository.save(any(GoodsPostImage.class))).willReturn(image);
 
-        // when
-        GoodsPostResponse response = goodsService.registerGoodsPost(member.getId(), request, files);
+            // when
+            GoodsPostResponse response = goodsService.registerGoodsPost(member.getId(), request, files);
 
-        // then
-        assertThat(response).isNotNull();
-        assertThat(response.getStatus()).isEqualTo(Status.OPEN.getValue());
+            // then
+            assertThat(response).isNotNull();
+            assertThat(response.getStatus()).isEqualTo(Status.OPEN.getValue());
 
-        verify(memberRepository).findById(member.getId());
-        verify(goodsPostRepository).save(any(GoodsPost.class));
-        verify(imageRepository).save(any(GoodsPostImage.class));
+            verify(memberRepository).findById(member.getId());
+            verify(goodsPostRepository).save(any(GoodsPost.class));
+            verify(imageRepository).save(any(GoodsPostImage.class));
+        }
+
+        @Test
+        @DisplayName("굿즈거래 판매글 작성 실패 - 존재하지 않는 회원")
+        void register_goods_post_failed_with_invalid_member() {
+            // given
+            Long invalidMemberId = 100L;
+            GoodsPostRequest request = new GoodsPostRequest(1L, "title", Category.ACCESSORY, 10_000, "content", createLocationInfo());
+            List<MultipartFile> files = List.of(createFile(MediaType.IMAGE_JPEG_VALUE));
+            given(memberRepository.findById(invalidMemberId)).willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> goodsService.registerGoodsPost(invalidMemberId, request, files))
+                    .isInstanceOf(CustomException.class)
+                    .hasMessage(ErrorCode.MEMBER_NOT_FOUND_BY_ID.getMessage());
+
+            verify(memberRepository).findById(invalidMemberId);
+            verify(goodsPostRepository, never()).save(any());
+            verify(imageRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("굿즈거래 판매글 작성 실패 - 형식이 잘못된 파일")
+        void register_goods_post_failed_with_invalid_file() {
+            // given
+            GoodsPostRequest request = new GoodsPostRequest(1L, "title", Category.ACCESSORY, 10_000, "content", createLocationInfo());
+            List<MultipartFile> files = List.of(createFile(MediaType.APPLICATION_PDF_VALUE));
+            given(memberRepository.findById(member.getId())).willReturn(Optional.of(member));
+
+            // when & then
+            assertThatThrownBy(() -> goodsService.registerGoodsPost(member.getId(), request, files))
+                    .isInstanceOf(CustomException.class)
+                    .hasMessage(ErrorCode.FILE_UNSUPPORTED_TYPE.getMessage());
+
+            verify(memberRepository).findById(member.getId());
+            verify(goodsPostRepository, never()).save(any());
+            verify(imageRepository, never()).save(any());
+        }
     }
 
-    @Test
-    @DisplayName("굿즈거래 판매글 작성 실패 - 존재하지 않는 회원")
-    void register_goods_post_failed_with_invalid_member() {
-        // given
-        Long invalidMemberId = 100L;
-        GoodsPostRequest request = createGoodsPostRequest();
-        List<MultipartFile> files = List.of(createFile(MediaType.IMAGE_JPEG_VALUE));
-        given(memberRepository.findById(invalidMemberId)).willReturn(Optional.empty());
+    @Nested
+    @DisplayName("굿즈거래 판매글 수정 테스트")
+    class GoodsServiceUpdatedTest {
 
-        // when & then
-        assertThatThrownBy(() -> goodsService.registerGoodsPost(invalidMemberId, request, files))
-                .isInstanceOf(CustomException.class)
-                .hasMessage(ErrorCode.MEMBER_NOT_FOUND_BY_ID.getMessage());
+        @Test
+        @DisplayName("굿즈거래 판매글 수정 성공")
+        void update_goods_post_success() {
+            // given
+            Long goodsPostId = 1L;
+            GoodsPostRequest request = new GoodsPostRequest(1L, "title", Category.CAP, 100_000, "test....", createLocationInfo());
+            List<MultipartFile> files = List.of(createFile(MediaType.IMAGE_JPEG_VALUE));
+            GoodsPostImage updatedGoodsImage = goodsPostImage;
 
-        verify(memberRepository).findById(invalidMemberId);
-        verify(goodsPostRepository, never()).save(any());
-        verify(imageRepository, never()).save(any());
-    }
+            given(memberRepository.findById(member.getId())).willReturn(Optional.of(member));
+            given(goodsPostRepository.findById(goodsPostId)).willReturn(Optional.of(goodsPost));
+            given(imageRepository.getImageUrlsByPostId(goodsPostId)).willReturn(List.of());
+            given(imageRepository.save(any(GoodsPostImage.class))).willReturn(updatedGoodsImage);
 
-    @Test
-    @DisplayName("굿즈거래 판매글 작성 실패 - 형식이 잘못된 파일")
-    void register_goods_post_failed_with_invalid_file() {
-        // given
-        Member member = createTestMember();
-        GoodsPostRequest request = createGoodsPostRequest();
-        List<MultipartFile> files = List.of(createFile(MediaType.APPLICATION_PDF_VALUE));
-        given(memberRepository.findById(member.getId())).willReturn(Optional.of(member));
+            // when
+            GoodsPostResponse actual = goodsService.updateGoodsPost(member.getId(), goodsPostId, request, files);
 
-        // when & then
-        assertThatThrownBy(() -> goodsService.registerGoodsPost(member.getId(), request, files))
-                .isInstanceOf(CustomException.class)
-                .hasMessage(ErrorCode.FILE_UNSUPPORTED_TYPE.getMessage());
+            // then
+            assertThat(actual).isNotNull();
+            assertThat(actual.getStatus()).isEqualTo(Status.OPEN.getValue());
+            assertThat(actual.getContent()).isEqualTo("test....");
+            assertThat(actual.getCategory()).isEqualTo(Category.CAP.getValue());
+            assertThat(actual.getPrice()).isEqualTo(100_000);
 
-        verify(memberRepository).findById(member.getId());
-        verify(goodsPostRepository, never()).save(any());
-        verify(imageRepository, never()).save(any());
+            verify(memberRepository).findById(member.getId());
+            verify(imageRepository).getImageUrlsByPostId(goodsPostId);
+            verify(imageRepository).deleteAllByPostId(goodsPostId);
+            verify(imageRepository).save(any(GoodsPostImage.class));
+        }
+
+        @Test
+        @DisplayName("굿즈거래 판매글 수정 실패 - 판매자 회원 불일치")
+        void update_goods_post_failed_with_invalid_member() {
+            // given
+            Long goodsPostId = 1L;
+            GoodsPostRequest request = new GoodsPostRequest(1L, "title", Category.CAP, 100_000, "test....", createLocationInfo());
+            List<MultipartFile> files = List.of(createFile(MediaType.IMAGE_JPEG_VALUE));
+            Member notSeller = Member.builder().id(11L).name("홍길동").build();
+
+            given(memberRepository.findById(member.getId())).willReturn(Optional.of(notSeller));
+            given(goodsPostRepository.findById(goodsPostId)).willReturn(Optional.of(goodsPost));
+
+            // when
+            assertThatThrownBy(() -> goodsService.updateGoodsPost(member.getId(), goodsPostId, request, files))
+                    .isInstanceOf(CustomException.class)
+                    .hasMessage(ErrorCode.GOODS_UPDATE_NOT_ALLOWED.getMessage());
+
+            // then
+            verify(memberRepository).findById(member.getId());
+            verify(goodsPostRepository).findById(goodsPostId);
+            verify(imageRepository, never()).deleteAllByPostId(any(Long.class));
+            verify(imageRepository, never()).save(any(GoodsPostImage.class));
+        }
+
+        @Test
+        @DisplayName("굿즈거래 판매글 수정 실패 - 존재하지 않는 판매글")
+        void update_goods_post_failed_with_invalid_post() {
+            // given
+            Long goodsPostId = 1L;
+            GoodsPostRequest request = new GoodsPostRequest(1L, "title", Category.CAP, 100_000, "test....", createLocationInfo());
+            List<MultipartFile> files = List.of(createFile(MediaType.IMAGE_JPEG_VALUE));
+
+            given(memberRepository.findById(member.getId())).willReturn(Optional.of(member));
+            given(goodsPostRepository.findById(goodsPostId)).willReturn(Optional.empty());
+
+            // when
+            assertThatThrownBy(() -> goodsService.updateGoodsPost(member.getId(), goodsPostId, request, files))
+                    .isInstanceOf(CustomException.class)
+                    .hasMessage(ErrorCode.GOODS_NOT_FOUND_BY_ID.getMessage());
+
+            // then
+            verify(memberRepository).findById(member.getId());
+            verify(goodsPostRepository).findById(goodsPostId);
+            verify(imageRepository, never()).deleteAllByPostId(any(Long.class));
+            verify(imageRepository, never()).save(any(GoodsPostImage.class));
+        }
     }
 }

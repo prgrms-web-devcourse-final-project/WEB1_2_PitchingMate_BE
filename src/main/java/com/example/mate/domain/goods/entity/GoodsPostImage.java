@@ -34,7 +34,15 @@ public class GoodsPostImage {
     @Column(name = "image_url", nullable = false, columnDefinition = "TEXT")
     private String imageUrl;
 
+    @Column(name = "is_main_image", nullable = false)
+    @Builder.Default
+    private Boolean isMainImage = false;
+
     public void changePost(GoodsPost post) {
         this.post = post;
+    }
+
+    public void setAsMainImage() {
+        this.isMainImage = true;
     }
 }

@@ -103,4 +103,45 @@ class GoodsControllerTest {
 
         verify(goodsService).registerGoodsPost(eq(memberId), any(GoodsPostRequest.class), anyList());
     }
+
+    @Test
+    @DisplayName("굿즈 판매글 수정 - API 테스트")
+    void update_goods_post_success() throws Exception {
+        // given
+        Long memberId = 1L;
+        Long goodsPostId = 1L;
+        GoodsPostRequest postRequest = createGoodsPostRequest();
+        GoodsPostResponse response = createGoodsPostResponse();
+        List<MockMultipartFile> files = List.of(createFile(), createFile());
+
+        MockMultipartFile data = new MockMultipartFile(
+                "data",
+                "",
+                MediaType.APPLICATION_JSON_VALUE,
+                objectMapper.writeValueAsBytes(postRequest)
+        );
+
+        given(goodsService.updateGoodsPost(eq(memberId), eq(goodsPostId), any(GoodsPostRequest.class), anyList()))
+                .willReturn(response);
+
+        // when
+        MockMultipartHttpServletRequestBuilder multipartRequest = multipart("/api/goods/{memberId}/post/{goodsPostId}", memberId, goodsPostId)
+                .file(data);
+        files.forEach(multipartRequest::file);
+        multipartRequest.with(request -> {
+            request.setMethod("PUT"); // PUT 메서드로 변경
+            return request;
+        });
+
+        // then
+        mockMvc.perform(multipartRequest)
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("SUCCESS"))
+                .andExpect(jsonPath("$.data.id").value(response.getId()))
+                .andExpect(jsonPath("$.data.status").value(response.getStatus()))
+                .andExpect(jsonPath("$.code").value(200));
+
+        verify(goodsService).updateGoodsPost(eq(memberId), eq(goodsPostId), any(GoodsPostRequest.class), anyList());
+    }
 }

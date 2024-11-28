@@ -41,14 +41,17 @@ public class GoodsIntegrationTest {
 
     @Autowired private MockMvc mockMvc;
     @Autowired private MemberRepository memberRepository;
-    @Autowired private GoodsPostRepository goodsPostRepository;
-    @Autowired private ObjectMapper objectMapper;
+    @Autowired private GoodsPostRepository goodsPostRepository;@Autowired
+    private ObjectMapper objectMapper;
 
     private Member member;
+
+    private GoodsPost goodsPost;
 
     @BeforeEach
     void setUp() {
         createMember();
+        createGoodsPost();
     }
 
     @Test
@@ -79,12 +82,51 @@ public class GoodsIntegrationTest {
         ApiResponse<GoodsPostResponse> apiResponse = objectMapper.readValue(result.getContentAsString(), new TypeReference<>() {});
 
         // then
-        assertApiResponse(apiResponse, goodsPostRequest);
-        assertActualData(apiResponse.getData().getId(), goodsPostRequest);
+        assertApiResponse(apiResponse, goodsPostRequest, files);
+        assertActualData(apiResponse.getData().getId(), goodsPostRequest, files);
+    }
+
+    @Test
+    @DisplayName("굿즈거래 판매글 수정 통합 테스트")
+    void update_goods_post_integration_test() throws Exception {
+        // given
+        Long memberId = member.getId();
+        Long goodsPostId = goodsPost.getId();
+        LocationInfo locationInfo = createLocationInfo();
+        GoodsPostRequest goodsPostRequest = new GoodsPostRequest(1L, "update tile", Category.CAP, 10_000, "update content", locationInfo);
+        List<MockMultipartFile> files = List.of(createFile(), createFile(), createFile());
+
+        MockMultipartFile data = new MockMultipartFile(
+                "data", "",
+                MediaType.APPLICATION_JSON_VALUE,
+                objectMapper.writeValueAsBytes(goodsPostRequest)
+        );
+
+        // when
+        MockMultipartHttpServletRequestBuilder multipartRequest
+                = multipart("/api/goods/{memberId}/post/{goodsPostId}", memberId, goodsPostId).file(data);
+        files.forEach(multipartRequest::file);
+        multipartRequest.with(request -> {
+            request.setMethod("PUT"); // PUT 메서드로 변경
+            return request;
+        });
+
+        MockHttpServletResponse result = mockMvc.perform(multipartRequest)
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andReturn().getResponse();
+        result.setCharacterEncoding("UTF-8");
+
+        ApiResponse<GoodsPostResponse> apiResponse = objectMapper.readValue(result.getContentAsString(),
+                new TypeReference<>() {});
+
+        // then
+        assertApiResponse(apiResponse, goodsPostRequest, files);
+        assertActualData(apiResponse.getData().getId(), goodsPostRequest, files);
     }
 
     // ApiResponse 검증
-    private void assertApiResponse(ApiResponse<GoodsPostResponse> apiResponse, GoodsPostRequest expected) {
+    private void assertApiResponse(ApiResponse<GoodsPostResponse> apiResponse, GoodsPostRequest expected, List<MockMultipartFile> files) {
         assertThat(apiResponse.getCode()).isEqualTo(200);
         assertThat(apiResponse.getStatus()).isEqualTo("SUCCESS");
 
@@ -103,11 +145,11 @@ public class GoodsIntegrationTest {
 
         List<String> imageUrls = response.getImageUrls();
         assertThat(imageUrls).isNotEmpty();
-        assertThat(imageUrls.size()).isEqualTo(2);
+        assertThat(imageUrls.size()).isEqualTo(files.size());
     }
 
     // 저장된 DB 데이터 검증
-    private void assertActualData(Long postId, GoodsPostRequest expected) {
+    private void assertActualData(Long postId, GoodsPostRequest expected, List<MockMultipartFile> files) {
         GoodsPost goodsPost = goodsPostRepository.findById(postId).get();
 
         assertThat(goodsPost.getCategory()).isEqualTo(expected.getCategory());
@@ -118,7 +160,7 @@ public class GoodsIntegrationTest {
 
         List<GoodsPostImage> goodsPostImages = goodsPost.getGoodsPostImages();
         assertThat(goodsPostImages).isNotEmpty();
-        assertThat(goodsPostImages).hasSize(2);
+        assertThat(goodsPostImages).hasSize(files.size());
     }
 
     private void createMember() {
@@ -130,6 +172,18 @@ public class GoodsIntegrationTest {
                 .gender(Gender.FEMALE)
                 .age(25)
                 .manner(0.3f)
+                .build());
+    }
+
+    private void createGoodsPost() {
+        goodsPost = goodsPostRepository.save(GoodsPost.builder()
+                .seller(member)
+                .teamId(1L)
+                .title("test title")
+                .content("test content")
+                .price(10_000)
+                .category(Category.ACCESSORY)
+                .location(LocationInfo.toEntity(createLocationInfo()))
                 .build());
     }
 

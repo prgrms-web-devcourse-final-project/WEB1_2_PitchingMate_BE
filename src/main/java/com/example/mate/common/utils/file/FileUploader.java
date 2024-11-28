@@ -17,6 +17,12 @@ public class FileUploader {
         return "upload/" + fileName;
     }
 
+    public static boolean deleteFile(String imageUrl) {
+        // TODO : 2024/11/28 - S3 파일 삭제 기능, 삭제 여부를 boolean 값으로 반환
+
+        return true;
+    }
+
     /**
      * 파일명에서 허용되지 않는 문자를 제거하고, UUID 를 추가한 새로운 파일명을 생성
      *

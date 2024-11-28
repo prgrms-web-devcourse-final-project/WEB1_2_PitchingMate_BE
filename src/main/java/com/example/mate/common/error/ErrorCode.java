@@ -37,6 +37,8 @@ public enum ErrorCode {
   
     // Goods
     GOODS_IMAGES_ARE_EMPTY(HttpStatus.BAD_REQUEST, "G001", "굿즈 이미지는 최소 1개 이상을 업로드 할 수 있습니다."),
+    GOODS_NOT_FOUND_BY_ID(HttpStatus.NOT_FOUND, "G002", "해당 ID의 굿즈 판매글 정보를 찾을 수 없습니다"),
+    GOODS_UPDATE_NOT_ALLOWED(HttpStatus.FORBIDDEN, "G003", "판매글의 판매자가 아니라면, 판매글을 수정할 수 없습니다"),
 
     // FILE
     FILE_IS_EMPTY(HttpStatus.BAD_REQUEST, "F001", "빈 파일을 업로드할 수 없습니다. 파일 내용을 확인해주세요."),
@@ -45,6 +47,7 @@ public enum ErrorCode {
     FILE_UPLOAD_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "F004", "이미지 파일은 최대 10개까지 업로드 할 수 있습니다."),
     INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, "F005", "이미지 파일만 업로드 가능합니다."),
     FILE_UPLOAD_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "F006", "파일 업로드에 실패했습니다."),
+    FILE_DELETE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "F007", "파일 삭제에 실패했습니다."),
 
     // Age
     INVALID_AGE_VALUE(HttpStatus.BAD_REQUEST, "AGE001", "유효하지 않은 나이 값입니다."),
