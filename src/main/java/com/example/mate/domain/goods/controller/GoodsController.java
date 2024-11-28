@@ -1,5 +1,6 @@
 package com.example.mate.domain.goods.controller;
 
+import com.example.mate.common.response.ApiResponse;
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.goods.dto.request.GoodsPostRequest;
 import com.example.mate.domain.goods.dto.request.GoodsReviewFormRequest;
@@ -9,9 +10,13 @@ import com.example.mate.domain.goods.dto.response.GoodsPostSummaryResponse;
 import com.example.mate.domain.goods.dto.response.GoodsReviewFormResponse;
 import com.example.mate.domain.goods.dto.response.GoodsReviewResponse;
 import com.example.mate.domain.goods.entity.Category;
+import com.example.mate.domain.goods.service.GoodsService;
 import java.util.Collections;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,7 +31,26 @@ import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/goods")
+@RequiredArgsConstructor
+@Slf4j
 public class GoodsController {
+
+    private final GoodsService goodsService;
+
+    /*
+    굿즈 거래 페이지 : 굿즈 거래글 등록
+    TODO: @PathVariable Long memberId -> @AuthenticationPrincipal 로 변경
+     */
+    @PostMapping("/{memberId}")
+    public ResponseEntity<ApiResponse<GoodsPostResponse>> registerGoodsPost(
+            @Validated @RequestPart("data") GoodsPostRequest request,
+            @RequestPart("files") List<MultipartFile> files,
+            @PathVariable Long memberId
+    ) {
+        log.info("request = {}", request);
+        GoodsPostResponse response = goodsService.registerGoodsPost(memberId, request, files);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
 
     /*
     메인 페이지 : 굿즈 거래글 요약 4개 리스트 조회
@@ -44,12 +68,14 @@ public class GoodsController {
     3. 요청된 페이지에 맞는 데이터 반환
     */
     @GetMapping
-    public ResponseEntity<PageResponse<GoodsPostSummaryResponse>> getGoodsPosts(@RequestParam Long teamId,
-                                                                                @RequestParam Category category,
-                                                                                @RequestParam int pageNumber,
-                                                                                @RequestParam(required = false, defaultValue = "10") int pageSize) {
-        List<GoodsPostSummaryResponse> list = Collections.nCopies(24,
-                GoodsPostSummaryResponse.createResponse(teamId, category));
+    public ResponseEntity<PageResponse<GoodsPostSummaryResponse>> getGoodsPosts(
+            @RequestParam Long teamId,
+            @RequestParam Category category,
+            @RequestParam int pageNumber,
+            @RequestParam(required = false, defaultValue = "10") int pageSize
+    ) {
+        List<GoodsPostSummaryResponse> list =
+                Collections.nCopies(24, GoodsPostSummaryResponse.createResponse(teamId, category));
 
         int start = (pageNumber - 1) * 10;
         int end = Math.min(start + 10, list.size());
@@ -67,16 +93,6 @@ public class GoodsController {
         return ResponseEntity.ok(pageResponse);
     }
 
-    /*
-    굿즈 거래 페이지 : 굿즈 거래글 등록
-    요청 Body를 form-data 형식으로 설정하여, Key를 값을 넣은 "data"와 사진 파일 "files"로 구분
-     */
-    @PostMapping
-    public ResponseEntity<GoodsPostResponse> registerGoodsPost(@RequestPart("data") GoodsPostRequest request,
-                                                               @RequestPart("files") MultipartFile[] files) {
-        return ResponseEntity.ok(GoodsPostResponse.of(request, files));
-    }
-
     // 굿즈 거래하기 상세 페이지 : 굿즈 거래글 단건 조회
     @GetMapping("/{goodsPostId}")
     public ResponseEntity<GoodsPostResponse> getGoodsPost(@PathVariable Long goodsPostId) {
@@ -88,9 +104,11 @@ public class GoodsController {
     요청 Body를 form-data 형식으로 설정하여, Key를 값을 넣은 "data"와 사진 파일 "files"로 구분
      */
     @PutMapping("/{goodsPostId}")
-    public ResponseEntity<GoodsPostResponse> updateGoodsPost(@PathVariable Long goodsPostId,
-                                                             @RequestPart("data") GoodsPostRequest request,
-                                                             @RequestPart("files") MultipartFile[] files) {
+    public ResponseEntity<GoodsPostResponse> updateGoodsPost(
+            @PathVariable Long goodsPostId,
+            @RequestPart("data") GoodsPostRequest request,
+            @RequestPart("files") MultipartFile[] files
+    ) {
         return ResponseEntity.ok(GoodsPostResponse.updateResponse(goodsPostId, request, files));
     }
 
@@ -125,23 +143,4 @@ public class GoodsController {
                                                                    @RequestBody GoodsReviewRequest request) {
         return ResponseEntity.ok(GoodsReviewResponse.createResponse(goodsPostId, request));
     }
-
-//    /*
-//    후기 모아보기 페이지 : 굿즈거래 후기 10개씩 페이징 조회
-//    1. 가상의 데이터 24개 생성
-//    2. 페이지 번호와 리스트 크기를 고려해, 시작/끝 인덱스 설정
-//    3. 요청된 페이지에 맞는 데이터 반환
-//     */
-//    @GetMapping("/review")
-//    public ResponseEntity<Page<GoodsReviewResponse>> getGoodsReviews(
-//            @RequestParam(required = false, defaultValue = "10") int pageNumber) {
-//        List<GoodsReviewResponse> list = Collections.nCopies(24, GoodsReviewResponse.createResponse());
-//
-//        int start = (pageNumber - 1) * 10;
-//        int end = Math.min(start + 10, list.size());
-//        List<GoodsReviewResponse> pageContent = list.subList(start, end);
-//        Pageable pageable = PageRequest.of(pageNumber - 1, 10);
-//
-//        return ResponseEntity.ok(new PageImpl<>(pageContent, pageable, list.size()));
-//    }
 }

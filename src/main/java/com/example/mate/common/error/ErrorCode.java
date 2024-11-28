@@ -25,7 +25,7 @@ public enum ErrorCode {
     MATCH_NOT_FOUND_BY_ID(HttpStatus.NOT_FOUND, "MATCH_001", "해당 ID의 경기 정보를 찾을 수 없습니다."),
 
     // Member
-    MEMBER_NOT_FOUND_BY_ID(HttpStatus.NOT_FOUND, "MEMBER_001", "해당 ID의 사용자를 찾을 수 없습니다."),
+    MEMBER_NOT_FOUND_BY_ID(HttpStatus.NOT_FOUND, "M001", "해당 ID의 회원 정보를 찾을 수 없습니다"),
 
     // Mate Post
     INVALID_MATE_POST_PARTICIPANTS(HttpStatus.BAD_REQUEST, "MP001", "모집 인원은 2명에서 10명 사이여야 합니다."),
@@ -33,10 +33,17 @@ public enum ErrorCode {
     INVALID_MATE_POST_COMPLETION(HttpStatus.BAD_REQUEST, "MP003", "모집완료 상태에서만 직관 완료가 가능합니다."),
     MATE_POST_NOT_FOUND(HttpStatus.NOT_FOUND, "MP004", "해당 ID의 메이트 게시글을 찾을 수 없습니다."),
     UNAUTHORIZED_MATE_POST_ACCESS(HttpStatus.FORBIDDEN, "MP005", "해당 메이트 게시글에 대한 권한이 없습니다."),
+  
+    // Goods
+    GOODS_IMAGES_ARE_EMPTY(HttpStatus.BAD_REQUEST, "G001", "굿즈 이미지는 최소 1개 이상을 업로드 할 수 있습니다."),
 
-    // File
-    INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, "FILE001", "이미지 파일만 업로드 가능합니다."),
-    FILE_UPLOAD_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "F003", "파일 업로드에 실패했습니다."),
+    // FILE
+    FILE_IS_EMPTY(HttpStatus.BAD_REQUEST, "F001", "빈 파일을 업로드할 수 없습니다. 파일 내용을 확인해주세요."),
+    FILE_UNSUPPORTED_TYPE(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "F002", "지원하지 않는 파일 형식입니다."),
+    FILE_MISSING_MIME_TYPE(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "F003", "파일의 MIME 타입을 찾을 수 없습니다."),
+    FILE_UPLOAD_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "F004", "이미지 파일은 최대 10개까지 업로드 할 수 있습니다."),
+    INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, "F005", "이미지 파일만 업로드 가능합니다."),
+    FILE_UPLOAD_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "F006", "파일 업로드에 실패했습니다."),
 
     // Age
     INVALID_AGE_VALUE(HttpStatus.BAD_REQUEST, "AGE001", "유효하지 않은 나이 값입니다."),
