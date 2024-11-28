@@ -54,9 +54,10 @@ public class Match {
     private Weather weather;
 
     @Builder
-    public Match(Long homeTeamId, Long awayTeamId, Long stadiumId,
+    public Match(Long id, Long homeTeamId, Long awayTeamId, Long stadiumId,
                  LocalDateTime matchTime, Boolean isCanceled,
                  MatchStatus status) {
+        this.id = id;
         this.homeTeamId = homeTeamId;
         this.awayTeamId = awayTeamId;
         this.stadiumId = stadiumId;

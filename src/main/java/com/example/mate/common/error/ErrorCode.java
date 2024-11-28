@@ -22,6 +22,7 @@ public enum ErrorCode {
     STADIUM_NOT_FOUND_BY_NAME(HttpStatus.NOT_FOUND, "S002", "해당 이름의 경기장 정보를 찾을 수 없습니다"),
 
     // Match
+    MATCH_NOT_FOUND(HttpStatus.NOT_FOUND, "M001", "해당 경기를 찾을 수 없습니다"),
     MATCH_NOT_FOUND_BY_ID(HttpStatus.NOT_FOUND, "MATCH_001", "해당 ID의 경기 정보를 찾을 수 없습니다."),
 
     // Member

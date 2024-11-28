@@ -12,4 +12,3 @@ springdoc:
   packages-to-scan: com.example.mate
   default-consumes-media-type: application/json
   default-produces-media-type: application/json
-

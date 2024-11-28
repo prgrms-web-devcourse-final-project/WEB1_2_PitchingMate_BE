@@ -1,6 +1,8 @@
 package com.example.mate.domain.match.dto.response;
 
+import com.example.mate.domain.match.entity.Weather;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -8,19 +10,27 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Getter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class WeatherResponse {
     @Getter
-    @Builder
+    @NoArgsConstructor(access = AccessLevel.PROTECTED)
     public static class Info {
         private Float temperature;
         private Float pop;
         private Integer cloudiness;
         private LocalDateTime wtTime;
 
-        @JsonFormat(pattern = "yyyy-MM-dd HH:mm")
-        public LocalDateTime getWtTime() {
-            return wtTime;
+        @Builder
+        private Info(Weather weather) {
+            this.temperature = weather.getTemperature();
+            this.pop = weather.getPop();
+            this.cloudiness = weather.getCloudiness();
+            this.wtTime = weather.getWtTime();
+        }
+
+        public static Info from(Weather weather) {
+            if (weather == null) return null;
+            return new Info(weather);
         }
     }
 }
