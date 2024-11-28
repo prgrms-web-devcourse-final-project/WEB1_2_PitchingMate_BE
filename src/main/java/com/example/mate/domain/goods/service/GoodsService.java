@@ -108,8 +108,7 @@ public class GoodsService {
             GoodsPostImage savedImage = imageRepository.save(image);
             images.add(savedImage);
         }
-        // 대표사진 지정
-        images.get(0).setAsMainImage();
+
         return images;
     }
 }

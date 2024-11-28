@@ -88,6 +88,7 @@ public class GoodsPost {
             this.goodsPostImages.add(goodsPostImage);
             goodsPostImage.changePost(this);
         }
+        this.goodsPostImages.get(0).setAsMainImage();
     }
 
     // 굿즈 판매글 수정 메서드
