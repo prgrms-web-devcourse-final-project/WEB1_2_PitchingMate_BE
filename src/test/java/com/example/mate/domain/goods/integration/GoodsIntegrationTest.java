@@ -1,6 +1,7 @@
 package com.example.mate.domain.goods.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -15,12 +16,14 @@ import com.example.mate.domain.goods.entity.Category;
 import com.example.mate.domain.goods.entity.GoodsPost;
 import com.example.mate.domain.goods.entity.GoodsPostImage;
 import com.example.mate.domain.goods.entity.Status;
+import com.example.mate.domain.goods.repository.GoodsPostImageRepository;
 import com.example.mate.domain.goods.repository.GoodsPostRepository;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -41,8 +44,9 @@ public class GoodsIntegrationTest {
 
     @Autowired private MockMvc mockMvc;
     @Autowired private MemberRepository memberRepository;
-    @Autowired private GoodsPostRepository goodsPostRepository;@Autowired
-    private ObjectMapper objectMapper;
+    @Autowired private GoodsPostRepository goodsPostRepository;
+    @Autowired private GoodsPostImageRepository imageRepository;
+    @Autowired private ObjectMapper objectMapper;
 
     private Member member;
 
@@ -123,6 +127,26 @@ public class GoodsIntegrationTest {
         // then
         assertApiResponse(apiResponse, goodsPostRequest, files);
         assertActualData(apiResponse.getData().getId(), goodsPostRequest, files);
+    }
+
+    @Test
+    @DisplayName("굿즈거래 판매글 삭제 통합 테스트")
+    void delete_goods_post_integration_test() throws Exception {
+        // given
+        Long memberId = member.getId();
+        Long goodsPostId = goodsPost.getId();
+
+        // when
+        mockMvc.perform(delete("/api/goods/{memberId}/post/{goodsPostId}", memberId, goodsPostId))
+                .andDo(print())
+                .andExpect(status().isNoContent());
+
+        // then
+        Optional<GoodsPost> goodsPost = goodsPostRepository.findById(goodsPostId);
+        assertThat(goodsPost).isEmpty();
+
+        List<String> imageUrls = imageRepository.getImageUrlsByPostId(goodsPostId);
+        assertThat(imageUrls).isEmpty();
     }
 
     // ApiResponse 검증

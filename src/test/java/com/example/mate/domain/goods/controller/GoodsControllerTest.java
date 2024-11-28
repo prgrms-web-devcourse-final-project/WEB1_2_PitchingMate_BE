@@ -4,7 +4,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -143,5 +145,23 @@ class GoodsControllerTest {
                 .andExpect(jsonPath("$.code").value(200));
 
         verify(goodsService).updateGoodsPost(eq(memberId), eq(goodsPostId), any(GoodsPostRequest.class), anyList());
+    }
+
+    @Test
+    @DisplayName("굿즈 판매글 삭제 - API 테스트")
+    void delete_goods_post_success() throws Exception {
+        // given
+        Long memberId = 1L;
+        Long goodsPostId = 1L;
+
+        willDoNothing().given(goodsService).deleteGoodsPost(memberId, goodsPostId);
+
+        // when & then
+        mockMvc.perform(delete("/api/goods/{memberId}/post/{goodsPostId}", memberId, goodsPostId))
+                .andDo(print())
+                .andExpect(status().isNoContent());
+
+
+        verify(goodsService).deleteGoodsPost(memberId, goodsPostId);
     }
 }
