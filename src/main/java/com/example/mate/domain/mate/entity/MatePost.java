@@ -1,5 +1,6 @@
 package com.example.mate.domain.mate.entity;
 
+import com.example.mate.domain.constant.TeamInfo;
 import com.example.mate.domain.match.entity.Match;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.constant.Gender;
@@ -24,9 +25,8 @@ public class MatePost {
     @JoinColumn(name = "author_id", nullable = false)
     private Member author;
 
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "team_id", nullable = false)
-//    private Team team;
+    @Column(name = "team_id", nullable = false)
+    private Long teamId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "match_id", nullable = false)
@@ -67,10 +67,15 @@ public class MatePost {
     @OneToOne(mappedBy = "post", cascade = CascadeType.ALL)
     private Visit visit;
 
+    // Team 정보 조회
+    public TeamInfo.Team getTeam() {
+        return TeamInfo.getById(this.teamId);
+    }
+
     // 게시글 전체 정보 수정
     public void updatePost(
-//            Team team,
-//            Match match,
+            Long teamId,
+            Match match,
             String imageUrl,
             String title,
             String content,
@@ -79,8 +84,8 @@ public class MatePost {
             Gender gender,
             TransportType transport
     ) {
-//        this.team = team;
-//        this.match = match;
+        this.teamId = teamId;
+        this.match = match;
         this.imageUrl = imageUrl;
         this.title = title;
         this.content = content;

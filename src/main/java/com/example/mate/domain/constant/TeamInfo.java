@@ -2,6 +2,7 @@ package com.example.mate.domain.constant;
 
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
+
 import java.util.List;
 import lombok.Getter;
 
@@ -43,7 +44,7 @@ public final class TeamInfo {
                 .findFirst()
                 .orElseThrow(() -> new CustomException(ErrorCode.TEAM_NOT_FOUND));
     }
-
+  
     public static boolean existById(Long id) {
         return TEAMS.stream()
                 .anyMatch(team -> team.id.equals(id));

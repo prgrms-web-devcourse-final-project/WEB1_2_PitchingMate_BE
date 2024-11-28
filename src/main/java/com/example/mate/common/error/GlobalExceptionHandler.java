@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class GlobalExceptionHandler {
     // CustomException 처리
     @ExceptionHandler(CustomException.class)
-    protected ResponseEntity<ApiResponse<Void>> handleCustomException(CustomException e) {
+    public ResponseEntity<ApiResponse<Void>> handleCustomException(CustomException e) {
         log.error("CustomException: {}", e.getMessage());
         ErrorCode errorCode = e.getErrorCode();
 
@@ -50,7 +50,7 @@ public class GlobalExceptionHandler {
 
     // 모든 예외 타입 처리
     @ExceptionHandler(Exception.class)
-    protected ResponseEntity<ApiResponse<Void>> handleException(Exception e) {
+    public ResponseEntity<ApiResponse<Void>> handleException(Exception e) {
         log.error("Unexpected error: {}", e.getMessage(), e);
 
         return ResponseEntity
