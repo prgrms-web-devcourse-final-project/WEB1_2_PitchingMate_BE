@@ -16,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
@@ -73,6 +74,45 @@ class MatchServiceTest {
         CustomException exception = assertThrows(CustomException.class,
                 () -> matchService.getTeamMatches(invalidTeamId));
         assertEquals(ErrorCode.TEAM_NOT_FOUND, exception.getErrorCode());
+    }
+
+    @Test
+    @DisplayName("팀별 완료된 경기 조회 - 성공")
+    void getTeamCompletedMatches_Success() {
+        // given
+        Long teamId = TeamInfo.LG.id;
+        List<Match> completedMatches = Arrays.asList(
+                createCompletedMatch(TeamInfo.LG.id, TeamInfo.KT.id, 5, 3),
+                createCompletedMatch(TeamInfo.KIA.id, TeamInfo.LG.id, 2, 7)
+        );
+
+        when(matchRepository.findByStatusAndHomeTeamIdOrStatusAndAwayTeamIdOrderByMatchTimeDesc(
+                MatchStatus.COMPLETED, teamId, MatchStatus.COMPLETED, teamId))
+                .thenReturn(completedMatches);
+
+        // when
+        List<MatchResponse> result = matchService.getTeamCompletedMatches(teamId);
+
+        // then
+        assertThat(result).hasSize(2);
+        assertThat(result.get(0).getStatus()).isEqualTo(MatchStatus.COMPLETED);
+        assertThat(result.get(0).getHomeTeam().getId()).isEqualTo(TeamInfo.LG.id);
+        assertThat(result.get(0).getHomeScore()).isEqualTo(5);
+        verify(matchRepository).findByStatusAndHomeTeamIdOrStatusAndAwayTeamIdOrderByMatchTimeDesc(
+                MatchStatus.COMPLETED, teamId, MatchStatus.COMPLETED, teamId);
+    }
+
+    private Match createCompletedMatch(Long homeTeamId, Long awayTeamId, Integer homeScore, Integer awayScore) {
+        return Match.builder()
+                .homeTeamId(homeTeamId)
+                .awayTeamId(awayTeamId)
+                .stadiumId(StadiumInfo.JAMSIL.id)
+                .matchTime(LocalDateTime.now().minusDays(1))
+                .status(MatchStatus.COMPLETED)
+                .homeScore(homeScore)
+                .awayScore(awayScore)
+                .isCanceled(false)
+                .build();
     }
 
 

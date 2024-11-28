@@ -34,11 +34,17 @@ public class MatchController {
         return ResponseEntity.ok(ApiResponse.success(matches));
     }
 
-    //
     @Operation(summary = "팀별 경기 조회")
     @GetMapping("/team/{teamId}")
     public ResponseEntity<ApiResponse<List<MatchResponse>>> getTeamMatches(
             @Parameter(description = "팀 ID") @PathVariable Long teamId) {
         return ResponseEntity.ok(ApiResponse.success(matchService.getTeamMatches(teamId)));
+    }
+
+    @Operation(summary = "팀별 완료된 경기 전적 조회")
+    @GetMapping("/team/{teamId}/completed")
+    public ResponseEntity<ApiResponse<List<MatchResponse>>> getTeamCompletedMatches(
+            @Parameter(description = "팀 ID") @PathVariable Long teamId) {
+        return ResponseEntity.ok(ApiResponse.success(matchService.getTeamCompletedMatches(teamId)));
     }
 }

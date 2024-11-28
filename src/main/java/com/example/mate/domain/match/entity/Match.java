@@ -56,7 +56,7 @@ public class Match {
     @Builder
     public Match(Long id, Long homeTeamId, Long awayTeamId, Long stadiumId,
                  LocalDateTime matchTime, Boolean isCanceled,
-                 MatchStatus status) {
+                 MatchStatus status, Integer homeScore, Integer awayScore) {
         this.id = id;
         this.homeTeamId = homeTeamId;
         this.awayTeamId = awayTeamId;
@@ -64,6 +64,8 @@ public class Match {
         this.matchTime = matchTime;
         this.isCanceled = isCanceled;
         this.status = status;
+        this.homeScore = homeScore;
+        this.awayScore = awayScore;
     }
 
     // Stadium 정보 조회
