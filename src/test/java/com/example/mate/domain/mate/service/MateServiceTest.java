@@ -6,6 +6,7 @@ import com.example.mate.domain.match.entity.Match;
 import com.example.mate.domain.match.repository.MatchRepository;
 import com.example.mate.domain.mate.dto.request.MatePostCreateRequest;
 import com.example.mate.domain.mate.dto.response.MatePostResponse;
+import com.example.mate.domain.mate.dto.response.MatePostSummaryResponse;
 import com.example.mate.domain.mate.entity.Age;
 import com.example.mate.domain.mate.entity.MatePost;
 import com.example.mate.domain.mate.entity.Status;
@@ -14,20 +15,23 @@ import com.example.mate.domain.mate.repository.MateRepository;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
-import static com.example.mate.common.error.ErrorCode.MATCH_NOT_FOUND_BY_ID;
-import static com.example.mate.common.error.ErrorCode.MEMBER_NOT_FOUND_BY_ID;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static com.example.mate.common.error.ErrorCode.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -95,70 +99,214 @@ class MateServiceTest {
                 .build();
     }
 
-    @Test
-    @DisplayName("메이트 게시글 작성 성공")
-    void createMatePost_Success() {
-        // given
-        Member testMember = createTestMember();
-        Match testMatch = createTestMatch();
-        MatePostCreateRequest request = createTestRequest();
-        MatePost matePost = createTestMatePost(testMember, testMatch);
+    @Nested
+    @DisplayName("메이트 게시글 작성")
+    class CreateMatePost {
 
-        given(memberRepository.findById(request.getMemberId()))
-                .willReturn(Optional.of(testMember));
-        given(matchRepository.findById(request.getMatchId()))
-                .willReturn(Optional.of(testMatch));
-        given(mateRepository.save(any(MatePost.class)))
-                .willReturn(matePost);
+        @Test
+        @DisplayName("메이트 게시글 작성 성공")
+        void createMatePost_Success() {
+            // given
+            Member testMember = createTestMember();
+            Match testMatch = createTestMatch();
+            MatePostCreateRequest request = createTestRequest();
+            MatePost matePost = createTestMatePost(testMember, testMatch);
 
-        // when
-        MatePostResponse response = mateService.createMatePost(request, null);
+            given(memberRepository.findById(request.getMemberId()))
+                    .willReturn(Optional.of(testMember));
+            given(matchRepository.findById(request.getMatchId()))
+                    .willReturn(Optional.of(testMatch));
+            given(mateRepository.save(any(MatePost.class)))
+                    .willReturn(matePost);
 
-        // then
-        assertThat(response.getStatus()).isEqualTo(Status.OPEN);
+            // when
+            MatePostResponse response = mateService.createMatePost(request, null);
 
-        verify(memberRepository).findById(TEST_MEMBER_ID);
-        verify(matchRepository).findById(TEST_MATCH_ID);
-        verify(mateRepository).save(any(MatePost.class));
+            // then
+            assertThat(response.getStatus()).isEqualTo(Status.OPEN);
+
+            verify(memberRepository).findById(TEST_MEMBER_ID);
+            verify(matchRepository).findById(TEST_MATCH_ID);
+            verify(mateRepository).save(any(MatePost.class));
+        }
+
+        @Test
+        @DisplayName("메이트 게시글 작성 실패 - 존재하지 않는 회원")
+        void createMatePost_FailWithInvalidMember() {
+            // given
+            MatePostCreateRequest request = createTestRequest();
+            given(memberRepository.findById(request.getMemberId()))
+                    .willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> mateService.createMatePost(request, null))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", MEMBER_NOT_FOUND_BY_ID);
+
+            verify(memberRepository).findById(TEST_MEMBER_ID);
+            verify(matchRepository, never()).findById(any());
+            verify(mateRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("메이트 게시글 작성 실패 - 존재하지 않는 경기")
+        void createMatePost_FailWithInvalidMatch() {
+            // given
+            Member testMember = createTestMember();
+            MatePostCreateRequest request = createTestRequest();
+
+            given(memberRepository.findById(request.getMemberId()))
+                    .willReturn(Optional.of(testMember));
+            given(matchRepository.findById(request.getMatchId()))
+                    .willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> mateService.createMatePost(request, null))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", MATCH_NOT_FOUND_BY_ID);
+
+            verify(memberRepository).findById(TEST_MEMBER_ID);
+            verify(matchRepository).findById(TEST_MATCH_ID);
+            verify(mateRepository, never()).save(any());
+        }
     }
 
-    @Test
-    @DisplayName("메이트 게시글 작성 실패 - 존재하지 않는 회원")
-    void createMatePost_FailWithInvalidMember() {
-        // given
-        MatePostCreateRequest request = createTestRequest();
-        given(memberRepository.findById(request.getMemberId()))
-                .willReturn(Optional.empty());
+    @Nested
+    @DisplayName("메이트 게시글 조회")
+    class GetMatePosts {
 
-        // when & then
-        CustomException exception = assertThrows(CustomException.class,
-                () -> mateService.createMatePost(request, null));
-        assertThat(exception.getErrorCode()).isEqualTo(MEMBER_NOT_FOUND_BY_ID);
+        private List<MatePost> createTestMatePostList() {
+            Member testMember = createTestMember();
+            Match testMatch = createTestMatch();
 
-        verify(memberRepository).findById(TEST_MEMBER_ID);
-        verify(matchRepository, never()).findById(any());
-        verify(mateRepository, never()).save(any());
-    }
+            return List.of(
+                    MatePost.builder()
+                            .id(1L)
+                            .author(testMember)
+                            .teamId(1L)
+                            .match(testMatch)
+                            .title("테스트 제목1")
+                            .content("테스트 내용1")
+                            .status(Status.OPEN)
+                            .maxParticipants(4)
+                            .age(Age.TWENTIES)
+                            .gender(Gender.ANY)
+                            .transport(TransportType.PUBLIC)
+                            .build(),
+                    MatePost.builder()
+                            .id(2L)
+                            .author(testMember)
+                            .teamId(1L)
+                            .match(testMatch)
+                            .title("테스트 제목2")
+                            .content("테스트 내용2")
+                            .status(Status.OPEN)
+                            .maxParticipants(3)
+                            .age(Age.THIRTIES)
+                            .gender(Gender.ANY)
+                            .transport(TransportType.CAR)
+                            .build()
+            );
+        }
 
-    @Test
-    @DisplayName("메이트 게시글 작성 실패 - 존재하지 않는 경기")
-    void createMatePost_FailWithInvalidMatch() {
-        // given
-        Member testMember = createTestMember();
-        MatePostCreateRequest request = createTestRequest();
+        @Test
+        @DisplayName("메이트 게시글 목록 조회 성공 - 팀 ID 없음")
+        void getMatePostMain_SuccessWithoutTeamId() {
+            // given
+            List<MatePost> testPosts = createTestMatePostList();
+            given(mateRepository.findMainPagePosts(
+                    eq(null),
+                    any(LocalDateTime.class),
+                    eq(List.of(Status.OPEN, Status.CLOSED)),
+                    any(Pageable.class)))
+                    .willReturn(testPosts);
 
-        given(memberRepository.findById(request.getMemberId()))
-                .willReturn(Optional.of(testMember));
-        given(matchRepository.findById(request.getMatchId()))
-                .willReturn(Optional.empty());
+            // when
+            List<MatePostSummaryResponse> result = mateService.getMatePostMain(null);
 
-        // when & then
-        CustomException exception = assertThrows(CustomException.class,
-                () -> mateService.createMatePost(request, null));
-        assertThat(exception.getErrorCode()).isEqualTo(MATCH_NOT_FOUND_BY_ID);
+            // then
+            assertThat(result.size()).isEqualTo(2);
+            assertThat(result.get(0).getTitle()).isEqualTo("테스트 제목1");
+            assertThat(result.get(1).getTitle()).isEqualTo("테스트 제목2");
 
-        verify(memberRepository).findById(TEST_MEMBER_ID);
-        verify(matchRepository).findById(TEST_MATCH_ID);
-        verify(mateRepository, never()).save(any());
+            verify(mateRepository).findMainPagePosts(
+                    eq(null),
+                    any(LocalDateTime.class),
+                    eq(List.of(Status.OPEN, Status.CLOSED)),
+                    any(Pageable.class));
+        }
+
+        @Test
+        @DisplayName("메이트 게시글 목록 조회 성공 - 특정 팀")
+        void getMatePostMain_SuccessWithTeamId() {
+            // given
+            Long teamId = 1L;
+            List<MatePost> testPosts = createTestMatePostList();
+            given(mateRepository.findMainPagePosts(
+                    eq(teamId),
+                    any(LocalDateTime.class),
+                    eq(List.of(Status.OPEN, Status.CLOSED)),
+                    any(Pageable.class)))
+                    .willReturn(testPosts);
+
+            // when
+            List<MatePostSummaryResponse> result = mateService.getMatePostMain(teamId);
+
+            // then
+            assertThat(result).hasSize(2);
+            assertThat(result).extracting("title")
+                    .containsExactly("테스트 제목1", "테스트 제목2");
+            assertThat(result).extracting("maxParticipants")
+                    .containsExactly(4, 3);
+
+            verify(mateRepository).findMainPagePosts(
+                    eq(teamId),
+                    any(LocalDateTime.class),
+                    eq(List.of(Status.OPEN, Status.CLOSED)),
+                    any(Pageable.class));
+        }
+
+        @Test
+        @DisplayName("메이트 게시글 목록 조회 - 결과 없음")
+        void getMatePostMain_EmptyResult() {
+            // given
+            given(mateRepository.findMainPagePosts(
+                    any(),
+                    any(LocalDateTime.class),
+                    any(),
+                    any(Pageable.class)))
+                    .willReturn(Collections.emptyList());
+
+            // when
+            List<MatePostSummaryResponse> result = mateService.getMatePostMain(1L);
+
+            // then
+            assertThat(result).isEmpty();
+
+            verify(mateRepository).findMainPagePosts(
+                    any(),
+                    any(LocalDateTime.class),
+                    any(),
+                    any(Pageable.class));
+        }
+
+        @Test
+        @DisplayName("메이트 게시글 목록 조회 실패 - 존재하지 않는 팀")
+        void getMatePostMain_FailWithInvalidTeamId() {
+            // given
+            Long invalidTeamId = 999L;
+
+            // when & then
+            assertThatThrownBy(() -> mateService.getMatePostMain(invalidTeamId))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", TEAM_NOT_FOUND);
+
+            verify(mateRepository, never()).findMainPagePosts(
+                    any(),
+                    any(LocalDateTime.class),
+                    any(),
+                    any(Pageable.class));
+        }
+
     }
 }

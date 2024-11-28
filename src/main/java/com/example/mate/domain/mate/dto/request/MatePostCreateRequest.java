@@ -1,5 +1,6 @@
 package com.example.mate.domain.mate.dto.request;
 
+import com.example.mate.common.utils.validator.ValidEnum;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.mate.entity.Age;
 import com.example.mate.domain.mate.entity.TransportType;
@@ -36,7 +37,7 @@ public class MatePostCreateRequest {
     @Length(min = 1, max = 500, message = "내용은 1자 이상 500자 이하여야 합니다.")
     private String content;
 
-    @NotNull(message = "연령대는 필수입니다.")
+    @ValidEnum(message = "연령대의 입력 값이 잘못되었습니다.", enumClass = Age.class)
     private Age age;
 
     @NotNull(message = "최대 참여 인원은 필수입니다.")
@@ -44,9 +45,9 @@ public class MatePostCreateRequest {
     @Max(value = 10, message = "최대 참여 인원은 10명 이하여야 합니다.")
     private Integer maxParticipants;
 
-    @NotNull(message = "성별은 필수입니다.")
+    @ValidEnum(message = "성별의 입력 값이 잘못되었습니다.", enumClass = Gender.class)
     private Gender gender;
 
-    @NotNull(message = "이동 수단은 필수입니다.")
+    @ValidEnum(message = "이동수단의 입력 값이 잘못되었습니다.", enumClass = TransportType.class)
     private TransportType transportType;
 }
