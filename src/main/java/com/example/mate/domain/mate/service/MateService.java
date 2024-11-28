@@ -1,6 +1,7 @@
 package com.example.mate.domain.mate.service;
 
 import com.example.mate.common.error.CustomException;
+import com.example.mate.common.error.ErrorCode;
 import com.example.mate.domain.constant.TeamInfo;
 import com.example.mate.domain.match.entity.Match;
 import com.example.mate.domain.match.repository.MatchRepository;
@@ -64,6 +65,10 @@ public class MateService {
     }
 
     public List<MatePostSummaryResponse> getMatePostMain(Long teamId) {
+        if (teamId != null && !TeamInfo.existById(teamId)) {
+            throw new CustomException(ErrorCode.TEAM_NOT_FOUND);
+        }
+
         LocalDateTime now = LocalDateTime.now();
         List<Status> validStatuses = List.of(Status.OPEN, Status.CLOSED);
 
