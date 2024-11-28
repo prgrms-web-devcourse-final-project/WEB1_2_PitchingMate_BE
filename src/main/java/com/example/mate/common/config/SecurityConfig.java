@@ -1,6 +1,6 @@
 package com.example.mate.common.config;
 
-import com.example.mate.common.security.filter.JwtCheckFilter;
+//import com.example.mate.common.security.filter.JwtCheckFilter;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -22,7 +22,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final JwtCheckFilter jwtCheckFilter;
+//    private final JwtCheckFilter jwtCheckFilter;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -34,8 +34,8 @@ public class SecurityConfig {
                 )
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(jwtCheckFilter,
-                        UsernamePasswordAuthenticationFilter.class)   // JWT 필터를 UsernamePasswordAuthenticationFilter 전에 추가
+//                .addFilterBefore(jwtCheckFilter,
+//                        UsernamePasswordAuthenticationFilter.class)   // JWT 필터를 UsernamePasswordAuthenticationFilter 전에 추가
                 .authorizeHttpRequests(req ->
                         req.anyRequest().permitAll())
                 .build();

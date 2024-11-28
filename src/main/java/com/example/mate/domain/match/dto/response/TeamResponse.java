@@ -7,8 +7,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class TeamResponse {
     @Getter
     @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -43,8 +41,7 @@ public class TeamResponse {
         private Integer losses;
         private Double gamesBehind;
 
-        @Builder
-        public Detail(TeamInfo.Team team, TeamRecord record) {
+        private Detail(TeamInfo.Team team, TeamRecord record) {
             this.id = team.id;
             this.teamName = team.fullName;
             this.stadium = StadiumResponse.Info.from(team.homeStadium);
@@ -58,10 +55,8 @@ public class TeamResponse {
         }
 
         public static Detail from(TeamInfo.Team team, TeamRecord record) {
-            return Detail.builder()
-                    .team(team)
-                    .record(record)
-                    .build();
+            return new Detail(team, record);
         }
+
     }
 }
