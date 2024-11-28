@@ -135,11 +135,9 @@ class GoodsServiceTest {
         Member member = createTestMember();
         GoodsPostRequest request = createGoodsPostRequest();
         List<MultipartFile> files = List.of(createFile(MediaType.APPLICATION_PDF_VALUE));
-
-        // 파일이 이미지가 아닌 경우
         given(memberRepository.findById(member.getId())).willReturn(Optional.of(member));
 
-        // when, then
+        // when & then
         assertThatThrownBy(() -> goodsService.registerGoodsPost(member.getId(), request, files))
                 .isInstanceOf(CustomException.class)
                 .hasMessage(ErrorCode.FILE_UNSUPPORTED_TYPE.getMessage());
