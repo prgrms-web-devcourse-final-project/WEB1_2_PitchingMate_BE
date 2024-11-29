@@ -17,7 +17,6 @@ import lombok.Getter;
 @AllArgsConstructor
 public class GoodsPostRequest {
 
-    @NotNull(message = "팀 ID는 필수 입력 값입니다.")
     @Min(value = 0, message = "팀 ID는 0 이상이어야 합니다.")
     @Max(value = 10, message = "팀 ID는 10 이하이어야 합니다.")
     private Long teamId;

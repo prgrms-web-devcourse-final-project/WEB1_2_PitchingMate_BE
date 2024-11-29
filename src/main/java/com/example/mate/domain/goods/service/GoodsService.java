@@ -89,7 +89,7 @@ public class GoodsService {
     }
 
     private void validateTeamInfo(Long teamId) {
-        if (!TeamInfo.existById(teamId)) {
+        if (teamId != null && !TeamInfo.existById(teamId)) {
             throw new CustomException(ErrorCode.TEAM_NOT_FOUND);
         }
     }

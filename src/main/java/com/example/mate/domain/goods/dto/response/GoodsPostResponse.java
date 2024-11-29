@@ -29,10 +29,12 @@ public class GoodsPostResponse {
     private final String status;
 
     public static GoodsPostResponse of(GoodsPost goodsPost) {
+        String teamName = goodsPost.getTeamId() == null ? null : TeamInfo.getById(goodsPost.getTeamId()).shortName;
+
         return GoodsPostResponse.builder()
                 .id(goodsPost.getId())
                 .seller(MemberInfo.from(goodsPost.getSeller(), Role.SELLER))
-                .teamName(TeamInfo.getById(goodsPost.getTeamId()).shortName)
+                .teamName(teamName)
                 .title(goodsPost.getTitle())
                 .category(goodsPost.getCategory().getValue())
                 .price(goodsPost.getPrice())
