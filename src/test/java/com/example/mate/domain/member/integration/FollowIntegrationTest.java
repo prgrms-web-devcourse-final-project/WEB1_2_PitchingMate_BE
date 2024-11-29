@@ -1,6 +1,7 @@
 package com.example.mate.domain.member.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -150,6 +151,69 @@ public class FollowIntegrationTest {
                     .getFollower().getId()).isEqualTo(member1.getId());
             assertThat(savedFollows.get(savedFollows.size() - 1)
                     .getFollowing().getId()).isEqualTo(member2.getId());
+        }
+    }
+
+    @Nested
+    @DisplayName("회원 언팔로우 테스트")
+    class UnfollowMember {
+
+        @Test
+        @DisplayName("회원 언팔로우 성공")
+        void unfollow_member_success() throws Exception {
+            // given
+            Long unfollowerId = member1.getId();
+            Long unfollowingId = member2.getId();
+
+            // when & then
+            mockMvc.perform(delete("/api/profile/follow/{memberId}", unfollowingId)
+                            .param("unfollowerId", String.valueOf(unfollowerId)))
+                    .andExpect(status().isNoContent())  // 204 No Content
+                    .andDo(print());
+
+            // 언팔로우 후 follow 관계가 삭제되었는지 확인
+            List<Follow> savedFollows = followRepository.findAll();
+            assertThat(savedFollows).isEmpty();  // 팔로우 관계가 삭제되었으므로 리스트는 비어 있어야 한다
+        }
+
+        @Test
+        @DisplayName("팔로우 관계가 없는 회원을 언팔로우하려는 경우 예외 발생")
+        void unfollow_member_not_followed() throws Exception {
+            // given
+            Long unfollowerId = member2.getId();  // member2가 member1을 팔로우하지 않은 상태
+            Long unfollowingId = member1.getId();
+
+            // when & then
+            mockMvc.perform(delete("/api/profile/follow/{memberId}", unfollowingId)
+                            .param("unfollowerId", String.valueOf(unfollowerId)))
+                    .andExpect(status().isBadRequest())  // 400 Bad Request
+                    .andExpect(jsonPath("$.status").value("ERROR"))
+                    .andExpect(jsonPath("$.message").value("이미 언팔로우한 회원입니다."))
+                    .andDo(print());
+
+            // 팔로우 관계가 여전히 존재하는지 확인
+            List<Follow> savedFollows = followRepository.findAll();
+            assertThat(savedFollows).size().isEqualTo(1);  // 기존에 설정한 팔로우 관계는 삭제되지 않음
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 팔로워 또는 팔로잉을 언팔로우하려는 경우 예외 발생")
+        void unfollow_member_not_found() throws Exception {
+            // given
+            Long unfollowerId = 999L;  // 존재하지 않는 팔로워 ID
+            Long unfollowingId = member2.getId();
+
+            // when & then
+            mockMvc.perform(delete("/api/profile/follow/{memberId}", unfollowingId)
+                            .param("unfollowerId", String.valueOf(unfollowerId)))
+                    .andExpect(status().isNotFound())  // 404 Not Found
+                    .andExpect(jsonPath("$.status").value("ERROR"))
+                    .andExpect(jsonPath("$.message").value("해당 ID의 언팔로워 회원을 찾을 수 없습니다."))
+                    .andDo(print());
+
+            // 팔로우 관계가 여전히 존재하는지 확인
+            List<Follow> savedFollows = followRepository.findAll();
+            assertThat(savedFollows).size().isEqualTo(1);  // 기존에 설정한 팔로우 관계는 삭제되지 않음
         }
     }
 }
