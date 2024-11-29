@@ -118,11 +118,9 @@ class GoodsServiceTest {
             List<MultipartFile> files = List.of(createFile(MediaType.IMAGE_JPEG_VALUE));
 
             GoodsPost post = GoodsPostRequest.toEntity(member, request);
-            GoodsPostImage image = goodsPostImage;
 
             given(memberRepository.findById(member.getId())).willReturn(Optional.of(member));
             given(goodsPostRepository.save(any(GoodsPost.class))).willReturn(post);
-            given(imageRepository.save(any(GoodsPostImage.class))).willReturn(image);
 
             // when
             GoodsPostResponse response = goodsService.registerGoodsPost(member.getId(), request, files);
@@ -133,7 +131,6 @@ class GoodsServiceTest {
 
             verify(memberRepository).findById(member.getId());
             verify(goodsPostRepository).save(any(GoodsPost.class));
-            verify(imageRepository).save(any(GoodsPostImage.class));
         }
 
         @Test
@@ -185,12 +182,10 @@ class GoodsServiceTest {
             Long goodsPostId = 1L;
             GoodsPostRequest request = new GoodsPostRequest(1L, "title", Category.CAP, 100_000, "test....", createLocationInfo());
             List<MultipartFile> files = List.of(createFile(MediaType.IMAGE_JPEG_VALUE));
-            GoodsPostImage updatedGoodsImage = goodsPostImage;
 
             given(memberRepository.findById(member.getId())).willReturn(Optional.of(member));
             given(goodsPostRepository.findById(goodsPostId)).willReturn(Optional.of(goodsPost));
             given(imageRepository.getImageUrlsByPostId(goodsPostId)).willReturn(List.of());
-            given(imageRepository.save(any(GoodsPostImage.class))).willReturn(updatedGoodsImage);
 
             // when
             GoodsPostResponse actual = goodsService.updateGoodsPost(member.getId(), goodsPostId, request, files);
@@ -205,7 +200,6 @@ class GoodsServiceTest {
             verify(memberRepository).findById(member.getId());
             verify(imageRepository).getImageUrlsByPostId(goodsPostId);
             verify(imageRepository).deleteAllByPostId(goodsPostId);
-            verify(imageRepository).save(any(GoodsPostImage.class));
         }
 
         @Test

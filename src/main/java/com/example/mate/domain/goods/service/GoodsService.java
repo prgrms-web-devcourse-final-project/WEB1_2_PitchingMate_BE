@@ -108,7 +108,7 @@ public class GoodsService {
         List<String> imageUrls = imageRepository.getImageUrlsByPostId(goodsPostId);
         imageUrls.forEach(url -> {
             if (!FileUploader.deleteFile(url)) {
-                throw new CustomException(ErrorCode.FILE_UPLOAD_ERROR);
+                throw new CustomException(ErrorCode.FILE_DELETE_ERROR);
             }
         });
         imageRepository.deleteAllByPostId(goodsPostId);
@@ -123,10 +123,8 @@ public class GoodsService {
                     .imageUrl(uploadUrl)
                     .post(savedPost)
                     .build();
-            GoodsPostImage savedImage = imageRepository.save(image);
-            images.add(savedImage);
+            images.add(image);
         }
-
         return images;
     }
 }
