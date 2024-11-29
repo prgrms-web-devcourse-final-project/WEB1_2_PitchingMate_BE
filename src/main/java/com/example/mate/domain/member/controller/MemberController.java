@@ -10,6 +10,7 @@ import com.example.mate.domain.member.service.MemberService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -32,24 +33,16 @@ public class MemberController {
     private final MemberService memberService;
 
     /*
-        TODO : 2024/11/23 - 소셜 회원가입 후, 자체 회원가입 기능
-        1. JwtToken 을 통해 사용자 정보 조회
-        2. nickname, myTeam 정보 저장
-        */
+    TODO : 2024/11/29 - 소셜 회원가입 후, 자체 회원가입 기능
+    1. 소셜 로그인 후 사용자 정보가 바로 넘어오도록 처리
+    2. nickname, myTeam 정보 저장
+    */
+    @Operation(summary = "자체 회원가입 기능")
     @PostMapping("/join")
-    public ResponseEntity<JoinResponse> join(
-            @RequestBody JoinRequest joinRequest
+    public ResponseEntity<ApiResponse<JoinResponse>> join(
+            @Parameter(description = "소셜 로그인 정보와 사용자 추가 입력 정보") @RequestBody @Valid JoinRequest joinRequest
     ) {
-        JoinResponse joinResponse = JoinResponse.builder()
-                .name("홍길동")
-                .nickname(joinRequest.getNickname())
-                .email("test@gmail.com")
-                .age(25)
-                .gender("FEMALE")
-                .team("삼성")
-                .build();
-
-        return ResponseEntity.ok(joinResponse);
+        return ResponseEntity.ok(ApiResponse.success(memberService.join(joinRequest)));
     }
 
     /*
