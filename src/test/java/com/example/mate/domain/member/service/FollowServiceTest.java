@@ -1,7 +1,9 @@
 package com.example.mate.domain.member.service;
 
 import static com.example.mate.common.error.ErrorCode.ALREADY_FOLLOWED_MEMBER;
+import static com.example.mate.common.error.ErrorCode.ALREADY_UNFOLLOWED_MEMBER;
 import static com.example.mate.common.error.ErrorCode.FOLLOWER_NOT_FOUND_BY_ID;
+import static com.example.mate.common.error.ErrorCode.UNFOLLOWER_NOT_FOUND_BY_ID;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
@@ -142,4 +144,75 @@ class FollowServiceTest {
         verify(followRepository, never()).save(any());
     }
 
+    @Test
+    @DisplayName("다른 회원 언팔로우 성공")
+    void unfollow_member_success() {
+        // given
+        Long unfollowerId = 1L;
+        Long unfollowingId = 2L;
+        Follow follow = createTestFollow();
+
+        given(memberRepository.findById(unfollowerId))
+                .willReturn(Optional.of(follower));
+        given(memberRepository.findById(unfollowingId))
+                .willReturn(Optional.of(following));
+        given(followRepository.existsByFollowerIdAndFollowingId(unfollowerId, unfollowingId))
+                .willReturn(true); // 팔로우 관계가 존재
+
+        // when
+        followService.unfollow(unfollowerId, unfollowingId);
+
+        // then
+        verify(memberRepository, times(1)).findById(unfollowerId);
+        verify(memberRepository, times(1)).findById(unfollowingId);
+        verify(followRepository, times(1)).existsByFollowerIdAndFollowingId(unfollowerId, unfollowingId);
+        verify(followRepository, times(1)).deleteByFollower_IdAndFollowing_Id(unfollowerId, unfollowingId);
+    }
+
+    @Test
+    @DisplayName("이미 언팔로우한 회원을 다시 언팔로우하려는 경우 예외 발생")
+    void unfollow_member_already_unfollowed() {
+        // given
+        Long unfollowerId = 1L;
+        Long unfollowingId = 2L;
+
+        given(memberRepository.findById(unfollowerId))
+                .willReturn(Optional.of(follower));
+        given(memberRepository.findById(unfollowingId))
+                .willReturn(Optional.of(following));
+        given(followRepository.existsByFollowerIdAndFollowingId(unfollowerId, unfollowingId))
+                .willReturn(false); // 이미 언팔로우된 상태
+
+        // when & then
+        assertThatThrownBy(() -> followService.unfollow(unfollowerId, unfollowingId))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ALREADY_UNFOLLOWED_MEMBER);
+
+        verify(memberRepository, times(1)).findById(unfollowerId);
+        verify(memberRepository, times(1)).findById(unfollowingId);
+        verify(followRepository, never()).deleteByFollower_IdAndFollowing_Id(any(), any());
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 언팔로워 또는 언팔로잉을 언팔로우하려는 경우 예외 발생")
+    void unfollow_member_not_found() {
+        // given
+        Long unfollowerId = 1L;
+        Long unfollowingId = 2L;
+
+        // 언팔로워가 존재하지 않는 경우
+        given(memberRepository.findById(unfollowerId))
+                .willReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> followService.unfollow(unfollowerId, unfollowingId))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", UNFOLLOWER_NOT_FOUND_BY_ID);
+
+        // 언팔로워 조회는 한 번 호출되었고, 언팔로잉은 조회되지 않음
+        verify(memberRepository, times(1)).findById(unfollowerId);
+        verify(memberRepository, never()).findById(unfollowingId);
+        verify(followRepository, never()).existsByFollowerIdAndFollowingId(any(), any());
+        verify(followRepository, never()).deleteByFollower_IdAndFollowing_Id(any(), any());
+    }
 }
