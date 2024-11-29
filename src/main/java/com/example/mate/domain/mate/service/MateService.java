@@ -2,10 +2,12 @@ package com.example.mate.domain.mate.service;
 
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
+import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.constant.TeamInfo;
 import com.example.mate.domain.match.entity.Match;
 import com.example.mate.domain.match.repository.MatchRepository;
 import com.example.mate.domain.mate.dto.request.MatePostCreateRequest;
+import com.example.mate.domain.mate.dto.request.MatePostSearchRequest;
 import com.example.mate.domain.mate.dto.response.MatePostResponse;
 import com.example.mate.domain.mate.dto.response.MatePostSummaryResponse;
 import com.example.mate.domain.mate.entity.MatePost;
@@ -15,7 +17,9 @@ import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -64,7 +68,7 @@ public class MateService {
         return MatePostResponse.from(savedPost);
     }
 
-    public List<MatePostSummaryResponse> getMatePostMain(Long teamId) {
+    public List<MatePostSummaryResponse> getMainPagePosts(Long teamId) {
         if (teamId != null && !TeamInfo.existById(teamId)) {
             throw new CustomException(ErrorCode.TEAM_NOT_FOUND);
         }
@@ -81,5 +85,26 @@ public class MateService {
         return mainPagePosts.stream()
                 .map(MatePostSummaryResponse::from)
                 .collect(Collectors.toList());
+    }
+
+    public PageResponse<MatePostSummaryResponse> getMatePagePosts(MatePostSearchRequest request, Pageable pageable) {
+        if (request.getTeamId()!= null && !TeamInfo.existById(request.getTeamId())) {
+            throw new CustomException(ErrorCode.TEAM_NOT_FOUND);
+        }
+
+        Page<MatePost> matePostPage = mateRepository.findMatePostsByFilter(request ,pageable);
+
+        List<MatePostSummaryResponse> content = matePostPage.getContent().stream()
+                .map(MatePostSummaryResponse::from)
+                .toList();
+
+        return PageResponse.<MatePostSummaryResponse>builder()
+                .content(content)
+                .totalPages(matePostPage.getTotalPages())
+                .totalElements(matePostPage.getTotalElements())
+                .hasNext(matePostPage.hasNext())
+                .pageNumber(matePostPage.getNumber())
+                .pageSize(matePostPage.getSize())
+                .build();
     }
 }
