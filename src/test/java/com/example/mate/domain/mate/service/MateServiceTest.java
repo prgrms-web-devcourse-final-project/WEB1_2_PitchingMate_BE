@@ -8,6 +8,7 @@ import com.example.mate.domain.match.entity.Match;
 import com.example.mate.domain.match.repository.MatchRepository;
 import com.example.mate.domain.mate.dto.request.MatePostCreateRequest;
 import com.example.mate.domain.mate.dto.request.MatePostSearchRequest;
+import com.example.mate.domain.mate.dto.response.MatePostDetailResponse;
 import com.example.mate.domain.mate.dto.response.MatePostResponse;
 import com.example.mate.domain.mate.dto.response.MatePostSummaryResponse;
 import com.example.mate.domain.mate.entity.*;
@@ -61,6 +62,7 @@ class MateServiceTest {
                 .name("테스트유저")
                 .email("test@test.com")
                 .nickname("테스트계정")
+                .imageUrl("test.jpg")
                 .build();
     }
 
@@ -481,6 +483,107 @@ class MateServiceTest {
                     .hasFieldOrPropertyWithValue("errorCode", TEAM_NOT_FOUND);
 
             verify(mateRepository, never()).findMatePostsByFilter(any(), any());
+        }
+    }
+
+    @Nested
+    @DisplayName("메이트 게시글 상세 조회")
+    class GetMatePostDetail {
+        private static final Long POST_ID = 1L;
+
+        @Test
+        @DisplayName("메이트 게시글 상세 조회 성공")
+        void getMatePostDetail_Success() {
+            // given
+            Member testMember = createTestMember();
+            Match testMatch = createTestMatch();
+
+            MatePost testPost = MatePost.builder()
+                    .id(POST_ID)
+                    .author(testMember)
+                    .teamId(1L)
+                    .match(testMatch)
+                    .imageUrl("post-image.jpg")
+                    .title("테스트 제목")
+                    .content("테스트 내용")
+                    .status(Status.OPEN)
+                    .maxParticipants(4)
+                    .age(Age.TWENTIES)
+                    .gender(Gender.ANY)
+                    .transport(TransportType.PUBLIC)
+                    .build();
+
+            given(mateRepository.findById(POST_ID))
+                    .willReturn(Optional.of(testPost));
+
+            // when
+            MatePostDetailResponse response = mateService.getMatePostDetail(POST_ID);
+
+            // then
+            assertThat(response.getPostImageUrl()).isEqualTo("post-image.jpg");
+            assertThat(response.getTitle()).isEqualTo("테스트 제목");
+            assertThat(response.getStatus()).isEqualTo(Status.OPEN);
+            assertThat(response.getRivalTeamName()).isEqualTo("LG");  // KIA가 홈팀이므로 LG가 상대팀
+            assertThat(response.getLocation()).isEqualTo("광주-기아 챔피언스 필드");
+            assertThat(response.getAge()).isEqualTo(Age.TWENTIES);
+            assertThat(response.getGender()).isEqualTo(Gender.ANY);
+            assertThat(response.getTransportType()).isEqualTo(TransportType.PUBLIC);
+            assertThat(response.getMaxParticipants()).isEqualTo(4);
+            assertThat(response.getUserImageUrl()).isEqualTo("test.jpg");
+            assertThat(response.getNickname()).isEqualTo("테스트계정");
+            assertThat(response.getManner()).isEqualTo(0.3f);
+            assertThat(response.getContent()).isEqualTo("테스트 내용");
+            assertThat(response.getPostId()).isEqualTo(POST_ID);
+
+            verify(mateRepository).findById(POST_ID);
+        }
+
+        @Test
+        @DisplayName("메이트 게시글 상세 조회 - 원정팀 팬의 게시글인 경우")
+        void getMatePostDetail_SuccessWithAwayTeamFan() {
+            // given
+            Member testMember = createTestMember();
+            Match testMatch = createTestMatch();
+
+            MatePost testPost = MatePost.builder()
+                    .id(POST_ID)
+                    .author(testMember)
+                    .teamId(2L)  // LG 팬의 게시글
+                    .match(testMatch)
+                    .imageUrl("post-image.jpg")
+                    .title("테스트 제목")
+                    .content("테스트 내용")
+                    .status(Status.OPEN)
+                    .maxParticipants(4)
+                    .age(Age.TWENTIES)
+                    .gender(Gender.ANY)
+                    .transport(TransportType.PUBLIC)
+                    .build();
+
+            given(mateRepository.findById(POST_ID))
+                    .willReturn(Optional.of(testPost));
+
+            // when
+            MatePostDetailResponse response = mateService.getMatePostDetail(POST_ID);
+
+            // then
+            assertThat(response.getRivalTeamName()).isEqualTo("KIA");  // LG 팬의 게시글이므로 KIA가 상대팀
+            verify(mateRepository).findById(POST_ID);
+        }
+
+        @Test
+        @DisplayName("메이트 게시글 상세 조회 실패 - 존재하지 않는 게시글")
+        void getMatePostDetail_FailWithInvalidPostId() {
+            // given
+            given(mateRepository.findById(POST_ID))
+                    .willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> mateService.getMatePostDetail(POST_ID))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", MATE_POST_NOT_FOUND);
+
+            verify(mateRepository).findById(POST_ID);
         }
     }
 }
