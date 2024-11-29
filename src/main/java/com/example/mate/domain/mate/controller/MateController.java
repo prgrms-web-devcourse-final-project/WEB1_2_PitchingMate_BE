@@ -24,7 +24,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -46,6 +45,7 @@ public class MateController {
     // 메이트 게시글 목록 조회(메인 페이지)
     @GetMapping(value = "/main", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponse<List<MatePostSummaryResponse>>> getMainPagePosts(@RequestParam(required = false) Long teamId) {
+
         List<MatePostSummaryResponse> matePostMain = mateService.getMainPagePosts(teamId);
         return ResponseEntity.ok(ApiResponse.success(matePostMain));
     }
@@ -59,6 +59,7 @@ public class MateController {
                                                                                                @RequestParam(required = false) Integer maxParticipants,
                                                                                                @RequestParam(required = false) String transportType,
                                                                                                @PageableDefault(size = 10) Pageable pageable) {
+
         MatePostSearchRequest request = MatePostSearchRequest.builder()
                 .teamId(teamId)
                 .sortType(sortType != null ? SortType.from(sortType) : null)
@@ -74,23 +75,10 @@ public class MateController {
 
     // 메이트 게시글 상세 조회
     @GetMapping("/{postId}")
-    public ResponseEntity<MatePostDetailResponse> getMatePostDetail(@PathVariable Long postId) {
-        return ResponseEntity.ok(MatePostDetailResponse.builder()
-                        .postImageUrl("imageUrl")
-                        .title("12월 경기 메이트 찾아요")
-                        .status(Status.OPEN)
-                        .rivalTeamName("삼성")
-                        .rivalMatchTime(LocalDateTime.now())
-                        .location("문학")
-                        .age(Age.TWENTIES)
-                        .gender(Gender.MALE)
-                        .transportType(TransportType.PUBLIC)
-                        .maxParticipants(10)
-                        .userImageUrl("imageUrl")
-                        .nickname("빌터")
-                        .manner(0.300F)
-                        .description("같이 갈 사람 구합니다.")
-                .build());
+    public ResponseEntity<ApiResponse<MatePostDetailResponse>> getMatePostDetail(@PathVariable Long postId) {
+
+        MatePostDetailResponse response = mateService.getMatePostDetail(postId);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     // 메이트 게시글 상태 변경
