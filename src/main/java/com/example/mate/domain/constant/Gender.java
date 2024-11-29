@@ -9,8 +9,8 @@ import lombok.Getter;
 @Getter
 public enum Gender {
     ANY("상관없음"),
-    MALE("남자만"),
-    FEMALE("여자만");
+    MALE("남자"),
+    FEMALE("여자");
 
     @JsonValue
     private final String value;
