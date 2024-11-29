@@ -467,4 +467,69 @@ public class MateIntegrationTest {
                     .andDo(print());
         }
     }
+
+    @Nested
+    @DisplayName("메이트 게시글 상세 조회")
+    class GetMatePostDetail {
+
+        @Test
+        @DisplayName("메이트 게시글 상세 조회 성공")
+        void getMatePostDetail_Success() throws Exception {
+            // when & then
+            mockMvc.perform(get("/api/mates/" + openPost.getId())
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value("SUCCESS"))
+                    .andExpect(jsonPath("$.code").value(200))
+                    .andExpect(jsonPath("$.data.postId").value(openPost.getId()))
+                    .andExpect(jsonPath("$.data.title").value("테스트 제목"))
+                    .andExpect(jsonPath("$.data.content").value("테스트 내용"))
+                    .andExpect(jsonPath("$.data.status").value("OPEN"))
+                    .andExpect(jsonPath("$.data.maxParticipants").value(4))
+                    .andExpect(jsonPath("$.data.age").value("20대"))
+                    .andExpect(jsonPath("$.data.gender").value("여자"))
+                    .andExpect(jsonPath("$.data.transportType").value("대중교통"))
+                    .andExpect(jsonPath("$.data.rivalTeamName").value("LG"))
+                    .andExpect(jsonPath("$.data.location").value("광주-기아 챔피언스 필드"))
+                    .andExpect(jsonPath("$.data.userImageUrl").value("test.jpg"))
+                    .andExpect(jsonPath("$.data.nickname").value("테스트계정"))
+                    .andExpect(jsonPath("$.data.manner").value(0.3))
+                    .andDo(print());
+        }
+
+        @Test
+        @DisplayName("메이트 게시글 상세 조회 실패 - 존재하지 않는 게시글")
+        void getMatePostDetail_NotFound() throws Exception {
+            // when & then
+            mockMvc.perform(get("/api/mates/999")
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.status").value("ERROR"))
+                    .andExpect(jsonPath("$.message").value(ErrorCode.MATE_POST_NOT_FOUND.getMessage()))
+                    .andExpect(jsonPath("$.code").value(404))
+                    .andDo(print());
+        }
+
+        @Test
+        @DisplayName("메이트 게시글 상세 조회 - 모든 상태의 게시글 조회 가능")
+        void getMatePostDetail_AllStatusAccessible() throws Exception {
+            // Test OPEN status
+            mockMvc.perform(get("/api/mates/" + openPost.getId())
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.status").value("OPEN"));
+
+            // Test CLOSED status
+            mockMvc.perform(get("/api/mates/" + closedPost.getId())
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.status").value("CLOSED"));
+
+            // Test COMPLETE status
+            mockMvc.perform(get("/api/mates/" + completedPost.getId())
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.status").value("COMPLETE"));
+        }
+    }
 }

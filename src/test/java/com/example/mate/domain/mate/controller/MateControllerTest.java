@@ -5,6 +5,7 @@ import com.example.mate.common.error.ErrorCode;
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.mate.dto.request.MatePostCreateRequest;
+import com.example.mate.domain.mate.dto.response.MatePostDetailResponse;
 import com.example.mate.domain.mate.dto.response.MatePostResponse;
 import com.example.mate.domain.mate.dto.response.MatePostSummaryResponse;
 import com.example.mate.domain.mate.entity.Age;
@@ -344,6 +345,79 @@ class MateControllerTest {
                     .andExpect(jsonPath("$.data.totalElements").value(50))
                     .andExpect(jsonPath("$.data.hasNext").value(true))
                     .andExpect(jsonPath("$.code").value(200));
+        }
+    }
+
+    @Nested
+    @DisplayName("메이트 게시글 상세 조회")
+    class GetMatePostDetail {
+
+        private MatePostDetailResponse createMatePostDetailResponse() {
+            return MatePostDetailResponse.builder()
+                    .postImageUrl("test-image.jpg")
+                    .title("테스트 제목")
+                    .status(Status.OPEN)
+                    .rivalTeamName("두산")
+                    .rivalMatchTime(LocalDateTime.now().plusDays(1))
+                    .location("잠실야구장")
+                    .age(Age.TWENTIES)
+                    .gender(Gender.FEMALE)
+                    .transportType(TransportType.PUBLIC)
+                    .maxParticipants(4)
+                    .userImageUrl("user-image.jpg")
+                    .nickname("테스트닉네임")
+                    .manner(36.5f)
+                    .content("테스트 내용입니다.")
+                    .postId(1L)
+                    .build();
+        }
+
+        @Test
+        @DisplayName("메이트 게시글 상세 조회 성공")
+        void getMatePostDetail_success() throws Exception {
+            // given
+            Long postId = 1L;
+            MatePostDetailResponse response = createMatePostDetailResponse();
+
+            given(mateService.getMatePostDetail(postId))
+                    .willReturn(response);
+
+            // when & then
+            mockMvc.perform(get("/api/mates/{postId}", postId)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value("SUCCESS"))
+                    .andExpect(jsonPath("$.data.postId").value(postId))
+                    .andExpect(jsonPath("$.data.title").value(response.getTitle()))
+                    .andExpect(jsonPath("$.data.status").value(response.getStatus().toString()))
+                    .andExpect(jsonPath("$.data.rivalTeamName").value(response.getRivalTeamName()))
+                    .andExpect(jsonPath("$.data.location").value(response.getLocation()))
+                    .andExpect(jsonPath("$.data.age").value(response.getAge().getValue()))
+                    .andExpect(jsonPath("$.data.gender").value(response.getGender().getValue()))
+                    .andExpect(jsonPath("$.data.transportType").value(response.getTransportType().getValue()))
+                    .andExpect(jsonPath("$.data.maxParticipants").value(response.getMaxParticipants()))
+                    .andExpect(jsonPath("$.data.nickname").value(response.getNickname()))
+                    .andExpect(jsonPath("$.data.manner").value(response.getManner()))
+                    .andExpect(jsonPath("$.code").value(200));
+        }
+
+        @Test
+        @DisplayName("메이트 게시글 상세 조회 실패 - 존재하지 않는 게시글")
+        void getMatePostDetail_failPostNotFound() throws Exception {
+            // given
+            Long nonExistentPostId = 999L;
+            given(mateService.getMatePostDetail(nonExistentPostId))
+                    .willThrow(new CustomException(ErrorCode.MATE_POST_NOT_FOUND));
+
+            // when & then
+            mockMvc.perform(get("/api/mates/{postId}", nonExistentPostId)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andDo(print())
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.status").value("ERROR"))
+                    .andExpect(jsonPath("$.message").exists())
+                    .andExpect(jsonPath("$.code").value(404));
         }
     }
 }
