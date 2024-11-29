@@ -118,11 +118,9 @@ class GoodsServiceTest {
             List<MultipartFile> files = List.of(createFile(MediaType.IMAGE_JPEG_VALUE));
 
             GoodsPost post = GoodsPostRequest.toEntity(member, request);
-            GoodsPostImage image = goodsPostImage;
 
             given(memberRepository.findById(member.getId())).willReturn(Optional.of(member));
             given(goodsPostRepository.save(any(GoodsPost.class))).willReturn(post);
-            given(imageRepository.save(any(GoodsPostImage.class))).willReturn(image);
 
             // when
             GoodsPostResponse response = goodsService.registerGoodsPost(member.getId(), request, files);
@@ -133,7 +131,6 @@ class GoodsServiceTest {
 
             verify(memberRepository).findById(member.getId());
             verify(goodsPostRepository).save(any(GoodsPost.class));
-            verify(imageRepository).save(any(GoodsPostImage.class));
         }
 
         @Test
@@ -176,7 +173,7 @@ class GoodsServiceTest {
 
     @Nested
     @DisplayName("굿즈거래 판매글 수정 테스트")
-    class GoodsServiceUpdatedTest {
+    class GoodsServiceUpdateTest {
 
         @Test
         @DisplayName("굿즈거래 판매글 수정 성공")
@@ -185,12 +182,10 @@ class GoodsServiceTest {
             Long goodsPostId = 1L;
             GoodsPostRequest request = new GoodsPostRequest(1L, "title", Category.CAP, 100_000, "test....", createLocationInfo());
             List<MultipartFile> files = List.of(createFile(MediaType.IMAGE_JPEG_VALUE));
-            GoodsPostImage updatedGoodsImage = goodsPostImage;
 
             given(memberRepository.findById(member.getId())).willReturn(Optional.of(member));
             given(goodsPostRepository.findById(goodsPostId)).willReturn(Optional.of(goodsPost));
             given(imageRepository.getImageUrlsByPostId(goodsPostId)).willReturn(List.of());
-            given(imageRepository.save(any(GoodsPostImage.class))).willReturn(updatedGoodsImage);
 
             // when
             GoodsPostResponse actual = goodsService.updateGoodsPost(member.getId(), goodsPostId, request, files);
@@ -205,7 +200,6 @@ class GoodsServiceTest {
             verify(memberRepository).findById(member.getId());
             verify(imageRepository).getImageUrlsByPostId(goodsPostId);
             verify(imageRepository).deleteAllByPostId(goodsPostId);
-            verify(imageRepository).save(any(GoodsPostImage.class));
         }
 
         @Test
@@ -253,6 +247,120 @@ class GoodsServiceTest {
             verify(goodsPostRepository).findById(goodsPostId);
             verify(imageRepository, never()).deleteAllByPostId(any(Long.class));
             verify(imageRepository, never()).save(any(GoodsPostImage.class));
+        }
+    }
+
+    @Nested
+    @DisplayName("굿즈거래 판매글 수정 테스트")
+    class GoodsServiceDeleteTest {
+
+        @Test
+        @DisplayName("굿즈거래 판매글 삭제 성공")
+        void delete_goods_post_success() {
+            // given
+            Long memberId = member.getId();
+            Long goodsPostId = 1L;
+
+            given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
+            given(goodsPostRepository.findById(goodsPostId)).willReturn(Optional.of(goodsPost));
+            given(imageRepository.getImageUrlsByPostId(goodsPostId)).willReturn(List.of());
+
+            // when
+            goodsService.deleteGoodsPost(memberId, goodsPostId);
+
+            // then
+            verify(memberRepository).findById(memberId);
+            verify(goodsPostRepository).findById(goodsPostId);
+            verify(imageRepository).getImageUrlsByPostId(goodsPostId);
+            verify(imageRepository).deleteAllByPostId(goodsPostId);
+            verify(goodsPostRepository).delete(goodsPost);
+        }
+
+        @Test
+        @DisplayName("굿즈거래 판매글 삭제 실패 - 유효하지 않은 판매글")
+        void delete_goods_post_failed_with_invalid_post() {
+            // given
+            Long memberId = member.getId();
+            Long goodsPostId = 1L;
+
+            given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
+            given(goodsPostRepository.findById(goodsPostId)).willReturn(Optional.empty());
+
+            // when
+            assertThatThrownBy(() -> goodsService.deleteGoodsPost(memberId, goodsPostId))
+                    .isInstanceOf(CustomException.class)
+                    .hasMessage(ErrorCode.GOODS_NOT_FOUND_BY_ID.getMessage());
+
+            // then
+            verify(memberRepository).findById(memberId);
+            verify(goodsPostRepository).findById(goodsPostId);
+            verify(imageRepository, never()).getImageUrlsByPostId(any(Long.class));
+            verify(imageRepository, never()).deleteAllByPostId(any(Long.class));
+            verify(goodsPostRepository, never()).delete(any(GoodsPost.class));
+        }
+
+        @Test
+        @DisplayName("굿즈거래 판매글 삭제 실패 - 유효하지 않은 회원")
+        void delete_goods_post_failed_with_invalid_member() {
+            // given
+            Long memberId = member.getId();
+            Long goodsPostId = 1L;
+
+            given(memberRepository.findById(memberId)).willReturn(Optional.empty());
+
+            // when
+            assertThatThrownBy(() -> goodsService.deleteGoodsPost(memberId, goodsPostId))
+                    .isInstanceOf(CustomException.class)
+                    .hasMessage(ErrorCode.MEMBER_NOT_FOUND_BY_ID.getMessage());
+
+            // then
+            verify(memberRepository).findById(memberId);
+            verify(goodsPostRepository, never()).findById(any(Long.class));
+            verify(imageRepository, never()).getImageUrlsByPostId(any(Long.class));
+            verify(imageRepository, never()).deleteAllByPostId(any(Long.class));
+            verify(goodsPostRepository, never()).delete(any(GoodsPost.class));
+        }
+    }
+
+    @Nested
+    @DisplayName("굿즈거래 판매글 상세 조회 테스트")
+    class GoodsServiceSearchTest {
+
+        @Test
+        @DisplayName("굿즈거래 판매글 상세 조회 성공")
+        void get_goods_post_success() {
+            // given
+            Long goodsPostId = 1L;
+            given(goodsPostRepository.findById(goodsPostId)).willReturn(Optional.of(goodsPost));
+
+            // when
+            GoodsPostResponse response = goodsService.getGoodsPost(goodsPostId);
+
+            // then
+            assertThat(response).isNotNull();
+            assertThat(response.getTitle()).isEqualTo(goodsPost.getTitle());
+            assertThat(response.getContent()).isEqualTo(goodsPost.getContent());
+            assertThat(response.getCategory()).isEqualTo(goodsPost.getCategory().getValue());
+            assertThat(response.getPrice()).isEqualTo(goodsPost.getPrice());
+            assertThat(response.getLocation().getPlaceName()).isEqualTo(goodsPost.getLocation().getPlaceName());
+
+            verify(goodsPostRepository).findById(goodsPostId);
+        }
+
+        @Test
+        @DisplayName("굿즈거래 판매글 상세 조회 실패 - 유효하지 않은 판매글")
+        void get_goods_post_failed_with_invalid_post() {
+            // given
+            Long goodsPostId = 1L;
+
+            given(goodsPostRepository.findById(goodsPostId)).willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> goodsService.getGoodsPost(goodsPostId))
+                    .isInstanceOf(CustomException.class)
+                    .hasMessage(ErrorCode.GOODS_NOT_FOUND_BY_ID.getMessage());
+
+            verify(goodsPostRepository).findById(goodsPostId);
         }
     }
 }

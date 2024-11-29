@@ -65,6 +65,24 @@ public class GoodsService {
         return GoodsPostResponse.of(goodsPost);
     }
 
+    public void deleteGoodsPost(Long memberId, Long goodsPostId) {
+        // 사용자, 판매글 정보 유효성 검증
+        Member seller = getSellerAndValidate(memberId);
+        GoodsPost goodsPost = getGoodsPostAndValidate(seller, goodsPostId);
+
+        // 업로된 이미지 파일 삭제
+        deleteExistingImages(goodsPostId);
+        goodsPostRepository.delete(goodsPost);
+    }
+
+    @Transactional(readOnly = true)
+    public GoodsPostResponse getGoodsPost(Long goodsPostId) {
+        GoodsPost goodsPost = goodsPostRepository.findById(goodsPostId).orElseThrow(()
+                -> new CustomException(ErrorCode.GOODS_NOT_FOUND_BY_ID));
+
+        return GoodsPostResponse.of(goodsPost);
+    }
+
     private Member getSellerAndValidate(Long memberId) {
         return memberRepository.findById(memberId).orElseThrow(()
                 -> new CustomException(ErrorCode.MEMBER_NOT_FOUND_BY_ID));
@@ -90,7 +108,7 @@ public class GoodsService {
         List<String> imageUrls = imageRepository.getImageUrlsByPostId(goodsPostId);
         imageUrls.forEach(url -> {
             if (!FileUploader.deleteFile(url)) {
-                throw new CustomException(ErrorCode.FILE_UPLOAD_ERROR);
+                throw new CustomException(ErrorCode.FILE_DELETE_ERROR);
             }
         });
         imageRepository.deleteAllByPostId(goodsPostId);
@@ -105,10 +123,8 @@ public class GoodsService {
                     .imageUrl(uploadUrl)
                     .post(savedPost)
                     .build();
-            GoodsPostImage savedImage = imageRepository.save(image);
-            images.add(savedImage);
+            images.add(image);
         }
-
         return images;
     }
 }

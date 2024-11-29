@@ -4,7 +4,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -143,5 +146,42 @@ class GoodsControllerTest {
                 .andExpect(jsonPath("$.code").value(200));
 
         verify(goodsService).updateGoodsPost(eq(memberId), eq(goodsPostId), any(GoodsPostRequest.class), anyList());
+    }
+
+    @Test
+    @DisplayName("굿즈 판매글 삭제 - API 테스트")
+    void delete_goods_post_success() throws Exception {
+        // given
+        Long memberId = 1L;
+        Long goodsPostId = 1L;
+
+        willDoNothing().given(goodsService).deleteGoodsPost(memberId, goodsPostId);
+
+        // when & then
+        mockMvc.perform(delete("/api/goods/{memberId}/post/{goodsPostId}", memberId, goodsPostId))
+                .andDo(print())
+                .andExpect(status().isNoContent());
+
+
+        verify(goodsService).deleteGoodsPost(memberId, goodsPostId);
+    }
+
+    @Test
+    @DisplayName("굿즈 판매글 상세 조회 - API 테스트")
+    void get_goods_post_success() throws Exception {
+        // given
+        Long goodsPostId = 1L;
+        GoodsPostResponse response = createGoodsPostResponse();
+
+        given(goodsService.getGoodsPost(goodsPostId)).willReturn(response);
+
+        // when & then
+        mockMvc.perform(get("/api/goods/{goodsPostId}", goodsPostId))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.id").value(response.getId()))
+                .andExpect(jsonPath("$.data.status").value(response.getStatus()));
+
+        verify(goodsService).getGoodsPost(goodsPostId);
     }
 }

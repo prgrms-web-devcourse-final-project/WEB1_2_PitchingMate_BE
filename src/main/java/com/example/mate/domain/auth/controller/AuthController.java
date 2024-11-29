@@ -3,6 +3,8 @@ package com.example.mate.domain.auth.controller;
 import com.example.mate.common.jwt.JwtToken;
 import com.example.mate.domain.auth.dto.response.LoginResponse;
 import com.example.mate.domain.auth.service.NaverAuthService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -18,6 +20,7 @@ import org.springframework.web.servlet.view.RedirectView;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/auth")
+@Tag(name = "Auth Controller", description = "소셜 로그인 관련 API")
 public class AuthController {
 
     private final NaverAuthService naverAuthService;
@@ -25,6 +28,7 @@ public class AuthController {
     /**
      * 네이버 소셜 로그인 연결 : 네이버 인증 페이지로의 리다이렉트
      */
+    @Operation(summary = "네이버 소셜 인증 페이지 리다이렉트")
     @GetMapping("/connect/naver")
     public RedirectView connectNaver() {
         return new RedirectView(naverAuthService.getAuthUrl());
@@ -33,6 +37,7 @@ public class AuthController {
     /**
      * 네이버 소셜 로그인 콜백 : 인증 페이지에서 로그인한 뒤, 네이버 사용자 정보와 로그인 토큰을 함께 반환
      */
+    @Operation(summary = "네이버 소셜 로그인 콜백")
     @GetMapping("/login/naver")
     public ResponseEntity<LoginResponse> loginByNaver(@RequestParam @NotEmpty String code,
                                                       @RequestParam String state) {

@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
-public interface MateRepository extends JpaRepository<MatePost, Long> {
+public interface MateRepository extends JpaRepository<MatePost, Long>, MateRepositoryCustom {
     @Query("""
             SELECT mp FROM MatePost mp JOIN FETCH mp.match mt
             WHERE (:teamId IS NULL OR mp.teamId = :teamId)
