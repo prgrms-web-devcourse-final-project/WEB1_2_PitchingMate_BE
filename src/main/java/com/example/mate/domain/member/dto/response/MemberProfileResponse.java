@@ -1,5 +1,7 @@
 package com.example.mate.domain.member.dto.response;
 
+import com.example.mate.domain.constant.TeamInfo;
+import com.example.mate.domain.member.entity.Member;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,4 +22,18 @@ public class MemberProfileResponse {
     private Integer followerCount;
     private Integer reviewsCount;
     private Integer goodsSoldCount;
+
+    // TODO : rewviewsCount, goodsSoldCount 추가
+    public static MemberProfileResponse of(Member member, int followingCount, int followerCount, int goodsSoldCount) {
+        return MemberProfileResponse.builder()
+                .nickname(member.getNickname())
+                .imageUrl(member.getImageUrl())
+                .teamName(TeamInfo.getById(member.getTeamId()).shortName)
+                .manner(member.getManner())
+                .aboutMe(member.getAboutMe())
+                .followingCount(followingCount)
+                .followerCount(followerCount)
+                .goodsSoldCount(goodsSoldCount)
+                .build();
+    }
 }
