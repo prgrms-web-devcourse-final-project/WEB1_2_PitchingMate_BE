@@ -78,8 +78,9 @@ public class GoodsController {
 
     // 굿즈 거래하기 상세 페이지 : 굿즈 거래글 단건 조회
     @GetMapping("/{goodsPostId}")
-    public ResponseEntity<GoodsPostResponse> getGoodsPost(@PathVariable Long goodsPostId) {
-        return ResponseEntity.ok(goodsService.getGoodsPost(goodsPostId));
+    public ResponseEntity<ApiResponse<GoodsPostResponse>> getGoodsPost(@PathVariable Long goodsPostId) {
+        GoodsPostResponse response = goodsService.getGoodsPost(goodsPostId);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     /*
