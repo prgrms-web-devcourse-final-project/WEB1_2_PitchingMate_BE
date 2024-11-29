@@ -65,6 +65,16 @@ public class GoodsService {
         return GoodsPostResponse.of(goodsPost);
     }
 
+    public void deleteGoodsPost(Long memberId, Long goodsPostId) {
+        // 사용자, 판매글 정보 유효성 검증
+        Member seller = getSellerAndValidate(memberId);
+        GoodsPost goodsPost = getGoodsPostAndValidate(seller, goodsPostId);
+
+        // 업로된 이미지 파일 삭제
+        deleteExistingImages(goodsPostId);
+        goodsPostRepository.delete(goodsPost);
+    }
+
     private Member getSellerAndValidate(Long memberId) {
         return memberRepository.findById(memberId).orElseThrow(()
                 -> new CustomException(ErrorCode.MEMBER_NOT_FOUND_BY_ID));
