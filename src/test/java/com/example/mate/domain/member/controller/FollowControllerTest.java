@@ -5,6 +5,7 @@ import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -121,4 +122,68 @@ class FollowControllerTest {
             verify(followService, times(1)).follow(followerId, followingId);
         }
     }
+
+    @Nested
+    @DisplayName("회원 언팔로우 테스트")
+    class UnfollowMember {
+
+        @Test
+        @DisplayName("다른 회원 언팔로우 성공")
+        void unfollow_member_success() throws Exception {
+            // given
+            Long unfollowerId = 1L;
+            Long unfollowingId = 2L;
+
+            willDoNothing().given(followService).unfollow(unfollowerId, unfollowingId);
+
+            // when & then
+            mockMvc.perform(delete("/api/profile/follow/{memberId}", unfollowingId)
+                            .param("unfollowerId", String.valueOf(unfollowerId)))
+                    .andExpect(status().isNoContent())
+                    .andDo(print());
+
+            verify(followService, times(1)).unfollow(unfollowerId, unfollowingId);
+        }
+
+        @Test
+        @DisplayName("이미 언팔로우한 회원을 다시 언팔로우하려는 경우 예외 발생")
+        void unfollow_member_already_unfollowed() throws Exception {
+            // given
+            Long unfollowerId = 1L;
+            Long unfollowingId = 2L;
+
+            // 언팔로우가 이미 되어 있다고 설정
+            willThrow(new CustomException(ErrorCode.ALREADY_UNFOLLOWED_MEMBER))
+                    .given(followService).unfollow(unfollowerId, unfollowingId);
+
+            // when & then
+            mockMvc.perform(delete("/api/profile/follow/{memberId}", unfollowingId)
+                            .param("unfollowerId", String.valueOf(unfollowerId)))
+                    .andExpect(status().isBadRequest())
+                    .andDo(print());
+
+            verify(followService, times(1)).unfollow(unfollowerId, unfollowingId);
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 언팔로워 또는 언팔로잉을 언팔로우하려는 경우 예외 발생")
+        void unfollow_member_not_found() throws Exception {
+            // given
+            Long unfollowerId = 1L;
+            Long unfollowingId = 999L; // 존재하지 않는 팔로잉 ID
+
+            // 존재하지 않는 언팔로워 또는 언팔로잉에 대한 예외 설정
+            willThrow(new CustomException(ErrorCode.UNFOLLOWER_NOT_FOUND_BY_ID))
+                    .given(followService).unfollow(unfollowerId, unfollowingId);
+
+            // when & then
+            mockMvc.perform(delete("/api/profile/follow/{memberId}", unfollowingId)
+                            .param("unfollowerId", String.valueOf(unfollowerId)))
+                    .andExpect(status().isNotFound())
+                    .andDo(print());
+
+            verify(followService, times(1)).unfollow(unfollowerId, unfollowingId);
+        }
+    }
+
 }
