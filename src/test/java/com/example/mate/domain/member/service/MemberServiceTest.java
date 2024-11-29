@@ -2,13 +2,17 @@ package com.example.mate.domain.member.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
+import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.goods.entity.GoodsPost;
 import com.example.mate.domain.goods.entity.Status;
 import com.example.mate.domain.goods.repository.GoodsPostRepository;
+import com.example.mate.domain.member.dto.request.JoinRequest;
+import com.example.mate.domain.member.dto.response.JoinResponse;
 import com.example.mate.domain.member.dto.response.MemberProfileResponse;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.FollowRepository;
@@ -39,20 +43,24 @@ class MemberServiceTest {
 
     private Member member;
     private GoodsPost goodsPost;
+    private JoinRequest joinRequest;
 
     @BeforeEach
     void setUp() {
         createTestMember();
-        createTestGoodsPost();
+        createTestJoinRequest();
     }
 
     private void createTestMember() {
         member = Member.builder()
                 .id(1L)
                 .name("홍길동")
-                .teamId(1L)
-                .email("test@example.com")
                 .nickname("tester")
+                .email("test@example.com")
+                .age(30)
+                .gender(Gender.MALE)
+                .teamId(1L)
+                .manner(0.300F)
                 .build();
     }
 
@@ -62,6 +70,32 @@ class MemberServiceTest {
                 .seller(member)
                 .status(Status.CLOSED)
                 .build();
+    }
+
+    private void createTestJoinRequest() {
+        joinRequest = JoinRequest.builder()
+                .name("홍길동")
+                .email("test@example.com")
+                .gender("M")
+                .birthyear("1993")
+                .teamId(1L)
+                .nickname("tester")
+                .build();
+    }
+
+    @Test
+    @DisplayName("자체 회원 가입 - 성공")
+    void join_success() {
+        // given
+        given(memberRepository.save(any(Member.class)))
+                .willReturn(member);
+
+        // when
+        JoinResponse response = memberService.join(joinRequest);
+
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.getNickname()).isEqualTo(member.getNickname());
     }
 
     @Test
