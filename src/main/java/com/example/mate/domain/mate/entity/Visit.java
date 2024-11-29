@@ -20,7 +20,7 @@ public class Visit {
     private Long id;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "post_id", nullable = false)
+    @JoinColumn(name = "post_id")
     private MatePost post;
 
     @OneToMany(mappedBy = "visit")
@@ -31,7 +31,10 @@ public class Visit {
     @Builder.Default
     private List<MateReview> reviews = new ArrayList<>();
 
-    // 참여자 추가
+    public void detachPost() {
+        this.post = null;
+    }
+
     public void addParticipants(List<Member> members) {
         members.forEach(member -> {
             VisitPart visitPart = VisitPart.builder()

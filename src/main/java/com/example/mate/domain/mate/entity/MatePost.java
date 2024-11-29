@@ -64,7 +64,7 @@ public class MatePost {
     @Column(name = "transport", nullable = false)
     private TransportType transport;
 
-    @OneToOne(mappedBy = "post", cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "post")
     private Visit visit;
 
     // Team 정보 조회
@@ -115,11 +115,9 @@ public class MatePost {
             throw new IllegalStateException("모집완료 상태에서만 직관 완료가 가능합니다.");
         }
 
-        if (this.visit == null) {
-            this.visit = Visit.builder()
-                    .post(this)
-                    .build();
-        }
+        this.visit = Visit.builder()
+                .post(this)
+                .build();
 
         this.status = Status.COMPLETE;
         return this.visit;
