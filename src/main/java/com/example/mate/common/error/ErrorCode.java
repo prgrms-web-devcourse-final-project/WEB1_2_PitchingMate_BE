@@ -33,6 +33,8 @@ public enum ErrorCode {
     ALREADY_UNFOLLOWED_MEMBER(HttpStatus.BAD_REQUEST, "F002", "이미 언팔로우한 회원입니다."),
     FOLLOWER_NOT_FOUND_BY_ID(HttpStatus.NOT_FOUND, "F003", "해당 ID의 팔로워 회원을 찾을 수 없습니다."),
     FOLLOWING_NOT_FOUND_BY_ID(HttpStatus.NOT_FOUND, "F004", "해당 ID의 팔로잉 회원을 찾을 수 없습니다."),
+    UNFOLLOWER_NOT_FOUND_BY_ID(HttpStatus.NOT_FOUND, "F005", "해당 ID의 언팔로워 회원을 찾을 수 없습니다."),
+    UNFOLLOWING_NOT_FOUND_BY_ID(HttpStatus.NOT_FOUND, "F006", "해당 ID의 언팔로잉 회원을 찾을 수 없습니다."),
 
     // Mate Post
     INVALID_MATE_POST_PARTICIPANTS(HttpStatus.BAD_REQUEST, "MP001", "모집 인원은 2명에서 10명 사이여야 합니다."),
