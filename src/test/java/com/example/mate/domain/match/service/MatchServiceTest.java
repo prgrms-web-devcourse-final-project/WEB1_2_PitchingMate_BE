@@ -5,6 +5,7 @@ import com.example.mate.common.error.ErrorCode;
 import com.example.mate.domain.constant.StadiumInfo;
 import com.example.mate.domain.constant.TeamInfo;
 import com.example.mate.domain.match.dto.response.MatchResponse;
+import com.example.mate.domain.match.dto.response.WeeklyMatchesResponse;
 import com.example.mate.domain.match.entity.Match;
 import com.example.mate.domain.match.entity.MatchStatus;
 import com.example.mate.domain.match.repository.MatchRepository;
@@ -15,13 +16,17 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -102,6 +107,127 @@ class MatchServiceTest {
                 MatchStatus.COMPLETED, teamId, MatchStatus.COMPLETED, teamId);
     }
 
+    @Test
+    @DisplayName("팀별 주차별 경기 일정 조회 - 성공")
+    void getTeamWeeklyMatches_Success() {
+        // Given
+        Long teamId = TeamInfo.LG.id;
+        LocalDate queryDate = LocalDate.of(2024, 3, 25); // 월요일
+        LocalDateTime startDateTime = queryDate.atStartOfDay();
+        LocalDateTime endDateTime = queryDate.plusWeeks(4).atTime(LocalTime.MAX);
+
+        List<Match> mockMatches = Arrays.asList(
+                createMatch(teamId, queryDate.plusDays(1)),
+                createMatch(teamId, queryDate.plusDays(8)),
+                createMatch(teamId, queryDate.plusDays(15)),
+                createMatch(teamId, queryDate.plusDays(22))
+        );
+
+        when(matchRepository.findTeamMatchesInPeriod(teamId, startDateTime, endDateTime))
+                .thenReturn(mockMatches);
+
+        // When
+        List<WeeklyMatchesResponse> result = matchService.getTeamWeeklyMatches(teamId, queryDate);
+
+        // Then
+        assertThat(result)
+                .hasSize(4)
+                .satisfies(responses -> {
+                    WeeklyMatchesResponse firstWeek = responses.get(0);
+                    assertThat(firstWeek)
+                            .extracting(
+                                    WeeklyMatchesResponse::getWeekNumber,
+                                    WeeklyMatchesResponse::getWeekLabel,
+                                    r -> r.getMatches().size()
+                            )
+                            .containsExactly(1, "3월 4주차", 1);
+
+                    assertThat(firstWeek.getWeekStartDate())
+                            .isEqualTo(queryDate);
+                    assertThat(firstWeek.getWeekEndDate())
+                            .isEqualTo(queryDate.plusDays(6));
+                });
+
+        verify(matchRepository).findTeamMatchesInPeriod(teamId, startDateTime, endDateTime);
+    }
+
+    @Test
+    @DisplayName("팀별 주차별 경기 일정 조회 - 존재하지 않는 팀")
+    void getTeamWeeklyMatches_TeamNotFound() {
+        // Given
+        Long invalidTeamId = 999L;
+        LocalDate queryDate = LocalDate.now();
+
+        // When & Then
+        assertThatThrownBy(() -> matchService.getTeamWeeklyMatches(invalidTeamId, queryDate))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.TEAM_NOT_FOUND);
+    }
+
+    @Test
+    @DisplayName("팀별 주차별 경기 일정 - 각 주차의 경기가 올바르게 그룹핑되는지 확인")
+    void getTeamWeeklyMatches_CorrectGrouping() {
+        // Given
+        Long teamId = TeamInfo.LG.id;
+        LocalDate queryDate = LocalDate.of(2024, 3, 25); // 월요일
+
+        List<Match> mockMatches = Arrays.asList(
+                createMatch(teamId, queryDate.plusDays(1)),  // 1주차
+                createMatch(teamId, queryDate.plusDays(2)),  // 1주차
+                createMatch(teamId, queryDate.plusDays(8)),  // 2주차
+                createMatch(teamId, queryDate.plusDays(15)), // 3주차
+                createMatch(teamId, queryDate.plusDays(22))  // 4주차
+        );
+
+        when(matchRepository.findTeamMatchesInPeriod(
+                any(Long.class),
+                any(LocalDateTime.class),
+                any(LocalDateTime.class)
+        )).thenReturn(mockMatches);
+
+        // When
+        List<WeeklyMatchesResponse> result = matchService.getTeamWeeklyMatches(teamId, queryDate);
+
+        // Then
+        assertThat(result)
+                .hasSize(4)
+                .satisfies(responses -> {
+                    // 1주차 검증
+                    assertThat(responses.get(0))
+                            .satisfies(week -> {
+                                assertThat(week.getWeekNumber()).isEqualTo(1);
+                                assertThat(week.getMatches()).hasSize(2);
+                                assertThat(week.getMatches())
+                                        .extracting(match -> match.getMatchTime().toLocalDate())
+                                        .containsExactly(
+                                                queryDate.plusDays(1),
+                                                queryDate.plusDays(2)
+                                        );
+                            });
+
+                    // 2주차 검증
+                    assertThat(responses.get(1))
+                            .satisfies(week -> {
+                                assertThat(week.getWeekNumber()).isEqualTo(2);
+                                assertThat(week.getMatches()).hasSize(1);
+                            });
+
+                    // 3주차 검증
+                    assertThat(responses.get(2))
+                            .satisfies(week -> {
+                                assertThat(week.getWeekNumber()).isEqualTo(3);
+                                assertThat(week.getMatches()).hasSize(1);
+                            });
+
+                    // 4주차 검증
+                    assertThat(responses.get(3))
+                            .satisfies(week -> {
+                                assertThat(week.getWeekNumber()).isEqualTo(4);
+                                assertThat(week.getMatches()).hasSize(1);
+                            });
+                });
+    }
+
     private Match createCompletedMatch(Long homeTeamId, Long awayTeamId, Integer homeScore, Integer awayScore) {
         return Match.builder()
                 .homeTeamId(homeTeamId)
@@ -154,5 +280,16 @@ class MatchServiceTest {
                         .status(MatchStatus.SCHEDULED)
                         .build()
         );
+    }
+
+    private Match createMatch(Long teamId, LocalDate matchDate) {
+        return Match.builder()
+                .homeTeamId(teamId)
+                .awayTeamId(TeamInfo.KT.id)  // 테스트용 상대팀
+                .stadiumId(StadiumInfo.JAMSIL.id)  // 테스트용 구장
+                .matchTime(matchDate.atTime(18, 30))  // 테스트용 경기 시간 (저녁 6시 30분)
+                .status(MatchStatus.SCHEDULED)
+                .isCanceled(false)
+                .build();
     }
 }

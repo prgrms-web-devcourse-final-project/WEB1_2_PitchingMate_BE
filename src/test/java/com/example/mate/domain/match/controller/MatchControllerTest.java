@@ -5,10 +5,12 @@ import com.example.mate.domain.constant.StadiumInfo;
 import com.example.mate.domain.constant.TeamInfo;
 import com.example.mate.domain.match.dto.response.MatchResponse;
 
+import com.example.mate.domain.match.dto.response.WeeklyMatchesResponse;
 import com.example.mate.domain.match.entity.Match;
 import com.example.mate.domain.match.entity.MatchStatus;
 import com.example.mate.domain.match.service.MatchService;
 
+import com.example.mate.domain.match.util.WeekCalculator;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,11 +21,16 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import static org.hamcrest.Matchers.hasSize;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -190,5 +197,65 @@ class MatchControllerTest {
                 .andExpect(jsonPath("$.data[0].status").value("COMPLETED"))
                 .andExpect(jsonPath("$.data[0].homeScore").value(5))
                 .andExpect(jsonPath("$.data[1].awayScore").value(7));
+    }
+
+    @Test
+    @DisplayName("팀별 주차별 경기 일정 조회 API 테스트")
+    void getTeamWeeklyMatches() throws Exception {
+        // Given
+        Long teamId = TeamInfo.LG.id;
+        LocalDate startDate = LocalDate.of(2024, 3, 25); // 월요일
+
+        List<WeeklyMatchesResponse> mockResponses = List.of(
+                createWeeklyMatchResponse(1, startDate, 2),            // 1주차 2경기
+                createWeeklyMatchResponse(2, startDate.plusWeeks(1), 1), // 2주차 1경기
+                createWeeklyMatchResponse(3, startDate.plusWeeks(2), 2), // 3주차 2경기
+                createWeeklyMatchResponse(4, startDate.plusWeeks(3), 1)  // 4주차 1경기
+        );
+
+        when(matchService.getTeamWeeklyMatches(eq(teamId), any(LocalDate.class)))
+                .thenReturn(mockResponses);
+
+        // When & Then
+        mockMvc.perform(get("/api/matches/team/{teamId}/weekly", teamId)
+                        .param("startDate", "2024-03-25")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("SUCCESS"))
+                .andExpect(jsonPath("$.data", hasSize(4)))
+                .andExpect(jsonPath("$.data[0].weekNumber").value(1))
+                .andExpect(jsonPath("$.data[0].weekLabel").value("3월 4주차"))
+                .andExpect(jsonPath("$.data[0].matches", hasSize(2)));
+    }
+
+    private Match createMatch(Long teamId, LocalDateTime matchTime) {
+        return Match.builder()
+                .homeTeamId(teamId)
+                .awayTeamId(TeamInfo.KT.id)
+                .stadiumId(StadiumInfo.JAMSIL.id)
+                .matchTime(matchTime)
+                .isCanceled(false)
+                .status(MatchStatus.SCHEDULED)
+                .build();
+    }
+
+    private WeeklyMatchesResponse createWeeklyMatchResponse(int weekNumber, LocalDate weekStart, int matchCount) {
+        List<MatchResponse> matches = new ArrayList<>();
+        for (int i = 0; i < matchCount; i++) {
+            Match match = createMatch(
+                    TeamInfo.LG.id,
+                    weekStart.plusDays(i).atTime(18, 30)
+            );
+            matches.add(MatchResponse.from(match, TeamInfo.LG.id));
+        }
+
+        return WeeklyMatchesResponse.builder()
+                .weekNumber(weekNumber)
+                .weekLabel(WeekCalculator.generateWeekLabel(weekStart))
+                .weekStartDate(weekStart)
+                .weekEndDate(weekStart.plusDays(6))
+                .matches(matches)
+                .build();
     }
 }
