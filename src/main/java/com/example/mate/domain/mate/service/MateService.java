@@ -8,6 +8,7 @@ import com.example.mate.domain.match.entity.Match;
 import com.example.mate.domain.match.repository.MatchRepository;
 import com.example.mate.domain.mate.dto.request.MatePostCreateRequest;
 import com.example.mate.domain.mate.dto.request.MatePostSearchRequest;
+import com.example.mate.domain.mate.dto.request.MatePostStatusRequest;
 import com.example.mate.domain.mate.dto.response.MatePostDetailResponse;
 import com.example.mate.domain.mate.dto.response.MatePostResponse;
 import com.example.mate.domain.mate.dto.response.MatePostSummaryResponse;
@@ -116,13 +117,21 @@ public class MateService {
         return MatePostDetailResponse.from(matePost);
     }
 
+    public MatePostResponse updateMatePostStatus(Long memberId, Long postId, MatePostStatusRequest request) {
+        MatePost matePost = mateRepository.findById(postId)
+                .orElseThrow(() -> new CustomException(MATE_POST_NOT_FOUND_BY_ID));
+
+        matePost.validateAuthor(memberId);
+        matePost.changeStatus(request.getStatus());
+
+        return MatePostResponse.from(matePost);
+    }
+
     public void deleteMatePost(Long memberId, Long postId) {
         MatePost matePost = mateRepository.findById(postId)
                 .orElseThrow(() -> new CustomException(MATE_POST_NOT_FOUND_BY_ID));
 
-        if (!matePost.getAuthor().getId().equals(memberId)) {
-            throw new CustomException(MATE_POST_DELETE_NOT_ALLOWED);
-        }
+        matePost.validateAuthor(memberId);
 
         if (matePost.getStatus() == Status.COMPLETE) {
             matePost.getVisit().detachPost();
