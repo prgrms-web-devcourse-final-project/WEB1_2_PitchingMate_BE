@@ -31,8 +31,9 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -408,7 +409,7 @@ class MateControllerTest {
             // given
             Long nonExistentPostId = 999L;
             given(mateService.getMatePostDetail(nonExistentPostId))
-                    .willThrow(new CustomException(ErrorCode.MATE_POST_NOT_FOUND));
+                    .willThrow(new CustomException(ErrorCode.MATE_POST_NOT_FOUND_BY_ID));
 
             // when & then
             mockMvc.perform(get("/api/mates/{postId}", nonExistentPostId)
@@ -418,6 +419,69 @@ class MateControllerTest {
                     .andExpect(jsonPath("$.status").value("ERROR"))
                     .andExpect(jsonPath("$.message").exists())
                     .andExpect(jsonPath("$.code").value(404));
+        }
+    }
+
+    @Nested
+    @DisplayName("메이트 게시글 삭제")
+    class DeleteMatePost {
+
+        @Test
+        @DisplayName("메이트 게시글 삭제 성공")
+        void deleteMatePost_success() throws Exception {
+            // given
+            Long memberId = 1L;
+            Long postId = 1L;
+
+            // when & then
+            mockMvc.perform(delete("/api/mates/{memberId}/{postId}", memberId, postId)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andDo(print())
+                    .andExpect(status().isNoContent());
+
+            verify(mateService).deleteMatePost(memberId, postId);
+        }
+
+        @Test
+        @DisplayName("메이트 게시글 삭제 실패 - 존재하지 않는 게시글")
+        void deleteMatePost_failPostNotFound() throws Exception {
+            // given
+            Long memberId = 1L;
+            Long nonExistentPostId = 999L;
+
+            doThrow(new CustomException(ErrorCode.MATE_POST_NOT_FOUND_BY_ID))
+                    .when(mateService)
+                    .deleteMatePost(memberId, nonExistentPostId);
+
+            // when & then
+            mockMvc.perform(delete("/api/mates/{memberId}/{postId}", memberId, nonExistentPostId)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andDo(print())
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.status").value("ERROR"))
+                    .andExpect(jsonPath("$.message").exists())
+                    .andExpect(jsonPath("$.code").value(404));
+        }
+
+        @Test
+        @DisplayName("메이트 게시글 삭제 실패 - 삭제 권한 없음")
+        void deleteMatePost_failNotAllowed() throws Exception {
+            // given
+            Long memberId = 2L;  // 작성자가 아닌 다른 사용자
+            Long postId = 1L;
+
+            doThrow(new CustomException(ErrorCode.MATE_POST_DELETE_NOT_ALLOWED))
+                    .when(mateService)
+                    .deleteMatePost(memberId, postId);
+
+            // when & then
+            mockMvc.perform(delete("/api/mates/{memberId}/{postId}", memberId, postId)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andDo(print())
+                    .andExpect(status().isForbidden())
+                    .andExpect(jsonPath("$.status").value("ERROR"))
+                    .andExpect(jsonPath("$.message").exists())
+                    .andExpect(jsonPath("$.code").value(403));
         }
     }
 }
