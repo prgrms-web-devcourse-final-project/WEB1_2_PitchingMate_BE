@@ -2,6 +2,7 @@ package com.example.mate.domain.member.entity;
 
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.constant.TeamInfo;
+import com.example.mate.domain.member.dto.request.JoinRequest;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -10,6 +11,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.time.LocalDate;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -38,8 +40,9 @@ public class Member {
     @Column(name = "email", length = 40, nullable = false, unique = true)
     private String email;
 
+    @Builder.Default
     @Column(name = "image_url", nullable = false)
-    private String imageUrl;
+    private String imageUrl = "/images/default.png"; // TODO : 이미지 기본 경로 설정 필요
 
     @Column(name = "age", nullable = false)
     private Integer age;
@@ -72,5 +75,16 @@ public class Member {
 
     public void changeAboutMe(String aboutMe) {
         this.aboutMe = aboutMe;
+    }
+
+    public static Member from(JoinRequest request) {
+        return Member.builder()
+                .name(request.getName())
+                .nickname(request.getNickname())
+                .email(request.getEmail())
+                .age(LocalDate.now().getYear() - Integer.parseInt(request.getBirthyear()))
+                .gender(Gender.fromCode(request.getGender()))
+                .teamId(request.getTeamId())
+                .build();
     }
 }

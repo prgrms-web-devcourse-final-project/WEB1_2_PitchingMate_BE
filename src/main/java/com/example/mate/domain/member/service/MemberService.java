@@ -4,6 +4,8 @@ import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
 import com.example.mate.domain.goods.entity.Status;
 import com.example.mate.domain.goods.repository.GoodsPostRepository;
+import com.example.mate.domain.member.dto.request.JoinRequest;
+import com.example.mate.domain.member.dto.response.JoinResponse;
 import com.example.mate.domain.member.dto.response.MemberProfileResponse;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.FollowRepository;
@@ -18,6 +20,12 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final FollowRepository followRepository;
     private final GoodsPostRepository goodsPostRepository;
+
+    // 자체 회원가입 기능
+    public JoinResponse join(JoinRequest request) {
+        Member savedMember = memberRepository.save(Member.from(request));
+        return JoinResponse.from(savedMember);
+    }
 
     // 다른 회원 프로필 조회
     public MemberProfileResponse getMemberProfile(Long memberId) {
