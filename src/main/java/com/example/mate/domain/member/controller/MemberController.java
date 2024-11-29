@@ -1,10 +1,15 @@
 package com.example.mate.domain.member.controller;
 
+import com.example.mate.common.response.ApiResponse;
 import com.example.mate.domain.member.dto.request.JoinRequest;
 import com.example.mate.domain.member.dto.request.MemberInfoUpdateRequest;
 import com.example.mate.domain.member.dto.response.JoinResponse;
 import com.example.mate.domain.member.dto.response.MemberProfileResponse;
 import com.example.mate.domain.member.dto.response.MyProfileResponse;
+import com.example.mate.domain.member.service.MemberService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,14 +23,17 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/members")
 public class MemberController {
 
+    private final MemberService memberService;
+
     /*
-    TODO : 2024/11/23 - 소셜 회원가입 후, 자체 회원가입 기능
-    1. JwtToken 을 통해 사용자 정보 조회
-    2. nickname, myTeam 정보 저장
-    */
+        TODO : 2024/11/23 - 소셜 회원가입 후, 자체 회원가입 기능
+        1. JwtToken 을 통해 사용자 정보 조회
+        2. nickname, myTeam 정보 저장
+        */
     @PostMapping("/join")
     public ResponseEntity<JoinResponse> join(
             @RequestBody JoinRequest joinRequest
@@ -65,25 +73,11 @@ public class MemberController {
         return ResponseEntity.ok(myProfileResponse);
     }
 
-    /*
-    TODO : 2024/11/25 - 다른 회원 프로필 조회
-    1. memberId 을 통해 사용자 정보 조회
-    */
+    @Operation(summary = "다른 회원 프로필 조회")
     @GetMapping("/{memberId}")
-    public ResponseEntity<MemberProfileResponse> findMemberInfo(@PathVariable Long memberId) {
-        MemberProfileResponse memberProfileResponse = MemberProfileResponse.builder()
-                .nickname("삼성빠돌이")
-                .imageUrl("default.jpg")
-                .teamName("삼성")
-                .manner(0.3f)
-                .aboutMe("삼성을 사랑하는 삼성빠돌이입니다!")
-                .followingCount(10)
-                .followerCount(20)
-                .reviewsCount(10)
-                .goodsSoldCount(20)
-                .build();
-
-        return ResponseEntity.ok(memberProfileResponse);
+    public ResponseEntity<ApiResponse<MemberProfileResponse>> findMemberInfo(
+            @Parameter(description = "회원 ID") @PathVariable Long memberId) {
+        return ResponseEntity.ok(ApiResponse.success(memberService.getMemberProfile(memberId)));
     }
 
     /*

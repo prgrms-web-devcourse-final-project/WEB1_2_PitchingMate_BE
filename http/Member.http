@@ -1,0 +1,6 @@
+## [Member API]
+
+
+### 다른 회원 프로필 조회
+## TODO : 리뷰 기능 구현 시 리뷰 기록 추가
+GET http://localhost:5173/api/members/1
