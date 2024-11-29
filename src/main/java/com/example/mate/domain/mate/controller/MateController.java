@@ -9,6 +9,7 @@ import com.example.mate.domain.mate.dto.response.MatePostResponse;
 import com.example.mate.domain.mate.dto.response.MatePostSummaryResponse;
 import com.example.mate.domain.mate.dto.response.MateReviewCreateResponse;
 import com.example.mate.domain.mate.entity.Age;
+import com.example.mate.domain.mate.entity.SortType;
 import com.example.mate.domain.mate.entity.Status;
 import com.example.mate.domain.mate.entity.TransportType;
 import com.example.mate.domain.mate.service.MateService;
@@ -44,41 +45,31 @@ public class MateController {
 
     // 메이트 게시글 목록 조회(메인 페이지)
     @GetMapping(value = "/main", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponse<List<MatePostSummaryResponse>>> getMatePostsMain(@RequestParam(required = false) Long teamId) {
-        List<MatePostSummaryResponse> matePostMain = mateService.getMatePostMain(teamId);
+    public ResponseEntity<ApiResponse<List<MatePostSummaryResponse>>> getMainPagePosts(@RequestParam(required = false) Long teamId) {
+        List<MatePostSummaryResponse> matePostMain = mateService.getMainPagePosts(teamId);
         return ResponseEntity.ok(ApiResponse.success(matePostMain));
     }
 
     // 메이트 게시글 목록 조회(메이트 페이지)
-    // 필터링 검색을 위한 동적 쿼리 적용 필요
-    @GetMapping
-    public ResponseEntity<PageResponse<MatePostSummaryResponse>> getMatePosts(@RequestParam Long teamId,
-                                                                              @PageableDefault(size = 10) Pageable pageable,
-                                                                              @ModelAttribute MatePostSearchRequest searchRequest) {
-        List<MatePostSummaryResponse> posts = List.of(
-                MatePostSummaryResponse.builder()
-                        .imageUrl("imageUrl")
-                        .title("12월 경기 메이트 찾아요")
-                        .status(Status.OPEN)
-                        .rivalTeamName("삼성")
-                        .rivalMatchTime(LocalDateTime.now())
-                        .maxParticipants(10)
-                        .age(Age.TWENTIES)
-                        .gender(Gender.MALE)
-                        .transportType(TransportType.PUBLIC)
-                        .build()
-        );
-
-        PageResponse<MatePostSummaryResponse> pageResponse = PageResponse.<MatePostSummaryResponse>builder()
-                .content(posts)
-                .totalPages(5)          // 총 페이지 수
-                .totalElements(42L)     // 총 게시글 수
-                .hasNext(true)          // 다음 페이지 존재 여부
-                .pageNumber(0)          // 현재 페이지 번호 (0부터 시작)
-                .pageSize(10)           // 페이지 크기
+    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponse<PageResponse<MatePostSummaryResponse>>> getMatePagePosts(@RequestParam(required = false) Long teamId,
+                                                                                               @RequestParam(required = false) String sortType,
+                                                                                               @RequestParam(required = false) String age,
+                                                                                               @RequestParam(required = false) String gender,
+                                                                                               @RequestParam(required = false) Integer maxParticipants,
+                                                                                               @RequestParam(required = false) String transportType,
+                                                                                               @PageableDefault(size = 10) Pageable pageable) {
+        MatePostSearchRequest request = MatePostSearchRequest.builder()
+                .teamId(teamId)
+                .sortType(sortType != null ? SortType.from(sortType) : null)
+                .age(age != null ? Age.from(age) : null)
+                .gender(gender != null ? Gender.from(gender) : null)
+                .maxParticipants(maxParticipants)
+                .transportType(transportType != null ? TransportType.from(transportType) : null)
                 .build();
 
-        return ResponseEntity.ok(pageResponse);
+        PageResponse<MatePostSummaryResponse> response = mateService.getMatePagePosts(request, pageable);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     // 메이트 게시글 상세 조회
