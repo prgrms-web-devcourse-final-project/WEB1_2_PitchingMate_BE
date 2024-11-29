@@ -26,7 +26,8 @@ public enum ErrorCode {
     MATCH_NOT_FOUND_BY_ID(HttpStatus.NOT_FOUND, "MATCH_001", "해당 ID의 경기 정보를 찾을 수 없습니다."),
 
     // Member
-    MEMBER_NOT_FOUND_BY_ID(HttpStatus.NOT_FOUND, "M001", "해당 ID의 회원 정보를 찾을 수 없습니다"),
+    MEMBER_NOT_FOUND_BY_ID(HttpStatus.NOT_FOUND, "M001", "해당 ID의 회원 정보를 찾을 수 없습니다."),
+    MEMBER_NOT_FOUND_BY_EMAIL(HttpStatus.NOT_FOUND, "M002", "해당 이메일의 회원 정보를 찾을 수 없습니다."),
 
     // Follow
     ALREADY_FOLLOWED_MEMBER(HttpStatus.BAD_REQUEST, "F001", "이미 팔로우한 회원입니다."),

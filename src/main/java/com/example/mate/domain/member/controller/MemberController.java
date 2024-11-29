@@ -1,8 +1,11 @@
 package com.example.mate.domain.member.controller;
 
+import com.example.mate.common.jwt.JwtToken;
 import com.example.mate.common.response.ApiResponse;
+import com.example.mate.common.security.auth.CustomUserPrincipal;
 import com.example.mate.domain.member.dto.request.JoinRequest;
 import com.example.mate.domain.member.dto.request.MemberInfoUpdateRequest;
+import com.example.mate.domain.member.dto.request.MemberLoginRequest;
 import com.example.mate.domain.member.dto.response.JoinResponse;
 import com.example.mate.domain.member.dto.response.MemberProfileResponse;
 import com.example.mate.domain.member.dto.response.MyProfileResponse;
@@ -10,8 +13,10 @@ import com.example.mate.domain.member.service.MemberService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,10 +37,10 @@ public class MemberController {
     private final MemberService memberService;
 
     /*
-        TODO : 2024/11/23 - 소셜 회원가입 후, 자체 회원가입 기능
-        1. JwtToken 을 통해 사용자 정보 조회
-        2. nickname, myTeam 정보 저장
-        */
+    TODO : 2024/11/23 - 소셜 회원가입 후, 자체 회원가입 기능
+    1. JwtToken 을 통해 사용자 정보 조회
+    2. nickname, myTeam 정보 저장
+    */
     @PostMapping("/join")
     public ResponseEntity<JoinResponse> join(
             @RequestBody JoinRequest joinRequest
@@ -50,6 +55,19 @@ public class MemberController {
                 .build();
 
         return ResponseEntity.ok(joinResponse);
+    }
+
+    /*
+    CATCH Mi 서비스 로그인
+    소셜 로그인 후, 받아온 이메일을 통해 로그인 처리
+     */
+    @Operation(summary = "CATCH Mi 서비스 로그인", description = "캐치미 서비스에 로그인합니다.")
+    @PostMapping("/login")
+    public ResponseEntity<ApiResponse<JwtToken>> catchMiLogin(
+            @Parameter(description = "회원 로그인 요청 정보", required = true) @Valid @RequestBody MemberLoginRequest request
+    ) {
+        JwtToken token = memberService.loginByEmail(request);
+        return ResponseEntity.ok(ApiResponse.success(token));
     }
 
     /*
@@ -120,5 +138,11 @@ public class MemberController {
     @DeleteMapping("/me")
     public ResponseEntity<Void> deleteMember() {
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/test")
+    public String test(@AuthenticationPrincipal CustomUserPrincipal principal) {
+        return "principal getName == " + principal.getName() + " || " + "principal getMemberId == "
+                + principal.getMemberId();
     }
 }

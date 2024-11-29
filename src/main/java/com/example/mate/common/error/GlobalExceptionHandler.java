@@ -26,7 +26,8 @@ public class GlobalExceptionHandler {
 
     // MethodArgumentNotValidException 처리
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    protected ResponseEntity<ApiResponse<Void>> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+    protected ResponseEntity<ApiResponse<Void>> handleMethodArgumentNotValidException(
+            MethodArgumentNotValidException e) {
         // 유효성 검증 실패한 필드와 메시지 추출
         List<String> validationErrors = e.getBindingResult().getFieldErrors().stream()
                 .map(fieldError -> String.format("%s: %s", fieldError.getField(), fieldError.getDefaultMessage()))
@@ -44,6 +45,19 @@ public class GlobalExceptionHandler {
                 .badRequest()
                 .body(ApiResponse.error(
                         errorMessage,
+                        HttpStatus.BAD_REQUEST.value()
+                ));
+    }
+
+    // IllegalArgumentException 처리
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiResponse<Void>> handleIllegalArgumentException(IllegalArgumentException e) {
+        log.error("IllegalArgumentException: {}", e.getMessage());
+
+        return ResponseEntity
+                .badRequest()
+                .body(ApiResponse.error(
+                        e.getMessage(),
                         HttpStatus.BAD_REQUEST.value()
                 ));
     }
