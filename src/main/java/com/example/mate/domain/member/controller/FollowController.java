@@ -42,14 +42,15 @@ public class FollowController {
     }
 
     /*
-    TODO : 2024/11/23 - 회원 언팔로우 기능
-    1. JwtToken 을 통해 사용자 정보 조회
-    2. 팔로우 여부 확인
-    3. memberId 회원 유효성 검사
-    4. 언팔로우 처리
+    TODO : 2024/11/29 - 회원 언팔로우 기능
+    1. JwtToken 을 통해 사용자 정보 조회 - 현재는 임시로 @RequestParam 사용
     */
+    @Operation(summary = "회원 언팔로우 기능")
     @DeleteMapping("/follow/{memberId}")
-    public ResponseEntity<Void> unfollowMember(@PathVariable Long memberId) {
+    public ResponseEntity<Void> unfollowMember(
+            @Parameter(description = "언팔로우할 회원 ID") @PathVariable Long memberId,
+            @Parameter(description = "언팔로우하는 회원 ID") @RequestParam Long unfollowerId) {
+        followService.unfollow(unfollowerId, memberId);
         return ResponseEntity.noContent().build();
     }
 
