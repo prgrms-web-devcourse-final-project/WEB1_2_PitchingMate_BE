@@ -75,6 +75,14 @@ public class GoodsService {
         goodsPostRepository.delete(goodsPost);
     }
 
+    @Transactional(readOnly = true)
+    public GoodsPostResponse getGoodsPost(Long goodsPostId) {
+        GoodsPost goodsPost = goodsPostRepository.findById(goodsPostId).orElseThrow(()
+                -> new CustomException(ErrorCode.GOODS_NOT_FOUND_BY_ID));
+
+        return GoodsPostResponse.of(goodsPost);
+    }
+
     private Member getSellerAndValidate(Long memberId) {
         return memberRepository.findById(memberId).orElseThrow(()
                 -> new CustomException(ErrorCode.MEMBER_NOT_FOUND_BY_ID));
