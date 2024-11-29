@@ -166,7 +166,7 @@ class FollowServiceTest {
         verify(memberRepository, times(1)).findById(unfollowerId);
         verify(memberRepository, times(1)).findById(unfollowingId);
         verify(followRepository, times(1)).existsByFollowerIdAndFollowingId(unfollowerId, unfollowingId);
-        verify(followRepository, times(1)).deleteByFollower_IdAndFollowing_Id(unfollowerId, unfollowingId);
+        verify(followRepository, times(1)).deleteByFollowerIdAndFollowingId(unfollowerId, unfollowingId);
     }
 
     @Test
@@ -190,7 +190,7 @@ class FollowServiceTest {
 
         verify(memberRepository, times(1)).findById(unfollowerId);
         verify(memberRepository, times(1)).findById(unfollowingId);
-        verify(followRepository, never()).deleteByFollower_IdAndFollowing_Id(any(), any());
+        verify(followRepository, never()).deleteByFollowerIdAndFollowingId(any(), any());
     }
 
     @Test
@@ -213,6 +213,6 @@ class FollowServiceTest {
         verify(memberRepository, times(1)).findById(unfollowerId);
         verify(memberRepository, never()).findById(unfollowingId);
         verify(followRepository, never()).existsByFollowerIdAndFollowingId(any(), any());
-        verify(followRepository, never()).deleteByFollower_IdAndFollowing_Id(any(), any());
+        verify(followRepository, never()).deleteByFollowerIdAndFollowingId(any(), any());
     }
 }

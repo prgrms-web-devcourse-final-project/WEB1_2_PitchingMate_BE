@@ -33,7 +33,7 @@ public class FollowService {
     public void unfollow(Long unfollowerId, Long unfollowingId) {
         Map<String, Member> members = isValidMemberUnfollow(unfollowerId, unfollowingId);
         if (followRepository.existsByFollowerIdAndFollowingId(unfollowerId, unfollowingId)) {
-            followRepository.deleteByFollower_IdAndFollowing_Id(unfollowerId, unfollowingId);
+            followRepository.deleteByFollowerIdAndFollowingId(unfollowerId, unfollowingId);
         } else {
             throw new CustomException(ErrorCode.ALREADY_UNFOLLOWED_MEMBER);
         }

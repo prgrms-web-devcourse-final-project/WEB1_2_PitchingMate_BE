@@ -19,5 +19,5 @@ public interface FollowRepository extends JpaRepository<Follow, Long> {
     // 특정 회원에 대한 팔로잉 여부 판단
     boolean existsByFollowerIdAndFollowingId(Long followerId, Long followingId);
 
-    void deleteByFollower_IdAndFollowing_Id(Long followerId, Long followingId);
+    void deleteByFollowerIdAndFollowingId(Long followerId, Long followingId);
 }
