@@ -81,7 +81,7 @@ public class MateController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    // 메이트 게시글 상태 변경
+    // 메이트 게시글 모집 상태 변경(모집중, 모집완료)
     @PatchMapping("/{postId}/status")
     public ResponseEntity<MatePostResponse> updateMatePostStatus(
             @PathVariable Long postId,
@@ -90,9 +90,11 @@ public class MateController {
         return ResponseEntity.ok(MatePostResponse.builder().id(1L).status(Status.CLOSED).build());
     }
 
+    // TODO: @PathVariable Long memberId -> @AuthenticationPrincipal 로 변경
     // 메이트 게시글 삭제
-    @DeleteMapping("/{postId}")
-    public ResponseEntity<Void> deleteMatePost(@PathVariable Long postId) {
+    @DeleteMapping("/{memberId}/{postId}")
+    public ResponseEntity<Void> deleteMatePost(@PathVariable Long memberId, @PathVariable Long postId) {
+        mateService.deleteMatePost(memberId, postId);
         return ResponseEntity.noContent().build();
     }
 
