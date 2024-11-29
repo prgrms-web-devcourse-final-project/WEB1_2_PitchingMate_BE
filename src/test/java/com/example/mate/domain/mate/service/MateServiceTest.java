@@ -59,6 +59,7 @@ class MateServiceTest {
 
     private Member createTestMember() {
         return Member.builder()
+                .id(TEST_MEMBER_ID)
                 .name("테스트유저")
                 .email("test@test.com")
                 .nickname("테스트계정")
@@ -581,9 +582,116 @@ class MateServiceTest {
             // when & then
             assertThatThrownBy(() -> mateService.getMatePostDetail(POST_ID))
                     .isInstanceOf(CustomException.class)
-                    .hasFieldOrPropertyWithValue("errorCode", MATE_POST_NOT_FOUND);
+                    .hasFieldOrPropertyWithValue("errorCode", MATE_POST_NOT_FOUND_BY_ID);
 
             verify(mateRepository).findById(POST_ID);
+        }
+    }
+
+    @Nested
+    @DisplayName("메이트 게시글 삭제")
+    class DeleteMatePost {
+        private static final Long POST_ID = 1L;
+
+        @Test
+        @DisplayName("메이트 게시글 삭제 성공")
+        void deleteMatePost_Success() {
+            // given
+            Member testMember = createTestMember();
+            Match testMatch = createTestMatch();
+
+            MatePost matePost = MatePost.builder()
+                    .id(POST_ID)
+                    .author(testMember)
+                    .teamId(1L)
+                    .match(testMatch)
+                    .title("테스트 제목")
+                    .content("테스트 내용")
+                    .status(Status.OPEN)
+                    .maxParticipants(4)
+                    .age(Age.TWENTIES)
+                    .gender(Gender.ANY)
+                    .transport(TransportType.PUBLIC)
+                    .build();
+
+            given(mateRepository.findById(POST_ID))
+                    .willReturn(Optional.of(matePost));
+
+            // when
+            mateService.deleteMatePost(TEST_MEMBER_ID, POST_ID);
+
+            // then
+            verify(mateRepository).findById(POST_ID);
+            verify(mateRepository).delete(matePost);
+        }
+
+        @Test
+        @DisplayName("직관 완료된 메이트 게시글 삭제 성공")
+        void deleteMatePost_SuccessWithCompletedPost() {
+            // given
+            Member testMember = createTestMember();
+            Match testMatch = createTestMatch();
+            Visit visit = Visit.builder().build();
+
+            MatePost matePost = MatePost.builder()
+                    .id(POST_ID)
+                    .author(testMember)
+                    .teamId(1L)
+                    .match(testMatch)
+                    .title("테스트 제목")
+                    .content("테스트 내용")
+                    .status(Status.COMPLETE)
+                    .maxParticipants(4)
+                    .age(Age.TWENTIES)
+                    .gender(Gender.ANY)
+                    .transport(TransportType.PUBLIC)
+                    .visit(visit)
+                    .build();
+
+            given(mateRepository.findById(POST_ID))
+                    .willReturn(Optional.of(matePost));
+
+            // when
+            mateService.deleteMatePost(TEST_MEMBER_ID, POST_ID);
+
+            // then
+            verify(mateRepository).findById(POST_ID);
+            verify(mateRepository).delete(matePost);
+            assertThat(visit.getPost()).isNull();
+        }
+
+        @Test
+        @DisplayName("메이트 게시글 삭제 실패 - 작성자가 아닌 경우")
+        void deleteMatePost_FailWithNotAuthor() {
+            // given
+            Member testMember = createTestMember();
+            Match testMatch = createTestMatch();
+
+            MatePost matePost = MatePost.builder()
+                    .id(POST_ID)
+                    .author(testMember)
+                    .teamId(1L)
+                    .match(testMatch)
+                    .title("테스트 제목")
+                    .content("테스트 내용")
+                    .status(Status.OPEN)
+                    .maxParticipants(4)
+                    .age(Age.TWENTIES)
+                    .gender(Gender.ANY)
+                    .transport(TransportType.PUBLIC)
+                    .build();
+
+            Long differentMemberId = 999L;
+            given(mateRepository.findById(POST_ID))
+                    .willReturn(Optional.of(matePost));
+
+            // when & then
+            assertThatThrownBy(() -> mateService.deleteMatePost(differentMemberId, POST_ID))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", MATE_POST_DELETE_NOT_ALLOWED);
+
+            verify(mateRepository).findById(POST_ID);
+            verify(mateRepository, never()).delete(any(MatePost.class));
         }
     }
 }
