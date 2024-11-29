@@ -1,8 +1,8 @@
 ### [Match API] ###
 ####################
 
-### 1. 전체 경기 조회 ###
-### 메인 배너용 경기 조회 (5개) (상단 배너)
+### 전체 경기 조회 ###
+### 메인 배너용 경기 조회(5개) (상단 배너)
 GET http://localhost:8000/api/matches/main
 Content-Type: application/json
 
@@ -14,6 +14,14 @@ Content-Type: application/json
 ### KIA 팀 완료된 경기 전적 조회
 GET http://localhost:8000/api/matches/team/1/completed
 Content-Type: application/json
+
+### 팀별 주차별 경기 일정 조회 (KIA) - 날짜 지정
+GET http://localhost:8000/api/matches/team/1/weekly?startDate=2024-11-15
+Accept: application/json
+
+### 팀별 주차별 경기 일정 조회 (KIA) - 오늘 날짜 기준
+GET http://localhost:8000/api/matches/team/1/weekly
+Accept: application/json
 
 ### [Team API] ###
 #################
