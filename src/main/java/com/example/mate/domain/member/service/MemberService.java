@@ -6,6 +6,7 @@ import com.example.mate.domain.goods.entity.Status;
 import com.example.mate.domain.goods.repository.GoodsPostRepository;
 import com.example.mate.domain.member.dto.response.MemberProfileResponse;
 import com.example.mate.domain.member.entity.Member;
+import com.example.mate.domain.member.repository.FollowRepository;
 import com.example.mate.domain.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -15,14 +16,14 @@ import org.springframework.stereotype.Service;
 public class MemberService {
 
     private final MemberRepository memberRepository;
-    private final FollowService followService;
+    private final FollowRepository followRepository;
     private final GoodsPostRepository goodsPostRepository;
 
     // 다른 회원 프로필 조회
     public MemberProfileResponse getMemberProfile(Long memberId) {
         Member member = findByMemberId(memberId);
-        int followCount = followService.getFollowCount(memberId);
-        int followerCount = followService.getFollowerCount(memberId);
+        int followCount = followRepository.countByFollowerId(memberId);
+        int followerCount = followRepository.countByFollowingId(memberId);
         int goodsSoldCount = goodsPostRepository.countGoodsPostsBySellerIdAndStatus(memberId, Status.CLOSED);
         return MemberProfileResponse.of(member, followCount, followerCount, goodsSoldCount);
     }

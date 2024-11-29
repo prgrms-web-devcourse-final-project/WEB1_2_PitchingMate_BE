@@ -11,6 +11,7 @@ import com.example.mate.domain.goods.entity.Status;
 import com.example.mate.domain.goods.repository.GoodsPostRepository;
 import com.example.mate.domain.member.dto.response.MemberProfileResponse;
 import com.example.mate.domain.member.entity.Member;
+import com.example.mate.domain.member.repository.FollowRepository;
 import com.example.mate.domain.member.repository.MemberRepository;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,7 +35,7 @@ class MemberServiceTest {
     private GoodsPostRepository goodsPostRepository;
 
     @Mock
-    private FollowService followService;
+    private FollowRepository followRepository;
 
     private Member member;
     private GoodsPost goodsPost;
@@ -73,8 +74,8 @@ class MemberServiceTest {
         int goodsSoldCount = 1;
 
         given(memberRepository.findById(memberId)).willReturn(java.util.Optional.of(member));
-        given(followService.getFollowCount(memberId)).willReturn(followCount);
-        given(followService.getFollowerCount(memberId)).willReturn(followerCount);
+        given(followRepository.countByFollowerId(memberId)).willReturn(followCount);
+        given(followRepository.countByFollowingId(memberId)).willReturn(followerCount);
         given(goodsPostRepository.countGoodsPostsBySellerIdAndStatus(memberId, Status.CLOSED)).
                 willReturn(goodsSoldCount);
 
