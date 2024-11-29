@@ -62,7 +62,10 @@ public enum ErrorCode {
     INVALID_GENDER_VALUE(HttpStatus.BAD_REQUEST, "GENDER001", "유효하지 않은 성별 값입니다."),
 
     // TransportType
-    INVALID_TRANSPORT_TYPE_VALUE(HttpStatus.BAD_REQUEST, "TRANSPORT001", "유효하지 않은 교통 수단 값입니다.");
+    INVALID_TRANSPORT_TYPE_VALUE(HttpStatus.BAD_REQUEST, "TRANSPORT001", "유효하지 않은 교통 수단 값입니다."),
+
+    // SortType
+    INVALID_SORT_TYPE_VALUE(HttpStatus.BAD_REQUEST, "ST001", "유효하지 않은 정렬 기준 값입니다.");
 
     private final HttpStatus status;
     private final String code;

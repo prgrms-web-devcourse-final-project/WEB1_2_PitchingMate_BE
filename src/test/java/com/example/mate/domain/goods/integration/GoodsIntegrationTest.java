@@ -2,6 +2,7 @@ package com.example.mate.domain.goods.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -42,11 +43,16 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class GoodsIntegrationTest {
 
-    @Autowired private MockMvc mockMvc;
-    @Autowired private MemberRepository memberRepository;
-    @Autowired private GoodsPostRepository goodsPostRepository;
-    @Autowired private GoodsPostImageRepository imageRepository;
-    @Autowired private ObjectMapper objectMapper;
+    @Autowired
+    private MockMvc mockMvc;
+    @Autowired
+    private MemberRepository memberRepository;
+    @Autowired
+    private GoodsPostRepository goodsPostRepository;
+    @Autowired
+    private GoodsPostImageRepository imageRepository;
+    @Autowired
+    private ObjectMapper objectMapper;
 
     private Member member;
 
@@ -64,7 +70,8 @@ public class GoodsIntegrationTest {
         // given
         Long memberId = member.getId();
         LocationInfo locationInfo = createLocationInfo();
-        GoodsPostRequest goodsPostRequest = new GoodsPostRequest(1L, "title", Category.ACCESSORY, 10_000, "content", locationInfo);
+        GoodsPostRequest goodsPostRequest = new GoodsPostRequest(1L, "title", Category.ACCESSORY, 10_000, "content",
+                locationInfo);
         List<MockMultipartFile> files = List.of(createFile(), createFile());
 
         MockMultipartFile data = new MockMultipartFile(
@@ -74,7 +81,8 @@ public class GoodsIntegrationTest {
         );
 
         // when
-        MockMultipartHttpServletRequestBuilder multipartRequest = multipart("/api/goods/{memberId}", memberId).file(data);
+        MockMultipartHttpServletRequestBuilder multipartRequest = multipart("/api/goods/{memberId}", memberId).file(
+                data);
         files.forEach(multipartRequest::file);
 
         MockHttpServletResponse result = mockMvc.perform(multipartRequest)
@@ -83,7 +91,9 @@ public class GoodsIntegrationTest {
                 .andReturn().getResponse();
         result.setCharacterEncoding("UTF-8");
 
-        ApiResponse<GoodsPostResponse> apiResponse = objectMapper.readValue(result.getContentAsString(), new TypeReference<>() {});
+        ApiResponse<GoodsPostResponse> apiResponse = objectMapper.readValue(result.getContentAsString(),
+                new TypeReference<>() {
+                });
 
         // then
         assertApiResponse(apiResponse, goodsPostRequest, files);
@@ -97,7 +107,8 @@ public class GoodsIntegrationTest {
         Long memberId = member.getId();
         Long goodsPostId = goodsPost.getId();
         LocationInfo locationInfo = createLocationInfo();
-        GoodsPostRequest goodsPostRequest = new GoodsPostRequest(1L, "update tile", Category.CAP, 10_000, "update content", locationInfo);
+        GoodsPostRequest goodsPostRequest = new GoodsPostRequest(1L, "update tile", Category.CAP, 10_000,
+                "update content", locationInfo);
         List<MockMultipartFile> files = List.of(createFile(), createFile(), createFile());
 
         MockMultipartFile data = new MockMultipartFile(
@@ -122,7 +133,8 @@ public class GoodsIntegrationTest {
         result.setCharacterEncoding("UTF-8");
 
         ApiResponse<GoodsPostResponse> apiResponse = objectMapper.readValue(result.getContentAsString(),
-                new TypeReference<>() {});
+                new TypeReference<>() {
+                });
 
         // then
         assertApiResponse(apiResponse, goodsPostRequest, files);
@@ -149,8 +161,46 @@ public class GoodsIntegrationTest {
         assertThat(imageUrls).isEmpty();
     }
 
+    @Test
+    @DisplayName("굿즈거래 판매글 상세 조회 통합 테스트")
+    void get_goods_post_integration_test() throws Exception {
+        // given
+        Long goodsPostId = goodsPost.getId();
+
+        // when
+        MockHttpServletResponse result = mockMvc.perform(get("/api/goods/{goodsPostId}", goodsPostId))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse();
+        result.setCharacterEncoding("UTF-8");
+
+        ApiResponse<GoodsPostResponse> apiResponse = objectMapper.readValue(result.getContentAsString(),
+                new TypeReference<>() {
+                });
+
+        // then
+        assertThat(apiResponse.getCode()).isEqualTo(200);
+        assertThat(apiResponse.getStatus()).isEqualTo("SUCCESS");
+
+        GoodsPostResponse response = apiResponse.getData();
+        assertThat(response).isNotNull();
+        assertThat(response.getId()).isEqualTo(goodsPostId);
+        assertThat(response.getTitle()).isEqualTo(goodsPost.getTitle());
+        assertThat(response.getContent()).isEqualTo(goodsPost.getContent());
+        assertThat(response.getPrice()).isEqualTo(goodsPost.getPrice());
+        assertThat(response.getCategory()).isEqualTo(goodsPost.getCategory().getValue());
+        assertThat(response.getLocation().getPlaceName()).isEqualTo(goodsPost.getLocation().getPlaceName());
+
+        MemberInfo seller = response.getSeller();
+        assertThat(seller.getMemberId()).isEqualTo(member.getId());
+        assertThat(seller.getNickname()).isEqualTo(member.getNickname());
+        assertThat(seller.getManner()).isEqualTo(member.getManner());
+    }
+
     // ApiResponse 검증
-    private void assertApiResponse(ApiResponse<GoodsPostResponse> apiResponse, GoodsPostRequest expected, List<MockMultipartFile> files) {
+    private void assertApiResponse(ApiResponse<GoodsPostResponse> apiResponse, GoodsPostRequest expected,
+                                   List<MockMultipartFile> files) {
         assertThat(apiResponse.getCode()).isEqualTo(200);
         assertThat(apiResponse.getStatus()).isEqualTo("SUCCESS");
 
