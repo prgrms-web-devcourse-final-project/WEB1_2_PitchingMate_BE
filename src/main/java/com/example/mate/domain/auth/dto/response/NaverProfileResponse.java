@@ -10,7 +10,7 @@ import lombok.Getter;
 public class NaverProfileResponse {
 
     private String name;
-    private String nickname;
+    //    private String nickname;  // 사용자 입력 nickname과 겹쳐 삭제 필요
     private String email;
     private String gender;
     private String birthyear;
@@ -21,7 +21,7 @@ public class NaverProfileResponse {
 
         return NaverProfileResponse.builder()
                 .name(element.getAsJsonObject().get("response").getAsJsonObject().get("name").getAsString())
-                .nickname(element.getAsJsonObject().get("response").getAsJsonObject().get("nickname").getAsString())
+//                .nickname(element.getAsJsonObject().get("response").getAsJsonObject().get("nickname").getAsString())
                 .email(element.getAsJsonObject().get("response").getAsJsonObject().get("email").getAsString())
                 .gender(element.getAsJsonObject().get("response").getAsJsonObject().get("gender").getAsString())
                 .birthyear(element.getAsJsonObject().get("response").getAsJsonObject().get("birthyear").getAsString())
