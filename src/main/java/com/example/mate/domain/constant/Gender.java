@@ -28,4 +28,13 @@ public enum Gender {
         }
         throw new CustomException(ErrorCode.INVALID_GENDER_VALUE);
     }
+
+    // M 또는 F를 기반으로 Gender를 반환하는 메서드 추가
+    public static Gender fromCode(String code) {
+        return switch (code.toUpperCase()) {
+            case "M" -> MALE;
+            case "F" -> FEMALE;
+            default -> throw new CustomException(ErrorCode.INVALID_GENDER_VALUE);
+        };
+    }
 }
