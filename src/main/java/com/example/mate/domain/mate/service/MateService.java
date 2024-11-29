@@ -111,8 +111,23 @@ public class MateService {
 
     public MatePostDetailResponse getMatePostDetail(Long postId) {
         MatePost matePost = mateRepository.findById(postId)
-                .orElseThrow(() -> new CustomException(MATE_POST_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(MATE_POST_NOT_FOUND_BY_ID));
 
         return MatePostDetailResponse.from(matePost);
+    }
+
+    public void deleteMatePost(Long memberId, Long postId) {
+        MatePost matePost = mateRepository.findById(postId)
+                .orElseThrow(() -> new CustomException(MATE_POST_NOT_FOUND_BY_ID));
+
+        if (!matePost.getAuthor().getId().equals(memberId)) {
+            throw new CustomException(MATE_POST_DELETE_NOT_ALLOWED);
+        }
+
+        if (matePost.getStatus() == Status.COMPLETE) {
+            matePost.getVisit().detachPost();
+        }
+
+        mateRepository.delete(matePost);
     }
 }
