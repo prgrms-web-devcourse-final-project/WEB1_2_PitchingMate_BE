@@ -5,6 +5,7 @@ import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.match.entity.Match;
 import com.example.mate.domain.match.repository.MatchRepository;
 import com.example.mate.domain.mate.dto.request.MatePostCreateRequest;
+import com.example.mate.domain.mate.dto.request.MatePostStatusRequest;
 import com.example.mate.domain.mate.entity.*;
 import com.example.mate.domain.mate.repository.MateRepository;
 import com.example.mate.domain.member.entity.Member;
@@ -166,7 +167,7 @@ public class MateIntegrationTest {
                             .file(data))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.status").value("SUCCESS"))
-                    .andExpect(jsonPath("$.data.status").value("OPEN"))
+                    .andExpect(jsonPath("$.data.status").value("모집중"))
                     .andExpect(jsonPath("$.code").value(200))
                     .andDo(print());
 
@@ -256,7 +257,7 @@ public class MateIntegrationTest {
                     .andExpect(jsonPath("$.data.length()").value(2))
                     // 첫 번째 게시글 (OPEN) 검증
                     .andExpect(jsonPath("$.data[0].title").value("테스트 제목"))
-                    .andExpect(jsonPath("$.data[0].status").value("OPEN"))
+                    .andExpect(jsonPath("$.data[0].status").value("모집중"))
                     .andExpect(jsonPath("$.data[0].maxParticipants").value(4))
                     .andExpect(jsonPath("$.data[0].age").value("20대"))
                     .andExpect(jsonPath("$.data[0].gender").value("여자"))
@@ -265,7 +266,7 @@ public class MateIntegrationTest {
                     .andExpect(jsonPath("$.data[0].location").value("광주-기아 챔피언스 필드"))
                     // 두 번째 게시글 (CLOSED) 검증
                     .andExpect(jsonPath("$.data[1].title").value("테스트 제목"))
-                    .andExpect(jsonPath("$.data[1].status").value("CLOSED"))
+                    .andExpect(jsonPath("$.data[1].status").value("모집완료"))
                     .andExpect(jsonPath("$.data[1].maxParticipants").value(4))
                     .andExpect(jsonPath("$.data[1].age").value("20대"))
                     .andExpect(jsonPath("$.data[1].gender").value("여자"))
@@ -288,7 +289,7 @@ public class MateIntegrationTest {
                     .andExpect(jsonPath("$.data.length()").value(2))
                     // 첫 번째 게시글 (OPEN) 검증
                     .andExpect(jsonPath("$.data[0].title").value("테스트 제목"))
-                    .andExpect(jsonPath("$.data[0].status").value("OPEN"))
+                    .andExpect(jsonPath("$.data[0].status").value("모집중"))
                     .andExpect(jsonPath("$.data[0].maxParticipants").value(4))
                     .andExpect(jsonPath("$.data[0].age").value("20대"))
                     .andExpect(jsonPath("$.data[0].gender").value("여자"))
@@ -297,7 +298,7 @@ public class MateIntegrationTest {
                     .andExpect(jsonPath("$.data[0].location").value("광주-기아 챔피언스 필드"))
                     // 두 번째 게시글 (CLOSED) 검증
                     .andExpect(jsonPath("$.data[1].title").value("테스트 제목"))
-                    .andExpect(jsonPath("$.data[1].status").value("CLOSED"))
+                    .andExpect(jsonPath("$.data[1].status").value("모집완료"))
                     .andExpect(jsonPath("$.data[1].maxParticipants").value(4))
                     .andExpect(jsonPath("$.data[1].age").value("20대"))
                     .andExpect(jsonPath("$.data[1].gender").value("여자"))
@@ -317,8 +318,8 @@ public class MateIntegrationTest {
                     .andExpect(jsonPath("$.status").value("SUCCESS"))
                     .andExpect(jsonPath("$.data").isArray())
                     .andExpect(jsonPath("$.data.length()").value(2))
-                    .andExpect(jsonPath("$.data[0].status").value("OPEN"))
-                    .andExpect(jsonPath("$.data[1].status").value("CLOSED"))
+                    .andExpect(jsonPath("$.data[0].status").value("모집중"))
+                    .andExpect(jsonPath("$.data[1].status").value("모집완료"))
                     .andDo(print());
 
             // DB 검증
@@ -480,7 +481,7 @@ public class MateIntegrationTest {
                     .andExpect(jsonPath("$.data.postId").value(openPost.getId()))
                     .andExpect(jsonPath("$.data.title").value("테스트 제목"))
                     .andExpect(jsonPath("$.data.content").value("테스트 내용"))
-                    .andExpect(jsonPath("$.data.status").value("OPEN"))
+                    .andExpect(jsonPath("$.data.status").value("모집중"))
                     .andExpect(jsonPath("$.data.maxParticipants").value(4))
                     .andExpect(jsonPath("$.data.age").value("20대"))
                     .andExpect(jsonPath("$.data.gender").value("여자"))
@@ -513,19 +514,19 @@ public class MateIntegrationTest {
             mockMvc.perform(get("/api/mates/" + openPost.getId())
                             .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.data.status").value("OPEN"));
+                    .andExpect(jsonPath("$.data.status").value("모집중"));
 
             // Test CLOSED status
             mockMvc.perform(get("/api/mates/" + closedPost.getId())
                             .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.data.status").value("CLOSED"));
+                    .andExpect(jsonPath("$.data.status").value("모집완료"));
 
             // Test COMPLETE status
             mockMvc.perform(get("/api/mates/" + completedPost.getId())
                             .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.data.status").value("COMPLETE"));
+                    .andExpect(jsonPath("$.data.status").value("직관완료"));
         }
     }
 
@@ -581,7 +582,7 @@ public class MateIntegrationTest {
                             .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isForbidden())
                     .andExpect(jsonPath("$.status").value("ERROR"))
-                    .andExpect(jsonPath("$.message").value(ErrorCode.MATE_POST_DELETE_NOT_ALLOWED.getMessage()))
+                    .andExpect(jsonPath("$.message").value(ErrorCode.MATE_POST_UPDATE_NOT_ALLOWED.getMessage()))
                     .andExpect(jsonPath("$.code").value(403))
                     .andDo(print());
 
@@ -606,6 +607,145 @@ public class MateIntegrationTest {
             // then
             assertThat(mateRepository.findById(post.getId())).isEmpty();
             assertThat(visit.getPost()).isNull();
+        }
+    }
+
+    @Nested
+    @DisplayName("메이트 게시글 상태 변경")
+    class UpdateMatePostStatus {
+
+        @Test
+        @DisplayName("메이트 게시글 상태 변경 성공 - 모집중에서 모집완료로")
+        void updateMatePostStatus_OpenToClosed_Success() throws Exception {
+            // given
+            MatePostStatusRequest request = new MatePostStatusRequest(Status.CLOSED);
+
+            // when & then
+            mockMvc.perform(patch("/api/mates/{memberId}/{postId}/status", testMember.getId(), openPost.getId())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value("SUCCESS"))
+                    .andExpect(jsonPath("$.data.id").value(openPost.getId()))
+                    .andExpect(jsonPath("$.data.status").value("모집완료"))
+                    .andExpect(jsonPath("$.code").value(200))
+                    .andDo(print());
+
+            // DB 검증
+            MatePost updatedPost = mateRepository.findById(openPost.getId()).orElseThrow();
+            assertThat(updatedPost.getStatus()).isEqualTo(Status.CLOSED);
+        }
+
+        @Test
+        @DisplayName("메이트 게시글 상태 변경 성공 - 모집완료에서 모집중으로")
+        void updateMatePostStatus_ClosedToOpen_Success() throws Exception {
+            // given
+            MatePostStatusRequest request = new MatePostStatusRequest(Status.OPEN);
+
+            // when & then
+            mockMvc.perform(patch("/api/mates/{memberId}/{postId}/status", testMember.getId(), closedPost.getId())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value("SUCCESS"))
+                    .andExpect(jsonPath("$.data.id").value(closedPost.getId()))
+                    .andExpect(jsonPath("$.data.status").value("모집중"))
+                    .andExpect(jsonPath("$.code").value(200))
+                    .andDo(print());
+
+            // DB 검증
+            MatePost updatedPost = mateRepository.findById(closedPost.getId()).orElseThrow();
+            assertThat(updatedPost.getStatus()).isEqualTo(Status.OPEN);
+        }
+
+        @Test
+        @DisplayName("메이트 게시글 상태 변경 실패 - 직관완료로 변경 시도")
+        void updateMatePostStatus_ToComplete_Failure() throws Exception {
+            // given
+            MatePostStatusRequest request = new MatePostStatusRequest(Status.COMPLETE);
+
+            // when & then
+            mockMvc.perform(patch("/api/mates/{memberId}/{postId}/status", testMember.getId(), openPost.getId())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isForbidden())
+                    .andExpect(jsonPath("$.status").value("ERROR"))
+                    .andExpect(jsonPath("$.message").value(ErrorCode.MATE_POST_UPDATE_NOT_ALLOWED.getMessage()))
+                    .andExpect(jsonPath("$.code").value(403))
+                    .andDo(print());
+
+            // DB 검증
+            MatePost unchangedPost = mateRepository.findById(openPost.getId()).orElseThrow();
+            assertThat(unchangedPost.getStatus()).isEqualTo(Status.OPEN);
+        }
+
+        @Test
+        @DisplayName("메이트 게시글 상태 변경 실패 - 이미 직관완료된 게시글")
+        void updateMatePostStatus_AlreadyCompleted_Failure() throws Exception {
+            // given
+            MatePostStatusRequest request = new MatePostStatusRequest(Status.OPEN);
+
+            // when & then
+            mockMvc.perform(patch("/api/mates/{memberId}/{postId}/status", testMember.getId(), completedPost.getId())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isForbidden())
+                    .andExpect(jsonPath("$.status").value("ERROR"))
+                    .andExpect(jsonPath("$.message").value(ErrorCode.ALREADY_COMPLETED_POST.getMessage()))
+                    .andExpect(jsonPath("$.code").value(403))
+                    .andDo(print());
+
+            // DB 검증
+            MatePost unchangedPost = mateRepository.findById(completedPost.getId()).orElseThrow();
+            assertThat(unchangedPost.getStatus()).isEqualTo(Status.COMPLETE);
+        }
+
+        @Test
+        @DisplayName("메이트 게시글 상태 변경 실패 - 권한 없음")
+        void updateMatePostStatus_NotAuthor_Failure() throws Exception {
+            // given
+            Member otherMember = memberRepository.save(Member.builder()
+                    .name("다른유저")
+                    .email("other@test.com")
+                    .nickname("다른계정")
+                    .imageUrl("other.jpg")
+                    .gender(Gender.MALE)
+                    .age(30)
+                    .manner(0.3f)
+                    .build());
+
+            MatePostStatusRequest request = new MatePostStatusRequest(Status.CLOSED);
+
+            // when & then
+            mockMvc.perform(patch("/api/mates/{memberId}/{postId}/status", otherMember.getId(), openPost.getId())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isForbidden())
+                    .andExpect(jsonPath("$.status").value("ERROR"))
+                    .andExpect(jsonPath("$.message").value(ErrorCode.MATE_POST_UPDATE_NOT_ALLOWED.getMessage()))
+                    .andExpect(jsonPath("$.code").value(403))
+                    .andDo(print());
+
+            // DB 검증
+            MatePost unchangedPost = mateRepository.findById(openPost.getId()).orElseThrow();
+            assertThat(unchangedPost.getStatus()).isEqualTo(Status.OPEN);
+        }
+
+        @Test
+        @DisplayName("메이트 게시글 상태 변경 실패 - 존재하지 않는 게시글")
+        void updateMatePostStatus_PostNotFound_Failure() throws Exception {
+            // given
+            MatePostStatusRequest request = new MatePostStatusRequest(Status.CLOSED);
+
+            // when & then
+            mockMvc.perform(patch("/api/mates/{memberId}/{postId}/status", testMember.getId(), 999L)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.status").value("ERROR"))
+                    .andExpect(jsonPath("$.message").value(ErrorCode.MATE_POST_NOT_FOUND_BY_ID.getMessage()))
+                    .andExpect(jsonPath("$.code").value(404))
+                    .andDo(print());
         }
     }
 }
