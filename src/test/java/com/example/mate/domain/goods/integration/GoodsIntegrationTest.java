@@ -144,6 +144,45 @@ public class GoodsIntegrationTest {
         assertActualData(apiResponse.getData().getId(), goodsPostRequest, files);
     }
 
+    // ApiResponse 검증
+    private void assertApiResponse(ApiResponse<GoodsPostResponse> apiResponse, GoodsPostRequest expected,
+                                   List<MockMultipartFile> files) {
+        assertThat(apiResponse.getCode()).isEqualTo(200);
+        assertThat(apiResponse.getStatus()).isEqualTo("SUCCESS");
+
+        GoodsPostResponse response = apiResponse.getData();
+        assertThat(response.getCategory()).isEqualTo(expected.getCategory().getValue());
+        assertThat(response.getContent()).isEqualTo(expected.getContent());
+        assertThat(response.getPrice()).isEqualTo(expected.getPrice());
+        assertThat(response.getTitle()).isEqualTo(expected.getTitle());
+        assertThat(response.getStatus()).isEqualTo("거래중");
+        assertThat(response.getLocation()).isEqualTo(expected.getLocation());
+
+        MemberInfo memberInfo = response.getSeller();
+        assertThat(memberInfo.getMemberId()).isEqualTo(member.getId());
+        assertThat(memberInfo.getManner()).isEqualTo(member.getManner());
+        assertThat(memberInfo.getNickname()).isEqualTo(member.getNickname());
+
+        List<String> imageUrls = response.getImageUrls();
+        assertThat(imageUrls).isNotEmpty();
+        assertThat(imageUrls.size()).isEqualTo(files.size());
+    }
+
+    // 저장된 DB 데이터 검증
+    private void assertActualData(Long postId, GoodsPostRequest expected, List<MockMultipartFile> files) {
+        GoodsPost goodsPost = goodsPostRepository.findById(postId).get();
+
+        assertThat(goodsPost.getCategory()).isEqualTo(expected.getCategory());
+        assertThat(goodsPost.getContent()).isEqualTo(expected.getContent());
+        assertThat(goodsPost.getPrice()).isEqualTo(expected.getPrice());
+        assertThat(goodsPost.getTitle()).isEqualTo(expected.getTitle());
+        assertThat(goodsPost.getStatus()).isEqualTo(Status.OPEN);
+
+        List<GoodsPostImage> goodsPostImages = goodsPost.getGoodsPostImages();
+        assertThat(goodsPostImages).isNotEmpty();
+        assertThat(goodsPostImages).hasSize(files.size());
+    }
+
     @Test
     @DisplayName("굿즈거래 판매글 삭제 통합 테스트")
     void delete_goods_post_integration_test() throws Exception {
@@ -231,43 +270,63 @@ public class GoodsIntegrationTest {
         assertThat(response.getImageUrl()).isEqualTo(goodsPost.getGoodsPostImages().get(0).getImageUrl());
     }
 
-    // ApiResponse 검증
-    private void assertApiResponse(ApiResponse<GoodsPostResponse> apiResponse, GoodsPostRequest expected,
-                                   List<MockMultipartFile> files) {
+    @Test
+    @DisplayName("메인페이지 굿즈 판매글 페이징 조회 통합 테스트")
+    void get_main_goods_posts_paging_integration_test() throws Exception {
+        // given
+        Long teamId = 10L;
+        int page = 0;
+        int size = 10;
+
+        goodsPostRepository.deleteAll();
+        imageRepository.deleteAll();
+
+        for (int i = 1; i <= 3; i++) {
+            GoodsPost post = GoodsPost.builder()
+                    .seller(member)
+                    .teamId(10L)
+                    .title("Test Title " + i)
+                    .content("Test Content " + i)
+                    .price(1000 * i)
+                    .category(Category.ACCESSORY)
+                    .location(LocationInfo.toEntity(createLocationInfo()))
+                    .build();
+
+            GoodsPostImage image = GoodsPostImage.builder()
+                    .imageUrl("upload/test_img_url " + i)
+                    .post(post)
+                    .build();
+
+            post.changeImages(List.of(image));
+            goodsPostRepository.save(post);
+        }
+
+        // when
+        MockHttpServletResponse result = mockMvc.perform(get("/api/goods/main")
+                        .param("teamId", String.valueOf(teamId))
+                        .param("page", String.valueOf(page))
+                        .param("size", String.valueOf(size)))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse();
+        result.setCharacterEncoding("UTF-8");
+
+        ApiResponse<List<GoodsPostSummaryResponse>> apiResponse = objectMapper.readValue(result.getContentAsString(),
+                new TypeReference<>() {});
+
+        // then
         assertThat(apiResponse.getCode()).isEqualTo(200);
         assertThat(apiResponse.getStatus()).isEqualTo("SUCCESS");
 
-        GoodsPostResponse response = apiResponse.getData();
-        assertThat(response.getCategory()).isEqualTo(expected.getCategory().getValue());
-        assertThat(response.getContent()).isEqualTo(expected.getContent());
-        assertThat(response.getPrice()).isEqualTo(expected.getPrice());
-        assertThat(response.getTitle()).isEqualTo(expected.getTitle());
-        assertThat(response.getStatus()).isEqualTo("거래중");
-        assertThat(response.getLocation()).isEqualTo(expected.getLocation());
+        List<GoodsPostSummaryResponse> goodsPostResponses = apiResponse.getData();
+        assertThat(goodsPostResponses).hasSize(3);
 
-        MemberInfo memberInfo = response.getSeller();
-        assertThat(memberInfo.getMemberId()).isEqualTo(member.getId());
-        assertThat(memberInfo.getManner()).isEqualTo(member.getManner());
-        assertThat(memberInfo.getNickname()).isEqualTo(member.getNickname());
-
-        List<String> imageUrls = response.getImageUrls();
-        assertThat(imageUrls).isNotEmpty();
-        assertThat(imageUrls.size()).isEqualTo(files.size());
-    }
-
-    // 저장된 DB 데이터 검증
-    private void assertActualData(Long postId, GoodsPostRequest expected, List<MockMultipartFile> files) {
-        GoodsPost goodsPost = goodsPostRepository.findById(postId).get();
-
-        assertThat(goodsPost.getCategory()).isEqualTo(expected.getCategory());
-        assertThat(goodsPost.getContent()).isEqualTo(expected.getContent());
-        assertThat(goodsPost.getPrice()).isEqualTo(expected.getPrice());
-        assertThat(goodsPost.getTitle()).isEqualTo(expected.getTitle());
-        assertThat(goodsPost.getStatus()).isEqualTo(Status.OPEN);
-
-        List<GoodsPostImage> goodsPostImages = goodsPost.getGoodsPostImages();
-        assertThat(goodsPostImages).isNotEmpty();
-        assertThat(goodsPostImages).hasSize(files.size());
+        GoodsPostSummaryResponse firstResponse = goodsPostResponses.get(0);
+        assertThat(firstResponse.getTitle()).isEqualTo("Test Title 3");
+        assertThat(firstResponse.getPrice()).isEqualTo(3_000);
+        assertThat(firstResponse.getCategory()).isEqualTo(Category.ACCESSORY.getValue());
+        assertThat(firstResponse.getImageUrl()).isEqualTo("upload/test_img_url 3");
     }
 
     private void createMember() {

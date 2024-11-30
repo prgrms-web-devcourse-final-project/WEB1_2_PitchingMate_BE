@@ -9,6 +9,7 @@ import static org.mockito.Mockito.verify;
 
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
+import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.goods.dto.LocationInfo;
 import com.example.mate.domain.goods.dto.request.GoodsPostRequest;
 import com.example.mate.domain.goods.dto.response.GoodsPostResponse;
@@ -31,6 +32,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -418,26 +420,154 @@ class GoodsServiceTest {
         }
 
         @Test
-        @DisplayName("메인페이지 굿즈거래 판매글 조회 실패 - 대표 이미지가 없는 경우")
-        void get_main_goods_posts_failed_with_no_main_image() {
+        @DisplayName("메인페이지 굿즈거래 판매글 조회 성공 - 대표 이미지가 없는 경우 기본 이미지를 반환")
+        void get_main_goods_posts_success_with_no_main_image() {
             // given
             Long teamId = 1L;
             List<GoodsPostImage> imagesWithoutMain = List.of(
                     GoodsPostImage.builder().imageUrl("upload/test_img_url_1").post(goodsPost).build(),
                     GoodsPostImage.builder().imageUrl("upload/test_img_url_2").post(goodsPost).build()
             );
+            // 직접 엔티티에 추가하여, 대표 사진 마설정
+            GoodsPost post = GoodsPost.builder()
+                    .id(1L)
+                    .teamId(1L)
+                    .title("test title")
+                    .category(Category.ACCESSORY)
+                    .price(10_000)
+                    .goodsPostImages(imagesWithoutMain).build();
 
-            GoodsPost post = GoodsPost.builder().goodsPostImages(imagesWithoutMain).build();
             List<GoodsPost> goodsPosts = List.of(post);
+            given(goodsPostRepository.findMainGoodsPosts(teamId, Status.OPEN, PageRequest.of(0, 4))).willReturn(
+                    goodsPosts);
 
-            given(goodsPostRepository.findMainGoodsPosts(teamId, Status.OPEN, PageRequest.of(0, 4))).willReturn(goodsPosts);
+            // when
+            List<GoodsPostSummaryResponse> responses = goodsService.getMainGoodsPosts(teamId);
+
+            // then
+            assertThat(responses).isNotEmpty();
+            assertThat(responses.size()).isEqualTo(goodsPosts.size());
+
+            GoodsPostSummaryResponse goodsPostSummaryResponse = responses.get(0);
+            assertThat(goodsPostSummaryResponse.getTitle()).isEqualTo(goodsPost.getTitle());
+            assertThat(goodsPostSummaryResponse.getPrice()).isEqualTo(goodsPost.getPrice());
+            assertThat(goodsPostSummaryResponse.getImageUrl()).isEqualTo("upload/default.jpg");
+
+            verify(goodsPostRepository).findMainGoodsPosts(1L, Status.OPEN, PageRequest.of(0, 4));
+        }
+    }
+
+    @Nested
+    @DisplayName("메인페이지 굿즈거래 판매글 페이징 조회 테스트")
+    class GoodsServiceGoodsPageTest {
+
+        private GoodsPost createGoodsPostWithoutFilters() {
+            return GoodsPost.builder()
+                    .seller(member)
+                    .teamId(10L)
+                    .title("No Filter Title")
+                    .content("No Filter Content")
+                    .price(10_000)
+                    .category(Category.UNIFORM)
+                    .location(LocationInfo.toEntity(createLocationInfo()))
+                    .build();
+        }
+
+        private GoodsPost createGoodsPostWithFilters() {
+            return GoodsPost.builder()
+                    .seller(member)
+                    .teamId(1L)
+                    .title("Filtered Title")
+                    .content("Filtered Content")
+                    .price(20_000)
+                    .category(Category.ACCESSORY)
+                    .location(LocationInfo.toEntity(createLocationInfo()))
+                    .build();
+        }
+
+        @Test
+        @DisplayName("메인페이지 굿즈거래 판매글 페이징 조회 성공 - 필터 비활성화")
+        void get_page_goods_posts_no_filters() {
+            // given
+            Long teamId = null;         // 팀 필터 비활성화
+            Category category = null;   // 카테고리 필터 비활성화
+            GoodsPost postWithoutFilters = createGoodsPostWithoutFilters();
+            GoodsPostImage image = GoodsPostImage.builder()
+                    .imageUrl("upload/test_img_url")
+                    .post(postWithoutFilters)
+                    .build();
+            postWithoutFilters.changeImages(List.of(image));
+
+            PageImpl<GoodsPost> goodsPostPage = new PageImpl<>(List.of(postWithoutFilters));
+            PageRequest pageRequest = PageRequest.of(0, 10);
+
+            given(goodsPostRepository.findPageGoodsPosts(teamId, Status.OPEN, category, pageRequest)).willReturn(goodsPostPage);
+
+            // when
+            PageResponse<GoodsPostSummaryResponse> pageGoodsPosts = goodsService.getPageGoodsPosts(teamId, null, pageRequest);
+
+            // then
+            assertThat(pageGoodsPosts).isNotNull();
+            assertThat(pageGoodsPosts.getContent()).isNotEmpty();
+            assertThat(pageGoodsPosts.getTotalElements()).isEqualTo(goodsPostPage.getTotalElements());
+            assertThat(pageGoodsPosts.getContent().size()).isEqualTo(goodsPostPage.getContent().size());
+
+            GoodsPostSummaryResponse summary = pageGoodsPosts.getContent().get(0);
+            assertThat(summary.getTitle()).isEqualTo(postWithoutFilters.getTitle());
+            assertThat(summary.getPrice()).isEqualTo(postWithoutFilters.getPrice());
+            assertThat(summary.getImageUrl()).isEqualTo(image.getImageUrl());
+
+            verify(goodsPostRepository).findPageGoodsPosts(teamId, Status.OPEN, category, pageRequest);
+        }
+
+        @Test
+        @DisplayName("메인페이지 굿즈거래 판매글 페이징 조회 성공 - 필터 활성화")
+        void get_page_goods_posts_all_filters() {
+            // given
+            Long teamId = 1L;
+            Category category = Category.ACCESSORY;
+            GoodsPost postWithFilters = createGoodsPostWithFilters();
+            GoodsPostImage image = GoodsPostImage.builder()
+                    .imageUrl("upload/test_img_url")
+                    .post(postWithFilters)
+                    .build();
+            postWithFilters.changeImages(List.of(image));
+
+            PageImpl<GoodsPost> goodsPostPage = new PageImpl<>(List.of(postWithFilters));
+            PageRequest pageRequest = PageRequest.of(0, 10);
+
+            given(goodsPostRepository.findPageGoodsPosts(teamId, Status.OPEN, category, pageRequest)).willReturn(goodsPostPage);
+
+            // when
+            PageResponse<GoodsPostSummaryResponse> pageGoodsPosts
+                    = goodsService.getPageGoodsPosts(teamId, category.getValue(), pageRequest);
+
+            // then
+            assertThat(pageGoodsPosts).isNotNull();
+            assertThat(pageGoodsPosts.getContent()).isNotEmpty();
+            assertThat(pageGoodsPosts.getTotalElements()).isEqualTo(goodsPostPage.getTotalElements());
+            assertThat(pageGoodsPosts.getContent().size()).isEqualTo(goodsPostPage.getContent().size());
+
+            GoodsPostSummaryResponse summary = pageGoodsPosts.getContent().get(0);
+            assertThat(summary.getTitle()).isEqualTo(postWithFilters.getTitle());
+            assertThat(summary.getPrice()).isEqualTo(postWithFilters.getPrice());
+            assertThat(summary.getImageUrl()).isEqualTo(image.getImageUrl());
+
+            verify(goodsPostRepository).findPageGoodsPosts(teamId, Status.OPEN, category, pageRequest);
+        }
+
+        @Test
+        @DisplayName("메인페이지 굿즈거래 판매글 페이징 조회 성공 - 유효하지 않은 팀 정보")
+        void get_page_goods_posts_team_filter_only() {
+            // given
+            Long teamId = 999L;
+            Category category = Category.ACCESSORY;
+            PageRequest pageRequest = PageRequest.of(0, 10);
 
             // when & then
-            assertThatThrownBy(() -> goodsService.getMainGoodsPosts(teamId))
-                    .isInstanceOf(CustomException.class)
-                    .hasMessage(ErrorCode.GOODS_MAIN_IMAGE_IS_EMPTY.getMessage());
-
-            verify(goodsPostRepository).findMainGoodsPosts(teamId, Status.OPEN, PageRequest.of(0, 4));
+            assertThatThrownBy(() -> goodsService.getPageGoodsPosts(teamId, category.getValue(), pageRequest))
+                    .isExactlyInstanceOf(CustomException.class)
+                    .hasMessage(ErrorCode.TEAM_NOT_FOUND.getMessage());
         }
     }
 }
