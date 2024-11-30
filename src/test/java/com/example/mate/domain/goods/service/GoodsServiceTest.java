@@ -325,6 +325,27 @@ class GoodsServiceTest {
             verify(imageRepository, never()).deleteAllByPostId(any(Long.class));
             verify(goodsPostRepository, never()).delete(any(GoodsPost.class));
         }
+
+        @Test
+        @DisplayName("굿즈거래 판매글 삭제 실패 - 거래완료 상태인 판매글")
+        void delete_goods_post_failed_with_closed_status() {
+            // given
+            Long memberId = member.getId();
+            GoodsPost post = GoodsPost.builder().seller(member).status(Status.CLOSED).build();
+
+            given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
+            given(goodsPostRepository.findById(post.getId())).willReturn(Optional.of(post));
+
+            // when & then
+            assertThatThrownBy(() -> goodsService.deleteGoodsPost(memberId, post.getId()))
+                    .isInstanceOf(CustomException.class)
+                    .hasMessage(ErrorCode.GOODS_DELETE_NOT_ALLOWED.getMessage());
+
+            verify(memberRepository).findById(memberId);
+            verify(goodsPostRepository).findById(post.getId());
+            verify(imageRepository, never()).deleteAllByPostId(any(Long.class));
+            verify(goodsPostRepository, never()).delete(any(GoodsPost.class));
+        }
     }
 
     @Nested

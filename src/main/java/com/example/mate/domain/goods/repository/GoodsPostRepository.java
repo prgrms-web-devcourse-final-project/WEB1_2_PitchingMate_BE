@@ -18,8 +18,8 @@ public interface GoodsPostRepository extends JpaRepository<GoodsPost, Long> {
             ORDER BY gp.createdAt DESC
             """)
     List<GoodsPost> findMainGoodsPosts(@Param("teamId") Long teamId, @Param("status") Status status, Pageable pageable);
-           
-   @Query("""
+
+    @Query("""
             SELECT COUNT(gp)
             FROM GoodsPost gp
             WHERE gp.seller.id = :memberId

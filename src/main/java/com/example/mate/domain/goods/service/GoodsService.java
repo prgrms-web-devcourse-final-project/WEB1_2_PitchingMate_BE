@@ -75,6 +75,10 @@ public class GoodsService {
         Member seller = getSellerAndValidate(memberId);
         GoodsPost goodsPost = getGoodsPostAndValidate(seller, goodsPostId);
 
+        if (goodsPost.getStatus() == Status.CLOSED) {
+            throw new CustomException(ErrorCode.GOODS_DELETE_NOT_ALLOWED);
+        }
+
         // 업로된 이미지 파일 삭제
         deleteExistingImages(goodsPostId);
         goodsPostRepository.delete(goodsPost);
