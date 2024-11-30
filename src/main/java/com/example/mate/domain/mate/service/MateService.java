@@ -8,6 +8,8 @@ import com.example.mate.domain.match.entity.Match;
 import com.example.mate.domain.match.repository.MatchRepository;
 import com.example.mate.domain.mate.dto.request.MatePostCreateRequest;
 import com.example.mate.domain.mate.dto.request.MatePostSearchRequest;
+import com.example.mate.domain.mate.dto.request.MatePostStatusRequest;
+import com.example.mate.domain.mate.dto.response.MatePostDetailResponse;
 import com.example.mate.domain.mate.dto.response.MatePostResponse;
 import com.example.mate.domain.mate.dto.response.MatePostSummaryResponse;
 import com.example.mate.domain.mate.entity.MatePost;
@@ -106,5 +108,35 @@ public class MateService {
                 .pageNumber(matePostPage.getNumber())
                 .pageSize(matePostPage.getSize())
                 .build();
+    }
+
+    public MatePostDetailResponse getMatePostDetail(Long postId) {
+        MatePost matePost = mateRepository.findById(postId)
+                .orElseThrow(() -> new CustomException(MATE_POST_NOT_FOUND_BY_ID));
+
+        return MatePostDetailResponse.from(matePost);
+    }
+
+    public MatePostResponse updateMatePostStatus(Long memberId, Long postId, MatePostStatusRequest request) {
+        MatePost matePost = mateRepository.findById(postId)
+                .orElseThrow(() -> new CustomException(MATE_POST_NOT_FOUND_BY_ID));
+
+        matePost.validateAuthor(memberId);
+        matePost.changeStatus(request.getStatus());
+
+        return MatePostResponse.from(matePost);
+    }
+
+    public void deleteMatePost(Long memberId, Long postId) {
+        MatePost matePost = mateRepository.findById(postId)
+                .orElseThrow(() -> new CustomException(MATE_POST_NOT_FOUND_BY_ID));
+
+        matePost.validateAuthor(memberId);
+
+        if (matePost.getStatus() == Status.COMPLETE) {
+            matePost.getVisit().detachPost();
+        }
+
+        mateRepository.delete(matePost);
     }
 }

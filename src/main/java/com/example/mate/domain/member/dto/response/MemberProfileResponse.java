@@ -23,8 +23,8 @@ public class MemberProfileResponse {
     private Integer reviewsCount;
     private Integer goodsSoldCount;
 
-    // TODO : rewviewsCount, goodsSoldCount 추가
-    public static MemberProfileResponse of(Member member, int followingCount, int followerCount, int goodsSoldCount) {
+    public static MemberProfileResponse of(Member member, int followingCount, int followerCount,
+                                           int reviewsCount, int goodsSoldCount) {
         return MemberProfileResponse.builder()
                 .nickname(member.getNickname())
                 .imageUrl(member.getImageUrl())
@@ -33,6 +33,7 @@ public class MemberProfileResponse {
                 .aboutMe(member.getAboutMe())
                 .followingCount(followingCount)
                 .followerCount(followerCount)
+                .reviewsCount(reviewsCount)
                 .goodsSoldCount(goodsSoldCount)
                 .build();
     }
