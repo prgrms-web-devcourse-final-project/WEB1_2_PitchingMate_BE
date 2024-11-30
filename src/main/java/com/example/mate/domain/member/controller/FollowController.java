@@ -1,15 +1,14 @@
 package com.example.mate.domain.member.controller;
 
 import com.example.mate.common.response.ApiResponse;
+import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.member.dto.response.MemberSummaryResponse;
 import com.example.mate.domain.member.service.FollowService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import java.util.Collections;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
@@ -54,22 +53,15 @@ public class FollowController {
         return ResponseEntity.noContent().build();
     }
 
-    /*
-    TODO : 2024/11/25 - 특정 사용자가 팔로우하는 회원들 페이징 조회
-    1. memberId 을 통해 회원 정보 조회
-    2. 회원이 팔로우하는 회원 정보 조회
-    3. 페이징 처리 후 반환
-    */
+    @Operation(summary = "특정 회원이 팔로우하는 회원 리스트 페이징 조회")
     @GetMapping("{memberId}/followings")
-    public ResponseEntity<Page<MemberSummaryResponse>> getFollowings(
-            @PathVariable Long memberId,
+    public ResponseEntity<ApiResponse<PageResponse<MemberSummaryResponse>>> getFollowings(
+            @Parameter(description = "특정 회원 ID") @PathVariable Long memberId,
             @PageableDefault(size = 10) Pageable pageable
     ) {
-        MemberSummaryResponse response = MemberSummaryResponse.from();
-        List<MemberSummaryResponse> responses = Collections.nCopies(10, response);
-        Page<MemberSummaryResponse> page = new PageImpl<>(responses, pageable, responses.size());
-
-        return ResponseEntity.ok(page);
+        pageable = validatePageable(pageable);
+        PageResponse<MemberSummaryResponse> response = followService.getFollowingsPage(memberId, pageable);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     /*
@@ -83,10 +75,20 @@ public class FollowController {
             @PathVariable Long memberId,
             @PageableDefault(size = 10) Pageable pageable
     ) {
-        MemberSummaryResponse response = MemberSummaryResponse.from();
-        List<MemberSummaryResponse> responses = Collections.nCopies(10, response);
-        Page<MemberSummaryResponse> page = new PageImpl<>(responses, pageable, responses.size());
+//        MemberSummaryResponse response = MemberSummaryResponse.from();
+//        List<MemberSummaryResponse> responses = Collections.nCopies(10, response);
+//        Page<MemberSummaryResponse> page = new PageImpl<>(responses, pageable, responses.size());
 
-        return ResponseEntity.ok(page);
+        return ResponseEntity.ok(null);
+    }
+
+    // Pageable 검증 메서드
+    private Pageable validatePageable(Pageable pageable) {
+        // pageNumber 검증: 0보다 작은 값은 0으로 처리
+        int pageNumber = Math.max(pageable.getPageNumber(), 0);
+
+        // pageSize 검증: 0 이하이면 기본값 10으로 설정
+        int pageSize = pageable.getPageSize() <= 0 ? 10 : pageable.getPageSize();
+        return PageRequest.of(pageNumber, pageSize, pageable.getSort());
     }
 }

@@ -1,5 +1,6 @@
 package com.example.mate.domain.member.dto.response;
 
+import com.example.mate.domain.member.entity.Member;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,11 +15,11 @@ public class MemberSummaryResponse {
     private String nickname;
     private String imageUrl;
 
-    public static MemberSummaryResponse from() {
+    public static MemberSummaryResponse from(Member member) {
         return MemberSummaryResponse.builder()
-                .memberId(1L)
-                .nickname("홍길동")
-                .imageUrl("upload/default.jpg")
+                .memberId(member.getId())
+                .nickname(member.getNickname())
+                .imageUrl(member.getImageUrl())
                 .build();
     }
 }
