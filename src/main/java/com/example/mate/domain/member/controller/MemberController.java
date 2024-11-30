@@ -61,33 +61,14 @@ public class MemberController {
     }
 
     /*
-    TODO : 2024/11/23 - 회원 정보 수정
-    1. JwtToken 을 통해 사용자 정보 조회
-    2. nickname, profileImage, aboutMe, myTeam 수정
-    3. 회원 정보 update 및 저장
+    TODO : 회원 정보 수정 :
+    1. JwtToken 을 통해 사용자 정보 조회 -> 본인만 수정 가능하도록
     */
     @PutMapping(value = "/me")
-    public ResponseEntity<MyProfileResponse> updateMemberInfo(
+    public ResponseEntity<ApiResponse<MyProfileResponse>> updateMemberInfo(
             @RequestPart(value = "image", required = false) MultipartFile image,
-            @RequestPart(value = "data") MemberInfoUpdateRequest updateRequest) {
-
-        String imageUrl = (image != null && image.getOriginalFilename() != null)
-                ? "upload/" + image.getOriginalFilename() : "upload/defaultImage.jpg";
-        String nickname = updateRequest.getNickname() != null ? updateRequest.getNickname() : "삼성빠돌이";
-        String myTeam = updateRequest.getTeamId() != null ? "삼성" : "한화";
-        String aboutMe = updateRequest.getAboutMe() != null ? updateRequest.getAboutMe() : "삼성을 사랑하는 삼성빠돌이입니다!";
-
-        MyProfileResponse myProfileResponse = MyProfileResponse.builder()
-                .nickname(nickname)
-                .imageUrl(imageUrl)
-                .teamName(myTeam)
-                .manner(0.3f)
-                .aboutMe(aboutMe)
-                .followingCount(10)
-                .followerCount(20)
-                .build();
-
-        return ResponseEntity.ok(myProfileResponse);
+            @Valid @RequestPart(value = "data") MemberInfoUpdateRequest updateRequest) {
+        return ResponseEntity.ok(ApiResponse.success(memberService.updateMyProfile(image, updateRequest)));
     }
 
     /*
