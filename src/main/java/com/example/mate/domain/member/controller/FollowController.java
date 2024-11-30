@@ -1,15 +1,13 @@
 package com.example.mate.domain.member.controller;
 
 import com.example.mate.common.response.ApiResponse;
+import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.member.dto.response.MemberSummaryResponse;
 import com.example.mate.domain.member.service.FollowService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import java.util.Collections;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
@@ -54,22 +52,15 @@ public class FollowController {
         return ResponseEntity.noContent().build();
     }
 
-    /*
-    TODO : 2024/11/25 - 특정 사용자가 팔로우하는 회원들 페이징 조회
-    1. memberId 을 통해 회원 정보 조회
-    2. 회원이 팔로우하는 회원 정보 조회
-    3. 페이징 처리 후 반환
-    */
+    @Operation(summary = "특정 회원이 팔로우하는 회원 리스트 페이징 조회")
     @GetMapping("{memberId}/followings")
-    public ResponseEntity<Page<MemberSummaryResponse>> getFollowings(
-            @PathVariable Long memberId,
-            @PageableDefault(size = 10) Pageable pageable
+    public ResponseEntity<ApiResponse<PageResponse<MemberSummaryResponse>>> getFollowings(
+            @Parameter(description = "특정 회원 ID") @PathVariable Long memberId,
+            @Parameter(description = "페이지 번호") @RequestParam(required = false, defaultValue = "1") int pageNumber,
+            @Parameter(description = "페이지 크기") @RequestParam(required = false, defaultValue = "10") int pageSize
     ) {
-        MemberSummaryResponse response = MemberSummaryResponse.from();
-        List<MemberSummaryResponse> responses = Collections.nCopies(10, response);
-        Page<MemberSummaryResponse> page = new PageImpl<>(responses, pageable, responses.size());
-
-        return ResponseEntity.ok(page);
+        PageResponse<MemberSummaryResponse> response = followService.getFollowingsPage(memberId, pageNumber, pageSize);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     /*
@@ -83,10 +74,10 @@ public class FollowController {
             @PathVariable Long memberId,
             @PageableDefault(size = 10) Pageable pageable
     ) {
-        MemberSummaryResponse response = MemberSummaryResponse.from();
-        List<MemberSummaryResponse> responses = Collections.nCopies(10, response);
-        Page<MemberSummaryResponse> page = new PageImpl<>(responses, pageable, responses.size());
+//        MemberSummaryResponse response = MemberSummaryResponse.from();
+//        List<MemberSummaryResponse> responses = Collections.nCopies(10, response);
+//        Page<MemberSummaryResponse> page = new PageImpl<>(responses, pageable, responses.size());
 
-        return ResponseEntity.ok(page);
+        return ResponseEntity.ok(null);
     }
 }
