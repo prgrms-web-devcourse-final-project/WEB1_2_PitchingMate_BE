@@ -13,6 +13,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.goods.dto.LocationInfo;
 import com.example.mate.domain.goods.dto.request.GoodsPostRequest;
 import com.example.mate.domain.goods.dto.response.GoodsPostResponse;
@@ -28,6 +29,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -219,5 +222,49 @@ class GoodsControllerTest {
                 .andExpect(jsonPath("$.code").value(200));
 
         verify(goodsService).getMainGoodsPosts(teamId);
+    }
+
+    @Test
+    @DisplayName("메인페이지 굿즈 판매글 페이징 조회 - API 테스트")
+    void get_goods_posts_page_success() throws Exception {
+        // given
+        Long teamId = 1L;
+        String categoryVal = Category.CLOTHING.getValue();
+        PageRequest pageRequest = PageRequest.of(1, 10);
+
+        GoodsPostSummaryResponse responseDTO = createGoodsPostSummaryResponse();
+        List<GoodsPostSummaryResponse> responses = List.of(responseDTO);
+        PageImpl<GoodsPostSummaryResponse> pageGoodsPosts = new PageImpl<>(responses);
+
+        PageResponse<GoodsPostSummaryResponse> pageResponse = PageResponse.<GoodsPostSummaryResponse>builder()
+                .content(responses)
+                .totalPages(pageGoodsPosts.getTotalPages())
+                .totalElements(pageGoodsPosts.getTotalElements())
+                .hasNext(pageGoodsPosts.hasNext())
+                .pageNumber(pageGoodsPosts.getNumber())
+                .pageSize(pageGoodsPosts.getSize())
+                .build();
+
+        given(goodsService.getPageGoodsPosts(teamId, categoryVal, pageRequest)).willReturn(pageResponse);
+
+        // when & then
+        mockMvc.perform(get("/api/goods")
+                        .param("teamId", String.valueOf(teamId))
+                        .param("category", categoryVal)
+                        .param("page", String.valueOf(pageRequest.getPageNumber()))
+                        .param("size", String.valueOf(pageRequest.getPageSize())))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("SUCCESS"))
+                .andExpect(jsonPath("$.data.content.size()").value(responses.size()))
+                .andExpect(jsonPath("$.data.content[0].id").value(responseDTO.getId()))
+                .andExpect(jsonPath("$.data.content[0].price").value(responseDTO.getPrice()))
+                .andExpect(jsonPath("$.data.totalPages").value(pageResponse.getTotalPages()))
+                .andExpect(jsonPath("$.data.totalElements").value(pageResponse.getTotalElements()))
+                .andExpect(jsonPath("$.data.pageNumber").value(pageResponse.getPageNumber()))
+                .andExpect(jsonPath("$.data.pageSize").value(pageResponse.getPageSize()))
+                .andExpect(jsonPath("$.code").value(200));
+
+        verify(goodsService).getPageGoodsPosts(teamId, categoryVal, pageRequest);
     }
 }
