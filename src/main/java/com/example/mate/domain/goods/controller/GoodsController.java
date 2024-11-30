@@ -9,11 +9,11 @@ import com.example.mate.domain.goods.dto.response.GoodsPostResponse;
 import com.example.mate.domain.goods.dto.response.GoodsPostSummaryResponse;
 import com.example.mate.domain.goods.dto.response.GoodsReviewFormResponse;
 import com.example.mate.domain.goods.dto.response.GoodsReviewResponse;
-import com.example.mate.domain.goods.entity.Category;
 import com.example.mate.domain.goods.service.GoodsService;
-import java.util.Collections;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -58,7 +58,7 @@ public class GoodsController {
     public ResponseEntity<ApiResponse<GoodsPostResponse>> updateGoodsPost(
             @PathVariable Long memberId,
             @PathVariable Long goodsPostId,
-            @RequestPart("data") GoodsPostRequest request,
+            @Validated @RequestPart("data") GoodsPostRequest request,
             @RequestPart("files") List<MultipartFile> files
     ) {
         GoodsPostResponse response = goodsService.updateGoodsPost(memberId, goodsPostId, request, files);
@@ -93,34 +93,16 @@ public class GoodsController {
 
     /*
     굿즈 거래 페이지 : 굿즈 거래글 팀/카테고리 기준 10개씩 페이징 조회
-    1. 가상의 데이터 24개 생성
-    2. 페이지 번호와 리스트 크기를 고려해, 시작/끝 인덱스 설정
-    3. 요청된 페이지에 맞는 데이터 반환
     */
     @GetMapping
-    public ResponseEntity<PageResponse<GoodsPostSummaryResponse>> getGoodsPosts(
-            @RequestParam Long teamId,
-            @RequestParam Category category,
-            @RequestParam int pageNumber,
-            @RequestParam(required = false, defaultValue = "10") int pageSize
+    public ResponseEntity<ApiResponse<PageResponse<GoodsPostSummaryResponse>>> getGoodsPosts(
+            @RequestParam(required = false) Long teamId,
+            @RequestParam(required = false) String category,
+            @PageableDefault Pageable pageable
     ) {
-        List<GoodsPostSummaryResponse> list =
-                Collections.nCopies(24, GoodsPostSummaryResponse.createResponse(teamId, category));
+        PageResponse<GoodsPostSummaryResponse> pageGoodsPosts = goodsService.getPageGoodsPosts(teamId, category, pageable);
 
-        int start = (pageNumber - 1) * 10;
-        int end = Math.min(start + 10, list.size());
-        List<GoodsPostSummaryResponse> pageContent = list.subList(start, end);
-
-        PageResponse<GoodsPostSummaryResponse> pageResponse = PageResponse.<GoodsPostSummaryResponse>builder()
-                .content(pageContent)
-                .totalPages((int) Math.ceil((double) list.size() / 10)) // 총 페이지 수
-                .totalElements(list.size())
-                .hasNext(end < list.size())
-                .pageNumber(pageNumber)
-                .pageSize(pageSize)
-                .build();
-
-        return ResponseEntity.ok(pageResponse);
+        return ResponseEntity.ok(ApiResponse.success(pageGoodsPosts));
     }
 
     // 굿즈 채팅창 - 알럿창 : 굿즈 거래 완료

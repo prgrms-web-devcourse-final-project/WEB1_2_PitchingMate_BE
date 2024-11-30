@@ -2,12 +2,14 @@ package com.example.mate.domain.goods.service;
 
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
+import com.example.mate.common.response.PageResponse;
 import com.example.mate.common.utils.file.FileUploader;
 import com.example.mate.common.utils.file.FileValidator;
 import com.example.mate.domain.constant.TeamInfo;
 import com.example.mate.domain.goods.dto.request.GoodsPostRequest;
 import com.example.mate.domain.goods.dto.response.GoodsPostResponse;
 import com.example.mate.domain.goods.dto.response.GoodsPostSummaryResponse;
+import com.example.mate.domain.goods.entity.Category;
 import com.example.mate.domain.goods.entity.GoodsPost;
 import com.example.mate.domain.goods.entity.GoodsPostImage;
 import com.example.mate.domain.goods.entity.Status;
@@ -19,7 +21,9 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -97,6 +101,25 @@ public class GoodsService {
                 .map(this::convertToSummaryResponse).toList();
     }
 
+    @Transactional(readOnly = true)
+    public PageResponse<GoodsPostSummaryResponse> getPageGoodsPosts(Long teamId, String categoryVal, Pageable pageable) {
+        validateTeamInfo(teamId);
+        Category category = Category.from(categoryVal);
+
+        Page<GoodsPost> pageGoodsPosts = goodsPostRepository.findPageGoodsPosts(teamId, Status.OPEN, category, pageable);
+        List<GoodsPostSummaryResponse> responses = pageGoodsPosts.getContent().stream()
+                .map(this::convertToSummaryResponse).toList();
+
+        return PageResponse.<GoodsPostSummaryResponse>builder()
+                .content(responses)
+                .totalPages(pageGoodsPosts.getTotalPages())
+                .totalElements(pageGoodsPosts.getTotalElements())
+                .hasNext(pageGoodsPosts.hasNext())
+                .pageNumber(pageGoodsPosts.getNumber())
+                .pageSize(pageGoodsPosts.getSize())
+                .build();
+    }
+
     private Member getSellerAndValidate(Long memberId) {
         return memberRepository.findById(memberId).orElseThrow(()
                 -> new CustomException(ErrorCode.MEMBER_NOT_FOUND_BY_ID));
@@ -143,12 +166,15 @@ public class GoodsService {
     }
 
     private GoodsPostSummaryResponse convertToSummaryResponse(GoodsPost goodsPost) {
-        String mainImageUrl = goodsPost.getGoodsPostImages().stream()
+        String mainImageUrl = getMainImageUrl(goodsPost);
+        return GoodsPostSummaryResponse.of(goodsPost, mainImageUrl);
+    }
+
+    private String getMainImageUrl(GoodsPost goodsPost) {
+        return goodsPost.getGoodsPostImages().stream()
                 .filter(GoodsPostImage::getIsMainImage)
                 .findFirst()
                 .map(GoodsPostImage::getImageUrl)
-                .orElseThrow(() -> new CustomException(ErrorCode.GOODS_MAIN_IMAGE_IS_EMPTY));
-
-        return GoodsPostSummaryResponse.of(goodsPost, mainImageUrl);
+                .orElse("upload/default.jpg");
     }
 }

@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface GoodsPostRepository extends JpaRepository<GoodsPost, Long> {
+public interface GoodsPostRepository extends JpaRepository<GoodsPost, Long>, GoodsPostRepositoryCustom {
 
     @Query("""
             SELECT gp
@@ -19,7 +19,7 @@ public interface GoodsPostRepository extends JpaRepository<GoodsPost, Long> {
             """)
     List<GoodsPost> findMainGoodsPosts(@Param("teamId") Long teamId, @Param("status") Status status, Pageable pageable);
            
-   @Query("""
+    @Query("""
             SELECT COUNT(gp)
             FROM GoodsPost gp
             WHERE gp.seller.id = :memberId
