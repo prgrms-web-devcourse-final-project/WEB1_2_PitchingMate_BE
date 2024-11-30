@@ -10,7 +10,7 @@ import lombok.Getter;
 public enum Status {
     OPEN("모집중"),
     CLOSED("모집완료"),
-    COMPLETE("직관완료");
+    VISIT_COMPLETE("직관완료");
 
     @JsonValue
     private final String value;

@@ -2,11 +2,13 @@ package com.example.mate.domain.member.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.example.mate.common.error.ErrorCode;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.member.entity.Follow;
 import com.example.mate.domain.member.entity.Member;
@@ -21,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 @SpringBootTest
@@ -83,11 +86,11 @@ public class FollowIntegrationTest {
     }
 
     @Nested
-    @DisplayName("회원 팔로우 테스트")
+    @DisplayName("회원 팔로우")
     class FollowMember {
 
         @Test
-        @DisplayName("다른 회원 팔로우 성공")
+        @DisplayName("회원 팔로우 성공")
         void follow_member_success() throws Exception {
             // given
             Long followerId = member2.getId();
@@ -108,7 +111,7 @@ public class FollowIntegrationTest {
         }
 
         @Test
-        @DisplayName("이미 팔로우한 회원을 다시 팔로우하려는 경우 예외 발생")
+        @DisplayName("회원 팔로우 실패 -이미 팔로우한 회원을 다시 팔로우하려는 경우 예외 발생")
         void follow_member_already_followed() throws Exception {
             // given - 이미 팔로우 되어 있는 상태인 member1가 member2 팔로우 상황 가정
             Long followerId = member1.getId();
@@ -131,7 +134,7 @@ public class FollowIntegrationTest {
         }
 
         @Test
-        @DisplayName("존재하지 않는 팔로워 또는 팔로잉을 팔로우하려는 경우 예외 발생")
+        @DisplayName("회원 팔로우 실패 - 존재하지 않는 팔로워 또는 팔로잉을 팔로우하려는 경우 예외 발생")
         void follow_member_not_found() throws Exception {
             // given
             Long followerId = member1.getId() + 999L;
@@ -155,7 +158,7 @@ public class FollowIntegrationTest {
     }
 
     @Nested
-    @DisplayName("회원 언팔로우 테스트")
+    @DisplayName("회원 언팔로우")
     class UnfollowMember {
 
         @Test
@@ -177,7 +180,7 @@ public class FollowIntegrationTest {
         }
 
         @Test
-        @DisplayName("팔로우 관계가 없는 회원을 언팔로우하려는 경우 예외 발생")
+        @DisplayName("회원 언팔로우 실패 - 팔로우 관계가 없는 회원을 언팔로우하려는 경우 예외 발생")
         void unfollow_member_not_followed() throws Exception {
             // given
             Long unfollowerId = member2.getId();  // member2가 member1을 팔로우하지 않은 상태
@@ -197,7 +200,7 @@ public class FollowIntegrationTest {
         }
 
         @Test
-        @DisplayName("존재하지 않는 팔로워 또는 팔로잉을 언팔로우하려는 경우 예외 발생")
+        @DisplayName("회원 언팔로우 실패 - 존재하지 않는 팔로워 또는 팔로잉을 언팔로우하려는 경우 예외 발생")
         void unfollow_member_not_found() throws Exception {
             // given
             Long unfollowerId = 999L;  // 존재하지 않는 팔로워 ID
@@ -214,6 +217,49 @@ public class FollowIntegrationTest {
             // 팔로우 관계가 여전히 존재하는지 확인
             List<Follow> savedFollows = followRepository.findAll();
             assertThat(savedFollows).size().isEqualTo(1);  // 기존에 설정한 팔로우 관계는 삭제되지 않음
+        }
+    }
+
+    @Nested
+    @DisplayName("팔로우 리스트 페이징")
+    class FollowingPage {
+
+        @Test
+        @DisplayName("팔로우 리스트 페이징 성공")
+        void get_followings_page_success() throws Exception {
+            // given
+            Long memberId = member1.getId();
+
+            // when & then
+            mockMvc.perform(get("/api/profile/{memberId}/followings", memberId)
+                            .param("page", "0")
+                            .param("size", "10")
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value("SUCCESS"))
+                    .andExpect(jsonPath("$.data.content").isArray())
+                    .andExpect(jsonPath("$.data.content.length()").value(1))
+                    .andExpect(jsonPath("$.code").value(200));
+        }
+
+        @Test
+        @DisplayName("팔로우 리스트 페이징 실패 - 해당 회원이 없는 경우")
+        void get_followings_page_member_not_found() throws Exception {
+            // given
+            Long memberId = member1.getId() + 999L;  // 존재하지 않는 회원 ID
+
+            // when & then
+            mockMvc.perform(get("/api/profile/{memberId}/followings", memberId)
+                            .param("pageNumber", "1")
+                            .param("pageSize", "10")
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andDo(print())
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.status").value("ERROR"))
+                    .andExpect(jsonPath("$.code").value(404))
+                    .andExpect(jsonPath("$.message").value(
+                            ErrorCode.MEMBER_NOT_FOUND_BY_ID.getMessage()));
         }
     }
 }
