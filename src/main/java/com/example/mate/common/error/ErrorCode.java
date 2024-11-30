@@ -42,7 +42,8 @@ public enum ErrorCode {
     INVALID_MATE_POST_COMPLETION(HttpStatus.BAD_REQUEST, "MP003", "모집완료 상태에서만 직관 완료가 가능합니다."),
     MATE_POST_NOT_FOUND_BY_ID(HttpStatus.NOT_FOUND, "MP004", "해당 ID의 메이트 게시글을 찾을 수 없습니다."),
     UNAUTHORIZED_MATE_POST_ACCESS(HttpStatus.FORBIDDEN, "MP005", "해당 메이트 게시글에 대한 권한이 없습니다."),
-    MATE_POST_DELETE_NOT_ALLOWED(HttpStatus.FORBIDDEN, "MP006", "메이트 게시글의 작성자가 아니라면, 게시글을 수정할 수 없습니다"),
+    MATE_POST_UPDATE_NOT_ALLOWED(HttpStatus.FORBIDDEN, "MP006", "메이트 게시글의 작성자가 아니라면, 게시글을 수정할 수 없습니다"),
+    ALREADY_COMPLETED_POST(HttpStatus.FORBIDDEN, "MP008", "이미 직관완료한 게시글은 모집 상태를 변경할 수 없습니다."),
 
     // Goods
     GOODS_IMAGES_ARE_EMPTY(HttpStatus.BAD_REQUEST, "G001", "굿즈 이미지는 최소 1개 이상을 업로드 할 수 있습니다."),
@@ -68,7 +69,11 @@ public enum ErrorCode {
     INVALID_TRANSPORT_TYPE_VALUE(HttpStatus.BAD_REQUEST, "TRANSPORT001", "유효하지 않은 교통 수단 값입니다."),
 
     // SortType
-    INVALID_SORT_TYPE_VALUE(HttpStatus.BAD_REQUEST, "ST001", "유효하지 않은 정렬 기준 값입니다.");
+    INVALID_SORT_TYPE_VALUE(HttpStatus.BAD_REQUEST, "ST001", "유효하지 않은 정렬 기준 값입니다."),
+
+    // Status
+    INVALID_STATUS_TYPE_VALUE(HttpStatus.BAD_REQUEST, "STATUS001", "유효하지 않은 모집 상태 값입니다.");
+
 
     private final HttpStatus status;
     private final String code;

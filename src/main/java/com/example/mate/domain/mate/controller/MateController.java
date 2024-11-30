@@ -10,7 +10,6 @@ import com.example.mate.domain.mate.dto.response.MatePostSummaryResponse;
 import com.example.mate.domain.mate.dto.response.MateReviewCreateResponse;
 import com.example.mate.domain.mate.entity.Age;
 import com.example.mate.domain.mate.entity.SortType;
-import com.example.mate.domain.mate.entity.Status;
 import com.example.mate.domain.mate.entity.TransportType;
 import com.example.mate.domain.mate.service.MateService;
 import jakarta.validation.Valid;
@@ -81,13 +80,15 @@ public class MateController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
+    // TODO: @PathVariable Long memberId -> @AuthenticationPrincipal 로 변경
     // 메이트 게시글 모집 상태 변경(모집중, 모집완료)
-    @PatchMapping("/{postId}/status")
-    public ResponseEntity<MatePostResponse> updateMatePostStatus(
-            @PathVariable Long postId,
-            @AuthenticationPrincipal UserDetails userDetails,
-            @RequestBody MatePostStatusRequest request) {
-        return ResponseEntity.ok(MatePostResponse.builder().id(1L).status(Status.CLOSED).build());
+    @PatchMapping("/{memberId}/{postId}/status")
+    public ResponseEntity<ApiResponse<MatePostResponse>> updateMatePostStatus(@PathVariable(value = "memberId") Long memberId,
+                                                                              @PathVariable(value = "postId") Long postId,
+                                                                              @Valid @RequestBody MatePostStatusRequest request) {
+
+        MatePostResponse response = mateService.updateMatePostStatus(memberId, postId, request);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     // TODO: @PathVariable Long memberId -> @AuthenticationPrincipal 로 변경
@@ -102,7 +103,6 @@ public class MateController {
     // 메이트 게시글 직관 완료로 상태 변경
     @PostMapping("/{postId}/complete")
     public ResponseEntity<MatePostResponse> completeMatePost(@PathVariable Long postId,
-                                                             @AuthenticationPrincipal UserDetails userDetails,
                                                              @RequestBody MatePostCompleteRequest request) {
         // 1. 게시글 상태 COMPLETE로 변경
         // 2. visit 테이블에 직관 기록 생성

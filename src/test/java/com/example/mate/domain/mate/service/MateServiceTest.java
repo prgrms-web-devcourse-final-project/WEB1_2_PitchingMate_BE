@@ -8,6 +8,7 @@ import com.example.mate.domain.match.entity.Match;
 import com.example.mate.domain.match.repository.MatchRepository;
 import com.example.mate.domain.mate.dto.request.MatePostCreateRequest;
 import com.example.mate.domain.mate.dto.request.MatePostSearchRequest;
+import com.example.mate.domain.mate.dto.request.MatePostStatusRequest;
 import com.example.mate.domain.mate.dto.response.MatePostDetailResponse;
 import com.example.mate.domain.mate.dto.response.MatePostResponse;
 import com.example.mate.domain.mate.dto.response.MatePostSummaryResponse;
@@ -688,10 +689,166 @@ class MateServiceTest {
             // when & then
             assertThatThrownBy(() -> mateService.deleteMatePost(differentMemberId, POST_ID))
                     .isInstanceOf(CustomException.class)
-                    .hasFieldOrPropertyWithValue("errorCode", MATE_POST_DELETE_NOT_ALLOWED);
+                    .hasFieldOrPropertyWithValue("errorCode", MATE_POST_UPDATE_NOT_ALLOWED);
 
             verify(mateRepository).findById(POST_ID);
             verify(mateRepository, never()).delete(any(MatePost.class));
+        }
+    }
+
+    @Nested
+    @DisplayName("메이트 게시글 모집 상태 변경")
+    class UpdateMatePostStatus {
+        private static final Long POST_ID = 1L;
+
+        @Test
+        @DisplayName("메이트 게시글 모집 상태 변경 성공")
+        void updateMatePostStatus_Success() {
+            // given
+            Member testMember = createTestMember();
+            Match testMatch = createTestMatch();
+            MatePost matePost = MatePost.builder()
+                    .id(POST_ID)
+                    .author(testMember)
+                    .teamId(1L)
+                    .match(testMatch)
+                    .title("테스트 제목")
+                    .content("테스트 내용")
+                    .status(Status.OPEN)
+                    .maxParticipants(4)
+                    .age(Age.TWENTIES)
+                    .gender(Gender.ANY)
+                    .transport(TransportType.PUBLIC)
+                    .build();
+
+            MatePostStatusRequest request = new MatePostStatusRequest(Status.CLOSED);
+
+            given(mateRepository.findById(POST_ID))
+                    .willReturn(Optional.of(matePost));
+
+            // when
+            MatePostResponse response = mateService.updateMatePostStatus(TEST_MEMBER_ID, POST_ID, request);
+
+            // then
+            assertThat(response.getId()).isEqualTo(POST_ID);
+            assertThat(response.getStatus()).isEqualTo(Status.CLOSED);
+            verify(mateRepository).findById(POST_ID);
+        }
+
+        @Test
+        @DisplayName("메이트 게시글 상태 변경 실패 - 존재하지 않는 게시글")
+        void updateMatePostStatus_FailWithInvalidPostId() {
+            // given
+            MatePostStatusRequest request = new MatePostStatusRequest(Status.CLOSED);
+            given(mateRepository.findById(POST_ID))
+                    .willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> mateService.updateMatePostStatus(TEST_MEMBER_ID, POST_ID, request))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", MATE_POST_NOT_FOUND_BY_ID);
+
+            verify(mateRepository).findById(POST_ID);
+        }
+
+        @Test
+        @DisplayName("메이트 게시글 상태 변경 실패 - 작성자가 아닌 경우")
+        void updateMatePostStatus_FailWithNotAuthor() {
+            // given
+            Member testMember = createTestMember();
+            Match testMatch = createTestMatch();
+            MatePost matePost = MatePost.builder()
+                    .id(POST_ID)
+                    .author(testMember)
+                    .teamId(1L)
+                    .match(testMatch)
+                    .title("테스트 제목")
+                    .content("테스트 내용")
+                    .status(Status.OPEN)
+                    .maxParticipants(4)
+                    .age(Age.TWENTIES)
+                    .gender(Gender.ANY)
+                    .transport(TransportType.PUBLIC)
+                    .build();
+
+            Long differentMemberId = 999L;
+            MatePostStatusRequest request = new MatePostStatusRequest(Status.CLOSED);
+
+            given(mateRepository.findById(POST_ID))
+                    .willReturn(Optional.of(matePost));
+
+            // when & then
+            assertThatThrownBy(() -> mateService.updateMatePostStatus(differentMemberId, POST_ID, request))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", MATE_POST_UPDATE_NOT_ALLOWED);
+
+            verify(mateRepository).findById(POST_ID);
+        }
+
+        @Test
+        @DisplayName("메이트 게시글 상태 변경 실패 - COMPLETE로 변경 시도")
+        void updateMatePostStatus_FailWithCompleteStatus() {
+            // given
+            Member testMember = createTestMember();
+            Match testMatch = createTestMatch();
+            MatePost matePost = MatePost.builder()
+                    .id(POST_ID)
+                    .author(testMember)
+                    .teamId(1L)
+                    .match(testMatch)
+                    .title("테스트 제목")
+                    .content("테스트 내용")
+                    .status(Status.OPEN)
+                    .maxParticipants(4)
+                    .age(Age.TWENTIES)
+                    .gender(Gender.ANY)
+                    .transport(TransportType.PUBLIC)
+                    .build();
+
+            MatePostStatusRequest request = new MatePostStatusRequest(Status.COMPLETE);
+
+            given(mateRepository.findById(POST_ID))
+                    .willReturn(Optional.of(matePost));
+
+            // when & then
+            assertThatThrownBy(() -> mateService.updateMatePostStatus(TEST_MEMBER_ID, POST_ID, request))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", MATE_POST_UPDATE_NOT_ALLOWED);
+
+            verify(mateRepository).findById(POST_ID);
+        }
+
+        @Test
+        @DisplayName("메이트 게시글 상태 변경 실패 - 이미 완료된 게시글")
+        void updateMatePostStatus_FailWithAlreadyCompleted() {
+            // given
+            Member testMember = createTestMember();
+            Match testMatch = createTestMatch();
+            MatePost matePost = MatePost.builder()
+                    .id(POST_ID)
+                    .author(testMember)
+                    .teamId(1L)
+                    .match(testMatch)
+                    .title("테스트 제목")
+                    .content("테스트 내용")
+                    .status(Status.COMPLETE)
+                    .maxParticipants(4)
+                    .age(Age.TWENTIES)
+                    .gender(Gender.ANY)
+                    .transport(TransportType.PUBLIC)
+                    .build();
+
+            MatePostStatusRequest request = new MatePostStatusRequest(Status.CLOSED);
+
+            given(mateRepository.findById(POST_ID))
+                    .willReturn(Optional.of(matePost));
+
+            // when & then
+            assertThatThrownBy(() -> mateService.updateMatePostStatus(TEST_MEMBER_ID, POST_ID, request))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ALREADY_COMPLETED_POST);
+
+            verify(mateRepository).findById(POST_ID);
         }
     }
 }
