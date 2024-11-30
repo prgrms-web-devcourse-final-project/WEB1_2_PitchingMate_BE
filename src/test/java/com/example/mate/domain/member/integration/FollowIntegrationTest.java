@@ -262,4 +262,48 @@ public class FollowIntegrationTest {
                             ErrorCode.MEMBER_NOT_FOUND_BY_ID.getMessage()));
         }
     }
+
+    @Nested
+    @DisplayName("팔로워 리스트 페이징")
+    class FollowerPage {
+
+        @Test
+        @DisplayName("팔로워 리스트 페이징 성공")
+        void get_followers_page_success() throws Exception {
+            // given
+            Long memberId = member2.getId(); // member2의 팔로워 목록 조회
+
+            // when & then
+            mockMvc.perform(get("/api/profile/{memberId}/followers", memberId)
+                            .param("page", "0")
+                            .param("size", "10")
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value("SUCCESS"))
+                    .andExpect(jsonPath("$.data.content").isArray())
+                    .andExpect(jsonPath("$.data.content.length()").value(1)) // member1이 팔로워로 존재
+                    .andExpect(jsonPath("$.code").value(200));
+        }
+
+        @Test
+        @DisplayName("팔로워 리스트 페이징 실패 - 해당 회원이 없는 경우")
+        void get_followers_page_member_not_found() throws Exception {
+            // given
+            Long memberId = member2.getId() + 999L;  // 존재하지 않는 회원 ID
+
+            // when & then
+            mockMvc.perform(get("/api/profile/{memberId}/followers", memberId)
+                            .param("page", "0")
+                            .param("size", "10")
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andDo(print())
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.status").value("ERROR"))
+                    .andExpect(jsonPath("$.code").value(404))
+                    .andExpect(jsonPath("$.message").value(
+                            ErrorCode.MEMBER_NOT_FOUND_BY_ID.getMessage()));
+        }
+    }
+
 }
