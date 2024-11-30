@@ -259,4 +259,60 @@ class FollowControllerTest {
                             ErrorCode.MEMBER_NOT_FOUND_BY_ID.getMessage()));
         }
     }
+
+    @Nested
+    @DisplayName("팔로워 리스트 페이징")
+    class FollowerPage {
+
+        @Test
+        @DisplayName("팔로워 리스트 페이징 성공")
+        void get_followers_page_success() throws Exception {
+            // given
+            Long memberId = 2L;
+            PageResponse<MemberSummaryResponse> responses = PageResponse.<MemberSummaryResponse>builder()
+                    .content(List.of(createMemberSummaryResponse()))
+                    .totalPages(1)
+                    .totalElements(1L)
+                    .hasNext(false)
+                    .pageNumber(0)
+                    .pageSize(10)
+                    .build();
+
+            given(followService.getFollowersPage(eq(memberId), any(Pageable.class))).willReturn(responses);
+
+            // when & then
+            mockMvc.perform(get("/api/profile/{memberId}/followers", memberId)
+                            .param("page", "1")
+                            .param("size", "10")
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value("SUCCESS"))
+                    .andExpect(jsonPath("$.data.content").isArray())
+                    .andExpect(jsonPath("$.data.content.length()").value(1))
+                    .andExpect(jsonPath("$.code").value(200));
+        }
+
+        @Test
+        @DisplayName("팔로워 리스트 페이징 실패 - 해당 회원이 없는 경우")
+        void get_followers_page_member_not_found() throws Exception {
+            // given
+            Long memberId = 999L;  // 존재하지 않는 회원 ID
+
+            given(followService.getFollowersPage(eq(memberId), any(Pageable.class)))
+                    .willThrow(new CustomException(ErrorCode.MEMBER_NOT_FOUND_BY_ID));
+
+            // when & then
+            mockMvc.perform(get("/api/profile/{memberId}/followers", memberId)
+                            .param("page", "1")
+                            .param("size", "10")
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andDo(print())
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.status").value("ERROR"))
+                    .andExpect(jsonPath("$.code").value(404))
+                    .andExpect(jsonPath("$.message").value(
+                            ErrorCode.MEMBER_NOT_FOUND_BY_ID.getMessage()));
+        }
+    }
 }
