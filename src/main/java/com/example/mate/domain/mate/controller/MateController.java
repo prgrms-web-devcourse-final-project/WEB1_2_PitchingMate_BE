@@ -54,7 +54,7 @@ public class MateController {
                                                                                                @RequestParam(required = false) String gender,
                                                                                                @RequestParam(required = false) Integer maxParticipants,
                                                                                                @RequestParam(required = false) String transportType,
-                                                                                               @PageableDefault(size = 10) Pageable pageable) {
+                                                                                               @PageableDefault Pageable pageable) {
 
         MatePostSearchRequest request = MatePostSearchRequest.builder()
                 .teamId(teamId)

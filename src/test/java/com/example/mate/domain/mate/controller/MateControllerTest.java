@@ -59,7 +59,7 @@ class MateControllerTest {
                 .title("테스트 제목")
                 .status(Status.OPEN)
                 .rivalTeamName("두산")
-                .rivalMatchTime(LocalDateTime.now().plusDays(1))
+                .matchTime(LocalDateTime.now().plusDays(1))
                 .location("잠실야구장")
                 .maxParticipants(4)
                 .age(Age.TWENTIES)

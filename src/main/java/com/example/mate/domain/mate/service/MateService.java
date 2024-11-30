@@ -28,7 +28,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static com.example.mate.common.error.ErrorCode.*;
 
@@ -87,7 +86,7 @@ public class MateService {
 
         return mainPagePosts.stream()
                 .map(MatePostSummaryResponse::from)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public PageResponse<MatePostSummaryResponse> getMatePagePosts(MatePostSearchRequest request, Pageable pageable) {
