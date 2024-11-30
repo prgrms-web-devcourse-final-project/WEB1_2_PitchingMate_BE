@@ -4,10 +4,7 @@ import com.example.mate.common.response.ApiResponse;
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.mate.dto.request.*;
-import com.example.mate.domain.mate.dto.response.MatePostDetailResponse;
-import com.example.mate.domain.mate.dto.response.MatePostResponse;
-import com.example.mate.domain.mate.dto.response.MatePostSummaryResponse;
-import com.example.mate.domain.mate.dto.response.MateReviewCreateResponse;
+import com.example.mate.domain.mate.dto.response.*;
 import com.example.mate.domain.mate.entity.Age;
 import com.example.mate.domain.mate.entity.SortType;
 import com.example.mate.domain.mate.entity.TransportType;
@@ -92,22 +89,22 @@ public class MateController {
     }
 
     // TODO: @PathVariable Long memberId -> @AuthenticationPrincipal 로 변경
+    // 메이트 게시글 직관 완료로 상태 변경
+    @PatchMapping("/{memberId}/{postId}/complete")
+    public ResponseEntity<ApiResponse<MatePostCompleteResponse>> completeVisit(@PathVariable Long memberId,
+                                                                               @PathVariable Long postId,
+                                                                               @Valid @RequestBody MatePostCompleteRequest request) {
+
+        MatePostCompleteResponse response = mateService.completeVisit(memberId, postId, request);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    // TODO: @PathVariable Long memberId -> @AuthenticationPrincipal 로 변경
     // 메이트 게시글 삭제
     @DeleteMapping("/{memberId}/{postId}")
     public ResponseEntity<Void> deleteMatePost(@PathVariable Long memberId, @PathVariable Long postId) {
         mateService.deleteMatePost(memberId, postId);
         return ResponseEntity.noContent().build();
-    }
-
-
-    // 메이트 게시글 직관 완료로 상태 변경
-    @PostMapping("/{postId}/complete")
-    public ResponseEntity<MatePostResponse> completeMatePost(@PathVariable Long postId,
-                                                             @RequestBody MatePostCompleteRequest request) {
-        // 1. 게시글 상태 COMPLETE로 변경
-        // 2. visit 테이블에 직관 기록 생성
-        // 3. visit_part 테이블에 participantIds 저장
-        return ResponseEntity.ok(MatePostResponse.builder().id(1L).build());
     }
 
     // 직관 후기 작성
