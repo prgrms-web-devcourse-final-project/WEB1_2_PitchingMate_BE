@@ -51,6 +51,7 @@ public enum ErrorCode {
     GOODS_NOT_FOUND_BY_ID(HttpStatus.NOT_FOUND, "G002", "해당 ID의 굿즈 판매글 정보를 찾을 수 없습니다."),
     GOODS_UPDATE_NOT_ALLOWED(HttpStatus.FORBIDDEN, "G003", "판매글의 판매자가 아니라면, 판매글을 수정할 수 없습니다."),
     GOODS_MAIN_IMAGE_IS_EMPTY(HttpStatus.NOT_FOUND, "G004", "굿즈 게시물의 대표사진을 찾을 수 없습니다."),
+    GOODS_DELETE_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "G005", "거래완료 상태에서 판매글을 삭제할 수 없습니다."),
 
     // FILE
     FILE_IS_EMPTY(HttpStatus.BAD_REQUEST, "F001", "빈 파일을 업로드할 수 없습니다. 파일 내용을 확인해주세요."),
