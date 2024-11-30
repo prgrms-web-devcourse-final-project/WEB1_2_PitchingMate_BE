@@ -1,7 +1,6 @@
 package com.example.mate.domain.mate.entity;
 
 import com.example.mate.common.error.CustomException;
-import com.example.mate.common.error.ErrorCode;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.constant.TeamInfo;
 import com.example.mate.domain.match.entity.Match;
@@ -11,7 +10,8 @@ import lombok.*;
 
 import java.util.List;
 
-import static com.example.mate.common.error.ErrorCode.MATE_POST_UPDATE_NOT_ALLOWED;
+import static com.example.mate.common.error.ErrorCode.ALREADY_COMPLETED_POST;
+import static com.example.mate.common.error.ErrorCode.DIRECT_VISIT_COMPLETE_FORBIDDEN;
 
 @Entity
 @Table(name = "mate_post")
@@ -68,7 +68,7 @@ public class MatePost {
     @Column(name = "transport", nullable = false)
     private TransportType transport;
 
-    @OneToOne(mappedBy = "post")
+    @OneToOne(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private Visit visit;
 
     // Team 정보 조회
@@ -101,35 +101,19 @@ public class MatePost {
 
     // 상태 변경 가능 여부 검증과 변경
     public void changeStatus(Status newStatus) {
-        if (newStatus == Status.COMPLETE) {
-            throw new CustomException(ErrorCode.MATE_POST_UPDATE_NOT_ALLOWED);
+        if (newStatus == Status.VISIT_COMPLETE) {
+            throw new CustomException(DIRECT_VISIT_COMPLETE_FORBIDDEN);
         }
 
-        if (this.status == Status.COMPLETE) {
-            throw new CustomException(ErrorCode.ALREADY_COMPLETED_POST);
+        if (this.status == Status.VISIT_COMPLETE) {
+            throw new CustomException(ALREADY_COMPLETED_POST);
         }
 
         this.status = newStatus;
     }
 
-    // 작성자 검증
-    public void validateAuthor(Long memberId) {
-        if (!this.author.getId().equals(memberId)) {
-            throw new CustomException(MATE_POST_UPDATE_NOT_ALLOWED);
-        }
-    }
-
-    // 직관 완료 처리
-    public Visit completeVisit(List<Long> participantMemberIds) {
-        if (this.status != Status.CLOSED) {
-            throw new IllegalStateException("모집완료 상태에서만 직관 완료가 가능합니다.");
-        }
-
-        this.visit = Visit.builder()
-                .post(this)
-                .build();
-
-        this.status = Status.COMPLETE;
-        return this.visit;
+    public void complete(List<Member> participants) {
+        this.status = Status.VISIT_COMPLETE;
+        this.visit = Visit.createForComplete(this, participants);
     }
 }
