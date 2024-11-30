@@ -2,6 +2,7 @@ package com.example.mate.domain.member.integration;
 
 import static com.example.mate.domain.match.entity.MatchStatus.SCHEDULED;
 import static com.example.mate.domain.mate.entity.Status.CLOSED;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -280,7 +281,7 @@ class MemberIntegrationTest {
                     .andDo(print());
         }
     }
-    
+
     @Nested
     @DisplayName("내 프로필 조회")
     class GetMyProfile {
@@ -408,6 +409,35 @@ class MemberIntegrationTest {
                     .andExpect(jsonPath("$.status").value("ERROR"))
                     .andExpect(jsonPath("$.message").value("nickname: 닉네임은 필수 항목입니다."))
                     .andExpect(jsonPath("$.code").value(400));
+        }
+    }
+
+    @Nested
+    @DisplayName("회원 탈퇴")
+    class DeleteMember {
+
+        @Test
+        @DisplayName("회원 탈퇴 성공")
+        void delete_member_success() throws Exception {
+            mockMvc.perform(delete("/api/members/me")
+                            .param("memberId", member.getId().toString()))
+                    .andDo(print())
+                    .andExpect(status().isNoContent());
+        }
+
+        @Test
+        @DisplayName("회원 탈퇴 실패 - 존재하지 않는 회원")
+        void delete_member_fail_not_exists_member() throws Exception {
+            // given
+            Long memberId = member.getId() + 999L;
+
+            // when & then
+            mockMvc.perform(delete("/api/members/me")
+                            .param("memberId", memberId.toString()))
+                    .andDo(print())
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.status").value("ERROR"))
+                    .andExpect(jsonPath("$.message").value("해당 ID의 회원 정보를 찾을 수 없습니다"));
         }
     }
 }

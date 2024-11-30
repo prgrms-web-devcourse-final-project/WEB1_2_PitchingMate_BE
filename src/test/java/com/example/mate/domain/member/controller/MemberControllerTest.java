@@ -2,6 +2,10 @@ package com.example.mate.domain.member.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willDoNothing;
+import static org.mockito.BDDMockito.willThrow;
+import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -347,6 +351,48 @@ class MemberControllerTest {
                     .andExpect(jsonPath("$.status").value("ERROR"))
                     .andExpect(jsonPath("$.message").value("nickname: 닉네임은 필수 항목입니다."))
                     .andExpect(jsonPath("$.code").value(400));
+        }
+    }
+
+    @Nested
+    @DisplayName("회원 탈퇴")
+    class DeleteMember {
+
+        @Test
+        @DisplayName("회원 탈퇴 성공")
+        void delete_member_success() throws Exception {
+            // given
+            Long memberId = 1L;
+
+            willDoNothing().given(memberService).deleteMember(memberId);
+
+            // when & then
+            mockMvc.perform(delete("/api/members/me")
+                            .param("memberId", memberId.toString()))
+                    .andDo(print())
+                    .andExpect(status().isNoContent());
+
+            verify(memberService).deleteMember(memberId);
+        }
+
+        @Test
+        @DisplayName("회원 탈퇴 실패 - 존재하지 않는 회원")
+        void delete_member_fail_not_exists_member() throws Exception {
+            // given
+            Long memberId = 999L;
+
+            willThrow(new CustomException(ErrorCode.MEMBER_NOT_FOUND_BY_ID))
+                    .given(memberService).deleteMember(memberId);
+
+            // when & then
+            mockMvc.perform(delete("/api/members/me")
+                            .param("memberId", memberId.toString()))
+                    .andDo(print())
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.status").value("ERROR"))
+                    .andExpect(jsonPath("$.message").value("해당 ID의 회원 정보를 찾을 수 없습니다"));
+
+            verify(memberService).deleteMember(memberId);
         }
     }
 }
