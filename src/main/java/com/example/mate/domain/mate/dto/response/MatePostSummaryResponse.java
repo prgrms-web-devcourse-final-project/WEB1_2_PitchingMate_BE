@@ -19,6 +19,7 @@ public class MatePostSummaryResponse {
     private String imageUrl;
     private String title;
     private Status status;
+    private String myTeamName;
     private String rivalTeamName;
     private LocalDateTime rivalMatchTime;
     private String location;
@@ -27,14 +28,29 @@ public class MatePostSummaryResponse {
     private Gender gender;
     private TransportType transportType;
 
-    public static MatePostSummaryResponse from(MatePost post) {
+    public static MatePostSummaryResponse from(MatePost post, Long selectedTeamId) {
+        Match match = post.getMatch();
+        String myTeamName;
+        String rivalTeamName;
+
+        if (selectedTeamId != null) {
+            // 특정 팀 선택한 경우: 게시글 작성자의 팀이 myTeam
+            myTeamName = TeamInfo.getById(post.getTeamId()).shortName;
+            rivalTeamName = getRivalTeamName(post);
+        } else {
+            // KBO 선택한 경우: 홈팀이 myTeam
+            myTeamName = TeamInfo.getById(match.getHomeTeamId()).shortName;
+            rivalTeamName = TeamInfo.getById(match.getAwayTeamId()).shortName;
+        }
+
         return MatePostSummaryResponse.builder()
                 .imageUrl(post.getImageUrl())
                 .title(post.getTitle())
                 .status(post.getStatus())
-                .rivalTeamName(getRivalTeamName(post))
-                .rivalMatchTime(post.getMatch().getMatchTime())
-                .location(post.getMatch().getStadium().name)
+                .myTeamName(myTeamName)
+                .rivalTeamName(rivalTeamName)
+                .rivalMatchTime(match.getMatchTime())
+                .location(match.getStadium().name)
                 .maxParticipants(post.getMaxParticipants())
                 .age(post.getAge())
                 .gender(post.getGender())
@@ -44,14 +60,11 @@ public class MatePostSummaryResponse {
 
     private static String getRivalTeamName(MatePost post) {
         Match match = post.getMatch();
-        Long postTeamId = post.getTeamId(); // 게시글 작성자가 선택한 팀
+        Long postTeamId = post.getTeamId();
 
-        // 게시글 작성자가 선택한 팀이 홈팀인 경우 원정팀이 상대팀
         if (postTeamId.equals(match.getHomeTeamId())) {
             return TeamInfo.getById(match.getAwayTeamId()).shortName;
-        }
-        // 게시글 작성자가 선택한 팀이 원정팀인 경우 홈팀이 상대팀
-        else {
+        } else {
             return TeamInfo.getById(match.getHomeTeamId()).shortName;
         }
     }
