@@ -29,8 +29,8 @@ public interface GoodsPostRepository extends JpaRepository<GoodsPost, Long>, Goo
 
     @Query("""
             SELECT COUNT(gp)
-            FROM GoodsPost gp 
-            WHERE gp.buyer.id = :memberId 
+            FROM GoodsPost gp
+            WHERE gp.buyer.id = :memberId
             AND gp.status = :status
             """)
     int countGoodsPostsByBuyerIdAndStatus(@Param("memberId") Long memberId, @Param("status") Status status);
