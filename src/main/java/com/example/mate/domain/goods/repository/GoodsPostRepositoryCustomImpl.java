@@ -28,6 +28,7 @@ public class GoodsPostRepositoryCustomImpl implements GoodsPostRepositoryCustom 
                 .selectFrom(goodsPost)
                 .join(goodsPost.goodsPostImages, goodsPostImage).fetchJoin()
                 .where(conditions)
+                .where(goodsPostImage.isMainImage.eq(true))
                 .orderBy(goodsPost.createdAt.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
