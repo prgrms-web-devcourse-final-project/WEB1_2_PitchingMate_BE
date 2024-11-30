@@ -66,6 +66,28 @@ public class FollowService {
                 .build();
     }
 
+    // 특정 회원의 팔로워 리스트 페이징 조회
+    public PageResponse<MemberSummaryResponse> getFollowersPage(Long memberId, Pageable pageable) {
+        findByMemberId(memberId);
+
+        // 해당 회원이 팔로우하는 리스트 최신 팔로우 순으로 페이징
+        Page<Member> followingsPage = followRepository.findFollowersByFollowingId(memberId, pageable);
+
+        // MemberSummaryResponse 변환
+        List<MemberSummaryResponse> content = followingsPage.getContent().stream()
+                .map(MemberSummaryResponse::from)
+                .toList();
+
+        return PageResponse.<MemberSummaryResponse>builder()
+                .content(content)
+                .totalPages(followingsPage.getTotalPages())
+                .totalElements(followingsPage.getTotalElements())
+                .hasNext(followingsPage.hasNext())
+                .pageNumber(followingsPage.getNumber())
+                .pageSize(followingsPage.getSize())
+                .build();
+    }
+
     private Map<String, Member> isValidMemberFollow(Long followerId, Long followingId) {
         Member follower = memberRepository.findById(followerId)
                 .orElseThrow(() -> new CustomException(ErrorCode.FOLLOWER_NOT_FOUND_BY_ID));

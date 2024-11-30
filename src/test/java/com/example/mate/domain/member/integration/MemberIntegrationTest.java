@@ -38,6 +38,7 @@ import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.FollowRepository;
 import com.example.mate.domain.member.repository.MemberRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -90,6 +91,9 @@ class MemberIntegrationTest {
 
     @Autowired
     private VisitPartRepository visitPartRepository;
+
+    @Autowired
+    private EntityManager entityManager;
 
     private Member member;
     private Member member2;
@@ -218,8 +222,10 @@ class MemberIntegrationTest {
                     .member(member)
                     .visit(visit)
                     .build();
-            visit.getParticipants().add(visitPart);
             visitPartRepository.save(visitPart);
+
+            // 1차 캐시에서 분리
+            entityManager.detach(visitPart);
         });
         return visit;
     }
