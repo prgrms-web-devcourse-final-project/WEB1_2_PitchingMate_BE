@@ -3,6 +3,7 @@ package com.example.mate.domain.member.controller;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -11,19 +12,23 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
 import com.example.mate.domain.member.dto.request.JoinRequest;
+import com.example.mate.domain.member.dto.request.MemberInfoUpdateRequest;
 import com.example.mate.domain.member.dto.response.JoinResponse;
 import com.example.mate.domain.member.dto.response.MemberProfileResponse;
 import com.example.mate.domain.member.dto.response.MyProfileResponse;
 import com.example.mate.domain.member.service.MemberService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(MemberController.class)
@@ -92,130 +97,158 @@ class MemberControllerTest {
                 .build();
     }
 
-    @Test
-    @DisplayName("자체 회원 가입 - 성공")
-    void join_success() throws Exception {
-        // given
-        JoinRequest joinRequest = createTestJoinRequest();
-        JoinResponse joinResponse = createTestJoinResponse();
-
-        given(memberService.join(any(JoinRequest.class))).willReturn(joinResponse);
-
-        // when & then
-        mockMvc.perform(post("/api/members/join")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(joinRequest)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("SUCCESS"))
-                .andExpect(jsonPath("$.data.name").value("홍길동"))
-                .andExpect(jsonPath("$.data.email").value("test@example.com"))
-                .andExpect(jsonPath("$.data.nickname").value("tester"))
-                .andDo(print());
-    }
-
-    @Test
-    @DisplayName("회원 가입 - teamId가 유효하지 않으면 400 오류 반환")
-    void join_fail_team_id_invalid() throws Exception {
-        // given
-        JoinRequest invalidJoinRequest = JoinRequest.builder()
-                .name("홍길동")
-                .email("test@example.com")
-                .gender("M")
-                .birthyear("2000")
-                .teamId(15L)  // 유효하지 않은 teamId
+    private MemberInfoUpdateRequest createMemberInfoUpdateRequest() {
+        return MemberInfoUpdateRequest.builder()
+                .teamId(1L)
                 .nickname("tester")
+                .aboutMe("테스터입니다.")
+                .memberId(1L)
                 .build();
-
-        // when & then
-        mockMvc.perform(post("/api/members/join")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(invalidJoinRequest)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message")
-                        .value("teamId: teamId는 10 이하이어야 합니다."));
     }
 
-    @Test
-    @DisplayName("회원 가입 - nickname이 최대 길이(20자)를 초과하면 오류")
-    void join_fail_invalid_nickname() throws Exception {
-        // given
-        JoinRequest invalidJoinRequest = JoinRequest.builder()
-                .name("홍길동")
-                .email("test@example.com")
-                .gender("M")
-                .birthyear("2000")
-                .teamId(5L)
-                .nickname("tester12345678901234567890")  // nickname 길이가 20자를 초과
-                .build();
-
-        // when & then
-        mockMvc.perform(post("/api/members/join")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(invalidJoinRequest)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message")
-                        .value("nickname: nickname은 최대 20자까지 입력할 수 있습니다."));
+    private MockMultipartFile createFile(String contentType) {
+        return new MockMultipartFile(
+                "image",
+                "test_photo.jpg",
+                contentType,
+                "content".getBytes()
+        );
     }
 
-    @Test
-    @DisplayName("내 프로필 조회 - 성공")
-    void get_my_profile_success() throws Exception {
-        // given
-        Long memberId = 1L;
-        MyProfileResponse response = createMyProfileResponse();
+    @Nested
+    @DisplayName("자체 회원 가입")
+    class Join {
 
-        given(memberService.getMyProfile(memberId)).willReturn(response);
+        @Test
+        @DisplayName("자체 회원 가입 성공")
+        void join_success() throws Exception {
+            // given
+            JoinRequest joinRequest = createTestJoinRequest();
+            JoinResponse joinResponse = createTestJoinResponse();
 
-        // when & then
-        mockMvc.perform(get("/api/members/me")
-                        .param("memberId", memberId.toString()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("SUCCESS"))
-                .andExpect(jsonPath("$.data.nickname").value("tester"))
-                .andExpect(jsonPath("$.data.imageUrl").value("default.jpg"))
-                .andExpect(jsonPath("$.data.teamName").value("KIA"))
-                .andExpect(jsonPath("$.data.manner").value(0.3))
-                .andExpect(jsonPath("$.data.aboutMe").value("테스터입니다."))
-                .andExpect(jsonPath("$.data.followingCount").value(10))
-                .andExpect(jsonPath("$.data.followerCount").value(20))
-                .andExpect(jsonPath("$.data.reviewsCount").value(5))
-                .andExpect(jsonPath("$.data.goodsSoldCount").value(15))
-                .andExpect(jsonPath("$.data.goodsBoughtCount").value(12))
-                .andExpect(jsonPath("$.data.visitsCount").value(3))
-                .andDo(print());
+            given(memberService.join(any(JoinRequest.class))).willReturn(joinResponse);
+
+            // when & then
+            mockMvc.perform(post("/api/members/join")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(joinRequest)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value("SUCCESS"))
+                    .andExpect(jsonPath("$.data.name").value("홍길동"))
+                    .andExpect(jsonPath("$.data.email").value("test@example.com"))
+                    .andExpect(jsonPath("$.data.nickname").value("tester"))
+                    .andDo(print());
+        }
+
+        @Test
+        @DisplayName("자체 회원 가입 실패 - teamId가 유효하지 않으면 400 오류 반환")
+        void join_fail_team_id_invalid() throws Exception {
+            // given
+            JoinRequest invalidJoinRequest = JoinRequest.builder()
+                    .name("홍길동")
+                    .email("test@example.com")
+                    .gender("M")
+                    .birthyear("2000")
+                    .teamId(15L)  // 유효하지 않은 teamId
+                    .nickname("tester")
+                    .build();
+
+            // when & then
+            mockMvc.perform(post("/api/members/join")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(invalidJoinRequest)))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.message")
+                            .value("teamId: teamId는 10 이하이어야 합니다."));
+        }
+
+        @Test
+        @DisplayName("자체 회원 가입 실패 - nickname이 최대 길이(20자)를 초과하면 오류")
+        void join_fail_invalid_nickname() throws Exception {
+            // given
+            JoinRequest invalidJoinRequest = JoinRequest.builder()
+                    .name("홍길동")
+                    .email("test@example.com")
+                    .gender("M")
+                    .birthyear("2000")
+                    .teamId(5L)
+                    .nickname("tester12345678901234567890")  // nickname 길이가 20자를 초과
+                    .build();
+
+            // when & then
+            mockMvc.perform(post("/api/members/join")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(invalidJoinRequest)))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.message")
+                            .value("nickname: nickname은 최대 20자까지 입력할 수 있습니다."));
+        }
     }
 
-    @Test
-    @DisplayName("내 프로필 조회 - 회원이 존재하지 않는 경우")
-    void get_my_profile_member_not_found() throws Exception {
-        // given
-        Long memberId = 999L;
+    @Nested
+    @DisplayName("내 프로필 조회")
+    class GetMyProfile {
 
-        given(memberService.getMyProfile(memberId)).willThrow(
-                new CustomException(ErrorCode.MEMBER_NOT_FOUND_BY_ID));
+        @Test
+        @DisplayName("내 프로필 조회 성공")
+        void get_my_profile_success() throws Exception {
+            // given
+            Long memberId = 1L;
+            MyProfileResponse response = createMyProfileResponse();
 
-        // when & then
-        mockMvc.perform(get("/api/members/me")
-                        .param("memberId", memberId.toString()))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.status").value("ERROR"))
-                .andExpect(jsonPath("$.message").value("해당 ID의 회원 정보를 찾을 수 없습니다"))
-                .andDo(print());
-    }
+            given(memberService.getMyProfile(memberId)).willReturn(response);
 
-    @Test
-    @DisplayName("내 프로필 조회 - 잘못된 memberId 형식")
-    void get_my_profile_invalid_member_id() throws Exception {
-        // given
-        String invalidMemberId = "invalid";  // 숫자가 아닌 잘못된 ID
+            // when & then
+            mockMvc.perform(get("/api/members/me")
+                            .param("memberId", memberId.toString()))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value("SUCCESS"))
+                    .andExpect(jsonPath("$.data.nickname").value("tester"))
+                    .andExpect(jsonPath("$.data.imageUrl").value("default.jpg"))
+                    .andExpect(jsonPath("$.data.teamName").value("KIA"))
+                    .andExpect(jsonPath("$.data.manner").value(0.3))
+                    .andExpect(jsonPath("$.data.aboutMe").value("테스터입니다."))
+                    .andExpect(jsonPath("$.data.followingCount").value(10))
+                    .andExpect(jsonPath("$.data.followerCount").value(20))
+                    .andExpect(jsonPath("$.data.reviewsCount").value(5))
+                    .andExpect(jsonPath("$.data.goodsSoldCount").value(15))
+                    .andExpect(jsonPath("$.data.goodsBoughtCount").value(12))
+                    .andExpect(jsonPath("$.data.visitsCount").value(3))
+                    .andDo(print());
+        }
 
-        // when & then
-        mockMvc.perform(get("/api/members/me")
-                        .param("memberId", invalidMemberId))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value("ERROR"))
-                .andExpect(jsonPath("$.message").value("잘못된 입력 형식입니다. 'invalid' 타입이 'Long'로 변환될 수 없습니다."))
-                .andDo(print());
+        @Test
+        @DisplayName("내 프로필 조회 실패 - 회원이 존재하지 않는 경우")
+        void get_my_profile_member_not_found() throws Exception {
+            // given
+            Long memberId = 999L;
+
+            given(memberService.getMyProfile(memberId)).willThrow(
+                    new CustomException(ErrorCode.MEMBER_NOT_FOUND_BY_ID));
+
+            // when & then
+            mockMvc.perform(get("/api/members/me")
+                            .param("memberId", memberId.toString()))
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.status").value("ERROR"))
+                    .andExpect(jsonPath("$.message").value("해당 ID의 회원 정보를 찾을 수 없습니다"))
+                    .andDo(print());
+        }
+
+        @Test
+        @DisplayName("내 프로필 조회 실패 - 잘못된 memberId 형식")
+        void get_my_profile_invalid_member_id() throws Exception {
+            // given
+            String invalidMemberId = "invalid";  // 숫자가 아닌 잘못된 ID
+
+            // when & then
+            mockMvc.perform(get("/api/members/me")
+                            .param("memberId", invalidMemberId))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.status").value("ERROR"))
+                    .andExpect(jsonPath("$.message").value("잘못된 입력 형식입니다. 'invalid' 타입이 'Long'로 변환될 수 없습니다."))
+                    .andDo(print());
+        }
     }
 
     @Test
@@ -241,5 +274,79 @@ class MemberControllerTest {
                 .andExpect(jsonPath("$.data.followerCount").value(20))
                 .andExpect(jsonPath("$.data.reviewsCount").value(5))
                 .andExpect(jsonPath("$.data.goodsSoldCount").value(15));
+    }
+
+    @Nested
+    @DisplayName("회원 정보 수정")
+    class UpdateMember {
+
+        @Test
+        @DisplayName("회원 정보 수정 성공")
+        void update_my_profile_success() throws Exception {
+            // given
+            MyProfileResponse response = createMyProfileResponse();
+            MemberInfoUpdateRequest request = createMemberInfoUpdateRequest();
+            MockMultipartFile data = new MockMultipartFile(
+                    "data",
+                    "",
+                    MediaType.APPLICATION_JSON_VALUE,
+                    objectMapper.writeValueAsBytes(request)
+            );
+            MockMultipartFile image = new MockMultipartFile(
+                    "image",
+                    "test.jpg",
+                    MediaType.IMAGE_JPEG_VALUE,
+                    "test image content".getBytes()
+            );
+
+            given(memberService.updateMyProfile(any(), any(MemberInfoUpdateRequest.class)))
+                    .willReturn(response);
+
+            // when & then
+            mockMvc.perform(multipart(HttpMethod.PUT, "/api/members/me")
+                            .file(data)
+                            .file(image))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value("SUCCESS"))
+                    .andExpect(jsonPath("$.data.nickname").value("tester"))
+                    .andExpect(jsonPath("$.data.teamName").value("KIA"))
+                    .andExpect(jsonPath("$.data.aboutMe").value("테스터입니다."))
+                    .andExpect(jsonPath("$.code").value(200));
+        }
+
+        @Test
+        @DisplayName("회원 정보 수정 실패 - 필수 파라미터 누락")
+        void update_my_profile_missing_parameter() throws Exception {
+            // given
+            MemberInfoUpdateRequest request = MemberInfoUpdateRequest.builder()
+                    .teamId(1L)
+                    .aboutMe("테스터입니다.")
+                    .memberId(1L)
+                    .build();
+
+            MockMultipartFile data = new MockMultipartFile(
+                    "data",
+                    "",
+                    MediaType.APPLICATION_JSON_VALUE,
+                    objectMapper.writeValueAsBytes(request)
+            );
+            MockMultipartFile image = new MockMultipartFile(
+                    "image",
+                    "test.jpg",
+                    MediaType.IMAGE_JPEG_VALUE,
+                    "test image content".getBytes()
+            );
+
+            // when & then
+            mockMvc.perform(multipart(HttpMethod.PUT, "/api/members/me")
+                            .file(data)
+                            .file(image))
+                    .andDo(print())
+                    .andExpect(status().isBadRequest())  // 잘못된 요청
+                    .andExpect(jsonPath("$.status").value("ERROR"))
+                    .andExpect(jsonPath("$.message").value("nickname: 닉네임은 필수 항목입니다."))
+                    .andExpect(jsonPath("$.code").value(400));
+        }
     }
 }
