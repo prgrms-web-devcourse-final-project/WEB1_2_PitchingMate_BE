@@ -70,6 +70,13 @@ public class MemberService {
         return MyProfileResponse.from(memberRepository.save(member));
     }
 
+    // TODO : JWT 도입 이후 본인만 접근할 수 있도록 수정
+    // 회원 탈퇴
+    public void deleteMember(Long memberId) {
+        findByMemberId(memberId);
+        memberRepository.deleteById(memberId);
+    }
+
     private void checkNickNameAndChange(Member member, String request) {
         if (member.getNickname().equals(request)) {
             return;
