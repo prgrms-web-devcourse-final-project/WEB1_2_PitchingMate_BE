@@ -13,10 +13,7 @@ import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.domain.Sort.Direction;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -48,13 +45,10 @@ public class FollowService {
     }
 
     // 특정 회원의 팔로우 리스트 페이징 조회
-    public PageResponse<MemberSummaryResponse> getFollowingsPage(Long memberId, int pageNumber, int pageSize) {
+    public PageResponse<MemberSummaryResponse> getFollowingsPage(Long memberId, Pageable pageable) {
         findByMemberId(memberId); // 회원 존재 검증
-        pageNumber = pageNumber < 1 ? 0 : pageNumber - 1;
-        pageSize = pageSize < 1 ? 10 : pageSize;
 
         // 해당 회원이 팔로우하는 리스트 최신 팔로우 순으로 페이징
-        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Direction.DESC, "id"));
         Page<Member> followingsPage = followRepository.findFollowingsByFollowerId(memberId, pageable);
 
         // MemberSummaryResponse 변환

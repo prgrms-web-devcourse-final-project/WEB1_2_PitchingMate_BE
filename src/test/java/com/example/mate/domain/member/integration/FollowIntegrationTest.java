@@ -232,8 +232,8 @@ public class FollowIntegrationTest {
 
             // when & then
             mockMvc.perform(get("/api/profile/{memberId}/followings", memberId)
-                            .param("pageNumber", "1")
-                            .param("pageSize", "10")
+                            .param("page", "0")
+                            .param("size", "10")
                             .contentType(MediaType.APPLICATION_JSON))
                     .andDo(print())
                     .andExpect(status().isOk())

@@ -253,20 +253,19 @@ class FollowServiceTest {
         void get_followings_page_success() {
             // given
             Long memberId = 1L;
-            int pageNumber = 1;
+            int pageNumber = 0;
             int pageSize = 2;
 
             given(memberRepository.findById(memberId)).willReturn(Optional.of(follower));
 
-            Pageable pageable = PageRequest.of(pageNumber - 1, pageSize, Sort.by(Direction.DESC, "id"));
+            Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Direction.DESC, "id"));
             Page<Member> membersPage = createTestMemberPage();
 
             given(followRepository.findFollowingsByFollowerId(eq(memberId), eq(pageable)))
                     .willReturn(membersPage);
 
             // when
-            PageResponse<MemberSummaryResponse> response = followService.getFollowingsPage(memberId, pageNumber,
-                    pageSize);
+            PageResponse<MemberSummaryResponse> response = followService.getFollowingsPage(memberId, pageable);
 
             // then
             assertThat(response.getTotalElements()).isEqualTo(2);
@@ -286,11 +285,12 @@ class FollowServiceTest {
             Long memberId = 999L;  // 존재하지 않는 회원 ID
             int pageNumber = 1;
             int pageSize = 2;
+            Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Direction.DESC, "id"));
 
             given(memberRepository.findById(memberId)).willReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> followService.getFollowingsPage(memberId, pageNumber, pageSize))
+            assertThatThrownBy(() -> followService.getFollowingsPage(memberId, pageable))
                     .isInstanceOf(CustomException.class)
                     .hasMessage(ErrorCode.MEMBER_NOT_FOUND_BY_ID.getMessage());
 

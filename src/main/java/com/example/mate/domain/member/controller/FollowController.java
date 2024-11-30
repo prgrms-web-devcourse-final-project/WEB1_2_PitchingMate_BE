@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
@@ -56,10 +57,10 @@ public class FollowController {
     @GetMapping("{memberId}/followings")
     public ResponseEntity<ApiResponse<PageResponse<MemberSummaryResponse>>> getFollowings(
             @Parameter(description = "특정 회원 ID") @PathVariable Long memberId,
-            @Parameter(description = "페이지 번호") @RequestParam(required = false, defaultValue = "1") int pageNumber,
-            @Parameter(description = "페이지 크기") @RequestParam(required = false, defaultValue = "10") int pageSize
+            @PageableDefault(size = 10) Pageable pageable
     ) {
-        PageResponse<MemberSummaryResponse> response = followService.getFollowingsPage(memberId, pageNumber, pageSize);
+        pageable = validatePageable(pageable);
+        PageResponse<MemberSummaryResponse> response = followService.getFollowingsPage(memberId, pageable);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
@@ -79,5 +80,15 @@ public class FollowController {
 //        Page<MemberSummaryResponse> page = new PageImpl<>(responses, pageable, responses.size());
 
         return ResponseEntity.ok(null);
+    }
+
+    // Pageable 검증 메서드
+    private Pageable validatePageable(Pageable pageable) {
+        // pageNumber 검증: 0보다 작은 값은 0으로 처리
+        int pageNumber = Math.max(pageable.getPageNumber(), 0);
+
+        // pageSize 검증: 0 이하이면 기본값 10으로 설정
+        int pageSize = pageable.getPageSize() <= 0 ? 10 : pageable.getPageSize();
+        return PageRequest.of(pageNumber, pageSize, pageable.getSort());
     }
 }
