@@ -39,11 +39,18 @@ public enum ErrorCode {
     // Mate Post
     INVALID_MATE_POST_PARTICIPANTS(HttpStatus.BAD_REQUEST, "MP001", "모집 인원은 2명에서 10명 사이여야 합니다."),
     INVALID_MATE_POST_STATUS_CHANGE(HttpStatus.BAD_REQUEST, "MP002", "직관 완료된 게시글은 상태를 변경할 수 없습니다."),
-    INVALID_MATE_POST_COMPLETION(HttpStatus.BAD_REQUEST, "MP003", "모집완료 상태에서만 직관 완료가 가능합니다."),
+    NOT_CLOSED_STATUS_FOR_COMPLETION(HttpStatus.BAD_REQUEST, "MP003", "모집완료 상태에서만 직관 완료가 가능합니다."),
     MATE_POST_NOT_FOUND_BY_ID(HttpStatus.NOT_FOUND, "MP004", "해당 ID의 메이트 게시글을 찾을 수 없습니다."),
     UNAUTHORIZED_MATE_POST_ACCESS(HttpStatus.FORBIDDEN, "MP005", "해당 메이트 게시글에 대한 권한이 없습니다."),
     MATE_POST_UPDATE_NOT_ALLOWED(HttpStatus.FORBIDDEN, "MP006", "메이트 게시글의 작성자가 아니라면, 게시글을 수정할 수 없습니다"),
-    ALREADY_COMPLETED_POST(HttpStatus.FORBIDDEN, "MP008", "이미 직관완료한 게시글은 모집 상태를 변경할 수 없습니다."),
+    DIRECT_VISIT_COMPLETE_FORBIDDEN(HttpStatus.FORBIDDEN, "MP007", "모집완료 상태가 아니라면 직관 완료 상태로 게시글을 수정할 수 없습니다"),
+    MATE_POST_COMPLETE_TIME_NOT_ALLOWED(HttpStatus.FORBIDDEN, "MP008", "경기 시작 이후에만 직관 완료 처리가 가능합니다."),
+    ALREADY_COMPLETED_POST(HttpStatus.FORBIDDEN, "MP009", "이미 직관완료한 게시글은 모집 상태를 변경할 수 없습니다."),
+    MATE_POST_PARTICIPANTS_NOT_FOUND(HttpStatus.BAD_REQUEST, "MP010", "직관 참여자 목록이 비어있습니다."),
+    VISIT_COMPLETE_POST_DELETE_FORBIDDEN(HttpStatus.FORBIDDEN, "MP0011", "직관 완료된 게시글은 삭제할 수 없습니다"),
+    MATE_POST_MAX_PARTICIPANTS_EXCEEDED(HttpStatus.BAD_REQUEST, "MP0012", "참여자 수가 최대 모집 인원을 초과했습니다"),
+    INVALID_MATE_POST_PARTICIPANT_IDS(HttpStatus.BAD_REQUEST, "MP013", "존재하지 않는 회원이 참여자 목록에 포함되어 있습니다"),
+
 
     // Goods
     GOODS_IMAGES_ARE_EMPTY(HttpStatus.BAD_REQUEST, "G001", "굿즈 이미지는 최소 1개 이상을 업로드 할 수 있습니다."),
