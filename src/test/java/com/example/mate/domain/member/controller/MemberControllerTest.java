@@ -8,9 +8,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.example.mate.common.error.CustomException;
+import com.example.mate.common.error.ErrorCode;
 import com.example.mate.domain.member.dto.request.JoinRequest;
 import com.example.mate.domain.member.dto.response.JoinResponse;
 import com.example.mate.domain.member.dto.response.MemberProfileResponse;
+import com.example.mate.domain.member.dto.response.MyProfileResponse;
 import com.example.mate.domain.member.service.MemberService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
@@ -37,12 +40,28 @@ class MemberControllerTest {
     @MockBean
     private MemberService memberService;
 
+    private MyProfileResponse createMyProfileResponse() {
+        return MyProfileResponse.builder()
+                .nickname("tester")
+                .imageUrl("default.jpg")
+                .teamName("KIA")
+                .manner(0.3f)
+                .aboutMe("테스터입니다.")
+                .followingCount(10)
+                .followerCount(20)
+                .reviewsCount(5)
+                .goodsSoldCount(15)
+                .goodsBoughtCount(12)
+                .visitsCount(3)
+                .build();
+    }
+
     private MemberProfileResponse createMemberProfileResponse() {
         return MemberProfileResponse.builder()
                 .nickname("tester")
                 .imageUrl("default.jpg")
                 .teamName("KIA")
-                .manner(4.5f)
+                .manner(0.2f)
                 .aboutMe("테스터입니다.")
                 .followingCount(10)
                 .followerCount(20)
@@ -139,6 +158,67 @@ class MemberControllerTest {
     }
 
     @Test
+    @DisplayName("내 프로필 조회 - 성공")
+    void get_my_profile_success() throws Exception {
+        // given
+        Long memberId = 1L;
+        MyProfileResponse response = createMyProfileResponse();
+
+        given(memberService.getMyProfile(memberId)).willReturn(response);
+
+        // when & then
+        mockMvc.perform(get("/api/members/me")
+                        .param("memberId", memberId.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("SUCCESS"))
+                .andExpect(jsonPath("$.data.nickname").value("tester"))
+                .andExpect(jsonPath("$.data.imageUrl").value("default.jpg"))
+                .andExpect(jsonPath("$.data.teamName").value("KIA"))
+                .andExpect(jsonPath("$.data.manner").value(0.3))
+                .andExpect(jsonPath("$.data.aboutMe").value("테스터입니다."))
+                .andExpect(jsonPath("$.data.followingCount").value(10))
+                .andExpect(jsonPath("$.data.followerCount").value(20))
+                .andExpect(jsonPath("$.data.reviewsCount").value(5))
+                .andExpect(jsonPath("$.data.goodsSoldCount").value(15))
+                .andExpect(jsonPath("$.data.goodsBoughtCount").value(12))
+                .andExpect(jsonPath("$.data.visitsCount").value(3))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("내 프로필 조회 - 회원이 존재하지 않는 경우")
+    void get_my_profile_member_not_found() throws Exception {
+        // given
+        Long memberId = 999L;
+
+        given(memberService.getMyProfile(memberId)).willThrow(
+                new CustomException(ErrorCode.MEMBER_NOT_FOUND_BY_ID));
+
+        // when & then
+        mockMvc.perform(get("/api/members/me")
+                        .param("memberId", memberId.toString()))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value("ERROR"))
+                .andExpect(jsonPath("$.message").value("해당 ID의 회원 정보를 찾을 수 없습니다"))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("내 프로필 조회 - 잘못된 memberId 형식")
+    void get_my_profile_invalid_member_id() throws Exception {
+        // given
+        String invalidMemberId = "invalid";  // 숫자가 아닌 잘못된 ID
+
+        // when & then
+        mockMvc.perform(get("/api/members/me")
+                        .param("memberId", invalidMemberId))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value("ERROR"))
+                .andExpect(jsonPath("$.message").value("잘못된 입력 형식입니다. 'invalid' 타입이 'Long'로 변환될 수 없습니다."))
+                .andDo(print());
+    }
+
+    @Test
     @DisplayName("다른 회원 프로필 조회")
     void find_member_info_success() throws Exception {
         // given
@@ -155,7 +235,7 @@ class MemberControllerTest {
                 .andExpect(jsonPath("$.data.nickname").value("tester"))
                 .andExpect(jsonPath("$.data.imageUrl").value("default.jpg"))
                 .andExpect(jsonPath("$.data.teamName").value("KIA"))
-                .andExpect(jsonPath("$.data.manner").value(4.5))
+                .andExpect(jsonPath("$.data.manner").value(0.2))
                 .andExpect(jsonPath("$.data.aboutMe").value("테스터입니다."))
                 .andExpect(jsonPath("$.data.followingCount").value(10))
                 .andExpect(jsonPath("$.data.followerCount").value(20))
