@@ -7,8 +7,10 @@ import com.example.mate.common.utils.file.FileValidator;
 import com.example.mate.domain.constant.TeamInfo;
 import com.example.mate.domain.goods.dto.request.GoodsPostRequest;
 import com.example.mate.domain.goods.dto.response.GoodsPostResponse;
+import com.example.mate.domain.goods.dto.response.GoodsPostSummaryResponse;
 import com.example.mate.domain.goods.entity.GoodsPost;
 import com.example.mate.domain.goods.entity.GoodsPostImage;
+import com.example.mate.domain.goods.entity.Status;
 import com.example.mate.domain.goods.repository.GoodsPostImageRepository;
 import com.example.mate.domain.goods.repository.GoodsPostRepository;
 import com.example.mate.domain.member.entity.Member;
@@ -16,6 +18,8 @@ import com.example.mate.domain.member.repository.MemberRepository;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,6 +27,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Service
 @Transactional
 @RequiredArgsConstructor
+@Slf4j
 public class GoodsService {
 
     private final MemberRepository memberRepository;
@@ -83,13 +88,22 @@ public class GoodsService {
         return GoodsPostResponse.of(goodsPost);
     }
 
+    @Transactional(readOnly = true)
+    public List<GoodsPostSummaryResponse> getMainGoodsPosts(Long teamId) {
+        validateTeamInfo(teamId);
+        List<GoodsPost> goodsPosts = goodsPostRepository.findMainGoodsPosts(teamId, Status.OPEN, PageRequest.of(0, 4));
+
+        return goodsPosts.stream()
+                .map(this::convertToSummaryResponse).toList();
+    }
+
     private Member getSellerAndValidate(Long memberId) {
         return memberRepository.findById(memberId).orElseThrow(()
                 -> new CustomException(ErrorCode.MEMBER_NOT_FOUND_BY_ID));
     }
 
     private void validateTeamInfo(Long teamId) {
-        if (!TeamInfo.existById(teamId)) {
+        if (teamId != null && !TeamInfo.existById(teamId)) {
             throw new CustomException(ErrorCode.TEAM_NOT_FOUND);
         }
     }
@@ -126,5 +140,15 @@ public class GoodsService {
             images.add(image);
         }
         return images;
+    }
+
+    private GoodsPostSummaryResponse convertToSummaryResponse(GoodsPost goodsPost) {
+        String mainImageUrl = goodsPost.getGoodsPostImages().stream()
+                .filter(GoodsPostImage::getIsMainImage)
+                .findFirst()
+                .map(GoodsPostImage::getImageUrl)
+                .orElseThrow(() -> new CustomException(ErrorCode.GOODS_MAIN_IMAGE_IS_EMPTY));
+
+        return GoodsPostSummaryResponse.of(goodsPost, mainImageUrl);
     }
 }

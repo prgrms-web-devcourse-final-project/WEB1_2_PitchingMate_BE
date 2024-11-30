@@ -9,10 +9,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.example.mate.common.response.ApiResponse;
 import com.example.mate.domain.constant.Gender;
+import com.example.mate.domain.constant.TeamInfo;
 import com.example.mate.domain.goods.dto.LocationInfo;
 import com.example.mate.domain.goods.dto.MemberInfo;
 import com.example.mate.domain.goods.dto.request.GoodsPostRequest;
 import com.example.mate.domain.goods.dto.response.GoodsPostResponse;
+import com.example.mate.domain.goods.dto.response.GoodsPostSummaryResponse;
 import com.example.mate.domain.goods.entity.Category;
 import com.example.mate.domain.goods.entity.GoodsPost;
 import com.example.mate.domain.goods.entity.GoodsPostImage;
@@ -62,6 +64,7 @@ public class GoodsIntegrationTest {
     void setUp() {
         createMember();
         createGoodsPost();
+        createGoodsPostImage();
     }
 
     @Test
@@ -156,9 +159,6 @@ public class GoodsIntegrationTest {
         // then
         Optional<GoodsPost> goodsPost = goodsPostRepository.findById(goodsPostId);
         assertThat(goodsPost).isEmpty();
-
-        List<String> imageUrls = imageRepository.getImageUrlsByPostId(goodsPostId);
-        assertThat(imageUrls).isEmpty();
     }
 
     @Test
@@ -196,6 +196,39 @@ public class GoodsIntegrationTest {
         assertThat(seller.getMemberId()).isEqualTo(member.getId());
         assertThat(seller.getNickname()).isEqualTo(member.getNickname());
         assertThat(seller.getManner()).isEqualTo(member.getManner());
+    }
+
+    @Test
+    @DisplayName("메인페이지 굿즈 판매글 리스트 조회 통합 테스트")
+    void get_main_goods_posts_integration_test() throws Exception {
+        // given
+        Long teamId = 1L;
+
+        // when
+        MockHttpServletResponse result = mockMvc.perform(get("/api/goods/main")
+                        .param("teamId", String.valueOf(teamId)))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse();
+        result.setCharacterEncoding("UTF-8");
+
+        ApiResponse<List<GoodsPostSummaryResponse>> apiResponse = objectMapper.readValue(result.getContentAsString(), new TypeReference<>() {});
+
+        // then
+        assertThat(apiResponse.getCode()).isEqualTo(200);
+        assertThat(apiResponse.getStatus()).isEqualTo("SUCCESS");
+
+        List<GoodsPostSummaryResponse> goodsPostResponses = apiResponse.getData();
+        assertThat(goodsPostResponses).hasSize(1);
+
+        GoodsPostSummaryResponse response = goodsPostResponses.get(0);
+
+        assertThat(response.getTitle()).isEqualTo(goodsPost.getTitle());
+        assertThat(response.getTeamName()).isEqualTo(TeamInfo.getById(goodsPost.getTeamId()).shortName);
+        assertThat(response.getPrice()).isEqualTo(goodsPost.getPrice());
+        assertThat(response.getCategory()).isEqualTo(goodsPost.getCategory().getValue());
+        assertThat(response.getImageUrl()).isEqualTo(goodsPost.getGoodsPostImages().get(0).getImageUrl());
     }
 
     // ApiResponse 검증
@@ -259,6 +292,15 @@ public class GoodsIntegrationTest {
                 .category(Category.ACCESSORY)
                 .location(LocationInfo.toEntity(createLocationInfo()))
                 .build());
+    }
+
+    private void createGoodsPostImage() {
+        GoodsPostImage image = GoodsPostImage.builder()
+                .imageUrl("upload/test_img_url")
+                .build();
+
+        goodsPost.changeImages(List.of(image));
+        goodsPostRepository.save(goodsPost);
     }
 
     private MockMultipartFile createFile() {

@@ -36,3 +36,6 @@ application-local.yml
 
 ### VS Code ###
 .vscode/
+
+### SQL ###
+*.sql

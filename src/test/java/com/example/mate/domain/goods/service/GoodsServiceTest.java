@@ -12,6 +12,7 @@ import com.example.mate.common.error.ErrorCode;
 import com.example.mate.domain.goods.dto.LocationInfo;
 import com.example.mate.domain.goods.dto.request.GoodsPostRequest;
 import com.example.mate.domain.goods.dto.response.GoodsPostResponse;
+import com.example.mate.domain.goods.dto.response.GoodsPostSummaryResponse;
 import com.example.mate.domain.goods.entity.Category;
 import com.example.mate.domain.goods.entity.GoodsPost;
 import com.example.mate.domain.goods.entity.GoodsPostImage;
@@ -30,6 +31,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
@@ -96,6 +98,9 @@ class GoodsServiceTest {
                 .imageUrl("upload/test_img_url")
                 .post(post)
                 .build();
+
+        goodsPostImage.setAsMainImage();
+        goodsPost.changeImages(List.of(goodsPostImage));
     }
 
     private MockMultipartFile createFile(String contentType) {
@@ -361,6 +366,57 @@ class GoodsServiceTest {
                     .hasMessage(ErrorCode.GOODS_NOT_FOUND_BY_ID.getMessage());
 
             verify(goodsPostRepository).findById(goodsPostId);
+        }
+    }
+
+    @Nested
+    @DisplayName("메인페이지 굿즈거래 판매글 조회 테스트")
+    class GoodsServiceMainPageTest {
+
+        @Test
+        @DisplayName("메인페이지 굿즈거래 판매글 조회 성공")
+        void get_main_goods_posts_success() {
+            // given
+            Long teamId = 1L;
+            List<GoodsPost> goodsPosts = List.of(goodsPost);
+            given(goodsPostRepository.findMainGoodsPosts(1L, Status.OPEN, PageRequest.of(0, 4))).willReturn(goodsPosts);
+
+            // when
+            List<GoodsPostSummaryResponse> responses = goodsService.getMainGoodsPosts(teamId);
+
+            // then
+            assertThat(responses).isNotEmpty();
+            assertThat(responses.size()).isEqualTo(goodsPosts.size());
+
+            GoodsPostSummaryResponse goodsPostSummaryResponse = responses.get(0);
+            assertThat(goodsPostSummaryResponse.getTitle()).isEqualTo(goodsPost.getTitle());
+            assertThat(goodsPostSummaryResponse.getPrice()).isEqualTo(goodsPost.getPrice());
+            assertThat(goodsPostSummaryResponse.getImageUrl()).isEqualTo(goodsPostImage.getImageUrl());
+
+            verify(goodsPostRepository).findMainGoodsPosts(1L, Status.OPEN, PageRequest.of(0, 4));
+        }
+
+        @Test
+        @DisplayName("메인페이지 굿즈거래 판매글 조회 실패 - 대표 이미지가 없는 경우")
+        void get_main_goods_posts_failed_with_no_main_image() {
+            // given
+            Long teamId = 1L;
+            List<GoodsPostImage> imagesWithoutMain = List.of(
+                    GoodsPostImage.builder().imageUrl("upload/test_img_url_1").post(goodsPost).build(),
+                    GoodsPostImage.builder().imageUrl("upload/test_img_url_2").post(goodsPost).build()
+            );
+
+            GoodsPost post = GoodsPost.builder().goodsPostImages(imagesWithoutMain).build();
+            List<GoodsPost> goodsPosts = List.of(post);
+
+            given(goodsPostRepository.findMainGoodsPosts(teamId, Status.OPEN, PageRequest.of(0, 4))).willReturn(goodsPosts);
+
+            // when & then
+            assertThatThrownBy(() -> goodsService.getMainGoodsPosts(teamId))
+                    .isInstanceOf(CustomException.class)
+                    .hasMessage(ErrorCode.GOODS_MAIN_IMAGE_IS_EMPTY.getMessage());
+
+            verify(goodsPostRepository).findMainGoodsPosts(teamId, Status.OPEN, PageRequest.of(0, 4));
         }
     }
 }

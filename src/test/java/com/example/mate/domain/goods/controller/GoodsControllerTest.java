@@ -16,6 +16,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.example.mate.domain.goods.dto.LocationInfo;
 import com.example.mate.domain.goods.dto.request.GoodsPostRequest;
 import com.example.mate.domain.goods.dto.response.GoodsPostResponse;
+import com.example.mate.domain.goods.dto.response.GoodsPostSummaryResponse;
 import com.example.mate.domain.goods.entity.Category;
 import com.example.mate.domain.goods.entity.Status;
 import com.example.mate.domain.goods.service.GoodsService;
@@ -70,6 +71,17 @@ class GoodsControllerTest {
         return GoodsPostResponse.builder()
                 .id(1L)
                 .status(Status.OPEN.getValue())
+                .build();
+    }
+
+    private GoodsPostSummaryResponse createGoodsPostSummaryResponse() {
+        return GoodsPostSummaryResponse.builder()
+                .id(1L)
+                .teamName("KIA")
+                .title("test title")
+                .category(Category.CLOTHING.getValue())
+                .price(10_000)
+                .imageUrl("test.jpg")
                 .build();
     }
 
@@ -183,5 +195,29 @@ class GoodsControllerTest {
                 .andExpect(jsonPath("$.data.status").value(response.getStatus()));
 
         verify(goodsService).getGoodsPost(goodsPostId);
+    }
+
+    @Test
+    @DisplayName("메인페이지 굿즈 판매글 리스트 조회 - API 테스트")
+    void get_main_goods_posts_success() throws Exception {
+        // given
+        Long teamId = 1L;
+        GoodsPostSummaryResponse response = createGoodsPostSummaryResponse();
+        List<GoodsPostSummaryResponse> goodsPosts = List.of(response);
+
+        given(goodsService.getMainGoodsPosts(teamId)).willReturn(goodsPosts);
+
+        // when & then
+        mockMvc.perform(get("/api/goods/main")
+                        .param("teamId", String.valueOf(teamId)))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("SUCCESS"))
+                .andExpect(jsonPath("$.data.size()").value(goodsPosts.size()))
+                .andExpect(jsonPath("$.data[0].id").value(response.getId()))
+                .andExpect(jsonPath("$.data[0].price").value(response.getPrice()))
+                .andExpect(jsonPath("$.code").value(200));
+
+        verify(goodsService).getMainGoodsPosts(teamId);
     }
 }

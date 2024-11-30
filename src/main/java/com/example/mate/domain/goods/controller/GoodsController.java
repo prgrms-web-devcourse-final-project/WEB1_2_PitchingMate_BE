@@ -83,13 +83,12 @@ public class GoodsController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    /*
-    메인 페이지 : 굿즈 거래글 요약 4개 리스트 조회
-    테스트 용도로, 가상의 동일한 거래글 데이터 4개를 생성
-     */
+
+    // 메인 페이지 : 굿즈 거래글 요약 4개 리스트 조회
     @GetMapping("/main")
-    public ResponseEntity<List<GoodsPostSummaryResponse>> getGoodsPostsMain(@RequestParam Long teamId) {
-        return ResponseEntity.ok(Collections.nCopies(4, GoodsPostSummaryResponse.createResponse(teamId)));
+    public ResponseEntity<ApiResponse<List<GoodsPostSummaryResponse>>> getGoodsPostsMain(@RequestParam(required = false) Long teamId) {
+        List<GoodsPostSummaryResponse> responses = goodsService.getMainGoodsPosts(teamId);
+        return ResponseEntity.ok(ApiResponse.success(responses));
     }
 
     /*
