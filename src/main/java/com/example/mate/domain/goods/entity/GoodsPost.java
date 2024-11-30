@@ -1,5 +1,6 @@
 package com.example.mate.domain.goods.entity;
 
+import com.example.mate.common.BaseTimeEntity;
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
 import com.example.mate.domain.member.entity.Member;
@@ -34,7 +35,7 @@ import lombok.ToString;
 @ToString
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class GoodsPost {
+public class GoodsPost extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

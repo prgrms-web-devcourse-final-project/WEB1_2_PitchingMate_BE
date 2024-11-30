@@ -21,7 +21,7 @@ public interface GoodsPostRepository extends JpaRepository<GoodsPost, Long> {
             SELECT gp FROM GoodsPost gp
             WHERE (:teamId IS NULL OR gp.teamId = :teamId)
             AND gp.status = :status
-            ORDER BY gp.id ASC
+            ORDER BY gp.createdAt DESC
             """)
     List<GoodsPost> findMainGoodsPosts(@Param("teamId") Long teamId, @Param("status") Status status, Pageable pageable);
 }

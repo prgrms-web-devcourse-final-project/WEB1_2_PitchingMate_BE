@@ -17,13 +17,15 @@ public class MemberInfo {
     private String nickname;
     private Float manner;
     private Role role;
+    private String imageUrl;
 
     @Builder
-    public MemberInfo(Long memberId, String nickname, Float manner, Role role) {
+    public MemberInfo(Long memberId, String nickname, Float manner, Role role, String imageUrl) {
         this.memberId = memberId;
         this.nickname = nickname;
         this.manner = manner;
         this.role = role;
+        this.imageUrl = imageUrl;
     }
 
     public static MemberInfo from(Member member, Role role) {
@@ -31,6 +33,7 @@ public class MemberInfo {
                 .memberId(member.getId())
                 .nickname(member.getNickname())
                 .manner(member.getManner())
+                .imageUrl(member.getImageUrl())
                 .role(role)
                 .build();
     }
