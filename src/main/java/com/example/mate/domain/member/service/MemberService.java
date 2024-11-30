@@ -3,6 +3,7 @@ package com.example.mate.domain.member.service;
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
 import com.example.mate.common.utils.file.FileUploader;
+import com.example.mate.common.utils.file.FileValidator;
 import com.example.mate.domain.constant.TeamInfo;
 import com.example.mate.domain.goods.entity.Status;
 import com.example.mate.domain.goods.repository.GoodsPostRepository;
@@ -60,6 +61,7 @@ public class MemberService {
         member.changeTeam(TeamInfo.getById(request.getTeamId()));
         member.changeAboutMe(request.getAboutMe());
         if (image != null && !image.isEmpty()) {
+            FileValidator.validateMyProfileImage(image);
             member.changeImageUrl(FileUploader.uploadFile(image)); // TODO : 실제 업로드 처리 필요
         } else {
             member.changeImageUrl(DEFAULT_IMAGE_URL);
