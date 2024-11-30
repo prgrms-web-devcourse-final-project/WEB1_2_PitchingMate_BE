@@ -7,7 +7,6 @@ import com.example.mate.domain.member.service.FollowService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -53,7 +52,7 @@ public class FollowController {
         return ResponseEntity.noContent().build();
     }
 
-    @Operation(summary = "특정 회원이 팔로우하는 회원 리스트 페이징 조회")
+    @Operation(summary = "특정 회원의 팔로우 회원 리스트 페이징 조회")
     @GetMapping("{memberId}/followings")
     public ResponseEntity<ApiResponse<PageResponse<MemberSummaryResponse>>> getFollowings(
             @Parameter(description = "특정 회원 ID") @PathVariable Long memberId,
@@ -64,22 +63,16 @@ public class FollowController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    /*
-    TODO : 2024/11/25 - 특정 사용자를 팔로우하는 회원들 페이징 조회
-    1. memberId 을 통해 회원 정보 조회
-    2. 회원을 팔로우하는 회원 정보 조회
-    3. 페이징 처리 후 반환
-    */
+    @Operation(summary = "특정 회원의 팔로워 회원 리스트 페이징 조회")
     @GetMapping("{memberId}/followers")
-    public ResponseEntity<Page<MemberSummaryResponse>> getFollowers(
-            @PathVariable Long memberId,
+    public ResponseEntity<ApiResponse<PageResponse<MemberSummaryResponse>>> getFollowers(
+            @Parameter(description = "특정 회원 ID") @PathVariable Long memberId,
             @PageableDefault(size = 10) Pageable pageable
     ) {
-//        MemberSummaryResponse response = MemberSummaryResponse.from();
-//        List<MemberSummaryResponse> responses = Collections.nCopies(10, response);
-//        Page<MemberSummaryResponse> page = new PageImpl<>(responses, pageable, responses.size());
+        pageable = validatePageable(pageable);
+        PageResponse<MemberSummaryResponse> response = followService.getFollowersPage(memberId, pageable);
 
-        return ResponseEntity.ok(null);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     // Pageable 검증 메서드
