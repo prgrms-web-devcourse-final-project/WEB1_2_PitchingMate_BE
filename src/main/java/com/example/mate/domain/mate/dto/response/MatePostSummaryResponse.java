@@ -21,27 +21,17 @@ public class MatePostSummaryResponse {
     private Status status;
     private String myTeamName;
     private String rivalTeamName;
-    private LocalDateTime rivalMatchTime;
+    private LocalDateTime matchTime;
     private String location;
     private Integer maxParticipants;
     private Age age;
     private Gender gender;
     private TransportType transportType;
 
-    public static MatePostSummaryResponse from(MatePost post, Long selectedTeamId) {
-        Match match = post.getMatch();
-        String myTeamName;
-        String rivalTeamName;
-
-        if (selectedTeamId != null) {
-            // 특정 팀 선택한 경우: 게시글 작성자의 팀이 myTeam
-            myTeamName = TeamInfo.getById(post.getTeamId()).shortName;
-            rivalTeamName = getRivalTeamName(post);
-        } else {
-            // KBO 선택한 경우: 홈팀이 myTeam
-            myTeamName = TeamInfo.getById(match.getHomeTeamId()).shortName;
-            rivalTeamName = TeamInfo.getById(match.getAwayTeamId()).shortName;
-        }
+    public static MatePostSummaryResponse from(MatePost post) {
+        // 게시글 작성자의 팀이 myTeam
+        String myTeamName = TeamInfo.getById(post.getTeamId()).shortName;
+        String rivalTeamName = getRivalTeamName(post);
 
         return MatePostSummaryResponse.builder()
                 .imageUrl(post.getImageUrl())
@@ -49,8 +39,8 @@ public class MatePostSummaryResponse {
                 .status(post.getStatus())
                 .myTeamName(myTeamName)
                 .rivalTeamName(rivalTeamName)
-                .rivalMatchTime(match.getMatchTime())
-                .location(match.getStadium().name)
+                .matchTime(post.getMatch().getMatchTime())
+                .location(post.getMatch().getStadium().name)
                 .maxParticipants(post.getMaxParticipants())
                 .age(post.getAge())
                 .gender(post.getGender())

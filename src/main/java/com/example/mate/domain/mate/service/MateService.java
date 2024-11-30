@@ -85,7 +85,7 @@ public class MateService {
                 PageRequest.of(0, 3));
 
         return mainPagePosts.stream()
-                .map(post -> MatePostSummaryResponse.from(post, teamId))
+                .map(MatePostSummaryResponse::from)
                 .toList();
     }
 
@@ -97,7 +97,7 @@ public class MateService {
         Page<MatePost> matePostPage = mateRepository.findMatePostsByFilter(request ,pageable);
 
         List<MatePostSummaryResponse> content = matePostPage.getContent().stream()
-                .map(post -> MatePostSummaryResponse.from(post, request.getTeamId()))
+                .map(MatePostSummaryResponse::from)
                 .toList();
 
         return PageResponse.<MatePostSummaryResponse>builder()
