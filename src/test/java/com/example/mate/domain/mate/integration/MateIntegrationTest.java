@@ -1,10 +1,13 @@
 package com.example.mate.domain.mate.integration;
+
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.match.entity.Match;
 import com.example.mate.domain.match.repository.MatchRepository;
 import com.example.mate.domain.mate.dto.request.MatePostCreateRequest;
-import com.example.mate.domain.mate.dto.request.MatePostStatusRequest;
-import com.example.mate.domain.mate.entity.*;
+import com.example.mate.domain.mate.entity.Age;
+import com.example.mate.domain.mate.entity.MatePost;
+import com.example.mate.domain.mate.entity.Status;
+import com.example.mate.domain.mate.entity.TransportType;
 import com.example.mate.domain.mate.repository.MateRepository;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
@@ -25,8 +28,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static com.example.mate.domain.match.entity.MatchStatus.SCHEDULED;
 import static com.example.mate.common.error.ErrorCode.*;
+import static com.example.mate.domain.match.entity.MatchStatus.SCHEDULED;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;

@@ -3,7 +3,6 @@ package com.example.mate.domain.mate.service;
 import com.example.mate.common.error.CustomException;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.match.entity.Match;
-import com.example.mate.domain.match.repository.MatchRepository;
 import com.example.mate.domain.mate.dto.request.MatePostCompleteRequest;
 import com.example.mate.domain.mate.dto.request.MatePostStatusRequest;
 import com.example.mate.domain.mate.dto.response.MatePostCompleteResponse;
