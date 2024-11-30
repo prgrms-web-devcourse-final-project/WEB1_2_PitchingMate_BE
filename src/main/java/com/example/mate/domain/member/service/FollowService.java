@@ -2,13 +2,21 @@ package com.example.mate.domain.member.service;
 
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
+import com.example.mate.common.response.PageResponse;
+import com.example.mate.domain.member.dto.response.MemberSummaryResponse;
 import com.example.mate.domain.member.entity.Follow;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.FollowRepository;
 import com.example.mate.domain.member.repository.MemberRepository;
 import jakarta.transaction.Transactional;
+import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -39,6 +47,31 @@ public class FollowService {
         }
     }
 
+    // 특정 회원의 팔로우 리스트 페이징 조회
+    public PageResponse<MemberSummaryResponse> getFollowingsPage(Long memberId, int pageNumber, int pageSize) {
+        findByMemberId(memberId); // 회원 존재 검증
+        pageNumber = pageNumber < 1 ? 0 : pageNumber - 1;
+        pageSize = pageSize < 1 ? 10 : pageSize;
+
+        // 해당 회원이 팔로우하는 리스트 최신 팔로우 순으로 페이징
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Direction.DESC, "id"));
+        Page<Member> followingsPage = followRepository.findFollowingsByFollowerId(memberId, pageable);
+
+        // MemberSummaryResponse 변환
+        List<MemberSummaryResponse> content = followingsPage.getContent().stream()
+                .map(MemberSummaryResponse::from)
+                .toList();
+
+        return PageResponse.<MemberSummaryResponse>builder()
+                .content(content)
+                .totalPages(followingsPage.getTotalPages())
+                .totalElements(followingsPage.getTotalElements())
+                .hasNext(followingsPage.hasNext())
+                .pageNumber(followingsPage.getNumber())
+                .pageSize(followingsPage.getSize())
+                .build();
+    }
+
     private Map<String, Member> isValidMemberFollow(Long followerId, Long followingId) {
         Member follower = memberRepository.findById(followerId)
                 .orElseThrow(() -> new CustomException(ErrorCode.FOLLOWER_NOT_FOUND_BY_ID));
@@ -63,15 +96,5 @@ public class FollowService {
     private Member findByMemberId(Long memberId) {
         return memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND_BY_ID));
-    }
-
-    // 특정 회원의 팔로잉 수 카운트
-    public int getFollowCount(Long memberId) {
-        return followRepository.countByFollowerId(memberId);
-    }
-
-    // 특정 회원의 팔로워 수 카운트
-    public int getFollowerCount(Long memberId) {
-        return followRepository.countByFollowingId(memberId);
     }
 }

@@ -2,6 +2,9 @@ package com.example.mate.domain.member.repository;
 
 
 import com.example.mate.domain.member.entity.Follow;
+import com.example.mate.domain.member.entity.Member;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -20,4 +23,8 @@ public interface FollowRepository extends JpaRepository<Follow, Long> {
     boolean existsByFollowerIdAndFollowingId(Long followerId, Long followingId);
 
     void deleteByFollowerIdAndFollowingId(Long followerId, Long followingId);
+
+    // 특정 회원의 팔로잉 리스트
+    @Query("SELECT f.following FROM Follow f WHERE f.follower.id = :followerId")
+    Page<Member> findFollowingsByFollowerId(@Param("followerId") Long followerId, Pageable pageable);
 }
