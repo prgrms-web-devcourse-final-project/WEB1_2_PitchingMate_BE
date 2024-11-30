@@ -297,4 +297,59 @@ class FollowServiceTest {
             verify(memberRepository, times(1)).findById(memberId);
         }
     }
+
+    @Nested
+    @DisplayName("팔로워 리스트 페이징")
+    class FollowerPage {
+
+        @Test
+        @DisplayName("팔로워 리스트 페이징 성공")
+        void get_followers_page_success() {
+            // given
+            Long memberId = 2L;
+            int pageNumber = 0;
+            int pageSize = 2;
+
+            given(memberRepository.findById(memberId)).willReturn(Optional.of(following));
+
+            Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Direction.DESC, "id"));
+            Page<Member> membersPage = createTestMemberPage();
+
+            given(followRepository.findFollowersByFollowingId(eq(memberId), eq(pageable)))
+                    .willReturn(membersPage);
+
+            // when
+            PageResponse<MemberSummaryResponse> response = followService.getFollowersPage(memberId, pageable);
+
+            // then
+            assertThat(response.getTotalElements()).isEqualTo(2);
+            assertThat(response.getContent()).hasSize(2);
+            assertThat(response.getContent().get(0).getNickname()).isEqualTo("tester1");
+            assertThat(response.getContent().get(1).getNickname()).isEqualTo("tester2");
+
+            verify(memberRepository, times(1)).findById(memberId);
+            verify(followRepository, times(1))
+                    .findFollowersByFollowingId(memberId, pageable);
+        }
+
+        @Test
+        @DisplayName("팔로워 리스트 페이징 실패 - 회원 없음")
+        void get_followers_page_member_not_found() {
+            // given
+            Long memberId = 999L;  // 존재하지 않는 회원 ID
+            int pageNumber = 1;
+            int pageSize = 2;
+            Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Direction.DESC, "id"));
+
+            given(memberRepository.findById(memberId)).willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> followService.getFollowersPage(memberId, pageable))
+                    .isInstanceOf(CustomException.class)
+                    .hasMessage(ErrorCode.MEMBER_NOT_FOUND_BY_ID.getMessage());
+
+            verify(memberRepository, times(1)).findById(memberId);
+        }
+
+    }
 }
