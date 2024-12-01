@@ -63,6 +63,12 @@ public enum ErrorCode {
     GOODS_ALREADY_COMPLETED(HttpStatus.BAD_REQUEST, "G006", "이미 거래완료 상태인 굿즈는 거래를 완료할 수 없습니다."),
     SELLER_CANNOT_BE_BUYER(HttpStatus.BAD_REQUEST, "G007", "판매자와 구매자는 동일할 수 없습니다."),
 
+
+    // REVIEW
+    NOT_PARTICIPANT_OR_AUTHOR(HttpStatus.FORBIDDEN, "R002", "리뷰어와 리뷰 대상자 모두 직관 참여자여야 합니다."),
+    SELF_REVIEW_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "R004", "자기 자신에 대한 리뷰는 작성할 수 없습니다."),
+    REVIEW_NOT_FOUND_BY_ID(HttpStatus.NOT_FOUND, "R005", "해당 ID의 리뷰를 찾을 수 없습니다."),
+
     // FILE
     FILE_IS_EMPTY(HttpStatus.BAD_REQUEST, "F001", "빈 파일을 업로드할 수 없습니다. 파일 내용을 확인해주세요."),
     FILE_UNSUPPORTED_TYPE(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "F002", "지원하지 않는 파일 형식입니다."),
@@ -85,8 +91,10 @@ public enum ErrorCode {
     INVALID_SORT_TYPE_VALUE(HttpStatus.BAD_REQUEST, "ST001", "유효하지 않은 정렬 기준 값입니다."),
 
     // Status
-    INVALID_STATUS_TYPE_VALUE(HttpStatus.BAD_REQUEST, "STATUS001", "유효하지 않은 모집 상태 값입니다.");
+    INVALID_STATUS_TYPE_VALUE(HttpStatus.BAD_REQUEST, "STATUS001", "유효하지 않은 모집 상태 값입니다."),
 
+    // Rating
+    INVALID_RATING_VALUE(HttpStatus.BAD_REQUEST, "Rating001", "유효하지 않은 리뷰 평가 값입니다.");
 
     private final HttpStatus status;
     private final String code;
