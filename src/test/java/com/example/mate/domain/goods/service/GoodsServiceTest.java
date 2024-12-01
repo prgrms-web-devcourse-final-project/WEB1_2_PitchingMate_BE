@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import com.example.mate.common.error.CustomException;
@@ -568,6 +569,81 @@ class GoodsServiceTest {
             assertThatThrownBy(() -> goodsService.getPageGoodsPosts(teamId, category.getValue(), pageRequest))
                     .isExactlyInstanceOf(CustomException.class)
                     .hasMessage(ErrorCode.TEAM_NOT_FOUND.getMessage());
+        }
+    }
+
+    @Nested
+    @DisplayName("굿즈거래 판매글 거래완료 테스트")
+    class GoodsServiceCompleteTransactionTest {
+
+        @Test
+        @DisplayName("굿즈거래 판매글 거래완료 성공")
+        void complete_goods_post_transaction_success() {
+            // given
+            Long sellerId = member.getId();
+            Long goodsPostId = goodsPost.getId();
+            Member buyer = Member.builder().id(2L).name("구매자").build();
+            Long buyerId = buyer.getId();
+
+            given(memberRepository.findById(sellerId)).willReturn(Optional.of(member));
+            given(goodsPostRepository.findById(goodsPostId)).willReturn(Optional.of(goodsPost));
+            given(memberRepository.findById(buyerId)).willReturn(Optional.of(buyer));
+
+            // when
+            goodsService.completeTransaction(sellerId, goodsPostId, buyerId);
+
+            // then
+            assertThat(goodsPost.getStatus()).isEqualTo(Status.CLOSED);
+            assertThat(goodsPost.getBuyer()).isEqualTo(buyer);
+
+            verify(memberRepository).findById(sellerId);
+            verify(goodsPostRepository).findById(goodsPostId);
+            verify(memberRepository).findById(buyerId);
+        }
+
+        @Test
+        @DisplayName("굿즈거래 판매글 거래완료 실패 - 이미 거래완료 상태인 판매글")
+        void complete_goods_post_transaction_failed_with_closed_status() {
+            // given
+            Long sellerId = member.getId();
+            Long goodsPostId = goodsPost.getId();
+            Member buyer = Member.builder().id(2L).name("구매자").build();
+            Long buyerId = 2L;
+            goodsPost.completeTransaction(buyer);       // 판매글 상태를 거래 완료로 설정
+
+            given(memberRepository.findById(sellerId)).willReturn(Optional.of(member));
+            given(goodsPostRepository.findById(goodsPostId)).willReturn(Optional.of(goodsPost));
+            given(memberRepository.findById(buyerId)).willReturn(Optional.of(buyer));
+
+            // when & then
+            assertThatThrownBy(() -> goodsService.completeTransaction(sellerId, goodsPostId, buyerId))
+                    .isInstanceOf(CustomException.class)
+                    .hasMessage(ErrorCode.GOODS_ALREADY_COMPLETED.getMessage());
+
+            verify(memberRepository).findById(sellerId);
+            verify(goodsPostRepository).findById(goodsPostId);
+            verify(memberRepository).findById(buyerId);
+        }
+
+        @Test
+        @DisplayName("굿즈거래 판매글 거래완료 실패 - 동일한 판매자와 구매자")
+        void complete_goods_post_transaction_failed_with_same_seller_and_buyer() {
+            // given
+            Long sellerId = member.getId();
+            Long goodsPostId = goodsPost.getId();
+            Long buyerId = sellerId;        // 구매자와 판매자가 동일
+
+            given(memberRepository.findById(sellerId)).willReturn(Optional.of(member));
+            given(goodsPostRepository.findById(goodsPostId)).willReturn(Optional.of(goodsPost));
+            given(memberRepository.findById(buyerId)).willReturn(Optional.of(member));
+
+            // when & then
+            assertThatThrownBy(() -> goodsService.completeTransaction(sellerId, goodsPostId, buyerId))
+                    .isInstanceOf(CustomException.class)
+                    .hasMessage(ErrorCode.SELLER_CANNOT_BE_BUYER.getMessage());
+
+            verify(memberRepository, times(2)).findById(sellerId);
+            verify(goodsPostRepository).findById(goodsPostId);
         }
     }
 }
