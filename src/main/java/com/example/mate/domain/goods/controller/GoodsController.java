@@ -3,11 +3,9 @@ package com.example.mate.domain.goods.controller;
 import com.example.mate.common.response.ApiResponse;
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.goods.dto.request.GoodsPostRequest;
-import com.example.mate.domain.goods.dto.request.GoodsReviewFormRequest;
 import com.example.mate.domain.goods.dto.request.GoodsReviewRequest;
 import com.example.mate.domain.goods.dto.response.GoodsPostResponse;
 import com.example.mate.domain.goods.dto.response.GoodsPostSummaryResponse;
-import com.example.mate.domain.goods.dto.response.GoodsReviewFormResponse;
 import com.example.mate.domain.goods.dto.response.GoodsReviewResponse;
 import com.example.mate.domain.goods.service.GoodsService;
 import java.util.List;
@@ -117,19 +115,6 @@ public class GoodsController {
     ) {
         goodsService.completeTransaction(sellerId, goodsPostId, buyerId);
         return ResponseEntity.ok(ApiResponse.success(null));
-    }
-
-    // 굿즈 거래후기 : 굿즈 거래후기 페이지 조회
-    @GetMapping("/{goodsPostId}/review")
-    public ResponseEntity<GoodsReviewFormResponse> getGoodsReviewForm(@PathVariable Long goodsPostId,
-                                                                      @RequestBody GoodsReviewFormRequest request) {
-        return ResponseEntity.ok(GoodsReviewFormResponse.builder()
-                .goodsPostId(goodsPostId)
-                .goodsPostTitle(request.getGoodsPostTitle())
-                .reviewer(request.getReviewer())
-                .reviewee(request.getReviewee())
-                .imageUrl(request.getImageUrl())
-                .build());
     }
 
     // 굿즈 거래후기 : 굿즈 거래후기 등록
