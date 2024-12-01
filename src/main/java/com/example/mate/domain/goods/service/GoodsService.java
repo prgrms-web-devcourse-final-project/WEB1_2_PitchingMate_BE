@@ -40,7 +40,7 @@ public class GoodsService {
 
     public GoodsPostResponse registerGoodsPost(Long memberId, GoodsPostRequest request, List<MultipartFile> files) {
         // 사용자, 팀 정보, 이미지 파일 유효성 검증
-        Member seller = getSellerAndValidate(memberId);
+        Member seller = getMemberOrThrow(memberId);
         validateTeamInfo(request.getTeamId());
         FileValidator.validateGoodsPostImages(files);
 
@@ -49,7 +49,7 @@ public class GoodsService {
         GoodsPost savedPost = goodsPostRepository.save(goodsPost);
 
         // 이미지 저장 & 연관관계 설정
-        List<GoodsPostImage> images = saveImages(files, savedPost);
+        List<GoodsPostImage> images = uploadImageFiles(files, savedPost);
         goodsPost.changeImages(images);
 
         return GoodsPostResponse.of(goodsPost);
@@ -57,34 +57,32 @@ public class GoodsService {
 
     public GoodsPostResponse updateGoodsPost(Long memberId, Long goodsPostId, GoodsPostRequest request, List<MultipartFile> files) {
         // 사용자, 판매글 정보, 팀 정보, 이미지 파일 유효성 검증
-        Member seller = getSellerAndValidate(memberId);
-        GoodsPost goodsPost = getGoodsPostAndValidate(seller, goodsPostId);
+        Member seller = getMemberOrThrow(memberId);
+        GoodsPost goodsPost = getGoodsPostOrThrow(seller, goodsPostId);
+
         validateTeamInfo(request.getTeamId());
         FileValidator.validateGoodsPostImages(files);
+        deleteExistingImageFiles(goodsPostId);
 
         // 판매글 정보 업데이트
-        GoodsPost updatedPost = GoodsPostRequest.toEntity(seller, request);
-        goodsPost.update(updatedPost);
-        deleteExistingImages(goodsPostId);
-
-        // 이미지 업로드 & 저장
-        List<GoodsPostImage> images = saveImages(files, goodsPost);
-        goodsPost.changeImages(images);
+        GoodsPost updateTarget = GoodsPostRequest.toEntity(seller, request);
+        List<GoodsPostImage> images = uploadImageFiles(files, goodsPost);
+        goodsPost.updatePostDetails(updateTarget, images);
 
         return GoodsPostResponse.of(goodsPost);
     }
 
     public void deleteGoodsPost(Long memberId, Long goodsPostId) {
         // 사용자, 판매글 정보 유효성 검증
-        Member seller = getSellerAndValidate(memberId);
-        GoodsPost goodsPost = getGoodsPostAndValidate(seller, goodsPostId);
+        Member seller = getMemberOrThrow(memberId);
+        GoodsPost goodsPost = getGoodsPostOrThrow(seller, goodsPostId);
 
         if (goodsPost.getStatus() == Status.CLOSED) {
             throw new CustomException(ErrorCode.GOODS_DELETE_NOT_ALLOWED);
         }
 
         // 업로된 이미지 파일 삭제
-        deleteExistingImages(goodsPostId);
+        deleteExistingImageFiles(goodsPostId);
         goodsPostRepository.delete(goodsPost);
     }
 
@@ -124,7 +122,22 @@ public class GoodsService {
                 .build();
     }
 
-    private Member getSellerAndValidate(Long memberId) {
+    public void completeTransaction(Long sellerId, Long goodsPostId, Long buyerId) {
+        Member seller = getMemberOrThrow(sellerId);
+        Member buyer = getMemberOrThrow(buyerId);
+        GoodsPost goodsPost = getGoodsPostOrThrow(seller, goodsPostId);
+
+        if (seller == buyer) {
+            throw new CustomException(ErrorCode.SELLER_CANNOT_BE_BUYER);
+        }
+        if (goodsPost.getStatus() == Status.CLOSED) {
+            throw new CustomException(ErrorCode.GOODS_ALREADY_COMPLETED);
+        }
+
+        goodsPost.completeTransaction(buyer);
+    }
+
+    private Member getMemberOrThrow(Long memberId) {
         return memberRepository.findById(memberId).orElseThrow(()
                 -> new CustomException(ErrorCode.MEMBER_NOT_FOUND_BY_ID));
     }
@@ -135,7 +148,7 @@ public class GoodsService {
         }
     }
 
-    private GoodsPost getGoodsPostAndValidate(Member seller, Long goodsPostId) {
+    private GoodsPost getGoodsPostOrThrow(Member seller, Long goodsPostId) {
         GoodsPost goodsPost = goodsPostRepository.findById(goodsPostId).orElseThrow(()
                 -> new CustomException(ErrorCode.GOODS_NOT_FOUND_BY_ID));
 
@@ -145,7 +158,7 @@ public class GoodsService {
         return goodsPost;
     }
 
-    private void deleteExistingImages(Long goodsPostId) {
+    private void deleteExistingImageFiles(Long goodsPostId) {
         List<String> imageUrls = imageRepository.getImageUrlsByPostId(goodsPostId);
         imageUrls.forEach(url -> {
             if (!FileUploader.deleteFile(url)) {
@@ -155,7 +168,7 @@ public class GoodsService {
         imageRepository.deleteAllByPostId(goodsPostId);
     }
 
-    private List<GoodsPostImage> saveImages(List<MultipartFile> files, GoodsPost savedPost) {
+    private List<GoodsPostImage> uploadImageFiles(List<MultipartFile> files, GoodsPost savedPost) {
         List<GoodsPostImage> images = new ArrayList<>();
 
         for (MultipartFile file : files) {

@@ -60,6 +60,8 @@ public enum ErrorCode {
     GOODS_UPDATE_NOT_ALLOWED(HttpStatus.FORBIDDEN, "G003", "판매글의 판매자가 아니라면, 판매글을 수정할 수 없습니다."),
     GOODS_MAIN_IMAGE_IS_EMPTY(HttpStatus.NOT_FOUND, "G004", "굿즈 게시물의 대표사진을 찾을 수 없습니다."),
     GOODS_DELETE_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "G005", "거래완료 상태에서 판매글을 삭제할 수 없습니다."),
+    GOODS_ALREADY_COMPLETED(HttpStatus.BAD_REQUEST, "G006", "이미 거래완료 상태인 굿즈는 거래를 완료할 수 없습니다."),
+    SELLER_CANNOT_BE_BUYER(HttpStatus.BAD_REQUEST, "G007", "판매자와 구매자는 동일할 수 없습니다."),
 
     // FILE
     FILE_IS_EMPTY(HttpStatus.BAD_REQUEST, "F001", "빈 파일을 업로드할 수 없습니다. 파일 내용을 확인해주세요."),
