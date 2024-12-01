@@ -94,21 +94,15 @@ public class ProfileController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    /*
-    TODO : 2024/11/24 - 굿즈 구매기록 페이징 조회
-    1. memberId 을 통해 회원 정보 조회
-    2. 회원이 구매한 굿즈기록 조회
-    3. 페이징 처리 후 반환
-    */
+    // TODO : 본인만 접근할 수 있도록 @AuthenticationPrincipal Long memberId
+    @Operation(summary = "굿즈 구매기록 페이징 조회")
     @GetMapping("/{memberId}/goods/bought")
-    public ResponseEntity<Page<MyGoodsRecordResponse>> getBoughtGoods(
-            @PathVariable Long memberId,
-            @PageableDefault(size = 10) Pageable pageable
+    public ResponseEntity<ApiResponse<PageResponse<MyGoodsRecordResponse>>> getBoughtGoods(
+            @Parameter(description = "회원 ID") @PathVariable Long memberId,
+            @Parameter(description = "페이지 요청 정보") @PageableDefault Pageable pageable
     ) {
-        MyGoodsRecordResponse myGoodsRecordResponse = MyGoodsRecordResponse.from();
-        List<MyGoodsRecordResponse> responses = Collections.nCopies(10, myGoodsRecordResponse);
-        Page<MyGoodsRecordResponse> page = new PageImpl<>(responses, pageable, responses.size());
-
-        return ResponseEntity.ok(page);
+        pageable = validatePageable(pageable);
+        PageResponse<MyGoodsRecordResponse> response = profileService.getBoughtGoodsPage(memberId, pageable);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 }

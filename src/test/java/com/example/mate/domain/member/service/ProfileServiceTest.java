@@ -160,4 +160,56 @@ class ProfileServiceTest {
             verify(memberRepository).findById(invalidMemberId);
         }
     }
+
+    @Nested
+    @DisplayName("회원 프로필 굿즈 구매기록 페이징 조회")
+    class ProfileBoughtGoodsPage {
+
+        @Test
+        @DisplayName("회원 프로필 굿즈 구매기록 페이징 조회 성공")
+        void get_bought_goods_page_success() {
+            // given
+            Long memberId = 2L;
+
+            PageImpl<GoodsPost> boughtGoodsPage = new PageImpl<>(List.of(goodsPost));
+            Pageable pageable = PageRequest.of(0, 10);
+
+            given(memberRepository.findById(memberId)).willReturn(Optional.of(seller));
+            given(goodsPostRepository.findGoodsPostsByBuyerId(memberId, Status.CLOSED, pageable))
+                    .willReturn(boughtGoodsPage);
+
+            // when
+            PageResponse<MyGoodsRecordResponse> response = profileService.getBoughtGoodsPage(memberId, pageable);
+
+            // then
+            assertThat(response).isNotNull();
+            assertThat(response.getContent()).isNotEmpty();
+            assertThat(response.getTotalElements()).isEqualTo(boughtGoodsPage.getTotalElements());
+            assertThat(response.getContent().size()).isEqualTo(boughtGoodsPage.getContent().size());
+
+            MyGoodsRecordResponse recordResponse = response.getContent().get(0);
+            assertThat(recordResponse.getTitle()).isEqualTo(goodsPost.getTitle());
+            assertThat(recordResponse.getPrice()).isEqualTo(goodsPost.getPrice());
+            assertThat(recordResponse.getImageUrl()).isEqualTo(goodsPostImage.getImageUrl());
+
+            verify(goodsPostRepository).findGoodsPostsByBuyerId(memberId, Status.CLOSED, pageable);
+        }
+
+        @Test
+        @DisplayName("회원 프로필 굿즈 구매기록 페이징 조회 실패 - 유효하지 않은 회원 아이디로 조회")
+        void get_bought_goods_page_invalid_member_id() {
+            // given
+            Long invalidMemberId = 999L;
+            Pageable pageable = PageRequest.of(0, 10);
+
+            given(memberRepository.findById(invalidMemberId)).willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> profileService.getBoughtGoodsPage(invalidMemberId, pageable))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", MEMBER_NOT_FOUND_BY_ID);
+
+            verify(memberRepository).findById(invalidMemberId);
+        }
+    }
 }

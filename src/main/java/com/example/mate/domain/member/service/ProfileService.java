@@ -9,12 +9,12 @@ import com.example.mate.domain.goods.entity.Status;
 import com.example.mate.domain.goods.repository.GoodsPostRepository;
 import com.example.mate.domain.member.dto.response.MyGoodsRecordResponse;
 import com.example.mate.domain.member.repository.MemberRepository;
-import jakarta.transaction.Transactional;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional
@@ -25,6 +25,7 @@ public class ProfileService {
     private final GoodsPostRepository goodsPostRepository;
 
     // 굿즈 판매기록 페이징 조회
+    @Transactional(readOnly = true)
     public PageResponse<MyGoodsRecordResponse> getSoldGoodsPage(Long memberId, Pageable pageable) {
         validateMemberId(memberId);
 
@@ -41,6 +42,27 @@ public class ProfileService {
                 .hasNext(soldGoodsPage.hasNext())
                 .pageNumber(soldGoodsPage.getNumber())
                 .pageSize(soldGoodsPage.getSize())
+                .build();
+    }
+
+    // 굿즈 구매기록 페이징 조회
+    @Transactional(readOnly = true)
+    public PageResponse<MyGoodsRecordResponse> getBoughtGoodsPage(Long memberId, Pageable pageable) {
+        validateMemberId(memberId);
+
+        Page<GoodsPost> boughtGoodsPage = goodsPostRepository.findGoodsPostsByBuyerId(memberId, Status.CLOSED,
+                pageable);
+
+        List<MyGoodsRecordResponse> content = boughtGoodsPage.getContent().stream()
+                .map(this::convertToRecordResponse).toList();
+
+        return PageResponse.<MyGoodsRecordResponse>builder()
+                .content(content)
+                .totalPages(boughtGoodsPage.getTotalPages())
+                .totalElements(boughtGoodsPage.getTotalElements())
+                .hasNext(boughtGoodsPage.hasNext())
+                .pageNumber(boughtGoodsPage.getNumber())
+                .pageSize(boughtGoodsPage.getSize())
                 .build();
     }
 
