@@ -4,6 +4,15 @@ spring:
       max-file-size: 10MB
       max-request-size: 100MB
 
+  task:
+    scheduling:
+      pool:
+        size: 2
+      thread-name-prefix: baseball-scheduler
+      shutdown:
+        await-termination: true
+        await-termination-period: 10s
+
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
@@ -12,3 +21,6 @@ springdoc:
   packages-to-scan: com.example.mate
   default-consumes-media-type: application/json
   default-produces-media-type: application/json
+
+crawler:
+  base-url: https://www.koreabaseball.com/Schedule/Schedule.aspx
