@@ -111,7 +111,7 @@ public class MateController {
     public ResponseEntity<ApiResponse<MateReviewCreateResponse>> createMateReview(
             @PathVariable Long memberId,
             @PathVariable Long postId,
-            @RequestBody MateReviewCreateRequest request
+            @Valid @RequestBody MateReviewCreateRequest request
     ) {
 
         MateReviewCreateResponse response = mateService.createReview(postId, memberId, request);
