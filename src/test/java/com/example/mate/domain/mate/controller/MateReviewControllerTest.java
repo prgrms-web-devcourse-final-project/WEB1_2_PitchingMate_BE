@@ -1,6 +1,5 @@
 package com.example.mate.domain.mate.controller;
 
-import com.example.mate.common.error.CustomException;
 import com.example.mate.domain.constant.Rating;
 import com.example.mate.domain.mate.dto.request.MateReviewCreateRequest;
 import com.example.mate.domain.mate.dto.response.MateReviewCreateResponse;
@@ -17,7 +16,6 @@ import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static com.example.mate.common.error.ErrorCode.NOT_PARTICIPANT_OR_AUTHOR;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
