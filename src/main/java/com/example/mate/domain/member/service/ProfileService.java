@@ -9,12 +9,12 @@ import com.example.mate.domain.goods.entity.Status;
 import com.example.mate.domain.goods.repository.GoodsPostRepository;
 import com.example.mate.domain.member.dto.response.MyGoodsRecordResponse;
 import com.example.mate.domain.member.repository.MemberRepository;
-import jakarta.transaction.Transactional;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional
@@ -25,6 +25,7 @@ public class ProfileService {
     private final GoodsPostRepository goodsPostRepository;
 
     // 굿즈 판매기록 페이징 조회
+    @Transactional(readOnly = true)
     public PageResponse<MyGoodsRecordResponse> getSoldGoodsPage(Long memberId, Pageable pageable) {
         validateMemberId(memberId);
 
@@ -44,25 +45,8 @@ public class ProfileService {
                 .build();
     }
 
-    private void validateMemberId(Long memberId) {
-        memberRepository.findById(memberId)
-                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND_BY_ID));
-    }
-
-    private MyGoodsRecordResponse convertToRecordResponse(GoodsPost goodsPost) {
-        String mainImageUrl = getMainImageUrl(goodsPost);
-        return MyGoodsRecordResponse.of(goodsPost, mainImageUrl);
-    }
-
-    private String getMainImageUrl(GoodsPost goodsPost) {
-        return goodsPost.getGoodsPostImages().stream()
-                .filter(GoodsPostImage::getIsMainImage)
-                .findFirst()
-                .map(GoodsPostImage::getImageUrl)
-                .orElse("upload/default.jpg");
-    }
-
     // 굿즈 구매기록 페이징 조회
+    @Transactional(readOnly = true)
     public PageResponse<MyGoodsRecordResponse> getBoughtGoodsPage(Long memberId, Pageable pageable) {
         validateMemberId(memberId);
 
@@ -80,5 +64,23 @@ public class ProfileService {
                 .pageNumber(boughtGoodsPage.getNumber())
                 .pageSize(boughtGoodsPage.getSize())
                 .build();
+    }
+
+    private void validateMemberId(Long memberId) {
+        memberRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND_BY_ID));
+    }
+
+    private MyGoodsRecordResponse convertToRecordResponse(GoodsPost goodsPost) {
+        String mainImageUrl = getMainImageUrl(goodsPost);
+        return MyGoodsRecordResponse.of(goodsPost, mainImageUrl);
+    }
+
+    private String getMainImageUrl(GoodsPost goodsPost) {
+        return goodsPost.getGoodsPostImages().stream()
+                .filter(GoodsPostImage::getIsMainImage)
+                .findFirst()
+                .map(GoodsPostImage::getImageUrl)
+                .orElse("upload/default.jpg");
     }
 }
