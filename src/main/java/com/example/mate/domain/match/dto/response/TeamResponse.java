@@ -7,7 +7,10 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 public class TeamResponse {
+
     @Getter
     @NoArgsConstructor(access = AccessLevel.PROTECTED)
     public static class Simple {
@@ -32,7 +35,7 @@ public class TeamResponse {
     public static class Detail {
         private Long id;
         private String teamName;
-        private StadiumResponse.Info stadium;
+        private List<StadiumResponse.Info> stadiums;
         private Integer rank;
         private Integer gamesPlayed;
         private Integer totalGames;
@@ -44,7 +47,9 @@ public class TeamResponse {
         private Detail(TeamInfo.Team team, TeamRecord record) {
             this.id = team.id;
             this.teamName = team.fullName;
-            this.stadium = StadiumResponse.Info.from(team.homeStadium);
+            this.stadiums = team.getHomeStadiums().stream()
+                    .map(StadiumResponse.Info::from)
+                    .toList();
             this.rank = record.getRank();
             this.gamesPlayed = record.getGamesPlayed();
             this.totalGames = record.getTotalGames();
@@ -57,6 +62,6 @@ public class TeamResponse {
         public static Detail from(TeamInfo.Team team, TeamRecord record) {
             return new Detail(team, record);
         }
-
     }
 }
+
