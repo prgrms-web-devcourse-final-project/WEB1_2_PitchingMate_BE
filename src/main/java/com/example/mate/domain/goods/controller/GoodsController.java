@@ -105,10 +105,18 @@ public class GoodsController {
         return ResponseEntity.ok(ApiResponse.success(pageGoodsPosts));
     }
 
-    // 굿즈 채팅창 - 알럿창 : 굿즈 거래 완료
-    @PostMapping("/{goodsPostId}/complete")
-    public ResponseEntity<Void> completeGoodsPost(@PathVariable Long goodsPostId) {
-        return ResponseEntity.ok().build();
+    /*
+    굿즈 채팅창 - 알럿창 : 굿즈 거래 완료
+    TODO: @PathVariable Long memberId -> @AuthenticationPrincipal 로 변경
+    */
+    @PostMapping("{sellerId}/{goodsPostId}/complete")
+    public ResponseEntity<ApiResponse<Void>> completeGoodsPost(
+            @PathVariable Long sellerId,
+            @PathVariable Long goodsPostId,
+            @RequestParam Long buyerId
+    ) {
+        goodsService.completeTransaction(sellerId, goodsPostId, buyerId);
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 
     // 굿즈 거래후기 : 굿즈 거래후기 페이지 조회
