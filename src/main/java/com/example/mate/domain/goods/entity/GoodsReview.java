@@ -1,5 +1,6 @@
 package com.example.mate.domain.goods.entity;
 
+import com.example.mate.common.BaseTimeEntity;
 import com.example.mate.domain.constant.Rating;
 import com.example.mate.domain.member.entity.Member;
 import jakarta.persistence.Column;
@@ -26,7 +27,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class GoodsReview {
+public class GoodsReview extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

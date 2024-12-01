@@ -137,15 +137,13 @@ public class GoodsService {
         goodsPost.completeTransaction(buyer);
     }
 
-    private Member getMemberOrThrow(Long memberId) {
-        return memberRepository.findById(memberId).orElseThrow(()
-                -> new CustomException(ErrorCode.MEMBER_NOT_FOUND_BY_ID));
-    }
+    public GoodsReviewResponse registerGoodsReview(Long reviewerId, Long goodsPostId, GoodsReviewRequest request) {
+        Member reviewer = findMemberById(reviewerId);
+        GoodsPost goodsPost = findGoodsPostById(goodsPostId);
+        validateReviewEligibility(goodsPost, reviewer);
 
-    private void validateTeamInfo(Long teamId) {
-        if (teamId != null && !TeamInfo.existById(teamId)) {
-            throw new CustomException(ErrorCode.TEAM_NOT_FOUND);
-        }
+        GoodsReview review = request.toEntity(goodsPost, reviewer, goodsPost.getSeller());
+        return GoodsReviewResponse.of(reviewRepository.save(review));
     }
 
     private GoodsPost getGoodsPostOrThrow(Member seller, Long goodsPostId) {

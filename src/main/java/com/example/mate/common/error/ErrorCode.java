@@ -57,11 +57,16 @@ public enum ErrorCode {
     // Goods
     GOODS_IMAGES_ARE_EMPTY(HttpStatus.BAD_REQUEST, "G001", "굿즈 이미지는 최소 1개 이상을 업로드 할 수 있습니다."),
     GOODS_NOT_FOUND_BY_ID(HttpStatus.NOT_FOUND, "G002", "해당 ID의 굿즈 판매글 정보를 찾을 수 없습니다."),
-    GOODS_UPDATE_NOT_ALLOWED(HttpStatus.FORBIDDEN, "G003", "판매글의 판매자가 아니라면, 판매글을 수정할 수 없습니다."),
+    GOODS_MODIFICATION_NOT_ALLOWED(HttpStatus.FORBIDDEN, "G003", "판매글의 판매자가 아니라면, 판매글을 수정하거나 삭제할 수 없습니다."),
     GOODS_MAIN_IMAGE_IS_EMPTY(HttpStatus.NOT_FOUND, "G004", "굿즈 게시물의 대표사진을 찾을 수 없습니다."),
     GOODS_DELETE_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "G005", "거래완료 상태에서 판매글을 삭제할 수 없습니다."),
     GOODS_ALREADY_COMPLETED(HttpStatus.BAD_REQUEST, "G006", "이미 거래완료 상태인 굿즈는 거래를 완료할 수 없습니다."),
     SELLER_CANNOT_BE_BUYER(HttpStatus.BAD_REQUEST, "G007", "판매자와 구매자는 동일할 수 없습니다."),
+
+    // Goods Review
+    GOODS_REVIEW_STATUS_NOT_CLOSED(HttpStatus.BAD_REQUEST, "GR001", "굿즈거래 후기는 거래완료 상태에서만 작성할 수 있습니다."),
+    GOODS_REVIEW_NOT_ALLOWED_FOR_NON_BUYER(HttpStatus.FORBIDDEN, "GR002", "굿즈거래 후기는 구매자만 작성할 수 있습니다."),
+    GOODS_REVIEW_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "GR003", "굿즈거래 후기는 한 번만 작성할 수 있습니다."),
 
     // FILE
     FILE_IS_EMPTY(HttpStatus.BAD_REQUEST, "F001", "빈 파일을 업로드할 수 없습니다. 파일 내용을 확인해주세요."),
