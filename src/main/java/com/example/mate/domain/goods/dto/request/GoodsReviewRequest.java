@@ -6,11 +6,11 @@ import com.example.mate.domain.goods.entity.GoodsPost;
 import com.example.mate.domain.goods.entity.GoodsReview;
 import com.example.mate.domain.member.entity.Member;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.ToString;
 
 @Getter
-@ToString
+@AllArgsConstructor
 public class GoodsReviewRequest {
 
     @ValidEnum(message = "평점의 입력 값이 잘못되었습니다.", enumClass = Rating.class)

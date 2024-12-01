@@ -11,16 +11,21 @@ import static org.mockito.Mockito.verify;
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
 import com.example.mate.common.response.PageResponse;
+import com.example.mate.domain.constant.Rating;
 import com.example.mate.domain.goods.dto.LocationInfo;
 import com.example.mate.domain.goods.dto.request.GoodsPostRequest;
+import com.example.mate.domain.goods.dto.request.GoodsReviewRequest;
 import com.example.mate.domain.goods.dto.response.GoodsPostResponse;
 import com.example.mate.domain.goods.dto.response.GoodsPostSummaryResponse;
+import com.example.mate.domain.goods.dto.response.GoodsReviewResponse;
 import com.example.mate.domain.goods.entity.Category;
 import com.example.mate.domain.goods.entity.GoodsPost;
 import com.example.mate.domain.goods.entity.GoodsPostImage;
+import com.example.mate.domain.goods.entity.GoodsReview;
 import com.example.mate.domain.goods.entity.Status;
 import com.example.mate.domain.goods.repository.GoodsPostImageRepository;
 import com.example.mate.domain.goods.repository.GoodsPostRepository;
+import com.example.mate.domain.goods.repository.GoodsReviewRepository;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
 import java.util.List;
@@ -53,6 +58,9 @@ class GoodsServiceTest {
 
     @Mock
     private MemberRepository memberRepository;
+
+    @Mock
+    private GoodsReviewRepository reviewRepository;
 
     private Member member;
 
@@ -644,6 +652,134 @@ class GoodsServiceTest {
 
             verify(memberRepository, times(2)).findById(sellerId);
             verify(goodsPostRepository).findById(goodsPostId);
+        }
+    }
+
+    @Nested
+    @DisplayName("굿즈거래 후기 등록 테스트")
+    class GoodsServiceReviewTest {
+
+        private GoodsPost createGoodsPost(Long id, Status status) {
+            return GoodsPost.builder()
+                    .id(id)
+                    .status(status)
+                    .buyer(member)
+                    .title("Test Post")
+                    .content("Test Content")
+                    .price(10_000)
+                    .category(Category.ACCESSORY)
+                    .build();
+        }
+
+        private GoodsReview createGoodsReview(GoodsPost goodsPost) {
+            return GoodsReview.builder()
+                    .id(1L)
+                    .reviewer(member)
+                    .goodsPost(goodsPost)
+                    .rating(Rating.GOOD)
+                    .reviewContent("Great seller!")
+                    .build();
+        }
+
+        @DisplayName("굿즈거래 후기 등록 성공")
+        @Test
+        void registerGoodsReviewSuccess() {
+            // given
+            GoodsPost completePost = createGoodsPost(2L, Status.CLOSED);
+            GoodsReviewRequest request = new GoodsReviewRequest(Rating.GOOD, "Great seller!");
+            Long reviewerId = member.getId();
+            Long goodsPostId = completePost.getId();
+            GoodsReview goodsReview = createGoodsReview(completePost);
+
+            given(memberRepository.findById(reviewerId)).willReturn(Optional.of(member));
+            given(goodsPostRepository.findById(goodsPostId)).willReturn(Optional.of(completePost));
+            given(reviewRepository.existsByGoodsPostIdAndReviewerId(goodsPostId, reviewerId)).willReturn(false);
+            given(reviewRepository.save(any(GoodsReview.class))).willReturn(goodsReview);
+
+            // when
+            GoodsReviewResponse response = goodsService.registerGoodsReview(reviewerId, goodsPostId, request);
+
+            // then
+            assertThat(response).isNotNull();
+            assertThat(response.getReviewerNickname()).isEqualTo(member.getNickname());
+            assertThat(response.getRating()).isEqualTo(request.getRating());
+            assertThat(response.getReviewContent()).isEqualTo(request.getReviewContent());
+
+            verify(memberRepository).findById(reviewerId);
+            verify(goodsPostRepository).findById(goodsPostId);
+            verify(reviewRepository).existsByGoodsPostIdAndReviewerId(goodsPostId, reviewerId);
+            verify(reviewRepository).save(any(GoodsReview.class));
+        }
+
+        @DisplayName("굿즈거래 후기 등록 실패 - 이미 작성된 후기")
+        @Test
+        void registerGoodsReviewFailedDueToDuplicateReview() {
+            // given
+            GoodsPost completePost = createGoodsPost(2L, Status.CLOSED);
+            GoodsReviewRequest request = new GoodsReviewRequest(Rating.GOOD, "Duplicate review!");
+            Long reviewerId = member.getId();
+            Long goodsPostId = completePost.getId();
+
+            given(memberRepository.findById(reviewerId)).willReturn(Optional.of(member));
+            given(goodsPostRepository.findById(goodsPostId)).willReturn(Optional.of(completePost));
+            given(reviewRepository.existsByGoodsPostIdAndReviewerId(goodsPostId, reviewerId)).willReturn(true);
+
+            // when & then
+            assertThatThrownBy(() -> goodsService.registerGoodsReview(reviewerId, goodsPostId, request))
+                    .isInstanceOf(CustomException.class)
+                    .hasMessage(ErrorCode.GOODS_REVIEW_ALREADY_EXISTS.getMessage());
+
+            verify(memberRepository).findById(reviewerId);
+            verify(goodsPostRepository).findById(goodsPostId);
+            verify(reviewRepository).existsByGoodsPostIdAndReviewerId(goodsPostId, reviewerId);
+            verify(reviewRepository, never()).save(any());
+        }
+
+        @DisplayName("굿즈거래 후기 등록 실패 - 작성자가 구매자가 아닌 경우")
+        @Test
+        void registerGoodsReviewFailedDueToInvalidReviewer() {
+            // given
+            GoodsPost completePost = createGoodsPost(2L, Status.CLOSED);
+            GoodsReviewRequest request = new GoodsReviewRequest(Rating.GOOD, "Not the buyer review!");
+            Member nonBuyer = Member.builder().id(3L).nickname("Non Buyer").build();
+            Long reviewerId = nonBuyer.getId();
+            Long goodsPostId = completePost.getId();
+
+            given(memberRepository.findById(reviewerId)).willReturn(Optional.of(nonBuyer));
+            given(goodsPostRepository.findById(goodsPostId)).willReturn(Optional.of(completePost));
+
+            // when & then
+            assertThatThrownBy(() -> goodsService.registerGoodsReview(reviewerId, goodsPostId, request))
+                    .isInstanceOf(CustomException.class)
+                    .hasMessage(ErrorCode.GOODS_REVIEW_NOT_ALLOWED_FOR_NON_BUYER.getMessage());
+
+            verify(memberRepository).findById(reviewerId);
+            verify(goodsPostRepository).findById(goodsPostId);
+            verify(reviewRepository, never()).existsByGoodsPostIdAndReviewerId(any(), any());
+            verify(reviewRepository, never()).save(any());
+        }
+
+        @DisplayName("굿즈거래 후기 등록 실패 - 판매글의 상태가 거래완료가 아닌 경우")
+        @Test
+        void registerGoodsReviewFailedDueToInvalidGoodsPostStatus() {
+            // given
+            GoodsPost incompletePost = createGoodsPost(3L, Status.OPEN); // 상태가 OPEN
+            GoodsReviewRequest request = new GoodsReviewRequest(Rating.GOOD, "Not completed transaction");
+            Long reviewerId = member.getId();
+            Long goodsPostId = incompletePost.getId();
+
+            given(memberRepository.findById(reviewerId)).willReturn(Optional.of(member));
+            given(goodsPostRepository.findById(goodsPostId)).willReturn(Optional.of(incompletePost));
+
+            // when & then
+            assertThatThrownBy(() -> goodsService.registerGoodsReview(reviewerId, goodsPostId, request))
+                    .isInstanceOf(CustomException.class)
+                    .hasMessage(ErrorCode.GOODS_REVIEW_STATUS_NOT_CLOSED.getMessage());
+
+            verify(memberRepository).findById(reviewerId);
+            verify(goodsPostRepository).findById(goodsPostId);
+            verify(reviewRepository, never()).existsByGoodsPostIdAndReviewerId(any(), any());
+            verify(reviewRepository, never()).save(any());
         }
     }
 }
