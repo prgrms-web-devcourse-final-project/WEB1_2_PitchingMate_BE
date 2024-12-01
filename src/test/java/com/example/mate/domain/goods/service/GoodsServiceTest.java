@@ -225,7 +225,7 @@ class GoodsServiceTest {
             // when
             assertThatThrownBy(() -> goodsService.updateGoodsPost(member.getId(), goodsPostId, request, files))
                     .isInstanceOf(CustomException.class)
-                    .hasMessage(ErrorCode.GOODS_UPDATE_NOT_ALLOWED.getMessage());
+                    .hasMessage(ErrorCode.GOODS_MODIFICATION_NOT_ALLOWED.getMessage());
 
             // then
             verify(memberRepository).findById(member.getId());
