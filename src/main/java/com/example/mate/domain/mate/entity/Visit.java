@@ -1,5 +1,6 @@
 package com.example.mate.domain.mate.entity;
 
+import com.example.mate.domain.mate.dto.request.MateReviewCreateRequest;
 import com.example.mate.domain.member.entity.Member;
 import jakarta.persistence.*;
 import lombok.*;
@@ -50,5 +51,18 @@ public class Visit {
         });
 
         return visit;
+    }
+
+    public MateReview createReview(Member reviewer, Member reviewee, MateReviewCreateRequest request) {
+        MateReview newMateReview = MateReview.builder()
+                .visit(this)
+                .reviewer(reviewer)
+                .reviewee(reviewee)
+                .reviewContent(request.getContent())
+                .rating(request.getRating())
+                .build();
+
+        reviews.add(newMateReview);
+        return newMateReview;
     }
 }
