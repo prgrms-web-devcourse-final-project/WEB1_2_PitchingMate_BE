@@ -61,6 +61,12 @@ public enum ErrorCode {
     GOODS_MAIN_IMAGE_IS_EMPTY(HttpStatus.NOT_FOUND, "G004", "굿즈 게시물의 대표사진을 찾을 수 없습니다."),
     GOODS_DELETE_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "G005", "거래완료 상태에서 판매글을 삭제할 수 없습니다."),
 
+
+    // REVIEW
+    NOT_PARTICIPANT_OR_AUTHOR(HttpStatus.FORBIDDEN, "R002", "리뷰어와 리뷰 대상자 모두 직관 참여자여야 합니다."),
+    SELF_REVIEW_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "R004", "자기 자신에 대한 리뷰는 작성할 수 없습니다."),
+    REVIEW_NOT_FOUND_BY_ID(HttpStatus.NOT_FOUND, "R005", "해당 ID의 리뷰를 찾을 수 없습니다."),
+
     // FILE
     FILE_IS_EMPTY(HttpStatus.BAD_REQUEST, "F001", "빈 파일을 업로드할 수 없습니다. 파일 내용을 확인해주세요."),
     FILE_UNSUPPORTED_TYPE(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "F002", "지원하지 않는 파일 형식입니다."),
