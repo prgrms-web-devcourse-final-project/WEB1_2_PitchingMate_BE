@@ -231,7 +231,6 @@ class MemberIntegrationTest {
                 .reviewee(reviewee)
                 .reviewContent("매칭 후기입니다. 아주 즐거웠어요!")
                 .rating(Rating.GOOD)
-                .createdAt(LocalDateTime.now())
                 .build());
     }
 
