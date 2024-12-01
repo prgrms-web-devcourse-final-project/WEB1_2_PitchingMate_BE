@@ -25,6 +25,6 @@ public enum Rating {
             if (rate.value.equals(value))
                 return rate;
         }
-        throw new CustomException(ErrorCode.INVALID_AGE_VALUE);
+        throw new CustomException(ErrorCode.INVALID_RATING_VALUE);
     }
 }
