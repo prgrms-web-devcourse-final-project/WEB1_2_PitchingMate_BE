@@ -4,6 +4,7 @@ import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.match.entity.Match;
 import com.example.mate.domain.match.repository.MatchRepository;
 import com.example.mate.domain.mate.dto.request.MatePostCreateRequest;
+import com.example.mate.domain.mate.dto.request.MatePostUpdateRequest;
 import com.example.mate.domain.mate.entity.Age;
 import com.example.mate.domain.mate.entity.MatePost;
 import com.example.mate.domain.mate.entity.Status;
@@ -378,8 +379,17 @@ public class MateIntegrationTest {
         void getMatePagePosts_AgeFilter_Success() throws Exception {
             // given
             MatePost thirtyPost = createMatePost(futureMatch, 1L, Status.OPEN);
-            thirtyPost.updatePost(1L, futureMatch, null, "30대 게시글", "내용", 4,
-                    Age.THIRTIES, Gender.FEMALE, TransportType.PUBLIC);
+            MatePostUpdateRequest updateRequest = MatePostUpdateRequest.builder()
+                    .teamId(1L)
+                    .matchId(futureMatch.getId())
+                    .title("30대 게시글")
+                    .content("내용")
+                    .maxParticipants(4)
+                    .age(Age.THIRTIES)
+                    .gender(Gender.FEMALE)
+                    .transportType(TransportType.PUBLIC)
+                    .build();
+            thirtyPost.updatePost(updateRequest, futureMatch, null);
             mateRepository.save(thirtyPost);
 
             // when & then
@@ -398,8 +408,17 @@ public class MateIntegrationTest {
         void getMatePagePosts_GenderFilter_Success() throws Exception {
             // given
             MatePost malePost = createMatePost(futureMatch, 1L, Status.OPEN);
-            malePost.updatePost(1L, futureMatch, null, "남자 게시글", "내용", 4,
-                    Age.TWENTIES, Gender.MALE, TransportType.PUBLIC);
+            MatePostUpdateRequest updateRequest = MatePostUpdateRequest.builder()
+                    .teamId(1L)
+                    .matchId(futureMatch.getId())
+                    .title("남자 게시글")
+                    .content("내용")
+                    .maxParticipants(4)
+                    .age(Age.TWENTIES)
+                    .gender(Gender.MALE)
+                    .transportType(TransportType.PUBLIC)
+                    .build();
+            malePost.updatePost(updateRequest, futureMatch, null);
             mateRepository.save(malePost);
 
             // when & then
@@ -414,22 +433,31 @@ public class MateIntegrationTest {
         }
 
         @Test
-        @DisplayName("메이트 페이지 게시글 목록 조회 성공 - 인원 수 필터")
+        @DisplayName("메이트 페이지 게시글 목록 조회 성공 - 최대 인원 필터")
         void getMatePagePosts_MaxParticipantsFilter_Success() throws Exception {
             // given
-            MatePost largeGroupPost = createMatePost(futureMatch, 1L, Status.OPEN);
-            largeGroupPost.updatePost(1L, futureMatch, null, "대규모 모집", "내용", 10,
-                    Age.TWENTIES, Gender.FEMALE, TransportType.PUBLIC);
-            mateRepository.save(largeGroupPost);
+            MatePost sixPeoplePost = createMatePost(futureMatch, 1L, Status.OPEN);
+            MatePostUpdateRequest updateRequest = MatePostUpdateRequest.builder()
+                    .teamId(1L)
+                    .matchId(futureMatch.getId())
+                    .title("6인 모집 게시글")
+                    .content("내용")
+                    .maxParticipants(6)
+                    .age(Age.TWENTIES)
+                    .gender(Gender.FEMALE)
+                    .transportType(TransportType.PUBLIC)
+                    .build();
+            sixPeoplePost.updatePost(updateRequest, futureMatch, null);
+            mateRepository.save(sixPeoplePost);
 
             // when & then
             mockMvc.perform(get("/api/mates")
-                            .param("maxParticipants", "10")
+                            .param("maxParticipants", "6")
                             .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.data.content").isArray())
                     .andExpect(jsonPath("$.data.content.length()").value(1))
-                    .andExpect(jsonPath("$.data.content[0].maxParticipants").value(10))
+                    .andExpect(jsonPath("$.data.content[0].maxParticipants").value(6))
                     .andDo(print());
         }
 
@@ -437,22 +465,30 @@ public class MateIntegrationTest {
         @DisplayName("메이트 페이지 게시글 목록 조회 성공 - 이동수단 필터")
         void getMatePagePosts_TransportFilter_Success() throws Exception {
             // given
-            MatePost carPost = createMatePost(futureMatch, 1L, Status.OPEN);
-            carPost.updatePost(1L, futureMatch, null, "자차 이동", "내용", 4,
-                    Age.TWENTIES, Gender.FEMALE, TransportType.CAR);
-            mateRepository.save(carPost);
+            MatePost carpoolPost = createMatePost(futureMatch, 1L, Status.OPEN);
+            MatePostUpdateRequest updateRequest = MatePostUpdateRequest.builder()
+                    .teamId(1L)
+                    .matchId(futureMatch.getId())
+                    .title("대중교통 게시글")
+                    .content("내용")
+                    .maxParticipants(4)
+                    .age(Age.TWENTIES)
+                    .gender(Gender.MALE)
+                    .transportType(TransportType.PUBLIC)
+                    .build();
+            carpoolPost.updatePost(updateRequest, futureMatch, null);
+            mateRepository.save(carpoolPost);
 
             // when & then
             mockMvc.perform(get("/api/mates")
-                            .param("transportType", "자차")
+                            .param("transportType", "대중교통")
                             .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.data.content").isArray())
-                    .andExpect(jsonPath("$.data.content.length()").value(1))
-                    .andExpect(jsonPath("$.data.content[0].transportType").value("자차"))
+                    .andExpect(jsonPath("$.data.content.length()").value(3))
+                    .andExpect(jsonPath("$.data.content[0].transportType").value("대중교통"))
                     .andDo(print());
         }
-
         @Test
         @DisplayName("메이트 페이지 게시글 목록 조회 실패 - 존재하지 않는 팀")
         void getMatePagePosts_InvalidTeamId_Failure() throws Exception {
