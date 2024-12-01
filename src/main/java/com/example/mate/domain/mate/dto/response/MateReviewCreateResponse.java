@@ -10,7 +10,7 @@ public class MateReviewCreateResponse {
     private Long reviewId;
     private Long reviewerId;
     private Long revieweeId;
-    private String revieweeName;
+    private String revieweeNickName;
     private String content;
     private String rating;
 
@@ -19,7 +19,7 @@ public class MateReviewCreateResponse {
                 .reviewId(review.getId())
                 .reviewerId(review.getReviewer().getId())
                 .revieweeId(review.getReviewee().getId())
-                .revieweeName(review.getReviewee().getName())
+                .revieweeNickName(review.getReviewee().getNickname())
                 .content(review.getReviewContent())
                 .rating(review.getRating().getValue())
                 .build();
