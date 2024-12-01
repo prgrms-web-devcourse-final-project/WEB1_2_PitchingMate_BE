@@ -32,9 +32,14 @@ public final class StadiumInfo {
     public static final Stadium DAEGU = new Stadium(7L, "대구삼성라이온즈파크", "대구광역시 수성구", "128.6815273", "35.8411705");
     public static final Stadium GOCHEOK = new Stadium(8L, "고척스카이돔", "서울특별시 구로구", "126.8670866", "37.498931");
     public static final Stadium DAEJEON = new Stadium(9L, "한화생명이글스파크", "대전광역시 중구", "127.4291345", "36.3170789");
+    public static final Stadium ULSAN = new Stadium(10L, "울산 문수야구장", "울산광역시 남구", "129.249577", "35.535295");
+    public static final Stadium ICHON_DOOSAN_BEARS_PARK = new Stadium(11L, "베어스 파크", "경기도 이천시", "127.497240", "37.243605");
+    public static final Stadium CHEONGJU = new Stadium(12L, "청주야구장", "충청북도 청주시", "127.488345", "36.626893");
+
+
 
     public static final List<Stadium> STADIUMS = List.of(
-            GWANGJU, JAMSIL, CHANGWON, INCHEON, SUWON, SAJIK, DAEGU, GOCHEOK, DAEJEON
+            GWANGJU, JAMSIL, CHANGWON, INCHEON, SUWON, SAJIK, DAEGU, GOCHEOK, DAEJEON, ULSAN, ICHON_DOOSAN_BEARS_PARK, CHEONGJU
     );
 
     public static Stadium getById(Long id) {
