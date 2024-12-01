@@ -8,7 +8,7 @@ import lombok.Getter;
 
 @Getter
 public enum Age {
-    ALL("상관 없음"),
+    ALL("상관없음"),
     TEENS("10대"),
     TWENTIES("20대"),
     THIRTIES("30대"),
