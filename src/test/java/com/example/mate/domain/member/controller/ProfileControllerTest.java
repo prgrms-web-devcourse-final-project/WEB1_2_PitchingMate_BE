@@ -13,6 +13,7 @@ import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.member.dto.response.MyGoodsRecordResponse;
+import com.example.mate.domain.member.dto.response.MyReviewResponse;
 import com.example.mate.domain.member.service.ProfileService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
@@ -184,6 +185,81 @@ class ProfileControllerTest {
                     .andExpect(jsonPath("$.message").value(ErrorCode.MEMBER_NOT_FOUND_BY_ID.getMessage()));
 
             verify(profileService, times(1)).getBoughtGoodsPage(memberId, pageable);
+        }
+    }
+
+    @Nested
+    @DisplayName("회원 프로필 메이트 후기 페이징 조회")
+    class ProfileMateReviewPage {
+
+        @Test
+        @DisplayName("회원 프로필 메이트 후기 페이징 조회 성공")
+        void get_mate_review_page_success() throws Exception {
+            // given
+            Long memberId = 1L;
+            Pageable pageable = PageRequest.of(0, 10);
+
+            MyReviewResponse reviewResponse = MyReviewResponse.builder()
+                    .postId(1L)
+                    .title("Title 1")
+                    .nickname("tester1")
+                    .rating("GOOD")
+                    .content("Great!")
+                    .createdAt(LocalDateTime.now())
+                    .build();
+            List<MyReviewResponse> content = List.of(reviewResponse);
+            PageImpl<MyReviewResponse> mateReviewPage = new PageImpl<>(content);
+
+            PageResponse<MyReviewResponse> response = PageResponse.<MyReviewResponse>builder()
+                    .content(content)
+                    .totalPages(mateReviewPage.getTotalPages())
+                    .totalElements(mateReviewPage.getTotalElements())
+                    .hasNext(mateReviewPage.hasNext())
+                    .pageNumber(mateReviewPage.getNumber())
+                    .pageSize(mateReviewPage.getSize())
+                    .build();
+
+            given(profileService.getMateReviewPage(memberId, pageable)).willReturn(response);
+
+            // when & then
+            mockMvc.perform(get("/api/profile/{memberId}/review/mate", memberId)
+                            .param("page", String.valueOf(pageable.getPageNumber()))
+                            .param("size", String.valueOf(pageable.getPageSize())))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value("SUCCESS"))
+                    .andExpect(jsonPath("$.data.content.size()").value(content.size()))
+                    .andExpect(jsonPath("$.data.content[0].postId").value(reviewResponse.getPostId()))
+                    .andExpect(jsonPath("$.data.content[0].title").value(reviewResponse.getTitle()))
+                    .andExpect(jsonPath("$.data.content[0].content").value(reviewResponse.getContent()))
+                    .andExpect(jsonPath("$.data.totalPages").value(response.getTotalPages()))
+                    .andExpect(jsonPath("$.data.totalElements").value(response.getTotalElements()))
+                    .andExpect(jsonPath("$.data.pageNumber").value(response.getPageNumber()))
+                    .andExpect(jsonPath("$.data.pageSize").value(response.getPageSize()))
+                    .andExpect(jsonPath("$.code").value(200));
+        }
+
+        @Test
+        @DisplayName("회원 프로필 메이트 후기 페이징 조회 실패 - 유효하지 않은 회원 아이디로 조회")
+        void get_mate_review_page_fail_invalid_member_id() throws Exception {
+            // given
+            Long memberId = 999L; // 존재 하지 않는 아이디
+            Pageable pageable = PageRequest.of(0, 10);
+
+            willThrow(new CustomException(ErrorCode.MEMBER_NOT_FOUND_BY_ID))
+                    .given(profileService).getMateReviewPage(memberId, pageable);
+
+            // when & then
+            mockMvc.perform(get("/api/profile/{memberId}/review/mate", memberId)
+                            .param("page", String.valueOf(pageable.getPageNumber()))
+                            .param("size", String.valueOf(pageable.getPageSize())))
+                    .andDo(print())
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.status").value("ERROR"))
+                    .andExpect(jsonPath("$.code").value(404))
+                    .andExpect(jsonPath("$.message").value(ErrorCode.MEMBER_NOT_FOUND_BY_ID.getMessage()));
+
+            verify(profileService, times(1)).getMateReviewPage(memberId, pageable);
         }
     }
 }
