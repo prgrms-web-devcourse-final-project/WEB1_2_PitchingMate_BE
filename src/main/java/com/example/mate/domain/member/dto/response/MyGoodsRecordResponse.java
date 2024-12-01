@@ -1,5 +1,6 @@
 package com.example.mate.domain.member.dto.response;
 
+import com.example.mate.domain.goods.entity.GoodsPost;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -25,6 +26,17 @@ public class MyGoodsRecordResponse {
                 .price(50000)
                 .author("이대호가 좋아서")
                 .createdAt(LocalDateTime.now().minusDays(7))
+                .build();
+    }
+
+    public static MyGoodsRecordResponse of(GoodsPost goodsPost, String mainImageUrl) {
+        return MyGoodsRecordResponse.builder()
+                .postId(goodsPost.getId())
+                .title(goodsPost.getTitle())
+                .imageUrl(mainImageUrl)
+                .price(goodsPost.getPrice())
+                .author(goodsPost.getSeller().getNickname())
+                .createdAt(goodsPost.getCreatedAt())
                 .build();
     }
 }
