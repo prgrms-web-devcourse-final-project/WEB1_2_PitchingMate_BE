@@ -1,6 +1,5 @@
 package com.example.mate.domain.member.dto.response;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
@@ -23,7 +22,7 @@ public class MyVisitResponse {
     private Long postId;
     private String imageUrl;
     private String title;
-    
+
     // 리뷰 정보
     private List<MateReviewResponse> reviews;
 
