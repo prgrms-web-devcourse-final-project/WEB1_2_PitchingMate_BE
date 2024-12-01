@@ -76,7 +76,19 @@ public enum ErrorCode {
     INVALID_SORT_TYPE_VALUE(HttpStatus.BAD_REQUEST, "ST001", "유효하지 않은 정렬 기준 값입니다."),
 
     // Status
-    INVALID_STATUS_TYPE_VALUE(HttpStatus.BAD_REQUEST, "STATUS001", "유효하지 않은 모집 상태 값입니다.");
+    INVALID_STATUS_TYPE_VALUE(HttpStatus.BAD_REQUEST, "STATUS001", "유효하지 않은 모집 상태 값입니다."),
+
+    // Crawling
+    CRAWLING_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "CR001", "크롤링 작업 중 오류가 발생했습니다"),
+    CRAWLING_INTERRUPTED(HttpStatus.INTERNAL_SERVER_ERROR, "CR002", "크롤링 작업이 중단되었습니다"),
+    WEBDRIVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "CR003", "WebDriver 초기화 중 오류가 발생했습니다"),
+    PARSING_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "CR004", "데이터 파싱 중 오류가 발생했습니다"),
+    MATCH_SAVE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "CR005", "경기정보 저장 중 오류"),
+    DATE_NOT_FOUND(HttpStatus.INTERNAL_SERVER_ERROR, "CR006", "날짜 정보를 찾을 수 없습니다"),
+    TEAM_NAME_PARSE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "CR007", "팀 이름 오류"),
+    INVALID_SCORE_FORMAT(HttpStatus.INTERNAL_SERVER_ERROR, "CR008", "점수 형식이 잘못되었습니다");
+
+
 
 
     private final HttpStatus status;

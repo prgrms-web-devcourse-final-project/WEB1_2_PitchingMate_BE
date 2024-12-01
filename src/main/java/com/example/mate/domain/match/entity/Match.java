@@ -79,9 +79,12 @@ public class Match {
         weather.setMatch(this);
     }
 
-    // 홈 팀의 경기장인지 확인
-    public boolean isHomeStadium() {
-        TeamInfo.Team homeTeam = TeamInfo.getById(this.homeTeamId);
-        return homeTeam.homeStadium.id.equals(this.stadiumId);
+    // 업데이트용 메서드
+    public void updateMatchDetails(Integer homeScore, Integer awayScore, MatchStatus status, Boolean isCanceled) {
+        this.homeScore = homeScore;
+        this.awayScore = awayScore;
+        this.status = status;
+        this.isCanceled = isCanceled;
     }
+
 }
