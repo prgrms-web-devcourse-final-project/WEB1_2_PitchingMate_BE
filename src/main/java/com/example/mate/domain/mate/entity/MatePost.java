@@ -4,6 +4,7 @@ import com.example.mate.common.error.CustomException;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.constant.TeamInfo;
 import com.example.mate.domain.match.entity.Match;
+import com.example.mate.domain.mate.dto.request.MatePostUpdateRequest;
 import com.example.mate.domain.member.entity.Member;
 import jakarta.persistence.*;
 import lombok.*;
@@ -76,27 +77,17 @@ public class MatePost {
         return TeamInfo.getById(this.teamId);
     }
 
-    // 게시글 전체 정보 수정
-    public void updatePost(
-            Long teamId,
-            Match match,
-            String imageUrl,
-            String title,
-            String content,
-            Integer maxParticipants,
-            Age age,
-            Gender gender,
-            TransportType transport
-    ) {
-        this.teamId = teamId;
+    // 메이트 게시글 수정
+    public void updatePost(MatePostUpdateRequest request, Match match, String imageUrl) {
+        this.teamId = request.getTeamId();
         this.match = match;
         this.imageUrl = imageUrl;
-        this.title = title;
-        this.content = content;
-        this.maxParticipants = maxParticipants;
-        this.age = age;
-        this.gender = gender;
-        this.transport = transport;
+        this.title = request.getTitle();
+        this.content = request.getContent();
+        this.maxParticipants = request.getMaxParticipants();
+        this.age = request.getAge();
+        this.gender = request.getGender();
+        this.transport = request.getTransportType();
     }
 
     // 상태 변경 가능 여부 검증과 변경
