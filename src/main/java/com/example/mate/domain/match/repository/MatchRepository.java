@@ -28,4 +28,14 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate
     );
+
+    @Query("SELECT m FROM Match m " +
+            "WHERE m.status = 'SCHEDULED' " +
+            "AND m.matchTime BETWEEN :startTime AND :endTime " +
+            "AND m.isCanceled = false " +
+            "ORDER BY m.matchTime ASC")
+    List<Match> findUpcomingMatches(
+            @Param("startTime") LocalDateTime startTime,
+            @Param("endTime") LocalDateTime endTime
+    );
 }
