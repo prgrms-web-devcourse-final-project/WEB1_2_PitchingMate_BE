@@ -128,12 +128,6 @@ public class MateService {
         return MatePostResponse.from(matePost);
     }
 
-    private void validatePostStatus(Status status) {
-        if (status == Status.VISIT_COMPLETE) {
-            throw new CustomException(ALREADY_COMPLETED_POST);
-        }
-    }
-
     private void validateTeamId(Long teamId) {
         if (!TeamInfo.existById(teamId)) {
             throw new CustomException(TEAM_NOT_FOUND);
@@ -166,22 +160,29 @@ public class MateService {
         MatePost matePost = findMatePostById(postId);
 
         validateAuthorization(matePost, memberId);
+        validatePostStatus(matePost.getStatus());
+
+        if(request.getStatus() == Status.CLOSED) {
+            findAndValidateParticipants(request.getParticipantIds(), matePost.getMaxParticipants());
+        }
         matePost.changeStatus(request.getStatus());
 
         return MatePostResponse.from(matePost);
     }
 
     public void deleteMatePost(Long memberId, Long postId) {
-        MatePost matePost = mateRepository.findById(postId)
-                .orElseThrow(() -> new CustomException(MATE_POST_NOT_FOUND_BY_ID));
+        MatePost matePost = findMatePostById(postId);
 
         validateAuthorization(matePost, memberId);
-
-        if (matePost.getStatus() == Status.VISIT_COMPLETE) {
-            matePost.getVisit().detachPost();
-        }
+        validatePostStatus(matePost.getStatus());
 
         mateRepository.delete(matePost);
+    }
+
+    private void validatePostStatus(Status status) {
+        if (status == Status.VISIT_COMPLETE) {
+            throw new CustomException(ALREADY_COMPLETED_POST);
+        }
     }
 
     public MatePostCompleteResponse completeVisit(Long memberId, Long postId, MatePostCompleteRequest request) {

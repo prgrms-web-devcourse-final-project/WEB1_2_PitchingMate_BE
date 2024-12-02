@@ -103,6 +103,7 @@ public class MateController {
     // 메이트 게시글 삭제
     @DeleteMapping("/{memberId}/{postId}")
     public ResponseEntity<Void> deleteMatePost(@PathVariable Long memberId, @PathVariable Long postId) {
+
         mateService.deleteMatePost(memberId, postId);
         return ResponseEntity.noContent().build();
     }

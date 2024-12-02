@@ -32,10 +32,6 @@ public class Visit {
     @Builder.Default
     private List<MateReview> reviews = new ArrayList<>();
 
-    public void detachPost() {
-        this.post = null;
-    }
-
     public static Visit createForComplete(MatePost post, List<Member> participants) {
         Visit visit = Visit.builder()
                 .post(post)
