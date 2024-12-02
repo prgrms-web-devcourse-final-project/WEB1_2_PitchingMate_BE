@@ -8,6 +8,9 @@ import com.example.mate.domain.goods.dto.response.GoodsPostResponse;
 import com.example.mate.domain.goods.dto.response.GoodsPostSummaryResponse;
 import com.example.mate.domain.goods.dto.response.GoodsReviewResponse;
 import com.example.mate.domain.goods.service.GoodsService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -29,74 +32,78 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/api/goods")
 @RequiredArgsConstructor
+@Tag(name = "GoodsController", description = "굿즈거래 관련 API")
 public class GoodsController {
 
     private final GoodsService goodsService;
 
     /*
-    굿즈 거래 페이지 : 굿즈 거래글 등록
     TODO: @PathVariable Long memberId -> @AuthenticationPrincipal 로 변경
+    "/api/goods" 로 변경 예정
      */
     @PostMapping("/{memberId}")
+    @Operation(summary = "굿즈거래 판매글 등록", description = "굿즈거래 페이지에서 판매글을 등록합니다.")
     public ResponseEntity<ApiResponse<GoodsPostResponse>> registerGoodsPost(
-            @Validated @RequestPart("data") GoodsPostRequest request,
-            @RequestPart("files") List<MultipartFile> files,
-            @PathVariable Long memberId
+            @Parameter(description = "판매글 등록 데이터", required = true) @Validated @RequestPart("data") GoodsPostRequest request,
+            @Parameter(description = "판매글 이미지 리스트", required = true) @RequestPart("files") List<MultipartFile> files,
+            @Parameter(description = "판매자 ID (삭제 예정)", required = true) @PathVariable Long memberId
     ) {
         GoodsPostResponse response = goodsService.registerGoodsPost(memberId, request, files);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     /*
-    굿즈 거래하기 상세 페이지 : 굿즈 거래글 수정
     TODO: @PathVariable Long memberId -> @AuthenticationPrincipal 로 변경
     "/api/goods/{goodsPostId}" 로 변경 예정
      */
     @PutMapping("/{memberId}/post/{goodsPostId}")
+    @Operation(summary = "굿즈거래 판매글 수정", description = "굿즈거래 판매글 상세 페이지에서 판매글을 수정합니다.")
     public ResponseEntity<ApiResponse<GoodsPostResponse>> updateGoodsPost(
-            @PathVariable Long memberId,
-            @PathVariable Long goodsPostId,
-            @Validated @RequestPart("data") GoodsPostRequest request,
-            @RequestPart("files") List<MultipartFile> files
+            @Parameter(description = "판매자 ID (삭제 예정)", required = true) @PathVariable Long memberId,
+            @Parameter(description = "판매글 ID", required = true) @PathVariable Long goodsPostId,
+            @Parameter(description = "수정할 판매글 데이터", required = true) @Validated @RequestPart("data") GoodsPostRequest request,
+            @Parameter(description = "수정할 첨부 파일 리스트", required = true) @RequestPart("files") List<MultipartFile> files
     ) {
         GoodsPostResponse response = goodsService.updateGoodsPost(memberId, goodsPostId, request, files);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     /*
-    굿즈 거래하기 상세 페이지 : 굿즈 거래글 삭제
     TODO: @PathVariable Long memberId -> @AuthenticationPrincipal 로 변경
     "/api/goods/{goodsPostId}" 로 변경 예정
-     */
+    */
     @DeleteMapping("/{memberId}/post/{goodsPostId}")
-    public ResponseEntity<Void> deleteGoodsPost(@PathVariable Long memberId, @PathVariable Long goodsPostId) {
+    @Operation(summary = "굿즈거래 판매글 삭제", description = "굿즈거래 판매글 상세 페이지에서 판매글을 삭제합니다.")
+    public ResponseEntity<Void> deleteGoodsPost(
+            @Parameter(description = "판매자 ID (삭제 예정)", required = true) @PathVariable Long memberId,
+            @Parameter(description = "삭제할 판매글 ID", required = true) @PathVariable Long goodsPostId)
+    {
         goodsService.deleteGoodsPost(memberId, goodsPostId);
         return ResponseEntity.noContent().build();
     }
 
-    // 굿즈 거래하기 상세 페이지 : 굿즈 거래글 단건 조회
     @GetMapping("/{goodsPostId}")
-    public ResponseEntity<ApiResponse<GoodsPostResponse>> getGoodsPost(@PathVariable Long goodsPostId) {
+    @Operation(summary = "굿즈거래 판매글 상세 조회", description = "굿즈거래 판매글 상세 페이지에서 판매글을 조회합니다.")
+    public ResponseEntity<ApiResponse<GoodsPostResponse>> getGoodsPost(@Parameter(description = "조회할 판매글 ID", required = true)
+                                                                       @PathVariable Long goodsPostId) {
         GoodsPostResponse response = goodsService.getGoodsPost(goodsPostId);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-
-    // 메인 페이지 : 굿즈 거래글 요약 4개 리스트 조회
     @GetMapping("/main")
-    public ResponseEntity<ApiResponse<List<GoodsPostSummaryResponse>>> getGoodsPostsMain(@RequestParam(required = false) Long teamId) {
+    @Operation(summary = "메인페이지 굿즈거래 판매글 조회", description = "메인 페이지에서 굿즈거래 판매글을 요약한 4개의 리스트를 조회합니다.")
+    public ResponseEntity<ApiResponse<List<GoodsPostSummaryResponse>>> getGoodsPostsMain(@Parameter(description = "팀 ID")
+                                                                                         @RequestParam(required = false) Long teamId) {
         List<GoodsPostSummaryResponse> responses = goodsService.getMainGoodsPosts(teamId);
         return ResponseEntity.ok(ApiResponse.success(responses));
     }
 
-    /*
-    굿즈 거래 페이지 : 굿즈 거래글 팀/카테고리 기준 10개씩 페이징 조회
-    */
     @GetMapping
+    @Operation(summary = "굿즈거래 판매글 페이징 조회", description = "굿즈거래 페이지에서 팀/카테고리 기준으로 굿즈 거래글을 페이징 조회합니다.")
     public ResponseEntity<ApiResponse<PageResponse<GoodsPostSummaryResponse>>> getGoodsPosts(
-            @RequestParam(required = false) Long teamId,
-            @RequestParam(required = false) String category,
-            @PageableDefault Pageable pageable
+            @Parameter(description = "팀 ID") @RequestParam(required = false) Long teamId,
+            @Parameter(description = "카테고리") @RequestParam(required = false) String category,
+            @Parameter(description = "페이징 정보", required = true) @PageableDefault Pageable pageable
     ) {
         PageResponse<GoodsPostSummaryResponse> pageGoodsPosts = goodsService.getPageGoodsPosts(teamId, category, pageable);
 
@@ -104,28 +111,30 @@ public class GoodsController {
     }
 
     /*
-    굿즈 채팅창 - 알럿창 : 굿즈 거래 완료
     TODO: @PathVariable Long memberId -> @AuthenticationPrincipal 로 변경
+    "/api/goods/{goodsPostId}/complete" 로 변경 예정
     */
     @PostMapping("{sellerId}/post/{goodsPostId}/complete")
+    @Operation(summary = "굿즈 거래 완료", description = "굿즈거래 채팅방에서 굿즈거래를 거래완료 처리합니다.")
     public ResponseEntity<ApiResponse<Void>> completeGoodsPost(
-            @PathVariable Long sellerId,
-            @PathVariable Long goodsPostId,
-            @RequestParam Long buyerId
-    ) {
+            @Parameter(description = "판매자 ID (삭제 예정)", required = true) @PathVariable Long sellerId,
+            @Parameter(description = "판매글 ID", required = true) @PathVariable Long goodsPostId,
+            @Parameter(description = "구매자 ID", required = true) @RequestParam Long buyerId
+            ) {
         goodsService.completeTransaction(sellerId, goodsPostId, buyerId);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
     /*
-    굿즈 거래후기 : 굿즈 거래후기 등록
     TODO: @PathVariable Long memberId -> @AuthenticationPrincipal 로 변경
+    "/api/goods/{goodsPostId}/review" 로 변경 예정
     */
     @PostMapping("/{reviewerId}/post/{goodsPostId}/review")
+    @Operation(summary = "굿즈거래 후기 등록", description = "후기 페이지에서 굿즈거래 후기를 등록합니다.")
     public ResponseEntity<ApiResponse<GoodsReviewResponse>> registerGoodsReview(
-            @PathVariable Long goodsPostId,
-            @PathVariable Long reviewerId,
-            @Validated @RequestBody GoodsReviewRequest request
+            @Parameter(description = "리뷰 작성자 ID (삭제 예정)", required = true) @PathVariable Long reviewerId,
+            @Parameter(description = "판매글 ID", required = true) @PathVariable Long goodsPostId,
+            @Parameter(description = "후기 작성 데이터", required = true) @Validated @RequestBody GoodsReviewRequest request
     ) {
         GoodsReviewResponse response = goodsService.registerGoodsReview(reviewerId, goodsPostId, request);
         return ResponseEntity.ok(ApiResponse.success(response));
