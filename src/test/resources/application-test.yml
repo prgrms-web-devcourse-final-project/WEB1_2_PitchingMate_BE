@@ -18,5 +18,3 @@ spring:
     console:
       enabled: true
       path: /h2-console
-crawler:
-  base-url: https://www.koreabaseball.com/Schedule/Schedule.aspx

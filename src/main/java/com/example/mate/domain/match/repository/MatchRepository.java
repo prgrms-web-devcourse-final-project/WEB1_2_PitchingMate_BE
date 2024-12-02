@@ -30,16 +30,6 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
             @Param("endDate") LocalDateTime endDate
     );
 
-
-    @Query("SELECT m FROM Match m " +
-            "WHERE m.status = 'SCHEDULED' " +
-            "AND m.matchTime BETWEEN :startTime AND :endTime " +
-            "AND m.isCanceled = false " +
-            "ORDER BY m.matchTime ASC")
-    List<Match> findUpcomingMatches(
-            @Param("startTime") LocalDateTime startTime,
-            @Param("endTime") LocalDateTime endTime
-
     Optional<Match> findByMatchTimeAndHomeTeamIdAndAwayTeamId(
             LocalDateTime matchTime,
             Long homeTeamId,
@@ -49,6 +39,5 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
     List<Match> findByMatchTimeBetween(
             LocalDateTime startOfMonth,
             LocalDateTime endOfMonth
-
     );
 }

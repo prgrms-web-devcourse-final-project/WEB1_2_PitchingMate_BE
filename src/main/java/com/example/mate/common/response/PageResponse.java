@@ -41,7 +41,7 @@ public class PageResponse<T> {
                 .pageSize(page.getSize())
                 .build();
     }
-
+}
 
     // Pageable 검증 메서드
     public static Pageable validatePageable(Pageable pageable) {
