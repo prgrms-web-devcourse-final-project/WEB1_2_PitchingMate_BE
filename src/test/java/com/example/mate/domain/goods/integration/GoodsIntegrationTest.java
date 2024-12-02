@@ -10,18 +10,23 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.example.mate.common.response.ApiResponse;
 import com.example.mate.domain.constant.Gender;
+import com.example.mate.domain.constant.Rating;
 import com.example.mate.domain.constant.TeamInfo;
 import com.example.mate.domain.goods.dto.LocationInfo;
 import com.example.mate.domain.goods.dto.MemberInfo;
 import com.example.mate.domain.goods.dto.request.GoodsPostRequest;
+import com.example.mate.domain.goods.dto.request.GoodsReviewRequest;
 import com.example.mate.domain.goods.dto.response.GoodsPostResponse;
 import com.example.mate.domain.goods.dto.response.GoodsPostSummaryResponse;
+import com.example.mate.domain.goods.dto.response.GoodsReviewResponse;
 import com.example.mate.domain.goods.entity.Category;
 import com.example.mate.domain.goods.entity.GoodsPost;
 import com.example.mate.domain.goods.entity.GoodsPostImage;
+import com.example.mate.domain.goods.entity.GoodsReview;
 import com.example.mate.domain.goods.entity.Status;
 import com.example.mate.domain.goods.repository.GoodsPostImageRepository;
 import com.example.mate.domain.goods.repository.GoodsPostRepository;
+import com.example.mate.domain.goods.repository.GoodsReviewRepository;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -46,25 +51,20 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class GoodsIntegrationTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-    @Autowired
-    private MemberRepository memberRepository;
-    @Autowired
-    private GoodsPostRepository goodsPostRepository;
-    @Autowired
-    private GoodsPostImageRepository imageRepository;
-    @Autowired
-    private ObjectMapper objectMapper;
+    @Autowired private MockMvc mockMvc;
+    @Autowired private MemberRepository memberRepository;
+    @Autowired private GoodsPostRepository goodsPostRepository;
+    @Autowired private GoodsPostImageRepository imageRepository;
+    @Autowired private GoodsReviewRepository reviewRepository;
+    @Autowired private ObjectMapper objectMapper;
 
     private Member member;
-
     private GoodsPost goodsPost;
 
     @BeforeEach
     void setUp() {
-        createMember();
-        createGoodsPost();
+        member = createMember();
+        goodsPost = createGoodsPost(Status.OPEN, null);
         createGoodsPostImage();
     }
 
@@ -347,7 +347,7 @@ public class GoodsIntegrationTest {
                 .build());
 
         // when
-        MockHttpServletResponse result = mockMvc.perform(post("/api/goods/{memberId}/{goodsPostId}/complete", memberId, goodsPostId)
+        MockHttpServletResponse result = mockMvc.perform(post("/api/goods/{memberId}/post/{goodsPostId}/complete", memberId, goodsPostId)
                         .param("buyerId", String.valueOf(buyer.getId())))
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -372,8 +372,51 @@ public class GoodsIntegrationTest {
         assertThat(resultBuyer.getNickname()).isEqualTo(buyer.getNickname());
     }
 
-    private void createMember() {
-        member = memberRepository.save(Member.builder()
+    @Test
+    @DisplayName("굿즈 거래 후기 등록 통합 테스트 - 성공")
+    void register_goods_review_integration_test_success() throws Exception {
+        // given
+        Member buyer = member;
+        GoodsPost completePost = createGoodsPost(Status.CLOSED, buyer);
+
+        GoodsReviewRequest request = new GoodsReviewRequest(Rating.GREAT, "Great seller!");
+
+        // when
+        MockHttpServletResponse result = mockMvc.perform(post("/api/goods/{buyerId}/post/{goodsPostId}/review", buyer.getId(), completePost.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse();
+        result.setCharacterEncoding("UTF-8");
+
+        ApiResponse<GoodsReviewResponse> apiResponse = objectMapper.readValue(result.getContentAsString(), new TypeReference<>() {});
+
+        // then
+        assertThat(apiResponse.getCode()).isEqualTo(200);
+        assertThat(apiResponse.getStatus()).isEqualTo("SUCCESS");
+
+        GoodsReviewResponse response = apiResponse.getData();
+        assertThat(response).isNotNull();
+        assertThat(response.getReviewId()).isNotNull();
+        assertThat(response.getReviewerNickname()).isEqualTo(buyer.getNickname());
+        assertThat(response.getRating()).isEqualTo(request.getRating());
+        assertThat(response.getReviewContent()).isEqualTo(request.getReviewContent());
+        assertThat(response.getCreatedAt()).isNotNull();
+        assertThat(response.getGoodsPostId()).isEqualTo(completePost.getId());
+        assertThat(response.getGoodsPostTitle()).isEqualTo(completePost.getTitle());
+
+        GoodsReview savedReview = reviewRepository.findById(response.getReviewId()).orElseThrow();
+        assertThat(savedReview.getReviewer().getId()).isEqualTo(buyer.getId());
+        assertThat(savedReview.getGoodsPost().getId()).isEqualTo(completePost.getId());
+        assertThat(savedReview.getRating()).isEqualTo(Rating.GREAT);
+        assertThat(savedReview.getReviewContent()).isEqualTo("Great seller!");
+        assertThat(savedReview.getCreatedAt()).isNotNull();
+    }
+
+    private Member createMember() {
+        return memberRepository.save(Member.builder()
                 .name("홍길동")
                 .email("test@gmail.com")
                 .nickname("테스터")
@@ -384,13 +427,15 @@ public class GoodsIntegrationTest {
                 .build());
     }
 
-    private void createGoodsPost() {
-        goodsPost = goodsPostRepository.save(GoodsPost.builder()
+    private GoodsPost createGoodsPost(Status status, Member buyer) {
+        return goodsPostRepository.save(GoodsPost.builder()
                 .seller(member)
                 .teamId(1L)
+                .buyer(buyer)
                 .title("test title")
                 .content("test content")
                 .price(10_000)
+                .status(status)
                 .category(Category.ACCESSORY)
                 .location(LocationInfo.toEntity(createLocationInfo()))
                 .build());

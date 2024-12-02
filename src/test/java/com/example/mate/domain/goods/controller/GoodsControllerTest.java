@@ -15,10 +15,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.mate.common.response.PageResponse;
+import com.example.mate.domain.constant.Rating;
 import com.example.mate.domain.goods.dto.LocationInfo;
 import com.example.mate.domain.goods.dto.request.GoodsPostRequest;
+import com.example.mate.domain.goods.dto.request.GoodsReviewRequest;
 import com.example.mate.domain.goods.dto.response.GoodsPostResponse;
 import com.example.mate.domain.goods.dto.response.GoodsPostSummaryResponse;
+import com.example.mate.domain.goods.dto.response.GoodsReviewResponse;
 import com.example.mate.domain.goods.entity.Category;
 import com.example.mate.domain.goods.entity.Status;
 import com.example.mate.domain.goods.service.GoodsService;
@@ -280,7 +283,7 @@ class GoodsControllerTest {
         willDoNothing().given(goodsService).completeTransaction(memberId, goodsPostId, buyerId);
 
         // when & then
-        mockMvc.perform(post("/api/goods/{memberId}/{goodsPostId}/complete", memberId, goodsPostId)
+        mockMvc.perform(post("/api/goods/{memberId}/post/{goodsPostId}/complete", memberId, goodsPostId)
                         .param("buyerId", String.valueOf(buyerId)))
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -288,5 +291,41 @@ class GoodsControllerTest {
                 .andExpect(jsonPath("$.code").value(200));
 
         verify(goodsService).completeTransaction(memberId, goodsPostId, buyerId);
+    }
+
+    @Test
+    @DisplayName("굿즈 거래 후기 등록 - API 테스트")
+    void register_goods_review_success() throws Exception {
+        // given
+        Long reviewerId = 1L;
+        Long goodsPostId = 1L;
+
+        GoodsReviewRequest request = new GoodsReviewRequest(Rating.GREAT, "Great seller!");
+        GoodsReviewResponse response = GoodsReviewResponse.builder()
+                .reviewId(1L)
+                .reviewerNickname("Reviewer")
+                .rating(Rating.GREAT)
+                .reviewContent("Great seller!")
+                .goodsPostId(goodsPostId)
+                .goodsPostTitle("Sample Goods")
+                .build();
+
+        given(goodsService.registerGoodsReview(eq(reviewerId), eq(goodsPostId), any(GoodsReviewRequest.class))).willReturn(response);
+
+        // when & then
+        mockMvc.perform(post("/api/goods/{reviewerId}/post/{goodsPostId}/review", reviewerId, goodsPostId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("SUCCESS"))
+                .andExpect(jsonPath("$.data.reviewId").value(response.getReviewId()))
+                .andExpect(jsonPath("$.data.reviewerNickname").value(response.getReviewerNickname()))
+                .andExpect(jsonPath("$.data.rating").value(response.getRating().getValue()))
+                .andExpect(jsonPath("$.data.reviewContent").value(response.getReviewContent()))
+                .andExpect(jsonPath("$.data.goodsPostTitle").value(response.getGoodsPostTitle()))
+                .andExpect(jsonPath("$.code").value(200));
+
+        verify(goodsService).registerGoodsReview(eq(reviewerId), eq(goodsPostId), any(GoodsReviewRequest.class));
     }
 }
