@@ -6,4 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface GoodsReviewRepository extends JpaRepository<GoodsReview, Long> {
 
     int countByRevieweeId(Long revieweeId);
+
+    boolean existsByGoodsPostIdAndReviewerId(Long goodsPostId, Long reviewerId);
 }

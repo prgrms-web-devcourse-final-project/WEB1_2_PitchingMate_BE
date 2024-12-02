@@ -95,15 +95,13 @@ public class GoodsPost extends BaseTimeEntity {
     }
 
     // 굿즈 판매글 수정 메서드
-    public void updatePostDetails(GoodsPost post, List<GoodsPostImage> goodsPostImages) {
+    public void updatePostDetails(GoodsPost post) {
         this.teamId = post.getTeamId();
         this.title = post.getTitle();
         this.content = post.getContent();
         this.price = post.getPrice();
         this.category = post.getCategory();
         this.location = post.getLocation();
-
-        changeImages(goodsPostImages);
     }
 
     // 거래 완료 메서드

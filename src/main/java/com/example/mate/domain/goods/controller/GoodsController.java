@@ -3,11 +3,9 @@ package com.example.mate.domain.goods.controller;
 import com.example.mate.common.response.ApiResponse;
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.goods.dto.request.GoodsPostRequest;
-import com.example.mate.domain.goods.dto.request.GoodsReviewFormRequest;
 import com.example.mate.domain.goods.dto.request.GoodsReviewRequest;
 import com.example.mate.domain.goods.dto.response.GoodsPostResponse;
 import com.example.mate.domain.goods.dto.response.GoodsPostSummaryResponse;
-import com.example.mate.domain.goods.dto.response.GoodsReviewFormResponse;
 import com.example.mate.domain.goods.dto.response.GoodsReviewResponse;
 import com.example.mate.domain.goods.service.GoodsService;
 import java.util.List;
@@ -109,7 +107,7 @@ public class GoodsController {
     굿즈 채팅창 - 알럿창 : 굿즈 거래 완료
     TODO: @PathVariable Long memberId -> @AuthenticationPrincipal 로 변경
     */
-    @PostMapping("{sellerId}/{goodsPostId}/complete")
+    @PostMapping("{sellerId}/post/{goodsPostId}/complete")
     public ResponseEntity<ApiResponse<Void>> completeGoodsPost(
             @PathVariable Long sellerId,
             @PathVariable Long goodsPostId,
@@ -119,23 +117,17 @@ public class GoodsController {
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
-    // 굿즈 거래후기 : 굿즈 거래후기 페이지 조회
-    @GetMapping("/{goodsPostId}/review")
-    public ResponseEntity<GoodsReviewFormResponse> getGoodsReviewForm(@PathVariable Long goodsPostId,
-                                                                      @RequestBody GoodsReviewFormRequest request) {
-        return ResponseEntity.ok(GoodsReviewFormResponse.builder()
-                .goodsPostId(goodsPostId)
-                .goodsPostTitle(request.getGoodsPostTitle())
-                .reviewer(request.getReviewer())
-                .reviewee(request.getReviewee())
-                .imageUrl(request.getImageUrl())
-                .build());
-    }
-
-    // 굿즈 거래후기 : 굿즈 거래후기 등록
-    @PostMapping("/{goodsPostId}/review")
-    public ResponseEntity<GoodsReviewResponse> registerGoodsReview(@PathVariable Long goodsPostId,
-                                                                   @RequestBody GoodsReviewRequest request) {
-        return ResponseEntity.ok(GoodsReviewResponse.createResponse(goodsPostId, request));
+    /*
+    굿즈 거래후기 : 굿즈 거래후기 등록
+    TODO: @PathVariable Long memberId -> @AuthenticationPrincipal 로 변경
+    */
+    @PostMapping("/{reviewerId}/post/{goodsPostId}/review")
+    public ResponseEntity<ApiResponse<GoodsReviewResponse>> registerGoodsReview(
+            @PathVariable Long goodsPostId,
+            @PathVariable Long reviewerId,
+            @Validated @RequestBody GoodsReviewRequest request
+    ) {
+        GoodsReviewResponse response = goodsService.registerGoodsReview(reviewerId, goodsPostId, request);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 }
