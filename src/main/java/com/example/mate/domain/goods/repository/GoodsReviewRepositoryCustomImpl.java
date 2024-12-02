@@ -14,9 +14,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
+import org.springframework.stereotype.Repository;
 
+@Repository
 @RequiredArgsConstructor
-public class GoodsReviewRepositoryImpl implements GoodsReviewRepositoryCustom {
+public class GoodsReviewRepositoryCustomImpl implements GoodsReviewRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
 
