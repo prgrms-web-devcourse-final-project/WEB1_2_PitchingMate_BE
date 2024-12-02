@@ -16,6 +16,7 @@ import com.example.mate.domain.goods.entity.GoodsPost;
 import com.example.mate.domain.goods.entity.GoodsPostImage;
 import com.example.mate.domain.goods.entity.Status;
 import com.example.mate.domain.goods.repository.GoodsPostRepository;
+import com.example.mate.domain.goods.repository.GoodsReviewRepositoryCustom;
 import com.example.mate.domain.mate.entity.MateReview;
 import com.example.mate.domain.mate.repository.MateReviewRepositoryCustom;
 import com.example.mate.domain.member.dto.response.MyGoodsRecordResponse;
@@ -52,6 +53,9 @@ class ProfileServiceTest {
 
     @Mock
     private MateReviewRepositoryCustom mateReviewRepositoryCustom;
+
+    @Mock
+    private GoodsReviewRepositoryCustom goodsReviewRepositoryCustom;
 
     private Member member1;
     private Member member2;
@@ -284,6 +288,64 @@ class ProfileServiceTest {
 
             // when & then
             assertThatThrownBy(() -> profileService.getMateReviewPage(invalidMemberId, pageable))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", MEMBER_NOT_FOUND_BY_ID);
+
+            verify(memberRepository).findById(invalidMemberId);
+
+        }
+    }
+
+    @Nested
+    @DisplayName("회원 프로필 굿즈 후기 페이징 조회")
+    class ProfileGoodsReviewPage {
+
+        @Test
+        @DisplayName("회원 프로필 굿즈 후기 페이징 조회 성공")
+        void get_goods_review_page_success() {
+            // given
+            Long memberId = 1L;
+            Pageable pageable = PageRequest.of(0, 10);
+
+            List<MyReviewResponse> myReviewResponseList = List.of(
+                    new MyReviewResponse(1L, "Title 1", "tester1", "GOOD", "Great!", LocalDateTime.now()),
+                    new MyReviewResponse(2L, "Title 2", "tester2", "GOOD", "Nice!", LocalDateTime.now())
+            );
+
+            Page<MyReviewResponse> goodsReviewPage = new PageImpl<>(myReviewResponseList, pageable,
+                    myReviewResponseList.size());
+
+            given(memberRepository.findById(memberId)).willReturn(Optional.of(member1));
+            given(goodsReviewRepositoryCustom.findGoodsReviewsByRevieweeId(memberId, pageable))
+                    .willReturn(goodsReviewPage);
+
+            // when
+            PageResponse<MyReviewResponse> response = profileService.getGoodsReviewPage(memberId, pageable);
+
+            // then
+            assertThat(response).isNotNull();
+            assertThat(response.getContent()).isNotEmpty();
+            assertThat(response.getTotalElements()).isEqualTo(goodsReviewPage.getTotalElements());
+            assertThat(response.getContent().size()).isEqualTo(goodsReviewPage.getContent().size());
+
+            MyReviewResponse reviewResponse = response.getContent().get(0);
+            assertThat(reviewResponse.getTitle()).isEqualTo(myReviewResponseList.get(0).getTitle());
+            assertThat(reviewResponse.getContent()).isEqualTo(myReviewResponseList.get(0).getContent());
+
+            verify(goodsReviewRepositoryCustom).findGoodsReviewsByRevieweeId(memberId, pageable);
+        }
+
+        @Test
+        @DisplayName("회원 프로필 굿즈 후기 페이징 조회 실패 - 유효하지 않은 회원 아이디로 조회")
+        void get_goods_review_page_fail_invalid_member_id() {
+            // given
+            Long invalidMemberId = 999L; // 존재하지 않는 회원 ID
+            Pageable pageable = PageRequest.of(0, 10);
+
+            given(memberRepository.findById(invalidMemberId)).willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> profileService.getGoodsReviewPage(invalidMemberId, pageable))
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", MEMBER_NOT_FOUND_BY_ID);
 
