@@ -161,6 +161,10 @@ public class MateService {
 
         validateAuthorization(matePost, memberId);
         validatePostStatus(matePost.getStatus());
+
+        if(request.getStatus() == Status.CLOSED) {
+            findAndValidateParticipants(request.getParticipantIds(), matePost.getMaxParticipants());
+        }
         matePost.changeStatus(request.getStatus());
 
         return MatePostResponse.from(matePost);
