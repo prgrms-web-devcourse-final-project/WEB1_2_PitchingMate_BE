@@ -39,13 +39,6 @@ public class Weather {
         this.wtTime = wtTime;
     }
 
-    public void update(Float temperature, Float pop, Integer cloudiness, LocalDateTime wtTime) {
-        this.temperature = temperature;
-        this.pop = pop;
-        this.cloudiness = cloudiness;
-        this.wtTime = wtTime;
-    }
-
     protected void setMatch(Match match) {
         this.match = match;
     }
