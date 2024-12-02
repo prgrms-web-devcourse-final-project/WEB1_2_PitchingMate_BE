@@ -15,8 +15,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -107,13 +105,16 @@ public class MateController {
         return ResponseEntity.noContent().build();
     }
 
+    // TODO: @PathVariable Long memberId -> @AuthenticationPrincipal 로 변경
     // 직관 후기 작성
-    @PostMapping("/{postId}/reviews")
-    public ResponseEntity<MateReviewCreateResponse> createMateReview(
+    @PostMapping("/{memberId}/{postId}/reviews")
+    public ResponseEntity<ApiResponse<MateReviewCreateResponse>> createMateReview(
+            @PathVariable Long memberId,
             @PathVariable Long postId,
-            @AuthenticationPrincipal UserDetails userDetails,
-            @RequestBody MateReviewRequest request
+            @Valid @RequestBody MateReviewCreateRequest request
     ) {
-        return ResponseEntity.ok(MateReviewCreateResponse.builder().id(1L).build());
+
+        MateReviewCreateResponse response = mateService.createReview(postId, memberId, request);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 }

@@ -5,17 +5,14 @@ import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.constant.TeamInfo;
 import com.example.mate.domain.match.entity.Match;
 import com.example.mate.domain.match.repository.MatchRepository;
-import com.example.mate.domain.mate.dto.request.MatePostCompleteRequest;
-import com.example.mate.domain.mate.dto.request.MatePostCreateRequest;
-import com.example.mate.domain.mate.dto.request.MatePostSearchRequest;
-import com.example.mate.domain.mate.dto.request.MatePostStatusRequest;
-import com.example.mate.domain.mate.dto.response.MatePostCompleteResponse;
-import com.example.mate.domain.mate.dto.response.MatePostDetailResponse;
-import com.example.mate.domain.mate.dto.response.MatePostResponse;
-import com.example.mate.domain.mate.dto.response.MatePostSummaryResponse;
+import com.example.mate.domain.mate.dto.request.*;
+import com.example.mate.domain.mate.dto.response.*;
 import com.example.mate.domain.mate.entity.MatePost;
+import com.example.mate.domain.mate.entity.MateReview;
 import com.example.mate.domain.mate.entity.Status;
+import com.example.mate.domain.mate.entity.Visit;
 import com.example.mate.domain.mate.repository.MateRepository;
+import com.example.mate.domain.mate.repository.MateReviewRepository;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
 import jakarta.transaction.Transactional;
@@ -39,10 +36,10 @@ public class MateService {
     private final MateRepository mateRepository;
     private final MatchRepository matchRepository;
     private final MemberRepository memberRepository;
+    private final MateReviewRepository mateReviewRepository;
 
     public MatePostResponse createMatePost(MatePostCreateRequest request, MultipartFile file) {
-        Member author = memberRepository.findById(request.getMemberId())
-                .orElseThrow(() -> new CustomException(MEMBER_NOT_FOUND_BY_ID));
+        Member author = findMemberById(request.getMemberId());
 
 
         Match match = matchRepository.findById(request.getMatchId())
@@ -139,17 +136,6 @@ public class MateService {
     }
 
 
-    private MatePost findMatePostById(Long postId) {
-        return mateRepository.findById(postId)
-                .orElseThrow(() -> new CustomException(MATE_POST_NOT_FOUND_BY_ID));
-    }
-
-    private void validateAuthorization(MatePost matePost, Long memberId) {
-        if (!matePost.getAuthor().getId().equals(memberId)) {
-            throw new CustomException(MATE_POST_UPDATE_NOT_ALLOWED);
-        }
-    }
-
     private void validateCompletionTime(MatePost matePost) {
         if (matePost.getMatch().getMatchTime().isAfter(LocalDateTime.now())) {
             throw new CustomException(MATE_POST_COMPLETE_TIME_NOT_ALLOWED);
@@ -193,5 +179,68 @@ public class MateService {
         }
 
         mateRepository.delete(matePost);
+    }
+
+    public MateReviewCreateResponse createReview(Long postId, Long reviewerId, MateReviewCreateRequest request) {
+        MatePost matePost = findMatePostById(postId);
+        Member reviewer = findMemberById(reviewerId);
+        Member reviewee = findMemberById(request.getRevieweeId());
+
+        validateReviewEligibility(matePost, reviewer, reviewee);
+
+        MateReview review = matePost.getVisit().createReview(reviewer, reviewee, request);
+        MateReview savedReview = mateReviewRepository.save(review);
+
+        return MateReviewCreateResponse.from(savedReview);
+    }
+
+    private void validateReviewEligibility(MatePost matePost, Member reviewer, Member reviewee) {
+        // 리뷰어와 리뷰 대상자 모두 참여자(또는 방장) 여부 검증
+        validateParticipant(matePost, reviewer);
+        validateParticipant(matePost, reviewee);
+
+        // 자기 자신 리뷰 검증
+        validateSelfReview(reviewer, reviewee);
+    }
+
+    private void validateParticipant(MatePost matePost, Member member) {
+        boolean isParticipant = isAuthor(matePost, member) ||
+                isVisitParticipant(matePost.getVisit(), member);
+
+        if (!isParticipant) {
+            throw new CustomException(NOT_PARTICIPANT_OR_AUTHOR);
+        }
+    }
+
+    private boolean isAuthor(MatePost matePost, Member member) {
+        return matePost.getAuthor().equals(member);
+    }
+
+    private boolean isVisitParticipant(Visit visit, Member member) {
+        return visit.getParticipants().stream()
+                .anyMatch(part -> part.getMember().equals(member));
+    }
+
+    private void validateSelfReview(Member reviewer, Member reviewee) {
+        if (reviewer.equals(reviewee)) {
+            throw new CustomException(SELF_REVIEW_NOT_ALLOWED);
+        }
+    }
+
+    private Member findMemberById(Long id) {
+        return memberRepository.findById(id)
+                .orElseThrow(() -> new CustomException(MEMBER_NOT_FOUND_BY_ID));
+    }
+
+    private MatePost findMatePostById(Long postId) {
+        return mateRepository.findById(postId)
+                .orElseThrow(() -> new CustomException(MATE_POST_NOT_FOUND_BY_ID));
+    }
+
+
+    private void validateAuthorization(MatePost matePost, Long memberId) {
+        if (!matePost.getAuthor().getId().equals(memberId)) {
+            throw new CustomException(MATE_POST_UPDATE_NOT_ALLOWED);
+        }
     }
 }

@@ -1,11 +1,10 @@
 package com.example.mate.domain.mate.entity;
 
-import com.example.mate.domain.member.entity.Member;
+import com.example.mate.common.BaseTimeEntity;
 import com.example.mate.domain.constant.Rating;
+import com.example.mate.domain.member.entity.Member;
 import jakarta.persistence.*;
 import lombok.*;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "mate_review")
@@ -13,7 +12,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
-public class MateReview {
+public class MateReview extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
@@ -37,15 +36,5 @@ public class MateReview {
     @Enumerated(EnumType.STRING)
     @Column(name = "rating", nullable = false)
     private Rating rating;
-
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
-
-    // 후기 내용 수정
-    public void updateReview(String content, Rating rating) {
-        this.reviewContent = content;
-        this.rating = rating;
-    }
-
 }
 

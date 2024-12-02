@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 
 @Getter
 public enum ErrorCode {
+  
     // Common
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "C001", "Internal Server Error"),
     INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "C002", "Invalid Input Value"),
@@ -53,7 +54,6 @@ public enum ErrorCode {
     MATE_POST_MAX_PARTICIPANTS_EXCEEDED(HttpStatus.BAD_REQUEST, "MP0012", "참여자 수가 최대 모집 인원을 초과했습니다"),
     INVALID_MATE_POST_PARTICIPANT_IDS(HttpStatus.BAD_REQUEST, "MP013", "존재하지 않는 회원이 참여자 목록에 포함되어 있습니다"),
 
-
     // Goods
     GOODS_IMAGES_ARE_EMPTY(HttpStatus.BAD_REQUEST, "G001", "굿즈 이미지는 최소 1개 이상을 업로드 할 수 있습니다."),
     GOODS_NOT_FOUND_BY_ID(HttpStatus.NOT_FOUND, "G002", "해당 ID의 굿즈 판매글 정보를 찾을 수 없습니다."),
@@ -67,6 +67,11 @@ public enum ErrorCode {
     GOODS_REVIEW_STATUS_NOT_CLOSED(HttpStatus.BAD_REQUEST, "GR001", "굿즈거래 후기는 거래완료 상태에서만 작성할 수 있습니다."),
     GOODS_REVIEW_NOT_ALLOWED_FOR_NON_BUYER(HttpStatus.FORBIDDEN, "GR002", "굿즈거래 후기는 구매자만 작성할 수 있습니다."),
     GOODS_REVIEW_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "GR003", "굿즈거래 후기는 한 번만 작성할 수 있습니다."),
+
+    // Mate Review
+    NOT_PARTICIPANT_OR_AUTHOR(HttpStatus.FORBIDDEN, "R002", "리뷰어와 리뷰 대상자 모두 직관 참여자여야 합니다."),
+    SELF_REVIEW_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "R004", "자기 자신에 대한 리뷰는 작성할 수 없습니다."),
+    REVIEW_NOT_FOUND_BY_ID(HttpStatus.NOT_FOUND, "R005", "해당 ID의 리뷰를 찾을 수 없습니다."),
 
     // FILE
     FILE_IS_EMPTY(HttpStatus.BAD_REQUEST, "F001", "빈 파일을 업로드할 수 없습니다. 파일 내용을 확인해주세요."),
@@ -90,8 +95,10 @@ public enum ErrorCode {
     INVALID_SORT_TYPE_VALUE(HttpStatus.BAD_REQUEST, "ST001", "유효하지 않은 정렬 기준 값입니다."),
 
     // Status
-    INVALID_STATUS_TYPE_VALUE(HttpStatus.BAD_REQUEST, "STATUS001", "유효하지 않은 모집 상태 값입니다.");
+    INVALID_STATUS_TYPE_VALUE(HttpStatus.BAD_REQUEST, "STATUS001", "유효하지 않은 모집 상태 값입니다."),
 
+    // Rating
+    INVALID_RATING_VALUE(HttpStatus.BAD_REQUEST, "Rating001", "유효하지 않은 리뷰 평가 값입니다.");
 
     private final HttpStatus status;
     private final String code;
