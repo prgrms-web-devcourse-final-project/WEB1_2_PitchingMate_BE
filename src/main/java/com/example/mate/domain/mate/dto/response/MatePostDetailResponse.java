@@ -18,6 +18,7 @@ public class MatePostDetailResponse {
     private String postImageUrl;
     private String title;
     private Status status;
+    private String myTeamName;
     private String rivalTeamName;
     private LocalDateTime rivalMatchTime;
     private String location;
@@ -32,11 +33,15 @@ public class MatePostDetailResponse {
     private Long postId;
 
     public static MatePostDetailResponse from(MatePost post) {
+        String myTeamName = TeamInfo.getById(post.getTeamId()).shortName;
+        String rivalTeamName = getRivalTeamName(post);
+
         return MatePostDetailResponse.builder()
                 .postImageUrl(post.getImageUrl())
                 .title(post.getTitle())
                 .status(post.getStatus())
-                .rivalTeamName(getRivalTeamName(post))
+                .myTeamName(myTeamName)
+                .rivalTeamName(rivalTeamName)
                 .rivalMatchTime(post.getMatch().getMatchTime())
                 .location(post.getMatch().getStadium().name)
                 .age(post.getAge())
@@ -53,13 +58,11 @@ public class MatePostDetailResponse {
 
     private static String getRivalTeamName(MatePost post) {
         Match match = post.getMatch();
-        Long postTeamId = post.getTeamId(); // 게시글 작성자가 선택한 팀
+        Long postTeamId = post.getTeamId();
 
-        // 게시글 작성자가 선택한 팀이 홈팀인 경우 원정팀이 상대팀
         if (postTeamId.equals(match.getHomeTeamId())) {
             return TeamInfo.getById(match.getAwayTeamId()).shortName;
         }
-        // 게시글 작성자가 선택한 팀이 원정팀인 경우 홈팀이 상대팀
         else {
             return TeamInfo.getById(match.getHomeTeamId()).shortName;
         }
