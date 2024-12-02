@@ -637,7 +637,7 @@ class MateControllerTest {
                     .andDo(print())
                     .andExpect(status().isForbidden())
                     .andExpect(jsonPath("$.status").value("ERROR"))
-                    .andExpect(jsonPath("$.message").value("이미 직관완료한 게시글은 모집 상태를 변경할 수 없습니다."));
+                    .andExpect(jsonPath("$.message").value(ALREADY_COMPLETED_POST.getMessage()));
         }
     }
 

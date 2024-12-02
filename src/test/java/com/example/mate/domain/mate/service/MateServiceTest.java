@@ -911,7 +911,7 @@ class MateServiceTest {
                     .match(testMatch)
                     .title("테스트 제목")
                     .content("테스트 내용")
-                    .status(Status.VISIT_COMPLETE)
+                    .status(Status.OPEN)
                     .maxParticipants(4)
                     .age(Age.TWENTIES)
                     .gender(Gender.ANY)

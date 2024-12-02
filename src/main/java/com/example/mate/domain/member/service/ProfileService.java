@@ -7,7 +7,7 @@ import com.example.mate.domain.goods.entity.GoodsPost;
 import com.example.mate.domain.goods.entity.GoodsPostImage;
 import com.example.mate.domain.goods.entity.Status;
 import com.example.mate.domain.goods.repository.GoodsPostRepository;
-import com.example.mate.domain.mate.repository.MateReviewRepository;
+import com.example.mate.domain.goods.repository.GoodsReviewRepositoryCustom;
 import com.example.mate.domain.mate.repository.MateReviewRepositoryCustom;
 import com.example.mate.domain.member.dto.response.MyGoodsRecordResponse;
 import com.example.mate.domain.member.dto.response.MyReviewResponse;
@@ -26,8 +26,8 @@ public class ProfileService {
 
     private final MemberRepository memberRepository;
     private final GoodsPostRepository goodsPostRepository;
-    private final MateReviewRepository mateReviewRepository;
     private final MateReviewRepositoryCustom mateReviewRepositoryCustom;
+    private final GoodsReviewRepositoryCustom goodsReviewRepositoryCustom;
 
     // 굿즈 판매기록 페이징 조회
     @Transactional(readOnly = true)
@@ -90,6 +90,7 @@ public class ProfileService {
     }
 
     // 메이트 후기 페이징 조회
+    @Transactional(readOnly = true)
     public PageResponse<MyReviewResponse> getMateReviewPage(Long memberId, Pageable pageable) {
         validateMemberId(memberId);
 
@@ -103,6 +104,24 @@ public class ProfileService {
                 .hasNext(mateReviewPage.hasNext())
                 .pageNumber(mateReviewPage.getNumber())
                 .pageSize(mateReviewPage.getSize())
+                .build();
+    }
+
+    // 굿즈거래 후기 페이징 조회
+    @Transactional(readOnly = true)
+    public PageResponse<MyReviewResponse> getGoodsReviewPage(Long memberId, Pageable pageable) {
+        validateMemberId(memberId);
+
+        Page<MyReviewResponse> goodsReviewPage = goodsReviewRepositoryCustom.findGoodsReviewsByRevieweeId(
+                memberId, pageable);
+
+        return PageResponse.<MyReviewResponse>builder()
+                .content(goodsReviewPage.getContent())
+                .totalPages(goodsReviewPage.getTotalPages())
+                .totalElements(goodsReviewPage.getTotalElements())
+                .hasNext(goodsReviewPage.hasNext())
+                .pageNumber(goodsReviewPage.getNumber())
+                .pageSize(goodsReviewPage.getSize())
                 .build();
     }
 }

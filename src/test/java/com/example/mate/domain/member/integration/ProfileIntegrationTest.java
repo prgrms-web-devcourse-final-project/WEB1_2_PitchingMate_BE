@@ -12,9 +12,11 @@ import com.example.mate.domain.goods.dto.LocationInfo;
 import com.example.mate.domain.goods.entity.Category;
 import com.example.mate.domain.goods.entity.GoodsPost;
 import com.example.mate.domain.goods.entity.GoodsPostImage;
+import com.example.mate.domain.goods.entity.GoodsReview;
 import com.example.mate.domain.goods.entity.Status;
 import com.example.mate.domain.goods.repository.GoodsPostImageRepository;
 import com.example.mate.domain.goods.repository.GoodsPostRepository;
+import com.example.mate.domain.goods.repository.GoodsReviewRepository;
 import com.example.mate.domain.match.entity.Match;
 import com.example.mate.domain.match.repository.MatchRepository;
 import com.example.mate.domain.mate.entity.Age;
@@ -77,13 +79,17 @@ public class ProfileIntegrationTest {
     private MateReviewRepository mateReviewRepository;
 
     @Autowired
+    private GoodsReviewRepository goodsReviewRepository;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
     private Member member1;
     private Member member2;
     private Member member3;
 
-    private GoodsPost goodsPost;
+    private GoodsPost goodsPost1;
+    private GoodsPost goodsPost2;
 
     private Match match;
 
@@ -94,14 +100,18 @@ public class ProfileIntegrationTest {
     @BeforeEach
     void setUp() {
         createMember();
-        createGoodsPost();
-        createGoodsPostImage();
+        goodsPost1 = createGoodsPost();
+        createGoodsPostImage(goodsPost1);
+        goodsPost2 = createGoodsPost();
+        createGoodsPostImage(goodsPost2);
         createMatch(LocalDateTime.now().minusDays(7));
         createMatePost();
         createVisit(matePost, List.of(member1, member2, member3));
         createVisitPart();
         createMateReview(member2, member1);
         createMateReview(member3, member1);
+        createGoodsReview(member2, member1, goodsPost1);
+        createGoodsReview(member3, member1, goodsPost2);
     }
 
     private void createMember() {
@@ -134,8 +144,8 @@ public class ProfileIntegrationTest {
                 .build());
     }
 
-    private void createGoodsPost() {
-        goodsPost = goodsPostRepository.save(GoodsPost.builder()
+    private GoodsPost createGoodsPost() {
+        return goodsPostRepository.save(GoodsPost.builder()
                 .seller(member1)
                 .teamId(1L)
                 .title("test title")
@@ -147,7 +157,7 @@ public class ProfileIntegrationTest {
                 .build());
     }
 
-    private void createGoodsPostImage() {
+    private void createGoodsPostImage(GoodsPost goodsPost) {
         GoodsPostImage image = GoodsPostImage.builder()
                 .imageUrl("upload/test_img_url")
                 .build();
@@ -218,6 +228,16 @@ public class ProfileIntegrationTest {
                 .build());
     }
 
+    private void createGoodsReview(Member reviewer, Member reviewee, GoodsPost goodsPost) {
+        goodsReviewRepository.save(GoodsReview.builder()
+                .goodsPost(goodsPost)
+                .reviewer(reviewer)
+                .reviewee(reviewee)
+                .rating(Rating.GOOD)
+                .reviewContent("good")
+                .build());
+    }
+
     @Nested
     @DisplayName("회원 프로필 굿즈 판매기록 페이징 조회")
     class ProfileSoldGoodsPage {
@@ -230,29 +250,24 @@ public class ProfileIntegrationTest {
             int page = 0;
             int size = 10;
 
-            goodsPostRepository.deleteAll();
-            imageRepository.deleteAll();
+            GoodsPost post = GoodsPost.builder()
+                    .seller(member1)
+                    .teamId(10L)
+                    .title("Test Title ")
+                    .content("Test Content ")
+                    .price(1000)
+                    .category(Category.ACCESSORY)
+                    .location(LocationInfo.toEntity(createLocationInfo()))
+                    .status(Status.CLOSED)
+                    .build();
 
-            for (int i = 1; i <= 3; i++) {
-                GoodsPost post = GoodsPost.builder()
-                        .seller(member1)
-                        .teamId(10L)
-                        .title("Test Title " + i)
-                        .content("Test Content " + i)
-                        .price(1000 * i)
-                        .category(Category.ACCESSORY)
-                        .location(LocationInfo.toEntity(createLocationInfo()))
-                        .status(Status.CLOSED)
-                        .build();
+            GoodsPostImage image = GoodsPostImage.builder()
+                    .imageUrl("upload/test_img_url ")
+                    .post(post)
+                    .build();
 
-                GoodsPostImage image = GoodsPostImage.builder()
-                        .imageUrl("upload/test_img_url " + i)
-                        .post(post)
-                        .build();
-
-                post.changeImages(List.of(image));
-                goodsPostRepository.save(post);
-            }
+            post.changeImages(List.of(image));
+            goodsPostRepository.save(post);
 
             // when
             mockMvc.perform(get("/api/profile/{memberId}/goods/sold", memberId)
@@ -306,30 +321,25 @@ public class ProfileIntegrationTest {
             int page = 0;
             int size = 10;
 
-            goodsPostRepository.deleteAll();
-            imageRepository.deleteAll();
+            GoodsPost post = GoodsPost.builder()
+                    .seller(member1)
+                    .buyer(buyer)
+                    .teamId(10L)
+                    .title("Test Title ")
+                    .content("Test Content ")
+                    .price(1000)
+                    .category(Category.ACCESSORY)
+                    .location(LocationInfo.toEntity(createLocationInfo()))
+                    .status(Status.CLOSED)
+                    .build();
 
-            for (int i = 1; i <= 3; i++) {
-                GoodsPost post = GoodsPost.builder()
-                        .seller(member1)
-                        .buyer(buyer)
-                        .teamId(10L)
-                        .title("Test Title " + i)
-                        .content("Test Content " + i)
-                        .price(1000 * i)
-                        .category(Category.ACCESSORY)
-                        .location(LocationInfo.toEntity(createLocationInfo()))
-                        .status(Status.CLOSED)
-                        .build();
+            GoodsPostImage image = GoodsPostImage.builder()
+                    .imageUrl("upload/test_img_url ")
+                    .post(post)
+                    .build();
 
-                GoodsPostImage image = GoodsPostImage.builder()
-                        .imageUrl("upload/test_img_url " + i)
-                        .post(post)
-                        .build();
-
-                post.changeImages(List.of(image));
-                goodsPostRepository.save(post);
-            }
+            post.changeImages(List.of(image));
+            goodsPostRepository.save(post);
 
             // when
             mockMvc.perform(get("/api/profile/{memberId}/goods/bought", buyer.getId())
@@ -339,7 +349,7 @@ public class ProfileIntegrationTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.status").value("SUCCESS"))
                     .andExpect(jsonPath("$.data.content").isArray())
-                    .andExpect(jsonPath("$.data.content.length()").value(3))
+                    .andExpect(jsonPath("$.data.content.length()").value(1))
                     .andExpect(jsonPath("$.code").value(200));
         }
 
@@ -395,6 +405,48 @@ public class ProfileIntegrationTest {
 
             // when & then
             mockMvc.perform(get("/api/profile/{memberId}/review/mate", invalidMemberId)
+                            .param("page", String.valueOf(pageable.getPageNumber()))
+                            .param("size", String.valueOf(pageable.getPageNumber())))
+                    .andDo(print())
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.status").value("ERROR"))
+                    .andExpect(jsonPath("$.code").value(404))
+                    .andExpect(jsonPath("$.message").value("해당 ID의 회원 정보를 찾을 수 없습니다"));
+        }
+    }
+
+    @Nested
+    @DisplayName("회원 프로필 굿즈 후기 페이징 조회")
+    class ProfileGoodsReviewPage {
+
+        @Test
+        @DisplayName("회원 프로필 굿즈 후기 페이징 조회 성공")
+        void get_goods_review_page_success() throws Exception {
+            // given
+            Long memberId = member1.getId();
+            Pageable pageable = PageRequest.of(0, 10);
+
+            // when & then
+            mockMvc.perform(get("/api/profile/{memberId}/review/goods", memberId)
+                            .param("page", String.valueOf(pageable.getPageNumber()))
+                            .param("size", String.valueOf(pageable.getPageSize())))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value("SUCCESS"))
+                    .andExpect(jsonPath("$.data.content").isArray())
+                    .andExpect(jsonPath("$.data.content.length()").value(2))
+                    .andExpect(jsonPath("$.code").value(200));
+        }
+
+        @Test
+        @DisplayName("회원 프로필 굿즈 후기 페이징 조회 실패 - 유효하지 않은 회원 아이디로 조회")
+        void get_goods_review_page_fail_invalid_member_id() throws Exception {
+            // given
+            Long invalidMemberId = member1.getId() + 999L; // 존재 하지 않는 아이디
+            Pageable pageable = PageRequest.of(0, 10);
+
+            // when & then
+            mockMvc.perform(get("/api/profile/{memberId}/review/goods", invalidMemberId)
                             .param("page", String.valueOf(pageable.getPageNumber()))
                             .param("size", String.valueOf(pageable.getPageNumber())))
                     .andDo(print())

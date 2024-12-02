@@ -32,30 +32,18 @@ public class ProfileController {
 
     private final ProfileService profileService;
 
-    /*
-    TODO : 2024/11/24 - 굿즈거래 후기 페이징 조회
-    1. memberId 을 통해 회원 정보 조회
-    2. 회원이 받은 굿즈거래 후기 조회
-    3. 페이징 처리 후 반환
-    */
+    @Operation(summary = "굿즈거래 후기 페이징 조회")
     @GetMapping("/{memberId}/review/goods")
-    public ResponseEntity<Page<MyReviewResponse>> getGoodsReviews(
-            @PathVariable Long memberId,
-            @PageableDefault(size = 10) Pageable pageable
+    public ResponseEntity<ApiResponse<PageResponse<MyReviewResponse>>> getGoodsReviews(
+            @Parameter(description = "회원 ID") @PathVariable Long memberId,
+            @Parameter(description = "페이지 요청 정보") @PageableDefault Pageable pageable
     ) {
-        MyReviewResponse myReviewResponse = MyReviewResponse.goodsFrom();
-        List<MyReviewResponse> responses = Collections.nCopies(10, myReviewResponse);
-        Page<MyReviewResponse> page = new PageImpl<>(responses, pageable, responses.size());
-
-        return ResponseEntity.ok(page);
+        validatePageable(pageable);
+        PageResponse<MyReviewResponse> response = profileService.getGoodsReviewPage(memberId, pageable);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    /*
-    TODO : 2024/11/24 - 메이트 후기 페이징 조회
-    1. memberId 을 통해 회원 정보 조회
-    2. 회원이 받은 메이트 후기 조회
-    3. 페이징 처리 후 반환
-    */
+    @Operation(summary = "메이트 후기 페이징 조회")
     @GetMapping("{memberId}/review/mate")
     public ResponseEntity<ApiResponse<PageResponse<MyReviewResponse>>> getMateReviews(
             @Parameter(description = "회원 ID") @PathVariable Long memberId,

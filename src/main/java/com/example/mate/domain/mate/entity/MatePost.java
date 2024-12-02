@@ -1,5 +1,6 @@
 package com.example.mate.domain.mate.entity;
 
+import com.example.mate.common.BaseTimeEntity;
 import com.example.mate.common.error.CustomException;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.constant.TeamInfo;
@@ -20,7 +21,7 @@ import static com.example.mate.common.error.ErrorCode.DIRECT_VISIT_COMPLETE_FORB
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
-public class MatePost {
+public class MatePost extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
