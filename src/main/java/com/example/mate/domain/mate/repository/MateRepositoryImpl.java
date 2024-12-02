@@ -84,14 +84,13 @@ public class MateRepositoryImpl implements MateRepositoryCustom{
                                                    QMatch match,
                                                    QMember author) {
         if (sortType == null) {
-            return new OrderSpecifier<>(Order.DESC, matePost.id); // 기본 정렬
+            return new OrderSpecifier<>(Order.DESC, matePost.createdAt); // 기본 정렬
         }
 
         return switch (sortType) {
-            case LATEST -> new OrderSpecifier<>(Order.DESC, matePost.id);
+            case LATEST -> new OrderSpecifier<>(Order.DESC, matePost.createdAt);
             case MATCH_TIME -> new OrderSpecifier<>(Order.ASC, match.matchTime);
             case MANNER -> new OrderSpecifier<>(Order.DESC, author.manner);
-            default -> new OrderSpecifier<>(Order.DESC, matePost.id);
         };
     }
 }
