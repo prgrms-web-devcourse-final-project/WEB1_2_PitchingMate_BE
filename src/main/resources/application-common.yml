@@ -21,6 +21,3 @@ springdoc:
   packages-to-scan: com.example.mate
   default-consumes-media-type: application/json
   default-produces-media-type: application/json
-
-crawler:
-  base-url: https://www.koreabaseball.com/Schedule/Schedule.aspx

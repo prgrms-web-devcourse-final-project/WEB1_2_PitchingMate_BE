@@ -37,8 +37,7 @@ public class CrawlingService {
     private final TeamRecordRepository teamRecordRepository;
     private final CrawlingStatus currentStatus = new CrawlingStatus();
 
-    @Value("${crawler.base-url}")
-    private String baseUrl;
+    private String baseUrl = "https://www.koreabaseball.com/Schedule/Schedule.aspx";
 
     @Transactional
     public CrawlingStatusResponse crawlAllCurrentMatches() {
