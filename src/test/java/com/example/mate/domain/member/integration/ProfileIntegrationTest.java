@@ -456,4 +456,46 @@ public class ProfileIntegrationTest {
                     .andExpect(jsonPath("$.message").value("해당 ID의 회원 정보를 찾을 수 없습니다"));
         }
     }
+
+    @Nested
+    @DisplayName("회원 타임라인 페이징 조회")
+    class ProfileTimelinePage {
+
+        @Test
+        @DisplayName("회원 타임라인 페이징 조회 성공")
+        void get_my_visit_page_success() throws Exception {
+            // given
+            Long memberId = member1.getId();
+            Pageable pageable = PageRequest.of(0, 10);
+
+            // when & then
+            mockMvc.perform(get("/api/profile/timeline/{memberId}", memberId)
+                            .param("page", String.valueOf(pageable.getPageNumber()))
+                            .param("size", String.valueOf(pageable.getPageSize())))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value("SUCCESS"))
+                    .andExpect(jsonPath("$.data.content").isArray())
+                    .andExpect(jsonPath("$.data.content.length()").value(1))
+                    .andExpect(jsonPath("$.code").value(200));
+        }
+
+        @Test
+        @DisplayName("회원 타임라인 페이징 조회 실패 - 유효하지 않은 회원 아이디로 조회")
+        void get_my_visit_page_fail_invalid_member_id() throws Exception {
+            // given
+            Long invalidMemberId = member1.getId() + 999L; // 존재 하지 않는 아이디
+            Pageable pageable = PageRequest.of(0, 10);
+
+            // when & then
+            mockMvc.perform(get("/api/profile/timeline/{memberId}", invalidMemberId)
+                            .param("page", String.valueOf(pageable.getPageNumber()))
+                            .param("size", String.valueOf(pageable.getPageNumber())))
+                    .andDo(print())
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.status").value("ERROR"))
+                    .andExpect(jsonPath("$.code").value(404))
+                    .andExpect(jsonPath("$.message").value("해당 ID의 회원 정보를 찾을 수 없습니다"));
+        }
+    }
 }
