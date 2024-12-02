@@ -24,6 +24,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -261,7 +262,7 @@ class MateStatusServiceTest {
                     .build();
 
             List<Long> participantIds = Arrays.asList(2L, 3L);
-            List<Member> participants = Arrays.asList(Member.builder().id(2L).build()); // 하나만 존재
+            List<Member> participants = Collections.singletonList(Member.builder().id(2L).build()); // 하나만 존재
 
             MatePostStatusRequest request = new MatePostStatusRequest(Status.CLOSED, participantIds);
 

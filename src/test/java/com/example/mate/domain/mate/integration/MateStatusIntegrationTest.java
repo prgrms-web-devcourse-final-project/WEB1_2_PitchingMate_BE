@@ -159,7 +159,7 @@ public class MateStatusIntegrationTest {
         @DisplayName("모집완료에서 모집중으로 상태 변경 성공")
         void updateMatePostStatus_ClosedToOpen_Success() throws Exception {
             // given
-            List<Long> participantIds = Arrays.asList(participant1.getId());  // 최소 1명의 참여자 필요
+            List<Long> participantIds = Collections.singletonList(participant1.getId());  // 최소 1명의 참여자 필요
             MatePostStatusRequest request = new MatePostStatusRequest(Status.OPEN, participantIds);
 
             // when & then
@@ -204,7 +204,7 @@ public class MateStatusIntegrationTest {
         @DisplayName("이미 직관완료된 게시글 상태 변경 시도시 실패")
         void updateMatePostStatus_AlreadyCompleted_Failure() throws Exception {
             // given
-            List<Long> participantIds = Arrays.asList(participant1.getId());  // 최소 1명의 참여자 필요
+            List<Long> participantIds = Collections.singletonList(participant1.getId());  // 최소 1명의 참여자 필요
             MatePostStatusRequest request = new MatePostStatusRequest(Status.OPEN, participantIds);
 
             // when & then
