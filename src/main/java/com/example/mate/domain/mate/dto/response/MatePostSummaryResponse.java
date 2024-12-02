@@ -27,6 +27,7 @@ public class MatePostSummaryResponse {
     private Age age;
     private Gender gender;
     private TransportType transportType;
+    private Long postId;
 
     public static MatePostSummaryResponse from(MatePost post) {
         // 게시글 작성자의 팀이 myTeam
@@ -45,6 +46,7 @@ public class MatePostSummaryResponse {
                 .age(post.getAge())
                 .gender(post.getGender())
                 .transportType(post.getTransport())
+                .postId(post.getId())
                 .build();
     }
 
