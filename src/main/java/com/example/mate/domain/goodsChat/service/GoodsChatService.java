@@ -51,12 +51,13 @@ public class GoodsChatService {
         GoodsChatRoom goodsChatRoom = GoodsChatRoom.builder()
                 .goodsPost(goodsPost)
                 .build();
-        chatRoomRepository.save(goodsChatRoom);
+        
+        GoodsChatRoom savedChatRoom = chatRoomRepository.save(goodsChatRoom);
 
-        goodsChatRoom.addChatParticipant(buyer, Role.BUYER);
-        goodsChatRoom.addChatParticipant(seller, Role.SELLER);
+        savedChatRoom.addChatParticipant(buyer, Role.BUYER);
+        savedChatRoom.addChatParticipant(seller, Role.SELLER);
 
-        return goodsChatRoom;
+        return savedChatRoom;
     }
 
     private Member findMemberById(Long memberId) {
