@@ -21,7 +21,7 @@ public class WeatherService {
     private final MatchRepository matchRepository;
     private final WeatherApiClient weatherApiClient;
 
-    @Scheduled(cron = "0 * * * * *")
+    @Scheduled(cron = "0 0 0 * * *")
     @Transactional
     public void updateWeatherForUpcomingMatches() {
         LocalDateTime now = LocalDateTime.now();
