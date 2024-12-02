@@ -48,7 +48,7 @@ public enum ErrorCode {
     MATE_POST_UPDATE_NOT_ALLOWED(HttpStatus.FORBIDDEN, "MP006", "메이트 게시글의 작성자가 아니라면, 게시글을 수정할 수 없습니다"),
     DIRECT_VISIT_COMPLETE_FORBIDDEN(HttpStatus.FORBIDDEN, "MP007", "모집완료 상태가 아니라면 직관 완료 상태로 게시글을 수정할 수 없습니다"),
     MATE_POST_COMPLETE_TIME_NOT_ALLOWED(HttpStatus.FORBIDDEN, "MP008", "경기 시작 이후에만 직관 완료 처리가 가능합니다."),
-    ALREADY_COMPLETED_POST(HttpStatus.FORBIDDEN, "MP009", "이미 직관완료한 게시글은 모집 상태를 변경할 수 없습니다."),
+    ALREADY_COMPLETED_POST(HttpStatus.FORBIDDEN, "MP009", "이미 직관완료한 게시글은 수정하거나 삭제할 수 없습니다."),
     MATE_POST_PARTICIPANTS_NOT_FOUND(HttpStatus.BAD_REQUEST, "MP010", "직관 참여자 목록이 비어있습니다."),
     VISIT_COMPLETE_POST_DELETE_FORBIDDEN(HttpStatus.FORBIDDEN, "MP0011", "직관 완료된 게시글은 삭제할 수 없습니다"),
     MATE_POST_MAX_PARTICIPANTS_EXCEEDED(HttpStatus.BAD_REQUEST, "MP0012", "참여자 수가 최대 모집 인원을 초과했습니다"),
