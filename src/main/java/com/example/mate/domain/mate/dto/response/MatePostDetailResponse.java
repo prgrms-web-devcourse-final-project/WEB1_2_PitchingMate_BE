@@ -31,6 +31,7 @@ public class MatePostDetailResponse {
     private Float manner;
     private String content;
     private Long postId;
+    private Long matchId;
 
     public static MatePostDetailResponse from(MatePost post) {
         String myTeamName = TeamInfo.getById(post.getTeamId()).shortName;
@@ -53,6 +54,7 @@ public class MatePostDetailResponse {
                 .manner(post.getAuthor().getManner())
                 .content(post.getContent())
                 .postId(post.getId())
+                .matchId(post.getMatch().getId())
                 .build();
     }
 
