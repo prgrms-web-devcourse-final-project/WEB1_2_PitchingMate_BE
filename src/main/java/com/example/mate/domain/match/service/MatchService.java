@@ -14,8 +14,6 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.temporal.TemporalAdjusters;
-import java.time.temporal.WeekFields;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -48,7 +46,7 @@ public class MatchService {
     public List<MatchResponse> getTeamCompletedMatches(Long teamId) {
         TeamInfo.getById(teamId);
 
-        return matchRepository.findByStatusAndHomeTeamIdOrStatusAndAwayTeamIdOrderByMatchTimeDesc(
+        return matchRepository.findRecentCompletedMatches(
                         MatchStatus.COMPLETED, teamId,
                         MatchStatus.COMPLETED, teamId)
                 .stream()

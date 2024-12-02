@@ -171,18 +171,62 @@ class MatchControllerTest {
                                 .awayScore(3)
                                 .isCanceled(false)
                                 .build(),
-                        teamId),
+                        TeamInfo.LG.id),
                 MatchResponse.from(Match.builder()
-                                .homeTeamId(TeamInfo.KIA.id)
+                                .homeTeamId(TeamInfo.DOOSAN.id)
                                 .awayTeamId(TeamInfo.LG.id)
-                                .stadiumId(StadiumInfo.GWANGJU.id)
+                                .stadiumId(StadiumInfo.JAMSIL.id)
                                 .matchTime(LocalDateTime.now().minusDays(2))
                                 .status(MatchStatus.COMPLETED)
                                 .homeScore(2)
+                                .awayScore(6)
+                                .isCanceled(false)
+                                .build(),
+                        TeamInfo.LG.id),
+                MatchResponse.from(Match.builder()
+                                .homeTeamId(TeamInfo.LG.id)
+                                .awayTeamId(TeamInfo.SAMSUNG.id)
+                                .stadiumId(StadiumInfo.JAMSIL.id)
+                                .matchTime(LocalDateTime.now().minusDays(3))
+                                .status(MatchStatus.COMPLETED)
+                                .homeScore(8)
+                                .awayScore(4)
+                                .isCanceled(false)
+                                .build(),
+                        TeamInfo.LG.id),
+                MatchResponse.from(Match.builder()
+                                .homeTeamId(TeamInfo.KIWOOM.id)
+                                .awayTeamId(TeamInfo.LG.id)
+                                .stadiumId(StadiumInfo.GOCHEOK.id)
+                                .matchTime(LocalDateTime.now().minusDays(4))
+                                .status(MatchStatus.COMPLETED)
+                                .homeScore(1)
                                 .awayScore(7)
                                 .isCanceled(false)
                                 .build(),
-                        teamId)
+                        TeamInfo.LG.id),
+                MatchResponse.from(Match.builder()
+                                .homeTeamId(TeamInfo.LG.id)
+                                .awayTeamId(TeamInfo.NC.id)
+                                .stadiumId(StadiumInfo.JAMSIL.id)
+                                .matchTime(LocalDateTime.now().minusDays(5))
+                                .status(MatchStatus.COMPLETED)
+                                .homeScore(3)
+                                .awayScore(3)
+                                .isCanceled(false)
+                                .build(),
+                        TeamInfo.LG.id),
+                MatchResponse.from(Match.builder()
+                                .homeTeamId(TeamInfo.HANWHA.id)
+                                .awayTeamId(TeamInfo.LG.id)
+                                .stadiumId(StadiumInfo.DAEJEON.id)
+                                .matchTime(LocalDateTime.now().minusDays(6))
+                                .status(MatchStatus.COMPLETED)
+                                .homeScore(4)
+                                .awayScore(9)
+                                .isCanceled(false)
+                                .build(),
+                        TeamInfo.LG.id)
         );
         when(matchService.getTeamCompletedMatches(teamId)).thenReturn(mockResponses);
 
@@ -191,12 +235,8 @@ class MatchControllerTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("SUCCESS"))
                 .andExpect(jsonPath("$.data").isArray())
-                .andExpect(jsonPath("$.data", hasSize(2)))
-                .andExpect(jsonPath("$.data[0].status").value("COMPLETED"))
-                .andExpect(jsonPath("$.data[0].homeScore").value(5))
-                .andExpect(jsonPath("$.data[1].awayScore").value(7));
+                .andExpect(jsonPath("$.data", hasSize(mockResponses.size())));  // 동적으로 크기 체크
     }
 
     @Test

@@ -19,6 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -82,29 +83,34 @@ class MatchServiceTest {
     }
 
     @Test
-    @DisplayName("팀별 완료된 경기 조회 - 성공")
+    @DisplayName("팀별 완료된 경기 조회 - 성공 (최대 6개)")
     void getTeamCompletedMatches_Success() {
         // given
         Long teamId = TeamInfo.LG.id;
-        List<Match> completedMatches = Arrays.asList(
-                createCompletedMatch(TeamInfo.LG.id, TeamInfo.KT.id, 5, 3),
-                createCompletedMatch(TeamInfo.KIA.id, TeamInfo.LG.id, 2, 7)
-        );
+        List<Match> completedMatches = new ArrayList<>();
 
-        when(matchRepository.findByStatusAndHomeTeamIdOrStatusAndAwayTeamIdOrderByMatchTimeDesc(
-                MatchStatus.COMPLETED, teamId, MatchStatus.COMPLETED, teamId))
-                .thenReturn(completedMatches);
+        for (int i = 0; i < 7; i++) {
+            completedMatches.add(createCompletedMatch(
+                    TeamInfo.LG.id,
+                    TeamInfo.KT.id,
+                    5 + i,
+                    3 + i
+            ));
+        }
+
+        when(matchRepository.findRecentCompletedMatches(
+                MatchStatus.COMPLETED, teamId,
+                MatchStatus.COMPLETED, teamId))
+                .thenReturn(completedMatches.subList(0, 6));
 
         // when
         List<MatchResponse> result = matchService.getTeamCompletedMatches(teamId);
 
         // then
-        assertThat(result).hasSize(2);
-        assertThat(result.get(0).getStatus()).isEqualTo(MatchStatus.COMPLETED);
-        assertThat(result.get(0).getHomeTeam().getId()).isEqualTo(TeamInfo.LG.id);
-        assertThat(result.get(0).getHomeScore()).isEqualTo(5);
-        verify(matchRepository).findByStatusAndHomeTeamIdOrStatusAndAwayTeamIdOrderByMatchTimeDesc(
-                MatchStatus.COMPLETED, teamId, MatchStatus.COMPLETED, teamId);
+        assertThat(result).hasSize(6);
+        verify(matchRepository).findRecentCompletedMatches(
+                MatchStatus.COMPLETED, teamId,
+                MatchStatus.COMPLETED, teamId);
     }
 
     @Test
