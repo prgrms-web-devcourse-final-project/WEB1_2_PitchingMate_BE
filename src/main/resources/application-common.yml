@@ -4,6 +4,15 @@ spring:
       max-file-size: 10MB
       max-request-size: 100MB
 
+  task:
+    scheduling:
+      pool:
+        size: 2
+      thread-name-prefix: baseball-scheduler
+      shutdown:
+        await-termination: true
+        await-termination-period: 10s
+
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
