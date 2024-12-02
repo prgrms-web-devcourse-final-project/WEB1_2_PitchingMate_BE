@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -25,10 +24,10 @@ public class PageResponse<T> {
     /**
      * Page 객체를 기반으로 PageResponse 를 생성하는 팩토리 메서드
      *
-     * @param page         Spring Data JPA 의 Page 객체
-     * @param content      변환된 데이터 리스트
-     * @param <R>          원본 데이터 타입
-     * @param <T>          변환된 데이터 타입
+     * @param page    Spring Data JPA 의 Page 객체
+     * @param content 변환된 데이터 리스트
+     * @param <R>     원본 데이터 타입
+     * @param <T>     변환된 데이터 타입
      * @return PageResponse
      */
     public static <R, T> PageResponse<T> from(Page<R> page, List<T> content) {
@@ -41,7 +40,6 @@ public class PageResponse<T> {
                 .pageSize(page.getSize())
                 .build();
     }
-}
 
     // Pageable 검증 메서드
     public static Pageable validatePageable(Pageable pageable) {

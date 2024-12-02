@@ -5,7 +5,7 @@ import org.springframework.http.HttpStatus;
 
 @Getter
 public enum ErrorCode {
-  
+
     // Common
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "C001", "Internal Server Error"),
     INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "C002", "Invalid Input Value"),
@@ -106,7 +106,7 @@ public enum ErrorCode {
     MATCH_SAVE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "CR005", "경기정보 저장 중 오류"),
     DATE_NOT_FOUND(HttpStatus.INTERNAL_SERVER_ERROR, "CR006", "날짜 정보를 찾을 수 없습니다"),
     TEAM_NAME_PARSE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "CR007", "팀 이름 오류"),
-    INVALID_SCORE_FORMAT(HttpStatus.INTERNAL_SERVER_ERROR, "CR008", "점수 형식이 잘못되었습니다");
+    INVALID_SCORE_FORMAT(HttpStatus.INTERNAL_SERVER_ERROR, "CR008", "점수 형식이 잘못되었습니다"),
 
     // Rating
     INVALID_RATING_VALUE(HttpStatus.BAD_REQUEST, "Rating001", "유효하지 않은 리뷰 평가 값입니다.");

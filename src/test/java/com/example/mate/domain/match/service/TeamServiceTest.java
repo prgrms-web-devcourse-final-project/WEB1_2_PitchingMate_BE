@@ -1,21 +1,20 @@
 package com.example.mate.domain.match.service;
 
+import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.example.mate.domain.constant.TeamInfo;
 import com.example.mate.domain.match.dto.response.TeamResponse;
 import com.example.mate.domain.match.entity.TeamRecord;
 import com.example.mate.domain.match.repository.TeamRecordRepository;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.List;
-
-import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class TeamServiceTest {
@@ -48,7 +47,7 @@ class TeamServiceTest {
     private List<TeamRecord> createTeamRecords() {
         return List.of(
                 TeamRecord.builder()
-                        .team(TeamInfo.LG)
+                        .teamId(TeamInfo.LG.id)
                         .rank(1)
                         .gamesPlayed(144)
                         .totalGames(144)
@@ -58,7 +57,7 @@ class TeamServiceTest {
                         .gamesBehind(0.0)
                         .build(),
                 TeamRecord.builder()
-                        .team(TeamInfo.KT)
+                        .teamId(TeamInfo.KT.id)
                         .rank(2)
                         .gamesPlayed(144)
                         .totalGames(144)
@@ -68,7 +67,7 @@ class TeamServiceTest {
                         .gamesBehind(4.5)
                         .build(),
                 TeamRecord.builder()
-                        .team(TeamInfo.SSG)
+                        .teamId(TeamInfo.SSG.id)
                         .rank(3)
                         .gamesPlayed(144)
                         .totalGames(144)
