@@ -57,15 +57,13 @@ public class ProfileController {
     3. 페이징 처리 후 반환
     */
     @GetMapping("{memberId}/review/mate")
-    public ResponseEntity<Page<MyReviewResponse>> getMateReviews(
-            @PathVariable Long memberId,
-            @PageableDefault(size = 10) Pageable pageable
+    public ResponseEntity<ApiResponse<PageResponse<MyReviewResponse>>> getMateReviews(
+            @Parameter(description = "회원 ID") @PathVariable Long memberId,
+            @Parameter(description = "페이지 요청 정보") @PageableDefault Pageable pageable
     ) {
-        MyReviewResponse myReviewResponse = MyReviewResponse.mateFrom();
-        List<MyReviewResponse> responses = Collections.nCopies(10, myReviewResponse);
-        Page<MyReviewResponse> page = new PageImpl<>(responses, pageable, responses.size());
-
-        return ResponseEntity.ok(page);
+        validatePageable(pageable);
+        PageResponse<MyReviewResponse> response = profileService.getMateReviewPage(memberId, pageable);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     /*
