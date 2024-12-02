@@ -17,7 +17,7 @@ import com.example.mate.domain.mate.repository.MateRepository;
 import com.example.mate.domain.mate.repository.MateReviewRepository;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -65,6 +65,7 @@ public class MateService {
         return MatePostResponse.from(savedPost);
     }
 
+    @Transactional(readOnly = true)
     public List<MatePostSummaryResponse> getMainPagePosts(Long teamId) {
         if (teamId != null && !TeamInfo.existById(teamId)) {
             throw new CustomException(TEAM_NOT_FOUND);
@@ -84,6 +85,7 @@ public class MateService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public PageResponse<MatePostSummaryResponse> getMatePagePosts(MatePostSearchRequest request, Pageable pageable) {
         if (request.getTeamId()!= null && !TeamInfo.existById(request.getTeamId())) {
             throw new CustomException(TEAM_NOT_FOUND);
@@ -105,6 +107,7 @@ public class MateService {
                 .build();
     }
 
+    @Transactional(readOnly = true)
     public MatePostDetailResponse getMatePostDetail(Long postId) {
         MatePost matePost = findMatePostById(postId);
 
@@ -143,15 +146,19 @@ public class MateService {
     }
 
     private String updateImage(String currentImageUrl, MultipartFile newFile) {
-        if (newFile == null) {
+        if (newFile == null || newFile.isEmpty()) {
             return currentImageUrl;
         }
 
+        // 새 파일이 있는 경우에만 유효성 검증 수행
+        FileValidator.validateMatePostImage(newFile);
+
+        // 기존 파일이 있으면 삭제
         if (currentImageUrl != null) {
             FileUploader.deleteFile(currentImageUrl);
         }
 
-        FileValidator.validateMatePostImage(newFile);
+        // 새 파일 업로드
         return FileUploader.uploadFile(newFile);
     }
 
