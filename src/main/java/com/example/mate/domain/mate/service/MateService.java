@@ -17,12 +17,12 @@ import com.example.mate.domain.mate.repository.MateRepository;
 import com.example.mate.domain.mate.repository.MateReviewRepository;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
-import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
@@ -171,6 +171,19 @@ public class MateService {
         return MatePostResponse.from(matePost);
     }
 
+    public void deleteMatePost(Long memberId, Long postId) {
+        MatePost matePost = mateRepository.findById(postId)
+                .orElseThrow(() -> new CustomException(MATE_POST_NOT_FOUND_BY_ID));
+
+        validateAuthorization(matePost, memberId);
+
+        if (matePost.getStatus() == Status.VISIT_COMPLETE) {
+            matePost.getVisit().detachPost();
+        }
+
+        mateRepository.delete(matePost);
+    }
+
     public MatePostCompleteResponse completeVisit(Long memberId, Long postId, MatePostCompleteRequest request) {
         MatePost matePost = findMatePostById(postId);
         validateAuthorization(matePost, memberId);
@@ -184,6 +197,11 @@ public class MateService {
         return MatePostCompleteResponse.from(matePost);
     }
 
+    private void validateAuthorization(MatePost matePost, Long memberId) {
+        if (!matePost.getAuthor().getId().equals(memberId)) {
+            throw new CustomException(MATE_POST_UPDATE_NOT_ALLOWED);
+        }
+    }
 
     private void validateCompletionTime(MatePost matePost) {
         if (matePost.getMatch().getMatchTime().isAfter(LocalDateTime.now())) {
@@ -215,19 +233,6 @@ public class MateService {
         if (totalParticipantCount > maxParticipants) {
             throw new CustomException(MATE_POST_MAX_PARTICIPANTS_EXCEEDED);
         }
-    }
-
-    public void deleteMatePost(Long memberId, Long postId) {
-        MatePost matePost = mateRepository.findById(postId)
-                .orElseThrow(() -> new CustomException(MATE_POST_NOT_FOUND_BY_ID));
-
-        validateAuthorization(matePost, memberId);
-
-        if (matePost.getStatus() == Status.VISIT_COMPLETE) {
-            matePost.getVisit().detachPost();
-        }
-
-        mateRepository.delete(matePost);
     }
 
     public MateReviewCreateResponse createReview(Long postId, Long reviewerId, MateReviewCreateRequest request) {
@@ -284,12 +289,5 @@ public class MateService {
     private MatePost findMatePostById(Long postId) {
         return mateRepository.findById(postId)
                 .orElseThrow(() -> new CustomException(MATE_POST_NOT_FOUND_BY_ID));
-    }
-
-
-    private void validateAuthorization(MatePost matePost, Long memberId) {
-        if (!matePost.getAuthor().getId().equals(memberId)) {
-            throw new CustomException(MATE_POST_UPDATE_NOT_ALLOWED);
-        }
     }
 }
