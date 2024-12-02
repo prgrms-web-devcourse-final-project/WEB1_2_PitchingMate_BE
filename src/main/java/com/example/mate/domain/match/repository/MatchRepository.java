@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface MatchRepository extends JpaRepository<Match, Long> {
@@ -29,6 +30,7 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
             @Param("endDate") LocalDateTime endDate
     );
 
+
     @Query("SELECT m FROM Match m " +
             "WHERE m.status = 'SCHEDULED' " +
             "AND m.matchTime BETWEEN :startTime AND :endTime " +
@@ -37,5 +39,16 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
     List<Match> findUpcomingMatches(
             @Param("startTime") LocalDateTime startTime,
             @Param("endTime") LocalDateTime endTime
+
+    Optional<Match> findByMatchTimeAndHomeTeamIdAndAwayTeamId(
+            LocalDateTime matchTime,
+            Long homeTeamId,
+            Long awayTeamId
+    );
+
+    List<Match> findByMatchTimeBetween(
+            LocalDateTime startOfMonth,
+            LocalDateTime endOfMonth
+
     );
 }

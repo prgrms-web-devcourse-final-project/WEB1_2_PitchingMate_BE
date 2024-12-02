@@ -10,6 +10,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableJpaAuditing
 @EnableScheduling
 @SpringBootApplication
+@EnableScheduling
 @EnableConfigurationProperties(OAuthConfig.class)
 public class MateApplication {
 
