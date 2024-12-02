@@ -24,6 +24,12 @@ public class FileValidator {
         isNotImage(file);
     }
 
+    // 메이트 게시글 이미지 파일 유효성 검사
+    public static void validateMatePostImage(MultipartFile file) {
+        validateNotEmpty(file);
+        isNotImage(file);
+    }
+
     private static void validateNotEmpty(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new CustomException(ErrorCode.FILE_IS_EMPTY);

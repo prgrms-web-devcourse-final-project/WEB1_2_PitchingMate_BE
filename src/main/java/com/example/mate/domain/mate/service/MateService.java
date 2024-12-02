@@ -3,6 +3,7 @@ package com.example.mate.domain.mate.service;
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.common.utils.file.FileUploader;
+import com.example.mate.common.utils.file.FileValidator;
 import com.example.mate.domain.constant.TeamInfo;
 import com.example.mate.domain.match.entity.Match;
 import com.example.mate.domain.match.repository.MatchRepository;
@@ -147,6 +148,7 @@ public class MateService {
         }
 
         if (currentImageUrl != null) {
+            FileValidator.validateMatePostImage(newFile);
             FileUploader.deleteFile(currentImageUrl);
         }
 
