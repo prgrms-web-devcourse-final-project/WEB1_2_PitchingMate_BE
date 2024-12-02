@@ -23,6 +23,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -73,7 +74,7 @@ class MateStatusServiceTest {
         private static final Long POST_ID = 1L;
 
         @Test
-        @DisplayName("메이트 게시글 모집 상태 변경 성공")
+        @DisplayName("메이트 게시글 모집 상태 변경 성공 - OPEN에서 CLOSED로 변경")
         void updateMatePostStatus_Success() {
             // given
             Member testMember = createTestMember();
@@ -92,10 +93,18 @@ class MateStatusServiceTest {
                     .transport(TransportType.PUBLIC)
                     .build();
 
-            MatePostStatusRequest request = new MatePostStatusRequest(Status.CLOSED);
+            List<Long> participantIds = Arrays.asList(2L, 3L);
+            List<Member> participants = Arrays.asList(
+                    Member.builder().id(2L).build(),
+                    Member.builder().id(3L).build()
+            );
+
+            MatePostStatusRequest request = new MatePostStatusRequest(Status.CLOSED, participantIds);
 
             given(mateRepository.findById(POST_ID))
                     .willReturn(Optional.of(matePost));
+            given(memberRepository.findAllById(participantIds))
+                    .willReturn(participants);
 
             // when
             MatePostResponse response = mateService.updateMatePostStatus(TEST_MEMBER_ID, POST_ID, request);
@@ -104,13 +113,15 @@ class MateStatusServiceTest {
             assertThat(response.getId()).isEqualTo(POST_ID);
             assertThat(response.getStatus()).isEqualTo(Status.CLOSED);
             verify(mateRepository).findById(POST_ID);
+            verify(memberRepository).findAllById(participantIds);
         }
 
         @Test
         @DisplayName("메이트 게시글 상태 변경 실패 - 존재하지 않는 게시글")
         void updateMatePostStatus_FailWithInvalidPostId() {
             // given
-            MatePostStatusRequest request = new MatePostStatusRequest(Status.CLOSED);
+            List<Long> participantIds = Arrays.asList(2L, 3L);
+            MatePostStatusRequest request = new MatePostStatusRequest(Status.CLOSED, participantIds);
             given(mateRepository.findById(POST_ID))
                     .willReturn(Optional.empty());
 
@@ -120,6 +131,7 @@ class MateStatusServiceTest {
                     .hasFieldOrPropertyWithValue("errorCode", MATE_POST_NOT_FOUND_BY_ID);
 
             verify(mateRepository).findById(POST_ID);
+            verify(memberRepository, never()).findAllById(any());
         }
 
         @Test
@@ -143,7 +155,8 @@ class MateStatusServiceTest {
                     .build();
 
             Long differentMemberId = 999L;
-            MatePostStatusRequest request = new MatePostStatusRequest(Status.CLOSED);
+            List<Long> participantIds = Arrays.asList(2L, 3L);
+            MatePostStatusRequest request = new MatePostStatusRequest(Status.CLOSED, participantIds);
 
             given(mateRepository.findById(POST_ID))
                     .willReturn(Optional.of(matePost));
@@ -154,6 +167,7 @@ class MateStatusServiceTest {
                     .hasFieldOrPropertyWithValue("errorCode", MATE_POST_UPDATE_NOT_ALLOWED);
 
             verify(mateRepository).findById(POST_ID);
+            verify(memberRepository, never()).findAllById(any());
         }
 
         @Test
@@ -176,7 +190,8 @@ class MateStatusServiceTest {
                     .transport(TransportType.PUBLIC)
                     .build();
 
-            MatePostStatusRequest request = new MatePostStatusRequest(Status.VISIT_COMPLETE);
+            List<Long> participantIds = Arrays.asList(2L, 3L);
+            MatePostStatusRequest request = new MatePostStatusRequest(Status.VISIT_COMPLETE, participantIds);
 
             given(mateRepository.findById(POST_ID))
                     .willReturn(Optional.of(matePost));
@@ -187,6 +202,7 @@ class MateStatusServiceTest {
                     .hasFieldOrPropertyWithValue("errorCode", DIRECT_VISIT_COMPLETE_FORBIDDEN);
 
             verify(mateRepository).findById(POST_ID);
+            verify(memberRepository, never()).findAllById(any());
         }
 
         @Test
@@ -209,7 +225,8 @@ class MateStatusServiceTest {
                     .transport(TransportType.PUBLIC)
                     .build();
 
-            MatePostStatusRequest request = new MatePostStatusRequest(Status.CLOSED);
+            List<Long> participantIds = Arrays.asList(2L, 3L);
+            MatePostStatusRequest request = new MatePostStatusRequest(Status.CLOSED, participantIds);
 
             given(mateRepository.findById(POST_ID))
                     .willReturn(Optional.of(matePost));
@@ -220,6 +237,89 @@ class MateStatusServiceTest {
                     .hasFieldOrPropertyWithValue("errorCode", ALREADY_COMPLETED_POST);
 
             verify(mateRepository).findById(POST_ID);
+            verify(memberRepository, never()).findAllById(any());
+        }
+
+        @Test
+        @DisplayName("메이트 게시글 상태 변경 실패 - 존재하지 않는 참여자 ID")
+        void updateMatePostStatus_FailWithInvalidParticipantIds() {
+            // given
+            Member testMember = createTestMember();
+            Match testMatch = createTestMatch();
+            MatePost matePost = MatePost.builder()
+                    .id(POST_ID)
+                    .author(testMember)
+                    .teamId(1L)
+                    .match(testMatch)
+                    .title("테스트 제목")
+                    .content("테스트 내용")
+                    .status(Status.OPEN)
+                    .maxParticipants(4)
+                    .age(Age.TWENTIES)
+                    .gender(Gender.ANY)
+                    .transport(TransportType.PUBLIC)
+                    .build();
+
+            List<Long> participantIds = Arrays.asList(2L, 3L);
+            List<Member> participants = Arrays.asList(Member.builder().id(2L).build()); // 하나만 존재
+
+            MatePostStatusRequest request = new MatePostStatusRequest(Status.CLOSED, participantIds);
+
+            given(mateRepository.findById(POST_ID))
+                    .willReturn(Optional.of(matePost));
+            given(memberRepository.findAllById(participantIds))
+                    .willReturn(participants);
+
+            // when & then
+            assertThatThrownBy(() -> mateService.updateMatePostStatus(TEST_MEMBER_ID, POST_ID, request))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", INVALID_MATE_POST_PARTICIPANT_IDS);
+
+            verify(mateRepository).findById(POST_ID);
+            verify(memberRepository).findAllById(participantIds);
+        }
+
+        @Test
+        @DisplayName("메이트 게시글 상태 변경 실패 - 최대 참여자 수 초과")
+        void updateMatePostStatus_FailWithExceededMaxParticipants() {
+            // given
+            Member testMember = createTestMember();
+            Match testMatch = createTestMatch();
+            MatePost matePost = MatePost.builder()
+                    .id(POST_ID)
+                    .author(testMember)
+                    .teamId(1L)
+                    .match(testMatch)
+                    .title("테스트 제목")
+                    .content("테스트 내용")
+                    .status(Status.OPEN)
+                    .maxParticipants(3) // 방장 포함 3명까지
+                    .age(Age.TWENTIES)
+                    .gender(Gender.ANY)
+                    .transport(TransportType.PUBLIC)
+                    .build();
+
+            List<Long> participantIds = Arrays.asList(2L, 3L, 4L); // 3명 추가 시도
+            List<Member> participants = Arrays.asList(
+                    Member.builder().id(2L).build(),
+                    Member.builder().id(3L).build(),
+                    Member.builder().id(4L).build()
+            );
+
+            MatePostStatusRequest request = new MatePostStatusRequest(Status.CLOSED, participantIds);
+
+            given(mateRepository.findById(POST_ID))
+                    .willReturn(Optional.of(matePost));
+            given(memberRepository.findAllById(participantIds))
+                    .willReturn(participants);
+
+            // when & then
+            assertThatThrownBy(() -> mateService.updateMatePostStatus(TEST_MEMBER_ID, POST_ID, request))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", MATE_POST_MAX_PARTICIPANTS_EXCEEDED);
+
+            verify(mateRepository).findById(POST_ID);
+            verify(memberRepository).findAllById(participantIds);
         }
     }
 

@@ -25,6 +25,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static com.example.mate.common.error.ErrorCode.*;
@@ -127,14 +129,15 @@ public class MateStatusIntegrationTest {
     }
 
     @Nested
-    @DisplayName("메이트 게시글 상태 변경")
+    @DisplayName("메이트 게시글 상태 변경 테스트")
     class UpdateMatePostStatus {
 
         @Test
-        @DisplayName("메이트 게시글 상태 변경 성공 - 모집중에서 모집완료로")
+        @DisplayName("모집중에서 모집완료로 상태 변경 성공")
         void updateMatePostStatus_OpenToClosed_Success() throws Exception {
             // given
-            MatePostStatusRequest request = new MatePostStatusRequest(Status.CLOSED);
+            List<Long> participantIds = Arrays.asList(participant1.getId(), participant2.getId());
+            MatePostStatusRequest request = new MatePostStatusRequest(Status.CLOSED, participantIds);
 
             // when & then
             mockMvc.perform(patch("/api/mates/{memberId}/{postId}/status", testMember.getId(), openPost.getId())
@@ -153,10 +156,11 @@ public class MateStatusIntegrationTest {
         }
 
         @Test
-        @DisplayName("메이트 게시글 상태 변경 성공 - 모집완료에서 모집중으로")
+        @DisplayName("모집완료에서 모집중으로 상태 변경 성공")
         void updateMatePostStatus_ClosedToOpen_Success() throws Exception {
             // given
-            MatePostStatusRequest request = new MatePostStatusRequest(Status.OPEN);
+            List<Long> participantIds = Arrays.asList(participant1.getId());  // 최소 1명의 참여자 필요
+            MatePostStatusRequest request = new MatePostStatusRequest(Status.OPEN, participantIds);
 
             // when & then
             mockMvc.perform(patch("/api/mates/{memberId}/{postId}/status", testMember.getId(), closedPost.getId())
@@ -175,10 +179,11 @@ public class MateStatusIntegrationTest {
         }
 
         @Test
-        @DisplayName("메이트 게시글 상태 변경 실패 - 직관완료로 변경 시도")
+        @DisplayName("직관완료 상태로 직접 변경 시도시 실패")
         void updateMatePostStatus_ToComplete_Failure() throws Exception {
             // given
-            MatePostStatusRequest request = new MatePostStatusRequest(Status.VISIT_COMPLETE);
+            List<Long> participantIds = Arrays.asList(participant1.getId(), participant2.getId());
+            MatePostStatusRequest request = new MatePostStatusRequest(Status.VISIT_COMPLETE, participantIds);
 
             // when & then
             mockMvc.perform(patch("/api/mates/{memberId}/{postId}/status", testMember.getId(), openPost.getId())
@@ -196,10 +201,11 @@ public class MateStatusIntegrationTest {
         }
 
         @Test
-        @DisplayName("메이트 게시글 상태 변경 실패 - 이미 직관완료된 게시글")
+        @DisplayName("이미 직관완료된 게시글 상태 변경 시도시 실패")
         void updateMatePostStatus_AlreadyCompleted_Failure() throws Exception {
             // given
-            MatePostStatusRequest request = new MatePostStatusRequest(Status.OPEN);
+            List<Long> participantIds = Arrays.asList(participant1.getId());  // 최소 1명의 참여자 필요
+            MatePostStatusRequest request = new MatePostStatusRequest(Status.OPEN, participantIds);
 
             // when & then
             mockMvc.perform(patch("/api/mates/{memberId}/{postId}/status", testMember.getId(), completedPost.getId())
@@ -217,20 +223,12 @@ public class MateStatusIntegrationTest {
         }
 
         @Test
-        @DisplayName("메이트 게시글 상태 변경 실패 - 권한 없음")
+        @DisplayName("게시글 작성자가 아닌 사용자가 상태 변경 시도시 실패")
         void updateMatePostStatus_NotAuthor_Failure() throws Exception {
             // given
-            Member otherMember = memberRepository.save(Member.builder()
-                    .name("다른유저")
-                    .email("other@test.com")
-                    .nickname("다른계정")
-                    .imageUrl("other.jpg")
-                    .gender(Gender.MALE)
-                    .age(30)
-                    .manner(0.3f)
-                    .build());
-
-            MatePostStatusRequest request = new MatePostStatusRequest(Status.CLOSED);
+            Member otherMember = createTestMember("otherMem");
+            List<Long> participantIds = Arrays.asList(participant1.getId(), participant2.getId());
+            MatePostStatusRequest request = new MatePostStatusRequest(Status.CLOSED, participantIds);
 
             // when & then
             mockMvc.perform(patch("/api/mates/{memberId}/{postId}/status", otherMember.getId(), openPost.getId())
@@ -247,11 +245,13 @@ public class MateStatusIntegrationTest {
             assertThat(unchangedPost.getStatus()).isEqualTo(Status.OPEN);
         }
 
+
         @Test
-        @DisplayName("메이트 게시글 상태 변경 실패 - 존재하지 않는 게시글")
+        @DisplayName("존재하지 않는 게시글의 상태 변경 시도시 실패")
         void updateMatePostStatus_PostNotFound_Failure() throws Exception {
             // given
-            MatePostStatusRequest request = new MatePostStatusRequest(Status.CLOSED);
+            List<Long> participantIds = Arrays.asList(participant1.getId(), participant2.getId());
+            MatePostStatusRequest request = new MatePostStatusRequest(Status.CLOSED, participantIds);
 
             // when & then
             mockMvc.perform(patch("/api/mates/{memberId}/{postId}/status", testMember.getId(), 999L)
@@ -262,6 +262,55 @@ public class MateStatusIntegrationTest {
                     .andExpect(jsonPath("$.message").value(MATE_POST_NOT_FOUND_BY_ID.getMessage()))
                     .andExpect(jsonPath("$.code").value(404))
                     .andDo(print());
+        }
+
+        @Test
+        @DisplayName("모집완료로 변경 시 참여자 수가 최대 인원을 초과하면 실패")
+        void updateMatePostStatus_ExceedMaxParticipants_Failure() throws Exception {
+            // given
+            Member participant3 = createTestMember("part3");
+            List<Long> participantIds = Arrays.asList(
+                    participant1.getId(),
+                    participant2.getId(),
+                    participant3.getId()
+            ); // 방장 포함 4명 (최대 인원 3명)
+            MatePostStatusRequest request = new MatePostStatusRequest(Status.CLOSED, participantIds);
+
+            // when & then
+            mockMvc.perform(patch("/api/mates/{memberId}/{postId}/status", testMember.getId(), openPost.getId())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.status").value("ERROR"))
+                    .andExpect(jsonPath("$.message").value(MATE_POST_MAX_PARTICIPANTS_EXCEEDED.getMessage()))
+                    .andExpect(jsonPath("$.code").value(400))
+                    .andDo(print());
+
+            // DB 검증
+            MatePost unchangedPost = mateRepository.findById(openPost.getId()).orElseThrow();
+            assertThat(unchangedPost.getStatus()).isEqualTo(Status.OPEN);
+        }
+
+        @Test
+        @DisplayName("모집완료로 변경 시 존재하지 않는 참여자 ID가 포함되면 실패")
+        void updateMatePostStatus_InvalidParticipantId_Failure() throws Exception {
+            // given
+            List<Long> participantIds = Arrays.asList(participant1.getId(), 999L);
+            MatePostStatusRequest request = new MatePostStatusRequest(Status.CLOSED, participantIds);
+
+            // when & then
+            mockMvc.perform(patch("/api/mates/{memberId}/{postId}/status", testMember.getId(), openPost.getId())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.status").value("ERROR"))
+                    .andExpect(jsonPath("$.message").value(INVALID_MATE_POST_PARTICIPANT_IDS.getMessage()))
+                    .andExpect(jsonPath("$.code").value(400))
+                    .andDo(print());
+
+            // DB 검증
+            MatePost unchangedPost = mateRepository.findById(openPost.getId()).orElseThrow();
+            assertThat(unchangedPost.getStatus()).isEqualTo(Status.OPEN);
         }
     }
 
