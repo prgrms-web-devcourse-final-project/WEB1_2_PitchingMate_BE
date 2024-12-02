@@ -109,7 +109,11 @@ public enum ErrorCode {
     INVALID_SCORE_FORMAT(HttpStatus.INTERNAL_SERVER_ERROR, "CR008", "점수 형식이 잘못되었습니다"),
 
     // Rating
-    INVALID_RATING_VALUE(HttpStatus.BAD_REQUEST, "Rating001", "유효하지 않은 리뷰 평가 값입니다.");
+    INVALID_RATING_VALUE(HttpStatus.BAD_REQUEST, "Rating001", "유효하지 않은 리뷰 평가 값입니다."),
+
+    //Weather
+    WEATHER_DATA_NOT_FOUND(HttpStatus.NOT_FOUND, "W001", "날씨 데이터를 찾을 수 없습니다."),
+    WEATHER_API_ERROR(HttpStatus.NOT_FOUND, "W002", "날씨 API 호출 중 오류가 발생했습니다.");
 
     private final HttpStatus status;
     private final String code;
