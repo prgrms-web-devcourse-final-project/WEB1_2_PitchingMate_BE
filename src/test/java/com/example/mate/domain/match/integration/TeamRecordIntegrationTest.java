@@ -3,6 +3,8 @@ package com.example.mate.domain.match.integration;
 import com.example.mate.domain.constant.TeamInfo;
 import com.example.mate.domain.match.entity.TeamRecord;
 import com.example.mate.domain.match.repository.TeamRecordRepository;
+import java.util.Arrays;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,9 +17,6 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Arrays;
-import java.util.List;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -64,7 +63,7 @@ class TeamRecordIntegrationTest {
     private TeamRecord createTeamRecord(TeamInfo.Team team, int rank,
                                         int wins, int draws, int losses, double gamesBehind) {
         return TeamRecord.builder()
-                .team(team)
+                .teamId(team.id)
                 .rank(rank)
                 .gamesPlayed(wins + draws + losses)
                 .totalGames(144)

@@ -22,7 +22,7 @@ public class TeamService {
 
         return teamRecords.stream()
                 .map(record -> {
-                    TeamInfo.Team team = TeamInfo.getById(record.getId());
+                    TeamInfo.Team team = TeamInfo.getById(record.getTeamId());
                     return TeamResponse.Detail.from(team, record);
                 })
                 .collect(Collectors.toList());
