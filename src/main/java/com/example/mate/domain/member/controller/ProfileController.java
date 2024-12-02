@@ -11,11 +11,7 @@ import com.example.mate.domain.member.service.ProfileService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.util.Collections;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
@@ -54,19 +50,16 @@ public class ProfileController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    /*
-    TODO : 2024/11/24 - 직관 타임라인 페이징 조회
-    1. JwtToken 을 통해 회원 정보 조회
-    2. 회원이 다녀온 직관 기록, 같이 본 사용자 정보, 메이트 후기 조회
-    3. 페이징 처리 후 반환
-    */
-    @GetMapping("/timeline")
-    public ResponseEntity<Page<MyVisitResponse>> getMyVisits(@PageableDefault(size = 10) Pageable pageable) {
-        MyVisitResponse myVisitResponse = MyVisitResponse.from();
-        List<MyVisitResponse> responses = Collections.nCopies(10, myVisitResponse);
-        Page<MyVisitResponse> page = new PageImpl<>(responses, pageable, responses.size());
-
-        return ResponseEntity.ok(page);
+    // TODO : 본인만 접근할 수 있도록 @AuthenticationPrincipal Long memberId
+    @Operation(summary = "직관 타임라인 페이징 조회")
+    @GetMapping("/timeline/{memberId}")
+    public ResponseEntity<ApiResponse<PageResponse<MyVisitResponse>>> getMyVisits(
+            @Parameter(description = "회원 ID") @PathVariable Long memberId,
+            @Parameter(description = "페이지 요청 정보") @PageableDefault Pageable pageable
+    ) {
+        validatePageable(pageable);
+        PageResponse<MyVisitResponse> response = profileService.getMyVisitPage(memberId, pageable);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @Operation(summary = "굿즈 판매기록 페이징 조회")
