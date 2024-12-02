@@ -26,6 +26,10 @@ public enum ErrorCode {
     MATCH_NOT_FOUND(HttpStatus.NOT_FOUND, "M001", "해당 경기를 찾을 수 없습니다"),
     MATCH_NOT_FOUND_BY_ID(HttpStatus.NOT_FOUND, "MATCH_001", "해당 ID의 경기 정보를 찾을 수 없습니다."),
 
+    //Weather
+    WEATHER_DATA_NOT_FOUND(HttpStatus.NOT_FOUND, "W001", "날씨 데이터를 찾을 수 없습니다."),
+    WEATHER_API_ERROR(HttpStatus.NOT_FOUND, "W002", "날씨 API 호출 중 오류가 발생했습니다."),
+
     // Member
     MEMBER_NOT_FOUND_BY_ID(HttpStatus.NOT_FOUND, "M001", "해당 ID의 회원 정보를 찾을 수 없습니다"),
     UNSUPPORTED_RESPONSE_TYPE(HttpStatus.BAD_REQUEST, "M002", "회원 프로필 조회에서 지원하지 않는 응답 타입입니다."),
