@@ -68,6 +68,10 @@ public enum ErrorCode {
     GOODS_REVIEW_NOT_ALLOWED_FOR_NON_BUYER(HttpStatus.FORBIDDEN, "GR002", "굿즈거래 후기는 구매자만 작성할 수 있습니다."),
     GOODS_REVIEW_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "GR003", "굿즈거래 후기는 한 번만 작성할 수 있습니다."),
 
+    // Goods Chat
+    GOODS_CHAT_CLOSED_POST(HttpStatus.BAD_REQUEST, "GC001", "거래완료된 판매글에 채팅을 시작할 수 없습니다."),
+    GOODS_CHAT_SELLER_CANNOT_START(HttpStatus.BAD_REQUEST, "GC002", "자신의 판매글에 채팅을 시작할 수 없습니다."),
+
     // Mate Review
     NOT_PARTICIPANT_OR_AUTHOR(HttpStatus.FORBIDDEN, "R002", "리뷰어와 리뷰 대상자 모두 직관 참여자여야 합니다."),
     SELF_REVIEW_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "R004", "자기 자신에 대한 리뷰는 작성할 수 없습니다."),
