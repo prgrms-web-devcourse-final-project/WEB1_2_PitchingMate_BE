@@ -2,6 +2,8 @@ package com.example.mate.domain.mate.service;
 
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.response.PageResponse;
+import com.example.mate.common.utils.file.FileUploader;
+import com.example.mate.common.utils.file.FileValidator;
 import com.example.mate.domain.constant.TeamInfo;
 import com.example.mate.domain.match.entity.Match;
 import com.example.mate.domain.match.repository.MatchRepository;
@@ -41,13 +43,9 @@ public class MateService {
     public MatePostResponse createMatePost(MatePostCreateRequest request, MultipartFile file) {
         Member author = findMemberById(request.getMemberId());
 
+        Match match = findMatchById(request.getMatchId());
 
-        Match match = matchRepository.findById(request.getMatchId())
-                .orElseThrow(() -> new CustomException(MATCH_NOT_FOUND_BY_ID));
-
-        if (!TeamInfo.existById(request.getTeamId())) {
-            throw new CustomException(TEAM_NOT_FOUND);
-        }
+        validateTeamId(request.getTeamId());
 
         MatePost matePost = MatePost.builder()
                 .author(author)
@@ -111,6 +109,50 @@ public class MateService {
         MatePost matePost = findMatePostById(postId);
 
         return MatePostDetailResponse.from(matePost);
+    }
+
+    public MatePostResponse updateMatePost(Long memberId, Long postId, MatePostUpdateRequest request, MultipartFile file) {
+        MatePost matePost = findMatePostById(postId);
+        validateAuthorization(matePost, memberId);
+        validatePostStatus(matePost.getStatus());
+        validateTeamId(request.getTeamId());
+
+        Match match = findMatchById(request.getMatchId());
+        String imageUrl = updateImage(matePost.getImageUrl(), file);
+
+        matePost.updatePost(request, match, imageUrl);
+
+        return MatePostResponse.from(matePost);
+    }
+
+    private void validatePostStatus(Status status) {
+        if (status == Status.VISIT_COMPLETE) {
+            throw new CustomException(ALREADY_COMPLETED_POST);
+        }
+    }
+
+    private void validateTeamId(Long teamId) {
+        if (!TeamInfo.existById(teamId)) {
+            throw new CustomException(TEAM_NOT_FOUND);
+        }
+    }
+
+    private Match findMatchById(Long matchId) {
+        return matchRepository.findById(matchId)
+                .orElseThrow(() -> new CustomException(MATCH_NOT_FOUND_BY_ID));
+    }
+
+    private String updateImage(String currentImageUrl, MultipartFile newFile) {
+        if (newFile == null) {
+            return currentImageUrl;
+        }
+
+        if (currentImageUrl != null) {
+            FileUploader.deleteFile(currentImageUrl);
+        }
+
+        FileValidator.validateMatePostImage(newFile);
+        return FileUploader.uploadFile(newFile);
     }
 
     public MatePostResponse updateMatePostStatus(Long memberId, Long postId, MatePostStatusRequest request) {

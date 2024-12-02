@@ -75,6 +75,19 @@ public class MateController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
+    // 메이트 게시글 수정
+    @PatchMapping("/{memberId}/{postId}")
+    public ResponseEntity<ApiResponse<MatePostResponse>> updateMatePost(
+            @PathVariable Long memberId,
+            @PathVariable Long postId,
+            @Valid @RequestPart(value = "data") MatePostUpdateRequest request,
+            @RequestPart(value = "file", required = false) MultipartFile file) {
+
+        MatePostResponse response = mateService.updateMatePost(memberId, postId, request, file);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+
     // TODO: @PathVariable Long memberId -> @AuthenticationPrincipal 로 변경
     // 메이트 게시글 모집 상태 변경(모집중, 모집완료)
     @PatchMapping("/{memberId}/{postId}/status")
