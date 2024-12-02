@@ -148,10 +148,10 @@ public class MateService {
         }
 
         if (currentImageUrl != null) {
-            FileValidator.validateMatePostImage(newFile);
             FileUploader.deleteFile(currentImageUrl);
         }
 
+        FileValidator.validateMatePostImage(newFile);
         return FileUploader.uploadFile(newFile);
     }
 
