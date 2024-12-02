@@ -15,9 +15,16 @@ import java.util.Optional;
 public interface MatchRepository extends JpaRepository<Match, Long> {
     List<Match> findTop5ByOrderByMatchTimeDesc();
     List<Match> findTop3ByHomeTeamIdOrAwayTeamIdOrderByMatchTimeDesc(Long homeTeamId, Long awayTeamId);
-    List<Match> findByStatusAndHomeTeamIdOrStatusAndAwayTeamIdOrderByMatchTimeDesc(
-            MatchStatus status1, Long homeTeamId,
-            MatchStatus status2, Long awayTeamId
+    @Query("SELECT m FROM Match m " +
+            "WHERE (m.status = :status1 AND m.homeTeamId = :homeTeamId) " +
+            "OR (m.status = :status2 AND m.awayTeamId = :awayTeamId) " +
+            "ORDER BY m.matchTime DESC " +
+            "LIMIT 6")
+    List<Match> findRecentCompletedMatches(
+            @Param("status1") MatchStatus status1,
+            @Param("homeTeamId") Long homeTeamId,
+            @Param("status2") MatchStatus status2,
+            @Param("awayTeamId") Long awayTeamId
     );
     @Query("SELECT m FROM Match m WHERE (m.homeTeamId = :teamId OR m.awayTeamId = :teamId) " +
             "AND m.matchTime BETWEEN :startDate AND :endDate " +
