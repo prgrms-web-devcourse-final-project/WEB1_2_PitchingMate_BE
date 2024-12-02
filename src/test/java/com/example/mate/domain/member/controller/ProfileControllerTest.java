@@ -14,6 +14,8 @@ import com.example.mate.common.error.ErrorCode;
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.member.dto.response.MyGoodsRecordResponse;
 import com.example.mate.domain.member.dto.response.MyReviewResponse;
+import com.example.mate.domain.member.dto.response.MyVisitResponse;
+import com.example.mate.domain.member.dto.response.MyVisitResponse.MateReviewResponse;
 import com.example.mate.domain.member.service.ProfileService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
@@ -335,6 +337,87 @@ class ProfileControllerTest {
                     .andExpect(jsonPath("$.message").value(ErrorCode.MEMBER_NOT_FOUND_BY_ID.getMessage()));
 
             verify(profileService, times(1)).getGoodsReviewPage(memberId, pageable);
+        }
+    }
+
+    @Nested
+    @DisplayName("회원 타임라인 페이징 조회")
+    class ProfileTimelinePage {
+
+        @Test
+        @DisplayName("회원 타임라인 페이징 조회 성공")
+        void get_my_visit_page_success() throws Exception {
+            // given
+            Long memberId = 1L;
+            Pageable pageable = PageRequest.of(0, 10);
+
+            MyVisitResponse myVisitResponse = MyVisitResponse.builder()
+                    .homeTeamName("KIA")
+                    .awayTeamName("LG")
+                    .location("광주-기아 챔피언스 필드")
+                    .matchTime(LocalDateTime.now().minusDays(7))
+                    .reviews(List.of(MateReviewResponse.builder()
+                            .memberId(2L)
+                            .nickname("tester2")
+                            .rating(null)
+                            .content(null)
+                            .build()))
+                    .build();
+            List<MyVisitResponse> content = List.of(myVisitResponse);
+            PageImpl<MyVisitResponse> myVisitPage = new PageImpl<>(content);
+
+            PageResponse<MyVisitResponse> response = PageResponse.<MyVisitResponse>builder()
+                    .content(content)
+                    .totalPages(myVisitPage.getTotalPages())
+                    .totalElements(myVisitPage.getTotalElements())
+                    .hasNext(myVisitPage.hasNext())
+                    .pageNumber(myVisitPage.getNumber())
+                    .pageSize(myVisitPage.getSize())
+                    .build();
+
+            given(profileService.getMyVisitPage(memberId, pageable)).willReturn(response);
+
+            // when & then
+            mockMvc.perform(get("/api/profile/timeline/{memberId}", memberId)
+                            .param("page", String.valueOf(pageable.getPageNumber()))
+                            .param("size", String.valueOf(pageable.getPageSize())))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value("SUCCESS"))
+                    .andExpect(jsonPath("$.data.content.size()").value(content.size()))
+                    .andExpect(jsonPath("$.data.content[0].homeTeamName").value(myVisitResponse.getHomeTeamName()))
+                    .andExpect(jsonPath("$.data.content[0].awayTeamName").value(myVisitResponse.getAwayTeamName()))
+                    .andExpect(jsonPath("$.data.content[0].location").value(myVisitResponse.getLocation()))
+                    .andExpect(jsonPath("$.data.content[0].reviews[0].memberId")
+                            .value(myVisitResponse.getReviews().get(0).getMemberId()))
+                    .andExpect(jsonPath("$.data.totalPages").value(response.getTotalPages()))
+                    .andExpect(jsonPath("$.data.totalElements").value(response.getTotalElements()))
+                    .andExpect(jsonPath("$.data.pageNumber").value(response.getPageNumber()))
+                    .andExpect(jsonPath("$.data.pageSize").value(response.getPageSize()))
+                    .andExpect(jsonPath("$.code").value(200));
+        }
+
+        @Test
+        @DisplayName("회원 타임라인 페이징 조회 실패 - 유효하지 않은 회원 아이디로 조회")
+        void get_my_visit_page_fail_invalid_member_id() throws Exception {
+            // given
+            Long memberId = 999L; // 존재 하지 않는 아이디
+            Pageable pageable = PageRequest.of(0, 10);
+
+            willThrow(new CustomException(ErrorCode.MEMBER_NOT_FOUND_BY_ID))
+                    .given(profileService).getMyVisitPage(memberId, pageable);
+
+            // when & then
+            mockMvc.perform(get("/api/profile/timeline/{memberId}", memberId)
+                            .param("page", String.valueOf(pageable.getPageNumber()))
+                            .param("size", String.valueOf(pageable.getPageSize())))
+                    .andDo(print())
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.status").value("ERROR"))
+                    .andExpect(jsonPath("$.code").value(404))
+                    .andExpect(jsonPath("$.message").value(ErrorCode.MEMBER_NOT_FOUND_BY_ID.getMessage()));
+
+            verify(profileService, times(1)).getMyVisitPage(memberId, pageable);
         }
     }
 }
