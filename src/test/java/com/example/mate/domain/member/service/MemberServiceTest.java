@@ -430,4 +430,41 @@ class MemberServiceTest {
             verify(memberRepository).findById(memberId);
         }
     }
+
+    @Nested
+    @DisplayName("회원 탈퇴")
+    class DeleteMember {
+
+        @Test
+        @DisplayName("회원 탈퇴 성공")
+        void delete_member_success() {
+            // given
+            Long memberId = 1L;
+
+            given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
+
+            // when
+            memberService.deleteMember(memberId);
+
+            // then
+            verify(memberRepository).findById(memberId);
+            verify(memberRepository).deleteById(memberId);
+        }
+
+        @Test
+        @DisplayName("회원 탈퇴 실패 - 존재하지 않는 회원")
+        void delete_member_fail_not_exists_member() {
+            // given
+            Long memberId = 999L;
+
+            given(memberRepository.findById(memberId)).willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> memberService.deleteMember(memberId))
+                    .isInstanceOf(CustomException.class)
+                    .hasMessage(ErrorCode.MEMBER_NOT_FOUND_BY_ID.getMessage());
+
+            verify(memberRepository).findById(memberId);
+        }
+    }
 }

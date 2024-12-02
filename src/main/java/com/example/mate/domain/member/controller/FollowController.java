@@ -1,15 +1,15 @@
 package com.example.mate.domain.member.controller;
 
+import static com.example.mate.common.response.PageResponse.validatePageable;
+
 import com.example.mate.common.response.ApiResponse;
+import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.member.dto.response.MemberSummaryResponse;
 import com.example.mate.domain.member.service.FollowService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import java.util.Collections;
-import java.util.List;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/profile")
+@Tag(name = "Follow Controller", description = "회원 팔로우 관련 API")
 public class FollowController {
 
     private final FollowService followService;
@@ -54,39 +55,26 @@ public class FollowController {
         return ResponseEntity.noContent().build();
     }
 
-    /*
-    TODO : 2024/11/25 - 특정 사용자가 팔로우하는 회원들 페이징 조회
-    1. memberId 을 통해 회원 정보 조회
-    2. 회원이 팔로우하는 회원 정보 조회
-    3. 페이징 처리 후 반환
-    */
+    @Operation(summary = "특정 회원의 팔로우 회원 리스트 페이징 조회")
     @GetMapping("{memberId}/followings")
-    public ResponseEntity<Page<MemberSummaryResponse>> getFollowings(
-            @PathVariable Long memberId,
-            @PageableDefault(size = 10) Pageable pageable
+    public ResponseEntity<ApiResponse<PageResponse<MemberSummaryResponse>>> getFollowings(
+            @Parameter(description = "특정 회원 ID") @PathVariable Long memberId,
+            @PageableDefault Pageable pageable
     ) {
-        MemberSummaryResponse response = MemberSummaryResponse.from();
-        List<MemberSummaryResponse> responses = Collections.nCopies(10, response);
-        Page<MemberSummaryResponse> page = new PageImpl<>(responses, pageable, responses.size());
-
-        return ResponseEntity.ok(page);
+        pageable = validatePageable(pageable);
+        PageResponse<MemberSummaryResponse> response = followService.getFollowingsPage(memberId, pageable);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    /*
-    TODO : 2024/11/25 - 특정 사용자를 팔로우하는 회원들 페이징 조회
-    1. memberId 을 통해 회원 정보 조회
-    2. 회원을 팔로우하는 회원 정보 조회
-    3. 페이징 처리 후 반환
-    */
+    @Operation(summary = "특정 회원의 팔로워 회원 리스트 페이징 조회")
     @GetMapping("{memberId}/followers")
-    public ResponseEntity<Page<MemberSummaryResponse>> getFollowers(
-            @PathVariable Long memberId,
-            @PageableDefault(size = 10) Pageable pageable
+    public ResponseEntity<ApiResponse<PageResponse<MemberSummaryResponse>>> getFollowers(
+            @Parameter(description = "특정 회원 ID") @PathVariable Long memberId,
+            @PageableDefault Pageable pageable
     ) {
-        MemberSummaryResponse response = MemberSummaryResponse.from();
-        List<MemberSummaryResponse> responses = Collections.nCopies(10, response);
-        Page<MemberSummaryResponse> page = new PageImpl<>(responses, pageable, responses.size());
+        pageable = validatePageable(pageable);
+        PageResponse<MemberSummaryResponse> response = followService.getFollowersPage(memberId, pageable);
 
-        return ResponseEntity.ok(page);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 }

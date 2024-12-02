@@ -53,11 +53,11 @@ public class GoodsPost extends BaseTimeEntity {
     private Long teamId;
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
-    @OrderBy("id ASC")
+    @OrderBy("isMainImage DESC, id ASC")
     @Builder.Default
     private List<GoodsPostImage> goodsPostImages = new ArrayList<>();
 
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false, length = 100)
     private String title;
 
     @Column(nullable = false, length = 500)
@@ -95,12 +95,18 @@ public class GoodsPost extends BaseTimeEntity {
     }
 
     // 굿즈 판매글 수정 메서드
-    public void update(GoodsPost post) {
+    public void updatePostDetails(GoodsPost post) {
         this.teamId = post.getTeamId();
         this.title = post.getTitle();
         this.content = post.getContent();
         this.price = post.getPrice();
         this.category = post.getCategory();
         this.location = post.getLocation();
+    }
+
+    // 거래 완료 메서드
+    public void completeTransaction(Member buyer) {
+        this.buyer = buyer;
+        this.status = Status.CLOSED;
     }
 }

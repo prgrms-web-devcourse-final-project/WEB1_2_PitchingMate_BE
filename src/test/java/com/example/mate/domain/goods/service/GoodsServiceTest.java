@@ -5,20 +5,27 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
+import com.example.mate.common.response.PageResponse;
+import com.example.mate.domain.constant.Rating;
 import com.example.mate.domain.goods.dto.LocationInfo;
 import com.example.mate.domain.goods.dto.request.GoodsPostRequest;
+import com.example.mate.domain.goods.dto.request.GoodsReviewRequest;
 import com.example.mate.domain.goods.dto.response.GoodsPostResponse;
 import com.example.mate.domain.goods.dto.response.GoodsPostSummaryResponse;
+import com.example.mate.domain.goods.dto.response.GoodsReviewResponse;
 import com.example.mate.domain.goods.entity.Category;
 import com.example.mate.domain.goods.entity.GoodsPost;
 import com.example.mate.domain.goods.entity.GoodsPostImage;
+import com.example.mate.domain.goods.entity.GoodsReview;
 import com.example.mate.domain.goods.entity.Status;
 import com.example.mate.domain.goods.repository.GoodsPostImageRepository;
 import com.example.mate.domain.goods.repository.GoodsPostRepository;
+import com.example.mate.domain.goods.repository.GoodsReviewRepository;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
 import java.util.List;
@@ -31,6 +38,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -50,6 +58,9 @@ class GoodsServiceTest {
 
     @Mock
     private MemberRepository memberRepository;
+
+    @Mock
+    private GoodsReviewRepository reviewRepository;
 
     private Member member;
 
@@ -222,7 +233,7 @@ class GoodsServiceTest {
             // when
             assertThatThrownBy(() -> goodsService.updateGoodsPost(member.getId(), goodsPostId, request, files))
                     .isInstanceOf(CustomException.class)
-                    .hasMessage(ErrorCode.GOODS_UPDATE_NOT_ALLOWED.getMessage());
+                    .hasMessage(ErrorCode.GOODS_MODIFICATION_NOT_ALLOWED.getMessage());
 
             // then
             verify(memberRepository).findById(member.getId());
@@ -418,26 +429,357 @@ class GoodsServiceTest {
         }
 
         @Test
-        @DisplayName("메인페이지 굿즈거래 판매글 조회 실패 - 대표 이미지가 없는 경우")
-        void get_main_goods_posts_failed_with_no_main_image() {
+        @DisplayName("메인페이지 굿즈거래 판매글 조회 성공 - 대표 이미지가 없는 경우 기본 이미지를 반환")
+        void get_main_goods_posts_success_with_no_main_image() {
             // given
             Long teamId = 1L;
             List<GoodsPostImage> imagesWithoutMain = List.of(
                     GoodsPostImage.builder().imageUrl("upload/test_img_url_1").post(goodsPost).build(),
                     GoodsPostImage.builder().imageUrl("upload/test_img_url_2").post(goodsPost).build()
             );
+            // 직접 엔티티에 추가하여, 대표 사진 마설정
+            GoodsPost post = GoodsPost.builder()
+                    .id(1L)
+                    .teamId(1L)
+                    .title("test title")
+                    .category(Category.ACCESSORY)
+                    .price(10_000)
+                    .goodsPostImages(imagesWithoutMain).build();
 
-            GoodsPost post = GoodsPost.builder().goodsPostImages(imagesWithoutMain).build();
             List<GoodsPost> goodsPosts = List.of(post);
+            given(goodsPostRepository.findMainGoodsPosts(teamId, Status.OPEN, PageRequest.of(0, 4))).willReturn(
+                    goodsPosts);
 
-            given(goodsPostRepository.findMainGoodsPosts(teamId, Status.OPEN, PageRequest.of(0, 4))).willReturn(goodsPosts);
+            // when
+            List<GoodsPostSummaryResponse> responses = goodsService.getMainGoodsPosts(teamId);
+
+            // then
+            assertThat(responses).isNotEmpty();
+            assertThat(responses.size()).isEqualTo(goodsPosts.size());
+
+            GoodsPostSummaryResponse goodsPostSummaryResponse = responses.get(0);
+            assertThat(goodsPostSummaryResponse.getTitle()).isEqualTo(goodsPost.getTitle());
+            assertThat(goodsPostSummaryResponse.getPrice()).isEqualTo(goodsPost.getPrice());
+            assertThat(goodsPostSummaryResponse.getImageUrl()).isEqualTo("upload/default.jpg");
+
+            verify(goodsPostRepository).findMainGoodsPosts(1L, Status.OPEN, PageRequest.of(0, 4));
+        }
+    }
+
+    @Nested
+    @DisplayName("메인페이지 굿즈거래 판매글 페이징 조회 테스트")
+    class GoodsServiceGoodsPageTest {
+
+        private GoodsPost createGoodsPostWithoutFilters() {
+            return GoodsPost.builder()
+                    .seller(member)
+                    .teamId(10L)
+                    .title("No Filter Title")
+                    .content("No Filter Content")
+                    .price(10_000)
+                    .category(Category.UNIFORM)
+                    .location(LocationInfo.toEntity(createLocationInfo()))
+                    .build();
+        }
+
+        private GoodsPost createGoodsPostWithFilters() {
+            return GoodsPost.builder()
+                    .seller(member)
+                    .teamId(1L)
+                    .title("Filtered Title")
+                    .content("Filtered Content")
+                    .price(20_000)
+                    .category(Category.ACCESSORY)
+                    .location(LocationInfo.toEntity(createLocationInfo()))
+                    .build();
+        }
+
+        @Test
+        @DisplayName("메인페이지 굿즈거래 판매글 페이징 조회 성공 - 필터 비활성화")
+        void get_page_goods_posts_no_filters() {
+            // given
+            Long teamId = null;         // 팀 필터 비활성화
+            Category category = null;   // 카테고리 필터 비활성화
+            GoodsPost postWithoutFilters = createGoodsPostWithoutFilters();
+            GoodsPostImage image = GoodsPostImage.builder()
+                    .imageUrl("upload/test_img_url")
+                    .post(postWithoutFilters)
+                    .build();
+            postWithoutFilters.changeImages(List.of(image));
+
+            PageImpl<GoodsPost> goodsPostPage = new PageImpl<>(List.of(postWithoutFilters));
+            PageRequest pageRequest = PageRequest.of(0, 10);
+
+            given(goodsPostRepository.findPageGoodsPosts(teamId, Status.OPEN, category, pageRequest)).willReturn(goodsPostPage);
+
+            // when
+            PageResponse<GoodsPostSummaryResponse> pageGoodsPosts = goodsService.getPageGoodsPosts(teamId, null, pageRequest);
+
+            // then
+            assertThat(pageGoodsPosts).isNotNull();
+            assertThat(pageGoodsPosts.getContent()).isNotEmpty();
+            assertThat(pageGoodsPosts.getTotalElements()).isEqualTo(goodsPostPage.getTotalElements());
+            assertThat(pageGoodsPosts.getContent().size()).isEqualTo(goodsPostPage.getContent().size());
+
+            GoodsPostSummaryResponse summary = pageGoodsPosts.getContent().get(0);
+            assertThat(summary.getTitle()).isEqualTo(postWithoutFilters.getTitle());
+            assertThat(summary.getPrice()).isEqualTo(postWithoutFilters.getPrice());
+            assertThat(summary.getImageUrl()).isEqualTo(image.getImageUrl());
+
+            verify(goodsPostRepository).findPageGoodsPosts(teamId, Status.OPEN, category, pageRequest);
+        }
+
+        @Test
+        @DisplayName("메인페이지 굿즈거래 판매글 페이징 조회 성공 - 필터 활성화")
+        void get_page_goods_posts_all_filters() {
+            // given
+            Long teamId = 1L;
+            Category category = Category.ACCESSORY;
+            GoodsPost postWithFilters = createGoodsPostWithFilters();
+            GoodsPostImage image = GoodsPostImage.builder()
+                    .imageUrl("upload/test_img_url")
+                    .post(postWithFilters)
+                    .build();
+            postWithFilters.changeImages(List.of(image));
+
+            PageImpl<GoodsPost> goodsPostPage = new PageImpl<>(List.of(postWithFilters));
+            PageRequest pageRequest = PageRequest.of(0, 10);
+
+            given(goodsPostRepository.findPageGoodsPosts(teamId, Status.OPEN, category, pageRequest)).willReturn(goodsPostPage);
+
+            // when
+            PageResponse<GoodsPostSummaryResponse> pageGoodsPosts
+                    = goodsService.getPageGoodsPosts(teamId, category.getValue(), pageRequest);
+
+            // then
+            assertThat(pageGoodsPosts).isNotNull();
+            assertThat(pageGoodsPosts.getContent()).isNotEmpty();
+            assertThat(pageGoodsPosts.getTotalElements()).isEqualTo(goodsPostPage.getTotalElements());
+            assertThat(pageGoodsPosts.getContent().size()).isEqualTo(goodsPostPage.getContent().size());
+
+            GoodsPostSummaryResponse summary = pageGoodsPosts.getContent().get(0);
+            assertThat(summary.getTitle()).isEqualTo(postWithFilters.getTitle());
+            assertThat(summary.getPrice()).isEqualTo(postWithFilters.getPrice());
+            assertThat(summary.getImageUrl()).isEqualTo(image.getImageUrl());
+
+            verify(goodsPostRepository).findPageGoodsPosts(teamId, Status.OPEN, category, pageRequest);
+        }
+
+        @Test
+        @DisplayName("메인페이지 굿즈거래 판매글 페이징 조회 성공 - 유효하지 않은 팀 정보")
+        void get_page_goods_posts_team_filter_only() {
+            // given
+            Long teamId = 999L;
+            Category category = Category.ACCESSORY;
+            PageRequest pageRequest = PageRequest.of(0, 10);
 
             // when & then
-            assertThatThrownBy(() -> goodsService.getMainGoodsPosts(teamId))
-                    .isInstanceOf(CustomException.class)
-                    .hasMessage(ErrorCode.GOODS_MAIN_IMAGE_IS_EMPTY.getMessage());
+            assertThatThrownBy(() -> goodsService.getPageGoodsPosts(teamId, category.getValue(), pageRequest))
+                    .isExactlyInstanceOf(CustomException.class)
+                    .hasMessage(ErrorCode.TEAM_NOT_FOUND.getMessage());
+        }
+    }
 
-            verify(goodsPostRepository).findMainGoodsPosts(teamId, Status.OPEN, PageRequest.of(0, 4));
+    @Nested
+    @DisplayName("굿즈거래 판매글 거래완료 테스트")
+    class GoodsServiceCompleteTransactionTest {
+
+        @Test
+        @DisplayName("굿즈거래 판매글 거래완료 성공")
+        void complete_goods_post_transaction_success() {
+            // given
+            Long sellerId = member.getId();
+            Long goodsPostId = goodsPost.getId();
+            Member buyer = Member.builder().id(2L).name("구매자").build();
+            Long buyerId = buyer.getId();
+
+            given(memberRepository.findById(sellerId)).willReturn(Optional.of(member));
+            given(goodsPostRepository.findById(goodsPostId)).willReturn(Optional.of(goodsPost));
+            given(memberRepository.findById(buyerId)).willReturn(Optional.of(buyer));
+
+            // when
+            goodsService.completeTransaction(sellerId, goodsPostId, buyerId);
+
+            // then
+            assertThat(goodsPost.getStatus()).isEqualTo(Status.CLOSED);
+            assertThat(goodsPost.getBuyer()).isEqualTo(buyer);
+
+            verify(memberRepository).findById(sellerId);
+            verify(goodsPostRepository).findById(goodsPostId);
+            verify(memberRepository).findById(buyerId);
+        }
+
+        @Test
+        @DisplayName("굿즈거래 판매글 거래완료 실패 - 이미 거래완료 상태인 판매글")
+        void complete_goods_post_transaction_failed_with_closed_status() {
+            // given
+            Long sellerId = member.getId();
+            Long goodsPostId = goodsPost.getId();
+            Member buyer = Member.builder().id(2L).name("구매자").build();
+            Long buyerId = 2L;
+            goodsPost.completeTransaction(buyer);       // 판매글 상태를 거래 완료로 설정
+
+            given(memberRepository.findById(sellerId)).willReturn(Optional.of(member));
+            given(goodsPostRepository.findById(goodsPostId)).willReturn(Optional.of(goodsPost));
+            given(memberRepository.findById(buyerId)).willReturn(Optional.of(buyer));
+
+            // when & then
+            assertThatThrownBy(() -> goodsService.completeTransaction(sellerId, goodsPostId, buyerId))
+                    .isInstanceOf(CustomException.class)
+                    .hasMessage(ErrorCode.GOODS_ALREADY_COMPLETED.getMessage());
+
+            verify(memberRepository).findById(sellerId);
+            verify(goodsPostRepository).findById(goodsPostId);
+            verify(memberRepository).findById(buyerId);
+        }
+
+        @Test
+        @DisplayName("굿즈거래 판매글 거래완료 실패 - 동일한 판매자와 구매자")
+        void complete_goods_post_transaction_failed_with_same_seller_and_buyer() {
+            // given
+            Long sellerId = member.getId();
+            Long goodsPostId = goodsPost.getId();
+            Long buyerId = sellerId;        // 구매자와 판매자가 동일
+
+            given(memberRepository.findById(sellerId)).willReturn(Optional.of(member));
+            given(goodsPostRepository.findById(goodsPostId)).willReturn(Optional.of(goodsPost));
+            given(memberRepository.findById(buyerId)).willReturn(Optional.of(member));
+
+            // when & then
+            assertThatThrownBy(() -> goodsService.completeTransaction(sellerId, goodsPostId, buyerId))
+                    .isInstanceOf(CustomException.class)
+                    .hasMessage(ErrorCode.SELLER_CANNOT_BE_BUYER.getMessage());
+
+            verify(memberRepository, times(2)).findById(sellerId);
+            verify(goodsPostRepository).findById(goodsPostId);
+        }
+    }
+
+    @Nested
+    @DisplayName("굿즈거래 후기 등록 테스트")
+    class GoodsServiceReviewTest {
+
+        private GoodsPost createGoodsPost(Long id, Status status) {
+            return GoodsPost.builder()
+                    .id(id)
+                    .status(status)
+                    .buyer(member)
+                    .title("Test Post")
+                    .content("Test Content")
+                    .price(10_000)
+                    .category(Category.ACCESSORY)
+                    .build();
+        }
+
+        private GoodsReview createGoodsReview(GoodsPost goodsPost) {
+            return GoodsReview.builder()
+                    .id(1L)
+                    .reviewer(member)
+                    .goodsPost(goodsPost)
+                    .rating(Rating.GOOD)
+                    .reviewContent("Great seller!")
+                    .build();
+        }
+
+        @DisplayName("굿즈거래 후기 등록 성공")
+        @Test
+        void registerGoodsReviewSuccess() {
+            // given
+            GoodsPost completePost = createGoodsPost(2L, Status.CLOSED);
+            GoodsReviewRequest request = new GoodsReviewRequest(Rating.GOOD, "Great seller!");
+            Long reviewerId = member.getId();
+            Long goodsPostId = completePost.getId();
+            GoodsReview goodsReview = createGoodsReview(completePost);
+
+            given(memberRepository.findById(reviewerId)).willReturn(Optional.of(member));
+            given(goodsPostRepository.findById(goodsPostId)).willReturn(Optional.of(completePost));
+            given(reviewRepository.existsByGoodsPostIdAndReviewerId(goodsPostId, reviewerId)).willReturn(false);
+            given(reviewRepository.save(any(GoodsReview.class))).willReturn(goodsReview);
+
+            // when
+            GoodsReviewResponse response = goodsService.registerGoodsReview(reviewerId, goodsPostId, request);
+
+            // then
+            assertThat(response).isNotNull();
+            assertThat(response.getReviewerNickname()).isEqualTo(member.getNickname());
+            assertThat(response.getRating()).isEqualTo(request.getRating());
+            assertThat(response.getReviewContent()).isEqualTo(request.getReviewContent());
+
+            verify(memberRepository).findById(reviewerId);
+            verify(goodsPostRepository).findById(goodsPostId);
+            verify(reviewRepository).existsByGoodsPostIdAndReviewerId(goodsPostId, reviewerId);
+            verify(reviewRepository).save(any(GoodsReview.class));
+        }
+
+        @DisplayName("굿즈거래 후기 등록 실패 - 이미 작성된 후기")
+        @Test
+        void registerGoodsReviewFailedDueToDuplicateReview() {
+            // given
+            GoodsPost completePost = createGoodsPost(2L, Status.CLOSED);
+            GoodsReviewRequest request = new GoodsReviewRequest(Rating.GOOD, "Duplicate review!");
+            Long reviewerId = member.getId();
+            Long goodsPostId = completePost.getId();
+
+            given(memberRepository.findById(reviewerId)).willReturn(Optional.of(member));
+            given(goodsPostRepository.findById(goodsPostId)).willReturn(Optional.of(completePost));
+            given(reviewRepository.existsByGoodsPostIdAndReviewerId(goodsPostId, reviewerId)).willReturn(true);
+
+            // when & then
+            assertThatThrownBy(() -> goodsService.registerGoodsReview(reviewerId, goodsPostId, request))
+                    .isInstanceOf(CustomException.class)
+                    .hasMessage(ErrorCode.GOODS_REVIEW_ALREADY_EXISTS.getMessage());
+
+            verify(memberRepository).findById(reviewerId);
+            verify(goodsPostRepository).findById(goodsPostId);
+            verify(reviewRepository).existsByGoodsPostIdAndReviewerId(goodsPostId, reviewerId);
+            verify(reviewRepository, never()).save(any());
+        }
+
+        @DisplayName("굿즈거래 후기 등록 실패 - 작성자가 구매자가 아닌 경우")
+        @Test
+        void registerGoodsReviewFailedDueToInvalidReviewer() {
+            // given
+            GoodsPost completePost = createGoodsPost(2L, Status.CLOSED);
+            GoodsReviewRequest request = new GoodsReviewRequest(Rating.GOOD, "Not the buyer review!");
+            Member nonBuyer = Member.builder().id(3L).nickname("Non Buyer").build();
+            Long reviewerId = nonBuyer.getId();
+            Long goodsPostId = completePost.getId();
+
+            given(memberRepository.findById(reviewerId)).willReturn(Optional.of(nonBuyer));
+            given(goodsPostRepository.findById(goodsPostId)).willReturn(Optional.of(completePost));
+
+            // when & then
+            assertThatThrownBy(() -> goodsService.registerGoodsReview(reviewerId, goodsPostId, request))
+                    .isInstanceOf(CustomException.class)
+                    .hasMessage(ErrorCode.GOODS_REVIEW_NOT_ALLOWED_FOR_NON_BUYER.getMessage());
+
+            verify(memberRepository).findById(reviewerId);
+            verify(goodsPostRepository).findById(goodsPostId);
+            verify(reviewRepository, never()).existsByGoodsPostIdAndReviewerId(any(), any());
+            verify(reviewRepository, never()).save(any());
+        }
+
+        @DisplayName("굿즈거래 후기 등록 실패 - 판매글의 상태가 거래완료가 아닌 경우")
+        @Test
+        void registerGoodsReviewFailedDueToInvalidGoodsPostStatus() {
+            // given
+            GoodsPost incompletePost = createGoodsPost(3L, Status.OPEN); // 상태가 OPEN
+            GoodsReviewRequest request = new GoodsReviewRequest(Rating.GOOD, "Not completed transaction");
+            Long reviewerId = member.getId();
+            Long goodsPostId = incompletePost.getId();
+
+            given(memberRepository.findById(reviewerId)).willReturn(Optional.of(member));
+            given(goodsPostRepository.findById(goodsPostId)).willReturn(Optional.of(incompletePost));
+
+            // when & then
+            assertThatThrownBy(() -> goodsService.registerGoodsReview(reviewerId, goodsPostId, request))
+                    .isInstanceOf(CustomException.class)
+                    .hasMessage(ErrorCode.GOODS_REVIEW_STATUS_NOT_CLOSED.getMessage());
+
+            verify(memberRepository).findById(reviewerId);
+            verify(goodsPostRepository).findById(goodsPostId);
+            verify(reviewRepository, never()).existsByGoodsPostIdAndReviewerId(any(), any());
+            verify(reviewRepository, never()).save(any());
         }
     }
 }

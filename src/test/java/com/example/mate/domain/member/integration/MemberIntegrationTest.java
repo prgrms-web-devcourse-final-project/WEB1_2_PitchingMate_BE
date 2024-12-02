@@ -2,6 +2,7 @@ package com.example.mate.domain.member.integration;
 
 import static com.example.mate.domain.match.entity.MatchStatus.SCHEDULED;
 import static com.example.mate.domain.mate.entity.Status.CLOSED;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -37,6 +38,7 @@ import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.FollowRepository;
 import com.example.mate.domain.member.repository.MemberRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -89,6 +91,9 @@ class MemberIntegrationTest {
 
     @Autowired
     private VisitPartRepository visitPartRepository;
+
+    @Autowired
+    private EntityManager entityManager;
 
     private Member member;
     private Member member2;
@@ -217,8 +222,10 @@ class MemberIntegrationTest {
                     .member(member)
                     .visit(visit)
                     .build();
-            visit.getParticipants().add(visitPart);
             visitPartRepository.save(visitPart);
+
+            // 1차 캐시에서 분리
+            entityManager.detach(visitPart);
         });
         return visit;
     }
@@ -230,7 +237,6 @@ class MemberIntegrationTest {
                 .reviewee(reviewee)
                 .reviewContent("매칭 후기입니다. 아주 즐거웠어요!")
                 .rating(Rating.GOOD)
-                .createdAt(LocalDateTime.now())
                 .build());
     }
 
@@ -280,7 +286,7 @@ class MemberIntegrationTest {
                     .andDo(print());
         }
     }
-    
+
     @Nested
     @DisplayName("내 프로필 조회")
     class GetMyProfile {
@@ -408,6 +414,35 @@ class MemberIntegrationTest {
                     .andExpect(jsonPath("$.status").value("ERROR"))
                     .andExpect(jsonPath("$.message").value("nickname: 닉네임은 필수 항목입니다."))
                     .andExpect(jsonPath("$.code").value(400));
+        }
+    }
+
+    @Nested
+    @DisplayName("회원 탈퇴")
+    class DeleteMember {
+
+        @Test
+        @DisplayName("회원 탈퇴 성공")
+        void delete_member_success() throws Exception {
+            mockMvc.perform(delete("/api/members/me")
+                            .param("memberId", member.getId().toString()))
+                    .andDo(print())
+                    .andExpect(status().isNoContent());
+        }
+
+        @Test
+        @DisplayName("회원 탈퇴 실패 - 존재하지 않는 회원")
+        void delete_member_fail_not_exists_member() throws Exception {
+            // given
+            Long memberId = member.getId() + 999L;
+
+            // when & then
+            mockMvc.perform(delete("/api/members/me")
+                            .param("memberId", memberId.toString()))
+                    .andDo(print())
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.status").value("ERROR"))
+                    .andExpect(jsonPath("$.message").value("해당 ID의 회원 정보를 찾을 수 없습니다"));
         }
     }
 }

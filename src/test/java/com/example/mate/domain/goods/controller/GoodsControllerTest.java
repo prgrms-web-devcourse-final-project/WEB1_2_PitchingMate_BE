@@ -9,14 +9,19 @@ import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.example.mate.common.response.PageResponse;
+import com.example.mate.domain.constant.Rating;
 import com.example.mate.domain.goods.dto.LocationInfo;
 import com.example.mate.domain.goods.dto.request.GoodsPostRequest;
+import com.example.mate.domain.goods.dto.request.GoodsReviewRequest;
 import com.example.mate.domain.goods.dto.response.GoodsPostResponse;
 import com.example.mate.domain.goods.dto.response.GoodsPostSummaryResponse;
+import com.example.mate.domain.goods.dto.response.GoodsReviewResponse;
 import com.example.mate.domain.goods.entity.Category;
 import com.example.mate.domain.goods.entity.Status;
 import com.example.mate.domain.goods.service.GoodsService;
@@ -28,6 +33,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -219,5 +226,106 @@ class GoodsControllerTest {
                 .andExpect(jsonPath("$.code").value(200));
 
         verify(goodsService).getMainGoodsPosts(teamId);
+    }
+
+    @Test
+    @DisplayName("메인페이지 굿즈 판매글 페이징 조회 - API 테스트")
+    void get_goods_posts_page_success() throws Exception {
+        // given
+        Long teamId = 1L;
+        String categoryVal = Category.CLOTHING.getValue();
+        PageRequest pageRequest = PageRequest.of(1, 10);
+
+        GoodsPostSummaryResponse responseDTO = createGoodsPostSummaryResponse();
+        List<GoodsPostSummaryResponse> responses = List.of(responseDTO);
+        PageImpl<GoodsPostSummaryResponse> pageGoodsPosts = new PageImpl<>(responses);
+
+        PageResponse<GoodsPostSummaryResponse> pageResponse = PageResponse.<GoodsPostSummaryResponse>builder()
+                .content(responses)
+                .totalPages(pageGoodsPosts.getTotalPages())
+                .totalElements(pageGoodsPosts.getTotalElements())
+                .hasNext(pageGoodsPosts.hasNext())
+                .pageNumber(pageGoodsPosts.getNumber())
+                .pageSize(pageGoodsPosts.getSize())
+                .build();
+
+        given(goodsService.getPageGoodsPosts(teamId, categoryVal, pageRequest)).willReturn(pageResponse);
+
+        // when & then
+        mockMvc.perform(get("/api/goods")
+                        .param("teamId", String.valueOf(teamId))
+                        .param("category", categoryVal)
+                        .param("page", String.valueOf(pageRequest.getPageNumber()))
+                        .param("size", String.valueOf(pageRequest.getPageSize())))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("SUCCESS"))
+                .andExpect(jsonPath("$.data.content.size()").value(responses.size()))
+                .andExpect(jsonPath("$.data.content[0].id").value(responseDTO.getId()))
+                .andExpect(jsonPath("$.data.content[0].price").value(responseDTO.getPrice()))
+                .andExpect(jsonPath("$.data.totalPages").value(pageResponse.getTotalPages()))
+                .andExpect(jsonPath("$.data.totalElements").value(pageResponse.getTotalElements()))
+                .andExpect(jsonPath("$.data.pageNumber").value(pageResponse.getPageNumber()))
+                .andExpect(jsonPath("$.data.pageSize").value(pageResponse.getPageSize()))
+                .andExpect(jsonPath("$.code").value(200));
+
+        verify(goodsService).getPageGoodsPosts(teamId, categoryVal, pageRequest);
+    }
+
+    @Test
+    @DisplayName("굿즈 판매글 거래 완료 - API 테스트")
+    void complete_goods_post_success() throws Exception {
+        // given
+        Long memberId = 1L;
+        Long goodsPostId = 1L;
+        Long buyerId = 2L;
+
+        willDoNothing().given(goodsService).completeTransaction(memberId, goodsPostId, buyerId);
+
+        // when & then
+        mockMvc.perform(post("/api/goods/{memberId}/post/{goodsPostId}/complete", memberId, goodsPostId)
+                        .param("buyerId", String.valueOf(buyerId)))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("SUCCESS"))
+                .andExpect(jsonPath("$.code").value(200));
+
+        verify(goodsService).completeTransaction(memberId, goodsPostId, buyerId);
+    }
+
+    @Test
+    @DisplayName("굿즈 거래 후기 등록 - API 테스트")
+    void register_goods_review_success() throws Exception {
+        // given
+        Long reviewerId = 1L;
+        Long goodsPostId = 1L;
+
+        GoodsReviewRequest request = new GoodsReviewRequest(Rating.GREAT, "Great seller!");
+        GoodsReviewResponse response = GoodsReviewResponse.builder()
+                .reviewId(1L)
+                .reviewerNickname("Reviewer")
+                .rating(Rating.GREAT)
+                .reviewContent("Great seller!")
+                .goodsPostId(goodsPostId)
+                .goodsPostTitle("Sample Goods")
+                .build();
+
+        given(goodsService.registerGoodsReview(eq(reviewerId), eq(goodsPostId), any(GoodsReviewRequest.class))).willReturn(response);
+
+        // when & then
+        mockMvc.perform(post("/api/goods/{reviewerId}/post/{goodsPostId}/review", reviewerId, goodsPostId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("SUCCESS"))
+                .andExpect(jsonPath("$.data.reviewId").value(response.getReviewId()))
+                .andExpect(jsonPath("$.data.reviewerNickname").value(response.getReviewerNickname()))
+                .andExpect(jsonPath("$.data.rating").value(response.getRating().getValue()))
+                .andExpect(jsonPath("$.data.reviewContent").value(response.getReviewContent()))
+                .andExpect(jsonPath("$.data.goodsPostTitle").value(response.getGoodsPostTitle()))
+                .andExpect(jsonPath("$.code").value(200));
+
+        verify(goodsService).registerGoodsReview(eq(reviewerId), eq(goodsPostId), any(GoodsReviewRequest.class));
     }
 }

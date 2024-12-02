@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 
 @Getter
 public enum ErrorCode {
+  
     // Common
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "C001", "Internal Server Error"),
     INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "C002", "Invalid Input Value"),
@@ -41,18 +42,36 @@ public enum ErrorCode {
     // Mate Post
     INVALID_MATE_POST_PARTICIPANTS(HttpStatus.BAD_REQUEST, "MP001", "모집 인원은 2명에서 10명 사이여야 합니다."),
     INVALID_MATE_POST_STATUS_CHANGE(HttpStatus.BAD_REQUEST, "MP002", "직관 완료된 게시글은 상태를 변경할 수 없습니다."),
-    INVALID_MATE_POST_COMPLETION(HttpStatus.BAD_REQUEST, "MP003", "모집완료 상태에서만 직관 완료가 가능합니다."),
+    NOT_CLOSED_STATUS_FOR_COMPLETION(HttpStatus.BAD_REQUEST, "MP003", "모집완료 상태에서만 직관 완료가 가능합니다."),
     MATE_POST_NOT_FOUND_BY_ID(HttpStatus.NOT_FOUND, "MP004", "해당 ID의 메이트 게시글을 찾을 수 없습니다."),
     UNAUTHORIZED_MATE_POST_ACCESS(HttpStatus.FORBIDDEN, "MP005", "해당 메이트 게시글에 대한 권한이 없습니다."),
     MATE_POST_UPDATE_NOT_ALLOWED(HttpStatus.FORBIDDEN, "MP006", "메이트 게시글의 작성자가 아니라면, 게시글을 수정할 수 없습니다"),
-    ALREADY_COMPLETED_POST(HttpStatus.FORBIDDEN, "MP008", "이미 직관완료한 게시글은 모집 상태를 변경할 수 없습니다."),
+    DIRECT_VISIT_COMPLETE_FORBIDDEN(HttpStatus.FORBIDDEN, "MP007", "모집완료 상태가 아니라면 직관 완료 상태로 게시글을 수정할 수 없습니다"),
+    MATE_POST_COMPLETE_TIME_NOT_ALLOWED(HttpStatus.FORBIDDEN, "MP008", "경기 시작 이후에만 직관 완료 처리가 가능합니다."),
+    ALREADY_COMPLETED_POST(HttpStatus.FORBIDDEN, "MP009", "이미 직관완료한 게시글은 모집 상태를 변경할 수 없습니다."),
+    MATE_POST_PARTICIPANTS_NOT_FOUND(HttpStatus.BAD_REQUEST, "MP010", "직관 참여자 목록이 비어있습니다."),
+    VISIT_COMPLETE_POST_DELETE_FORBIDDEN(HttpStatus.FORBIDDEN, "MP0011", "직관 완료된 게시글은 삭제할 수 없습니다"),
+    MATE_POST_MAX_PARTICIPANTS_EXCEEDED(HttpStatus.BAD_REQUEST, "MP0012", "참여자 수가 최대 모집 인원을 초과했습니다"),
+    INVALID_MATE_POST_PARTICIPANT_IDS(HttpStatus.BAD_REQUEST, "MP013", "존재하지 않는 회원이 참여자 목록에 포함되어 있습니다"),
 
     // Goods
     GOODS_IMAGES_ARE_EMPTY(HttpStatus.BAD_REQUEST, "G001", "굿즈 이미지는 최소 1개 이상을 업로드 할 수 있습니다."),
     GOODS_NOT_FOUND_BY_ID(HttpStatus.NOT_FOUND, "G002", "해당 ID의 굿즈 판매글 정보를 찾을 수 없습니다."),
-    GOODS_UPDATE_NOT_ALLOWED(HttpStatus.FORBIDDEN, "G003", "판매글의 판매자가 아니라면, 판매글을 수정할 수 없습니다."),
+    GOODS_MODIFICATION_NOT_ALLOWED(HttpStatus.FORBIDDEN, "G003", "판매글의 판매자가 아니라면, 판매글을 수정하거나 삭제할 수 없습니다."),
     GOODS_MAIN_IMAGE_IS_EMPTY(HttpStatus.NOT_FOUND, "G004", "굿즈 게시물의 대표사진을 찾을 수 없습니다."),
     GOODS_DELETE_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "G005", "거래완료 상태에서 판매글을 삭제할 수 없습니다."),
+    GOODS_ALREADY_COMPLETED(HttpStatus.BAD_REQUEST, "G006", "이미 거래완료 상태인 굿즈는 거래를 완료할 수 없습니다."),
+    SELLER_CANNOT_BE_BUYER(HttpStatus.BAD_REQUEST, "G007", "판매자와 구매자는 동일할 수 없습니다."),
+
+    // Goods Review
+    GOODS_REVIEW_STATUS_NOT_CLOSED(HttpStatus.BAD_REQUEST, "GR001", "굿즈거래 후기는 거래완료 상태에서만 작성할 수 있습니다."),
+    GOODS_REVIEW_NOT_ALLOWED_FOR_NON_BUYER(HttpStatus.FORBIDDEN, "GR002", "굿즈거래 후기는 구매자만 작성할 수 있습니다."),
+    GOODS_REVIEW_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "GR003", "굿즈거래 후기는 한 번만 작성할 수 있습니다."),
+
+    // Mate Review
+    NOT_PARTICIPANT_OR_AUTHOR(HttpStatus.FORBIDDEN, "R002", "리뷰어와 리뷰 대상자 모두 직관 참여자여야 합니다."),
+    SELF_REVIEW_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "R004", "자기 자신에 대한 리뷰는 작성할 수 없습니다."),
+    REVIEW_NOT_FOUND_BY_ID(HttpStatus.NOT_FOUND, "R005", "해당 ID의 리뷰를 찾을 수 없습니다."),
 
     // FILE
     FILE_IS_EMPTY(HttpStatus.BAD_REQUEST, "F001", "빈 파일을 업로드할 수 없습니다. 파일 내용을 확인해주세요."),
@@ -78,6 +97,7 @@ public enum ErrorCode {
     // Status
     INVALID_STATUS_TYPE_VALUE(HttpStatus.BAD_REQUEST, "STATUS001", "유효하지 않은 모집 상태 값입니다."),
 
+
     // Crawling
     CRAWLING_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "CR001", "크롤링 작업 중 오류가 발생했습니다"),
     CRAWLING_INTERRUPTED(HttpStatus.INTERNAL_SERVER_ERROR, "CR002", "크롤링 작업이 중단되었습니다"),
@@ -88,8 +108,8 @@ public enum ErrorCode {
     TEAM_NAME_PARSE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "CR007", "팀 이름 오류"),
     INVALID_SCORE_FORMAT(HttpStatus.INTERNAL_SERVER_ERROR, "CR008", "점수 형식이 잘못되었습니다");
 
-
-
+    // Rating
+    INVALID_RATING_VALUE(HttpStatus.BAD_REQUEST, "Rating001", "유효하지 않은 리뷰 평가 값입니다.");
 
     private final HttpStatus status;
     private final String code;
