@@ -1,13 +1,19 @@
 package com.example.mate.domain.mate.entity;
 
+import com.example.mate.common.BaseTimeEntity;
+import com.example.mate.common.error.CustomException;
+import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.constant.TeamInfo;
 import com.example.mate.domain.match.entity.Match;
+import com.example.mate.domain.mate.dto.request.MatePostUpdateRequest;
 import com.example.mate.domain.member.entity.Member;
-import com.example.mate.domain.constant.Gender;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.List;
+
+import static com.example.mate.common.error.ErrorCode.ALREADY_COMPLETED_POST;
+import static com.example.mate.common.error.ErrorCode.DIRECT_VISIT_COMPLETE_FORBIDDEN;
 
 @Entity
 @Table(name = "mate_post")
@@ -15,7 +21,7 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
-public class MatePost {
+public class MatePost extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
@@ -64,7 +70,7 @@ public class MatePost {
     @Column(name = "transport", nullable = false)
     private TransportType transport;
 
-    @OneToOne(mappedBy = "post", cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private Visit visit;
 
     // Team 정보 조회
@@ -72,56 +78,34 @@ public class MatePost {
         return TeamInfo.getById(this.teamId);
     }
 
-    // 게시글 전체 정보 수정
-    public void updatePost(
-            Long teamId,
-            Match match,
-            String imageUrl,
-            String title,
-            String content,
-            Integer maxParticipants,
-            Age age,
-            Gender gender,
-            TransportType transport
-    ) {
-        this.teamId = teamId;
+    // 메이트 게시글 수정
+    public void updatePost(MatePostUpdateRequest request, Match match, String imageUrl) {
+        this.teamId = request.getTeamId();
         this.match = match;
         this.imageUrl = imageUrl;
-        this.title = title;
-        this.content = content;
-        this.maxParticipants = maxParticipants;
-        this.age = age;
-        this.gender = gender;
-        this.transport = transport;
+        this.title = request.getTitle();
+        this.content = request.getContent();
+        this.maxParticipants = request.getMaxParticipants();
+        this.age = request.getAge();
+        this.gender = request.getGender();
+        this.transport = request.getTransportType();
     }
 
-    // 모집 상태 변경
-    public void changeStatus(Status status) {
-        if (status == Status.COMPLETE) {
-            throw new IllegalStateException("직관 완료는 completeVisit()을 통해서만 가능합니다.");
+    // 상태 변경 가능 여부 검증과 변경
+    public void changeStatus(Status newStatus) {
+        if (newStatus == Status.VISIT_COMPLETE) {
+            throw new CustomException(DIRECT_VISIT_COMPLETE_FORBIDDEN);
         }
 
-        // 이미 직관 완료된 게시글은 상태 변경 불가
-        if (this.status == Status.COMPLETE) {
-            throw new IllegalStateException("직관 완료된 게시글은 상태를 변경할 수 없습니다.");
+        if (this.status == Status.VISIT_COMPLETE) {
+            throw new CustomException(ALREADY_COMPLETED_POST);
         }
 
-        this.status = status;
+        this.status = newStatus;
     }
 
-    // 직관 완료 처리
-    public Visit completeVisit(List<Long> participantMemberIds) {
-        if (this.status != Status.CLOSED) {
-            throw new IllegalStateException("모집완료 상태에서만 직관 완료가 가능합니다.");
-        }
-
-        if (this.visit == null) {
-            this.visit = Visit.builder()
-                    .post(this)
-                    .build();
-        }
-
-        this.status = Status.COMPLETE;
-        return this.visit;
+    public void complete(List<Member> participants) {
+        this.status = Status.VISIT_COMPLETE;
+        this.visit = Visit.createForComplete(this, participants);
     }
 }

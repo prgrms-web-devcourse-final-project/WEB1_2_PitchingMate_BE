@@ -1,22 +1,30 @@
 package com.example.mate.domain.member.controller;
 
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
+import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.constant.Gender;
+import com.example.mate.domain.member.dto.response.MemberSummaryResponse;
 import com.example.mate.domain.member.entity.Follow;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.service.FollowService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -24,7 +32,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(FollowController.class)
@@ -40,6 +50,14 @@ class FollowControllerTest {
 
     @MockBean
     private FollowService followService;
+
+    private MemberSummaryResponse createMemberSummaryResponse() {
+        return MemberSummaryResponse.builder()
+                .nickname("tester1")
+                .memberId(1L)
+                .imageUrl("tester1.png")
+                .build();
+    }
 
     @Nested
     @DisplayName("회원 팔로우 테스트")
@@ -186,4 +204,115 @@ class FollowControllerTest {
         }
     }
 
+    @Nested
+    @DisplayName("팔로우 리스트 페이징")
+    class FollowingPage {
+
+        @Test
+        @DisplayName("팔로우 리스트 페이징 성공")
+        void get_followings_page_success() throws Exception {
+            // given
+            Long memberId = 2L;
+            PageResponse<MemberSummaryResponse> responses = PageResponse.<MemberSummaryResponse>builder()
+                    .content(List.of(createMemberSummaryResponse()))
+                    .totalPages(1)
+                    .totalElements(1L)
+                    .hasNext(false)
+                    .pageNumber(0)
+                    .pageSize(10)
+                    .build();
+
+            given(followService.getFollowingsPage(eq(memberId), any(Pageable.class))).willReturn(responses);
+
+            // when & then
+            mockMvc.perform(get("/api/profile/{memberId}/followings", memberId)
+                            .param("page", "1")
+                            .param("size", "10")
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value("SUCCESS"))
+                    .andExpect(jsonPath("$.data.content").isArray())
+                    .andExpect(jsonPath("$.data.content.length()").value(1))
+                    .andExpect(jsonPath("$.code").value(200));
+        }
+
+        @Test
+        @DisplayName("팔로우 리스트 페이징 실패 - 해당 회원이 없는 경우")
+        void get_followings_page_member_not_found() throws Exception {
+            // given
+            Long memberId = 999L;  // 존재하지 않는 회원 ID
+
+            given(followService.getFollowingsPage(eq(memberId), any(Pageable.class)))
+                    .willThrow(new CustomException(ErrorCode.MEMBER_NOT_FOUND_BY_ID));
+
+            // when & then
+            mockMvc.perform(get("/api/profile/{memberId}/followings", memberId)
+                            .param("page", "1")
+                            .param("size", "10")
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andDo(print())
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.status").value("ERROR"))
+                    .andExpect(jsonPath("$.code").value(404))
+                    .andExpect(jsonPath("$.message").value(
+                            ErrorCode.MEMBER_NOT_FOUND_BY_ID.getMessage()));
+        }
+    }
+
+    @Nested
+    @DisplayName("팔로워 리스트 페이징")
+    class FollowerPage {
+
+        @Test
+        @DisplayName("팔로워 리스트 페이징 성공")
+        void get_followers_page_success() throws Exception {
+            // given
+            Long memberId = 2L;
+            PageResponse<MemberSummaryResponse> responses = PageResponse.<MemberSummaryResponse>builder()
+                    .content(List.of(createMemberSummaryResponse()))
+                    .totalPages(1)
+                    .totalElements(1L)
+                    .hasNext(false)
+                    .pageNumber(0)
+                    .pageSize(10)
+                    .build();
+
+            given(followService.getFollowersPage(eq(memberId), any(Pageable.class))).willReturn(responses);
+
+            // when & then
+            mockMvc.perform(get("/api/profile/{memberId}/followers", memberId)
+                            .param("page", "1")
+                            .param("size", "10")
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value("SUCCESS"))
+                    .andExpect(jsonPath("$.data.content").isArray())
+                    .andExpect(jsonPath("$.data.content.length()").value(1))
+                    .andExpect(jsonPath("$.code").value(200));
+        }
+
+        @Test
+        @DisplayName("팔로워 리스트 페이징 실패 - 해당 회원이 없는 경우")
+        void get_followers_page_member_not_found() throws Exception {
+            // given
+            Long memberId = 999L;  // 존재하지 않는 회원 ID
+
+            given(followService.getFollowersPage(eq(memberId), any(Pageable.class)))
+                    .willThrow(new CustomException(ErrorCode.MEMBER_NOT_FOUND_BY_ID));
+
+            // when & then
+            mockMvc.perform(get("/api/profile/{memberId}/followers", memberId)
+                            .param("page", "1")
+                            .param("size", "10")
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andDo(print())
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.status").value("ERROR"))
+                    .andExpect(jsonPath("$.code").value(404))
+                    .andExpect(jsonPath("$.message").value(
+                            ErrorCode.MEMBER_NOT_FOUND_BY_ID.getMessage()));
+        }
+    }
 }

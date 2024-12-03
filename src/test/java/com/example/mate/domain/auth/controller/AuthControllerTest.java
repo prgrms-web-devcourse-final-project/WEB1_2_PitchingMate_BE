@@ -55,7 +55,6 @@ public class AuthControllerTest {
                 .isNewMember(true)
                 .naverProfileResponse(NaverProfileResponse.builder()
                         .name("홍길동")
-                        .nickname("tester")
                         .email("tester@naver.com")
                         .gender("M")
                         .birthyear("2000")

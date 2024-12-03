@@ -5,6 +5,7 @@ import com.example.mate.common.error.ErrorCode;
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.mate.dto.request.MatePostCreateRequest;
+import com.example.mate.domain.mate.dto.request.MatePostUpdateRequest;
 import com.example.mate.domain.mate.dto.response.MatePostDetailResponse;
 import com.example.mate.domain.mate.dto.response.MatePostResponse;
 import com.example.mate.domain.mate.dto.response.MatePostSummaryResponse;
@@ -21,18 +22,20 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static com.example.mate.common.error.ErrorCode.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -57,7 +60,7 @@ class MateControllerTest {
                 .title("테스트 제목")
                 .status(Status.OPEN)
                 .rivalTeamName("두산")
-                .rivalMatchTime(LocalDateTime.now().plusDays(1))
+                .matchTime(LocalDateTime.now().plusDays(1))
                 .location("잠실야구장")
                 .maxParticipants(4)
                 .age(Age.TWENTIES)
@@ -123,7 +126,7 @@ class MateControllerTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.status").value("SUCCESS"))
                     .andExpect(jsonPath("$.data.id").value(1L))
-                    .andExpect(jsonPath("$.data.status").value("OPEN"))
+                    .andExpect(jsonPath("$.data.status").value("모집중"))
                     .andExpect(jsonPath("$.code").value(200));
         }
 
@@ -151,7 +154,7 @@ class MateControllerTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.status").value("SUCCESS"))
                     .andExpect(jsonPath("$.data.id").value(1L))
-                    .andExpect(jsonPath("$.data.status").value("OPEN"))
+                    .andExpect(jsonPath("$.data.status").value("모집중"))
                     .andExpect(jsonPath("$.code").value(200));
         }
     }
@@ -390,7 +393,7 @@ class MateControllerTest {
                     .andExpect(jsonPath("$.status").value("SUCCESS"))
                     .andExpect(jsonPath("$.data.postId").value(postId))
                     .andExpect(jsonPath("$.data.title").value(response.getTitle()))
-                    .andExpect(jsonPath("$.data.status").value(response.getStatus().toString()))
+                    .andExpect(jsonPath("$.data.status").value(response.getStatus().getValue()))
                     .andExpect(jsonPath("$.data.rivalTeamName").value(response.getRivalTeamName()))
                     .andExpect(jsonPath("$.data.location").value(response.getLocation()))
                     .andExpect(jsonPath("$.data.age").value(response.getAge().getValue()))
@@ -408,7 +411,7 @@ class MateControllerTest {
             // given
             Long nonExistentPostId = 999L;
             given(mateService.getMatePostDetail(nonExistentPostId))
-                    .willThrow(new CustomException(ErrorCode.MATE_POST_NOT_FOUND));
+                    .willThrow(new CustomException(MATE_POST_NOT_FOUND_BY_ID));
 
             // when & then
             mockMvc.perform(get("/api/mates/{postId}", nonExistentPostId)
@@ -418,6 +421,286 @@ class MateControllerTest {
                     .andExpect(jsonPath("$.status").value("ERROR"))
                     .andExpect(jsonPath("$.message").exists())
                     .andExpect(jsonPath("$.code").value(404));
+        }
+    }
+
+    @Nested
+    @DisplayName("메이트 게시글 수정")
+    class UpdateMatePost {
+
+        private MatePostUpdateRequest createMatePostUpdateRequest() {
+            return MatePostUpdateRequest.builder()
+                    .teamId(1L)
+                    .matchId(1L)
+                    .title("수정된 제목")
+                    .content("수정된 내용")
+                    .age(Age.TWENTIES)
+                    .maxParticipants(4)
+                    .gender(Gender.FEMALE)
+                    .transportType(TransportType.PUBLIC)
+                    .build();
+        }
+
+        private MatePostResponse createMatePostResponse() {
+            return MatePostResponse.builder()
+                    .id(1L)
+                    .status(Status.OPEN)
+                    .build();
+        }
+
+        @Test
+        @DisplayName("메이트 게시글 수정 성공")
+        void updateMatePost_Success() throws Exception {
+            // given
+            Long memberId = 1L;
+            Long postId = 1L;
+            MatePostUpdateRequest request = createMatePostUpdateRequest();
+            MatePostResponse response = createMatePostResponse();
+
+            MockMultipartFile data = new MockMultipartFile(
+                    "data",
+                    "",
+                    MediaType.APPLICATION_JSON_VALUE,
+                    objectMapper.writeValueAsBytes(request)
+            );
+
+            MockMultipartFile file = new MockMultipartFile(
+                    "file",
+                    "test.jpg",
+                    MediaType.IMAGE_JPEG_VALUE,
+                    "test image content".getBytes()
+            );
+
+            given(mateService.updateMatePost(eq(memberId), eq(postId), any(MatePostUpdateRequest.class), any()))
+                    .willReturn(response);
+
+            // when & then
+            mockMvc.perform(MockMvcRequestBuilders
+                            .multipart(HttpMethod.PATCH, "/api/mates/{memberId}/{postId}", memberId, postId)
+                            .file(file)
+                            .file(data))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value("SUCCESS"))
+                    .andExpect(jsonPath("$.data.id").value(1L))
+                    .andExpect(jsonPath("$.data.status").value("모집중"))
+                    .andExpect(jsonPath("$.code").value(200));
+
+            verify(mateService).updateMatePost(eq(memberId), eq(postId), any(MatePostUpdateRequest.class), any());
+        }
+
+        @Test
+        @DisplayName("메이트 게시글 수정 성공 - 이미지 없음")
+        void updateMatePost_SuccessWithoutImage() throws Exception {
+            // given
+            Long memberId = 1L;
+            Long postId = 1L;
+            MatePostUpdateRequest request = createMatePostUpdateRequest();
+            MatePostResponse response = createMatePostResponse();
+
+            MockMultipartFile data = new MockMultipartFile(
+                    "data",
+                    "",
+                    MediaType.APPLICATION_JSON_VALUE,
+                    objectMapper.writeValueAsBytes(request)
+            );
+
+            given(mateService.updateMatePost(eq(memberId), eq(postId), any(MatePostUpdateRequest.class), isNull()))
+                    .willReturn(response);
+
+            // when & then
+            mockMvc.perform(MockMvcRequestBuilders
+                            .multipart(HttpMethod.PATCH, "/api/mates/{memberId}/{postId}", memberId, postId)
+                            .file(data))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value("SUCCESS"))
+                    .andExpect(jsonPath("$.data.id").value(1L))
+                    .andExpect(jsonPath("$.data.status").value("모집중"))
+                    .andExpect(jsonPath("$.code").value(200));
+
+            verify(mateService).updateMatePost(eq(memberId), eq(postId), any(MatePostUpdateRequest.class), isNull());
+        }
+
+        @Test
+        @DisplayName("메이트 게시글 수정 실패 - 유효하지 않은 요청 데이터")
+        void updateMatePost_FailWithInvalidRequest() throws Exception {
+            // given
+            Long memberId = 1L;
+            Long postId = 1L;
+            MatePostUpdateRequest request = MatePostUpdateRequest.builder()
+                    .teamId(null)  // 필수 값 누락
+                    .matchId(1L)
+                    .title("")     // 빈 문자열
+                    .content("수정된 내용")
+                    .age(Age.TWENTIES)
+                    .maxParticipants(1)  // 최소값 위반
+                    .gender(Gender.FEMALE)
+                    .transportType(TransportType.PUBLIC)
+                    .build();
+
+            MockMultipartFile data = new MockMultipartFile(
+                    "data",
+                    "",
+                    MediaType.APPLICATION_JSON_VALUE,
+                    objectMapper.writeValueAsBytes(request)
+            );
+
+            // when & then
+            mockMvc.perform(MockMvcRequestBuilders
+                            .multipart(HttpMethod.PATCH, "/api/mates/{memberId}/{postId}", memberId, postId)
+                            .file(data))
+                    .andDo(print())
+                    .andExpect(status().isBadRequest());
+
+            verify(mateService, never()).updateMatePost(any(), any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("메이트 게시글 수정 실패 - 존재하지 않는 게시글")
+        void updateMatePost_FailWithPostNotFound() throws Exception {
+            // given
+            Long memberId = 1L;
+            Long postId = 999L;
+            MatePostUpdateRequest request = createMatePostUpdateRequest();
+
+            MockMultipartFile data = new MockMultipartFile(
+                    "data",
+                    "",
+                    MediaType.APPLICATION_JSON_VALUE,
+                    objectMapper.writeValueAsBytes(request)
+            );
+
+            given(mateService.updateMatePost(any(), any(), any(), any()))
+                    .willThrow(new CustomException(MATE_POST_NOT_FOUND_BY_ID));
+
+            // when & then
+            mockMvc.perform(MockMvcRequestBuilders
+                            .multipart(HttpMethod.PATCH, "/api/mates/{memberId}/{postId}", memberId, postId)
+                            .file(data))
+                    .andDo(print())
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.status").value("ERROR"))
+                    .andExpect(jsonPath("$.message").value("해당 ID의 메이트 게시글을 찾을 수 없습니다."));
+        }
+
+        @Test
+        @DisplayName("메이트 게시글 수정 실패 - 권한 없음")
+        void updateMatePost_FailWithUnauthorized() throws Exception {
+            // given
+            Long memberId = 999L;
+            Long postId = 1L;
+            MatePostUpdateRequest request = createMatePostUpdateRequest();
+
+            MockMultipartFile data = new MockMultipartFile(
+                    "data",
+                    "",
+                    MediaType.APPLICATION_JSON_VALUE,
+                    objectMapper.writeValueAsBytes(request)
+            );
+
+            given(mateService.updateMatePost(any(), any(), any(), any()))
+                    .willThrow(new CustomException(MATE_POST_UPDATE_NOT_ALLOWED));
+
+            // when & then
+            mockMvc.perform(MockMvcRequestBuilders
+                            .multipart(HttpMethod.PATCH, "/api/mates/{memberId}/{postId}", memberId, postId)
+                            .file(data))
+                    .andDo(print())
+                    .andExpect(status().isForbidden())
+                    .andExpect(jsonPath("$.status").value("ERROR"))
+                    .andExpect(jsonPath("$.message").value("메이트 게시글의 작성자가 아니라면, 게시글을 수정할 수 없습니다"));
+        }
+
+        @Test
+        @DisplayName("메이트 게시글 수정 실패 - 이미 완료된 게시글")
+        void updateMatePost_FailWithCompletedPost() throws Exception {
+            // given
+            Long memberId = 1L;
+            Long postId = 1L;
+            MatePostUpdateRequest request = createMatePostUpdateRequest();
+
+            MockMultipartFile data = new MockMultipartFile(
+                    "data",
+                    "",
+                    MediaType.APPLICATION_JSON_VALUE,
+                    objectMapper.writeValueAsBytes(request)
+            );
+
+            given(mateService.updateMatePost(any(), any(), any(), any()))
+                    .willThrow(new CustomException(ALREADY_COMPLETED_POST));
+
+            // when & then
+            mockMvc.perform(MockMvcRequestBuilders
+                            .multipart(HttpMethod.PATCH, "/api/mates/{memberId}/{postId}", memberId, postId)
+                            .file(data))
+                    .andDo(print())
+                    .andExpect(status().isForbidden())
+                    .andExpect(jsonPath("$.status").value("ERROR"))
+                    .andExpect(jsonPath("$.message").value(ALREADY_COMPLETED_POST.getMessage()));
+        }
+    }
+
+    @Nested
+    @DisplayName("메이트 게시글 삭제")
+    class DeleteMatePost {
+
+        @Test
+        @DisplayName("메이트 게시글 삭제 성공")
+        void deleteMatePost_success() throws Exception {
+            // given
+            Long memberId = 1L;
+            Long postId = 1L;
+
+            // when & then
+            mockMvc.perform(delete("/api/mates/{memberId}/{postId}", memberId, postId)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andDo(print())
+                    .andExpect(status().isNoContent());
+
+            verify(mateService).deleteMatePost(memberId, postId);
+        }
+
+        @Test
+        @DisplayName("메이트 게시글 삭제 실패 - 존재하지 않는 게시글")
+        void deleteMatePost_failPostNotFound() throws Exception {
+            // given
+            Long memberId = 1L;
+            Long nonExistentPostId = 999L;
+
+            doThrow(new CustomException(MATE_POST_NOT_FOUND_BY_ID))
+                    .when(mateService)
+                    .deleteMatePost(memberId, nonExistentPostId);
+
+            // when & then
+            mockMvc.perform(delete("/api/mates/{memberId}/{postId}", memberId, nonExistentPostId)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andDo(print())
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.status").value("ERROR"))
+                    .andExpect(jsonPath("$.message").exists())
+                    .andExpect(jsonPath("$.code").value(404));
+        }
+
+        @Test
+        @DisplayName("메이트 게시글 삭제 실패 - 삭제 권한 없음")
+        void deleteMatePost_failNotAllowed() throws Exception {
+            // given
+            Long memberId = 2L;  // 작성자가 아닌 다른 사용자
+            Long postId = 1L;
+
+            doThrow(new CustomException(MATE_POST_UPDATE_NOT_ALLOWED))
+                    .when(mateService)
+                    .deleteMatePost(memberId, postId);
+
+            // when & then
+            mockMvc.perform(delete("/api/mates/{memberId}/{postId}", memberId, postId)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andDo(print())
+                    .andExpect(status().isForbidden())
+                    .andExpect(jsonPath("$.status").value("ERROR"))
+                    .andExpect(jsonPath("$.message").exists())
+                    .andExpect(jsonPath("$.code").value(403));
         }
     }
 }

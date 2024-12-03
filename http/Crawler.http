@@ -1,0 +1,40 @@
+
+
+### 현재 월 전체 경기 일정 수동 크롤링
+POST http://localhost:8000/api/admin/crawling/matches
+Content-Type: application/json
+
+### 특정 연도/월 전체 경기 일정 수동 크롤링
+POST http://localhost:8000/api/admin/crawling/matches/2024/4
+Content-Type: application/json
+
+### 크롤링 상태 조회
+GET http://localhost:8000/api/admin/crawling/status
+Content-Type: application/json
+
+### 특정 날짜 경기 일정 크롤링 - 정규시즌
+POST http://localhost:8000/api/admin/crawling/matches/REGULAR/2024/7
+Content-Type: application/json
+
+### 특정 날짜 경기 일정 크롤링 - 포스트시즌
+POST http://localhost:8000/api/admin/crawling/matches/POST/2024/10
+Content-Type: application/json
+
+### 특정 날짜 경기 일정 크롤링 - 시범경기
+POST http://localhost:8000/api/admin/crawling/matches/EXHIBITION/2024/3
+Content-Type: application/json
+
+##====================================##
+### 현재 월 전체 경기 일정 수동 크롤링 (테스트)
+POST http://localhost:8000/api/admin/crawling/matches/custom
+Content-Type: application/json
+
+###=================================##
+
+### 팀 순위 크롤링
+POST http://localhost:8000/api/admin/crawling/rankings
+Content-Type: application/json
+
+### 팀 순위 조회
+GET http://localhost:8000/api/admin/crawling/rankings
+Content-Type: application/json

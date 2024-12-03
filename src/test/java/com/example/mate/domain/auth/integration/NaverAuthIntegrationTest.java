@@ -52,11 +52,11 @@ public class NaverAuthIntegrationTest {
                 .andExpect(method(HttpMethod.POST))
                 .andRespond(withSuccess(
                         "{ \"response\": { " +
-                                "\"name\": \"정원주\", " +
-                                "\"nickname\": \"뿔버섯\", " +
-                                "\"email\": \"jwxxjx@naver.com\", " +
+                                "\"name\": \"홍길동\", " +
+                                "\"nickname\": \"오리\", " +
+                                "\"email\": \"tester222\", " +
                                 "\"gender\": \"M\", " +
-                                "\"birthyear\": \"1993\" " +
+                                "\"birthyear\": \"2000\" " +
                                 "} }",
                         MediaType.APPLICATION_JSON));
     }
@@ -93,10 +93,9 @@ public class NaverAuthIntegrationTest {
                 .andExpect(jsonPath("$.accessToken", is("accessToken")))
                 .andExpect(jsonPath("$.refreshToken", is("refreshToken")))
                 .andExpect(jsonPath("$.isNewMember", is(true))) // 신규 회원 여부 확인
-                .andExpect(jsonPath("$.naverProfileResponse.name", is("정원주"))) // 사용자 이름 확인
-                .andExpect(jsonPath("$.naverProfileResponse.nickname", is("뿔버섯"))) // 닉네임 확인
-                .andExpect(jsonPath("$.naverProfileResponse.email", is("jwxxjx@naver.com"))) // 이메일 확인
+                .andExpect(jsonPath("$.naverProfileResponse.name", is("홍길동"))) // 사용자 이름 확인
+                .andExpect(jsonPath("$.naverProfileResponse.email", is("tester222"))) // 이메일 확인
                 .andExpect(jsonPath("$.naverProfileResponse.gender", is("M"))) // 성별 확인
-                .andExpect(jsonPath("$.naverProfileResponse.birthyear", is("1993"))); // 생년 확인
+                .andExpect(jsonPath("$.naverProfileResponse.birthyear", is("2000"))); // 생년 확인
     }
 }

@@ -16,6 +16,20 @@ POST http://localhost:8080/api/profile/follow/1?followerId=3
 DELETE http://localhost:8080/api/profile/follow/1?unfollowerId=3
 
 
+### 자체 회원가입
+POST http://localhost:8080/api/members/join
+Content-Type: application/json
+
+{
+  "name": "홍길동",
+  "email": "new@example.com",
+  "gender": "M",
+  "birthyear": "2000",
+  "teamId": 1,
+  "nickname": "newTester"
+}
+
+
 ### CATCH Mi 회원 로그인
 POST http://localhost:8080/api/members/login
 Content-Type: application/json

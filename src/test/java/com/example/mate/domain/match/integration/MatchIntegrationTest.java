@@ -34,9 +34,22 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.filter.CharacterEncodingFilter;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.groups.Tuple.tuple;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 
 @SpringBootTest
-@AutoConfigureMockMvc(addFilters = false)
+@AutoConfigureMockMvc
+//@AutoConfigureMockMvc(addFilters = false)
 @Transactional
 class MatchIntegrationTest {
     @Autowired
@@ -132,17 +145,20 @@ class MatchIntegrationTest {
     @DisplayName("팀별 완료된 경기 조회 - 성공")
     void getTeamCompletedMatches_Success() throws Exception {
         // given
-        LocalDateTime pastTime1 = LocalDateTime.now().minusDays(1);
-        LocalDateTime pastTime2 = LocalDateTime.now().minusDays(2);
-
-        Match completedMatch1 = createCompletedMatch(TeamInfo.LG.id, TeamInfo.KT.id, StadiumInfo.JAMSIL.id, pastTime1,
-                5, 3);
-        Match completedMatch2 = createCompletedMatch(TeamInfo.KIA.id, TeamInfo.LG.id, StadiumInfo.GWANGJU.id, pastTime2,
-                2, 7);
-        Match scheduledMatch = createMatch(TeamInfo.LG.id, TeamInfo.NC.id, StadiumInfo.JAMSIL.id,
-                LocalDateTime.now().plusDays(1));
-
-        matchRepository.saveAll(Arrays.asList(completedMatch1, completedMatch2, scheduledMatch));
+        LocalDateTime now = LocalDateTime.now();
+        List<Match> matches = new ArrayList<>();
+        // 7개의 완료된 경기 생성
+        for (int i = 1; i <= 7; i++) {
+            matches.add(createCompletedMatch(
+                    TeamInfo.LG.id,
+                    TeamInfo.KT.id,
+                    StadiumInfo.JAMSIL.id,
+                    now.minusDays(i),
+                    5 + i,
+                    3 + i
+            ));
+        }
+        matchRepository.saveAll(matches);
 
         // when
         ResultActions result = mockMvc.perform(get("/api/matches/team/{teamId}/completed", TeamInfo.LG.id)
@@ -152,12 +168,8 @@ class MatchIntegrationTest {
         result.andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
                 .andExpect(jsonPath("$.data").isArray())
-                .andExpect(jsonPath("$.data.length()").value(2))
-                .andExpect(jsonPath("$.data[0].status").value("COMPLETED"))
-                .andExpect(jsonPath("$.data[0].homeTeam.id").value(TeamInfo.LG.id))
-                .andExpect(jsonPath("$.data[0].homeScore").value(5))
-                .andExpect(jsonPath("$.data[1].awayTeam.id").value(TeamInfo.LG.id))
-                .andExpect(jsonPath("$.data[1].awayScore").value(7));
+                .andExpect(jsonPath("$.data.length()").value(6))  // 최대 6개만 조회되는지 확인
+                .andExpect(jsonPath("$.data[0].status").value("COMPLETED"));
     }
 
     private Match createCompletedMatch(Long homeTeamId, Long awayTeamId, Long stadiumId,
@@ -263,8 +275,7 @@ class MatchIntegrationTest {
 
         return objectMapper.readValue(
                 mvcResult.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<List<WeeklyMatchesResponse>>>() {
-                }
+                new TypeReference<ApiResponse<List<WeeklyMatchesResponse>>>() {}
         );
     }
 

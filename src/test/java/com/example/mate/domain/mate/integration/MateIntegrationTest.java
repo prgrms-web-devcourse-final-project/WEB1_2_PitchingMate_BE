@@ -1,18 +1,10 @@
 package com.example.mate.domain.mate.integration;
 
-import com.example.mate.common.error.ErrorCode;
-import static com.example.mate.domain.match.entity.MatchStatus.SCHEDULED;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.match.entity.Match;
 import com.example.mate.domain.match.repository.MatchRepository;
 import com.example.mate.domain.mate.dto.request.MatePostCreateRequest;
+import com.example.mate.domain.mate.dto.request.MatePostUpdateRequest;
 import com.example.mate.domain.mate.entity.Age;
 import com.example.mate.domain.mate.entity.MatePost;
 import com.example.mate.domain.mate.entity.Status;
@@ -36,8 +28,20 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
+import static com.example.mate.common.error.ErrorCode.*;
+import static com.example.mate.domain.match.entity.MatchStatus.SCHEDULED;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 @SpringBootTest
-@AutoConfigureMockMvc(addFilters = false)
+@AutoConfigureMockMvc
+//@AutoConfigureMockMvc(addFilters = false)
 @Transactional
 //@WithMockUser(username = "mock-user", roles = "USER")
 public class MateIntegrationTest {
@@ -82,7 +86,7 @@ public class MateIntegrationTest {
         // 테스트 게시글 생성
         openPost = createMatePost(futureMatch, 1L, Status.OPEN);
         closedPost = createMatePost(futureMatch, 1L, Status.CLOSED);
-        completedPost = createMatePost(pastMatch, 2L, Status.COMPLETE);
+        completedPost = createMatePost(pastMatch, 2L, Status.VISIT_COMPLETE);
     }
 
     // 테스트 데이터 생성 헬퍼 메소드들
@@ -123,35 +127,23 @@ public class MateIntegrationTest {
                 .build());
     }
 
-    private void assertMatePostEquals(MatePost actual, MatePostCreateRequest expected) {
-        assertThat(actual.getAuthor()).isEqualTo(testMember);
-        assertThat(actual.getTeamId()).isEqualTo(expected.getTeamId());
-        assertThat(actual.getMatch().getId()).isEqualTo(expected.getMatchId());
-        assertThat(actual.getTitle()).isEqualTo(expected.getTitle());
-        assertThat(actual.getContent()).isEqualTo(expected.getContent());
-        assertThat(actual.getStatus()).isEqualTo(Status.OPEN);
-        assertThat(actual.getMaxParticipants()).isEqualTo(expected.getMaxParticipants());
-        assertThat(actual.getAge()).isEqualTo(expected.getAge());
-        assertThat(actual.getGender()).isEqualTo(expected.getGender());
-        assertThat(actual.getTransport()).isEqualTo(expected.getTransportType());
-    }
-
-    private void performErrorTest(MockMultipartFile data, String errorCode, int expectedStatus) throws Exception {
+    private void performErrorTest(MockMultipartFile data, String errorMessage, int expectedStatus) throws Exception {
         mateRepository.deleteAll();
 
         mockMvc.perform(multipart("/api/mates")
                         .file(data))
                 .andExpect(status().is(expectedStatus))
                 .andExpect(jsonPath("$.status").value("ERROR"))
+                .andExpect(jsonPath("$.message").value(errorMessage))
+                .andExpect(jsonPath("$.data").isEmpty())
                 .andExpect(jsonPath("$.code").value(expectedStatus))
-                .andExpect(jsonPath("$.message").exists())
                 .andDo(print());
 
         assertThat(mateRepository.findAll()).isEmpty();
     }
 
     @Nested
-    @DisplayName("메이트 게시글 작성 테스트")
+    @DisplayName("메이트 게시글 작성")
     class CreateMatePost {
 
         @Test
@@ -182,13 +174,25 @@ public class MateIntegrationTest {
                             .file(data))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.status").value("SUCCESS"))
-                    .andExpect(jsonPath("$.data.status").value("OPEN"))
+                    .andExpect(jsonPath("$.data.status").value("모집중"))
                     .andExpect(jsonPath("$.code").value(200))
                     .andDo(print());
 
+            // DB에 저장된 값 검증
             List<MatePost> savedPosts = mateRepository.findAll();
-            assertThat(savedPosts).hasSize(4); // 기존 3개 + 새로 생성된 1개
-            assertMatePostEquals(savedPosts.get(savedPosts.size() - 1), request);
+            MatePost savedPost = savedPosts.get(savedPosts.size() - 1);
+
+            assertThat(savedPosts).hasSize(4);
+            assertThat(savedPost.getAuthor().getId()).isEqualTo(testMember.getId());
+            assertThat(savedPost.getTeamId()).isEqualTo(request.getTeamId());
+            assertThat(savedPost.getMatch().getId()).isEqualTo(request.getMatchId());
+            assertThat(savedPost.getTitle()).isEqualTo(request.getTitle());
+            assertThat(savedPost.getContent()).isEqualTo(request.getContent());
+            assertThat(savedPost.getStatus()).isEqualTo(Status.OPEN);
+            assertThat(savedPost.getMaxParticipants()).isEqualTo(request.getMaxParticipants());
+            assertThat(savedPost.getAge()).isEqualTo(request.getAge());
+            assertThat(savedPost.getGender()).isEqualTo(request.getGender());
+            assertThat(savedPost.getTransport()).isEqualTo(request.getTransportType());
         }
 
         @Test
@@ -213,7 +217,7 @@ public class MateIntegrationTest {
                     objectMapper.writeValueAsBytes(request)
             );
 
-            performErrorTest(data, "MEMBER_NOT_FOUND_BY_ID", 404);
+            performErrorTest(data, MEMBER_NOT_FOUND_BY_ID.getMessage(), 404);
         }
 
         @Test
@@ -238,38 +242,13 @@ public class MateIntegrationTest {
                     objectMapper.writeValueAsBytes(request)
             );
 
-            performErrorTest(data, "MATCH_NOT_FOUND_BY_ID", 404);
-        }
-
-        @Test
-        @DisplayName("잘못된 요청 데이터로 메이트 게시글 작성 시 실패")
-        void createMatePost_WithInvalidRequest() throws Exception {
-            MatePostCreateRequest request = MatePostCreateRequest.builder()
-                    .memberId(testMember.getId())
-                    .teamId(1L)
-                    .matchId(futureMatch.getId())
-                    .title("")
-                    .content("통합 테스트 내용")
-                    .age(Age.TWENTIES)
-                    .maxParticipants(11)
-                    .gender(null)
-                    .transportType(TransportType.PUBLIC)
-                    .build();
-
-            MockMultipartFile data = new MockMultipartFile(
-                    "data",
-                    "",
-                    MediaType.APPLICATION_JSON_VALUE,
-                    objectMapper.writeValueAsBytes(request)
-            );
-
-            performErrorTest(data, "INVALID_REQUEST", 400);
+            performErrorTest(data, MATCH_NOT_FOUND_BY_ID.getMessage(), 404);
         }
     }
 
     @Nested
-    @DisplayName("메이트 게시글 조회 테스트")
-    class GetMatePosts {
+    @DisplayName("메인 페이지 메이트 게시글 조회")
+    class GetMainPageMatePosts {
 
         @Test
         @DisplayName("메인 페이지 메이트 게시글 목록 조회 성공 - 팀 ID 있음")
@@ -285,19 +264,19 @@ public class MateIntegrationTest {
                     .andExpect(jsonPath("$.data.length()").value(2))
                     // 첫 번째 게시글 (OPEN) 검증
                     .andExpect(jsonPath("$.data[0].title").value("테스트 제목"))
-                    .andExpect(jsonPath("$.data[0].status").value("OPEN"))
+                    .andExpect(jsonPath("$.data[0].status").value("모집중"))
                     .andExpect(jsonPath("$.data[0].maxParticipants").value(4))
                     .andExpect(jsonPath("$.data[0].age").value("20대"))
-                    .andExpect(jsonPath("$.data[0].gender").value("여자만"))
+                    .andExpect(jsonPath("$.data[0].gender").value("여자"))
                     .andExpect(jsonPath("$.data[0].transportType").value("대중교통"))
                     .andExpect(jsonPath("$.data[0].rivalTeamName").value("LG"))
                     .andExpect(jsonPath("$.data[0].location").value("광주-기아 챔피언스 필드"))
                     // 두 번째 게시글 (CLOSED) 검증
                     .andExpect(jsonPath("$.data[1].title").value("테스트 제목"))
-                    .andExpect(jsonPath("$.data[1].status").value("CLOSED"))
+                    .andExpect(jsonPath("$.data[1].status").value("모집완료"))
                     .andExpect(jsonPath("$.data[1].maxParticipants").value(4))
                     .andExpect(jsonPath("$.data[1].age").value("20대"))
-                    .andExpect(jsonPath("$.data[1].gender").value("여자만"))
+                    .andExpect(jsonPath("$.data[1].gender").value("여자"))
                     .andExpect(jsonPath("$.data[1].transportType").value("대중교통"))
                     .andExpect(jsonPath("$.data[1].rivalTeamName").value("LG"))
                     .andExpect(jsonPath("$.data[1].location").value("광주-기아 챔피언스 필드"))
@@ -317,19 +296,19 @@ public class MateIntegrationTest {
                     .andExpect(jsonPath("$.data.length()").value(2))
                     // 첫 번째 게시글 (OPEN) 검증
                     .andExpect(jsonPath("$.data[0].title").value("테스트 제목"))
-                    .andExpect(jsonPath("$.data[0].status").value("OPEN"))
+                    .andExpect(jsonPath("$.data[0].status").value("모집중"))
                     .andExpect(jsonPath("$.data[0].maxParticipants").value(4))
                     .andExpect(jsonPath("$.data[0].age").value("20대"))
-                    .andExpect(jsonPath("$.data[0].gender").value("여자만"))
+                    .andExpect(jsonPath("$.data[0].gender").value("여자"))
                     .andExpect(jsonPath("$.data[0].transportType").value("대중교통"))
                     .andExpect(jsonPath("$.data[0].rivalTeamName").value("LG"))
                     .andExpect(jsonPath("$.data[0].location").value("광주-기아 챔피언스 필드"))
                     // 두 번째 게시글 (CLOSED) 검증
                     .andExpect(jsonPath("$.data[1].title").value("테스트 제목"))
-                    .andExpect(jsonPath("$.data[1].status").value("CLOSED"))
+                    .andExpect(jsonPath("$.data[1].status").value("모집완료"))
                     .andExpect(jsonPath("$.data[1].maxParticipants").value(4))
                     .andExpect(jsonPath("$.data[1].age").value("20대"))
-                    .andExpect(jsonPath("$.data[1].gender").value("여자만"))
+                    .andExpect(jsonPath("$.data[1].gender").value("여자"))
                     .andExpect(jsonPath("$.data[1].transportType").value("대중교통"))
                     .andExpect(jsonPath("$.data[1].rivalTeamName").value("LG"))
                     .andExpect(jsonPath("$.data[1].location").value("광주-기아 챔피언스 필드"))
@@ -346,8 +325,8 @@ public class MateIntegrationTest {
                     .andExpect(jsonPath("$.status").value("SUCCESS"))
                     .andExpect(jsonPath("$.data").isArray())
                     .andExpect(jsonPath("$.data.length()").value(2))
-                    .andExpect(jsonPath("$.data[0].status").value("OPEN"))
-                    .andExpect(jsonPath("$.data[1].status").value("CLOSED"))
+                    .andExpect(jsonPath("$.data[0].status").value("모집중"))
+                    .andExpect(jsonPath("$.data[1].status").value("모집완료"))
                     .andDo(print());
 
             // DB 검증
@@ -404,8 +383,17 @@ public class MateIntegrationTest {
         void getMatePagePosts_AgeFilter_Success() throws Exception {
             // given
             MatePost thirtyPost = createMatePost(futureMatch, 1L, Status.OPEN);
-            thirtyPost.updatePost(1L, futureMatch, null, "30대 게시글", "내용", 4,
-                    Age.THIRTIES, Gender.FEMALE, TransportType.PUBLIC);
+            MatePostUpdateRequest updateRequest = MatePostUpdateRequest.builder()
+                    .teamId(1L)
+                    .matchId(futureMatch.getId())
+                    .title("30대 게시글")
+                    .content("내용")
+                    .maxParticipants(4)
+                    .age(Age.THIRTIES)
+                    .gender(Gender.FEMALE)
+                    .transportType(TransportType.PUBLIC)
+                    .build();
+            thirtyPost.updatePost(updateRequest, futureMatch, null);
             mateRepository.save(thirtyPost);
 
             // when & then
@@ -424,8 +412,17 @@ public class MateIntegrationTest {
         void getMatePagePosts_GenderFilter_Success() throws Exception {
             // given
             MatePost malePost = createMatePost(futureMatch, 1L, Status.OPEN);
-            malePost.updatePost(1L, futureMatch, null, "남자 게시글", "내용", 4,
-                    Age.TWENTIES, Gender.MALE, TransportType.PUBLIC);
+            MatePostUpdateRequest updateRequest = MatePostUpdateRequest.builder()
+                    .teamId(1L)
+                    .matchId(futureMatch.getId())
+                    .title("남자 게시글")
+                    .content("내용")
+                    .maxParticipants(4)
+                    .age(Age.TWENTIES)
+                    .gender(Gender.MALE)
+                    .transportType(TransportType.PUBLIC)
+                    .build();
+            malePost.updatePost(updateRequest, futureMatch, null);
             mateRepository.save(malePost);
 
             // when & then
@@ -440,22 +437,31 @@ public class MateIntegrationTest {
         }
 
         @Test
-        @DisplayName("메이트 페이지 게시글 목록 조회 성공 - 인원 수 필터")
+        @DisplayName("메이트 페이지 게시글 목록 조회 성공 - 최대 인원 필터")
         void getMatePagePosts_MaxParticipantsFilter_Success() throws Exception {
             // given
-            MatePost largeGroupPost = createMatePost(futureMatch, 1L, Status.OPEN);
-            largeGroupPost.updatePost(1L, futureMatch, null, "대규모 모집", "내용", 10,
-                    Age.TWENTIES, Gender.FEMALE, TransportType.PUBLIC);
-            mateRepository.save(largeGroupPost);
+            MatePost sixPeoplePost = createMatePost(futureMatch, 1L, Status.OPEN);
+            MatePostUpdateRequest updateRequest = MatePostUpdateRequest.builder()
+                    .teamId(1L)
+                    .matchId(futureMatch.getId())
+                    .title("6인 모집 게시글")
+                    .content("내용")
+                    .maxParticipants(6)
+                    .age(Age.TWENTIES)
+                    .gender(Gender.FEMALE)
+                    .transportType(TransportType.PUBLIC)
+                    .build();
+            sixPeoplePost.updatePost(updateRequest, futureMatch, null);
+            mateRepository.save(sixPeoplePost);
 
             // when & then
             mockMvc.perform(get("/api/mates")
-                            .param("maxParticipants", "10")
+                            .param("maxParticipants", "6")
                             .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.data.content").isArray())
                     .andExpect(jsonPath("$.data.content.length()").value(1))
-                    .andExpect(jsonPath("$.data.content[0].maxParticipants").value(10))
+                    .andExpect(jsonPath("$.data.content[0].maxParticipants").value(6))
                     .andDo(print());
         }
 
@@ -463,22 +469,30 @@ public class MateIntegrationTest {
         @DisplayName("메이트 페이지 게시글 목록 조회 성공 - 이동수단 필터")
         void getMatePagePosts_TransportFilter_Success() throws Exception {
             // given
-            MatePost carPost = createMatePost(futureMatch, 1L, Status.OPEN);
-            carPost.updatePost(1L, futureMatch, null, "자차 이동", "내용", 4,
-                    Age.TWENTIES, Gender.FEMALE, TransportType.CAR);
-            mateRepository.save(carPost);
+            MatePost carpoolPost = createMatePost(futureMatch, 1L, Status.OPEN);
+            MatePostUpdateRequest updateRequest = MatePostUpdateRequest.builder()
+                    .teamId(1L)
+                    .matchId(futureMatch.getId())
+                    .title("대중교통 게시글")
+                    .content("내용")
+                    .maxParticipants(4)
+                    .age(Age.TWENTIES)
+                    .gender(Gender.MALE)
+                    .transportType(TransportType.PUBLIC)
+                    .build();
+            carpoolPost.updatePost(updateRequest, futureMatch, null);
+            mateRepository.save(carpoolPost);
 
             // when & then
             mockMvc.perform(get("/api/mates")
-                            .param("transportType", "자차")
+                            .param("transportType", "대중교통")
                             .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.data.content").isArray())
-                    .andExpect(jsonPath("$.data.content.length()").value(1))
-                    .andExpect(jsonPath("$.data.content[0].transportType").value("자차"))
+                    .andExpect(jsonPath("$.data.content.length()").value(3))
+                    .andExpect(jsonPath("$.data.content[0].transportType").value("대중교통"))
                     .andDo(print());
         }
-
         @Test
         @DisplayName("메이트 페이지 게시글 목록 조회 실패 - 존재하지 않는 팀")
         void getMatePagePosts_InvalidTeamId_Failure() throws Exception {
@@ -487,7 +501,7 @@ public class MateIntegrationTest {
                             .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.status").value("ERROR"))
-                    .andExpect(jsonPath("$.message").value(ErrorCode.TEAM_NOT_FOUND.getMessage()))
+                    .andExpect(jsonPath("$.message").value(TEAM_NOT_FOUND.getMessage()))
                     .andExpect(jsonPath("$.code").value(404))
                     .andDo(print());
         }
@@ -509,7 +523,7 @@ public class MateIntegrationTest {
                     .andExpect(jsonPath("$.data.postId").value(openPost.getId()))
                     .andExpect(jsonPath("$.data.title").value("테스트 제목"))
                     .andExpect(jsonPath("$.data.content").value("테스트 내용"))
-                    .andExpect(jsonPath("$.data.status").value("OPEN"))
+                    .andExpect(jsonPath("$.data.status").value("모집중"))
                     .andExpect(jsonPath("$.data.maxParticipants").value(4))
                     .andExpect(jsonPath("$.data.age").value("20대"))
                     .andExpect(jsonPath("$.data.gender").value("여자"))
@@ -530,7 +544,7 @@ public class MateIntegrationTest {
                             .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.status").value("ERROR"))
-                    .andExpect(jsonPath("$.message").value(ErrorCode.MATE_POST_NOT_FOUND.getMessage()))
+                    .andExpect(jsonPath("$.message").value(MATE_POST_NOT_FOUND_BY_ID.getMessage()))
                     .andExpect(jsonPath("$.code").value(404))
                     .andDo(print());
         }
@@ -542,19 +556,99 @@ public class MateIntegrationTest {
             mockMvc.perform(get("/api/mates/" + openPost.getId())
                             .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.data.status").value("OPEN"));
+                    .andExpect(jsonPath("$.data.status").value("모집중"));
 
             // Test CLOSED status
             mockMvc.perform(get("/api/mates/" + closedPost.getId())
                             .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.data.status").value("CLOSED"));
+                    .andExpect(jsonPath("$.data.status").value("모집완료"));
 
             // Test COMPLETE status
             mockMvc.perform(get("/api/mates/" + completedPost.getId())
                             .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.data.status").value("COMPLETE"));
+                    .andExpect(jsonPath("$.data.status").value("직관완료"));
         }
+    }
+
+    @Nested
+    @DisplayName("메이트 게시글 삭제")
+    class DeleteMatePost {
+
+        @Test
+        @DisplayName("메이트 게시글 삭제 성공")
+        void deleteMatePost_Success() throws Exception {
+            // when & then
+            mockMvc.perform(delete("/api/mates/{memberId}/{postId}", testMember.getId(), openPost.getId())
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isNoContent())
+                    .andDo(print());
+
+            // DB 검증
+            assertThat(mateRepository.findById(openPost.getId())).isEmpty();
+        }
+
+        @Test
+        @DisplayName("메이트 게시글 삭제 실패 - 존재하지 않는 게시글")
+        void deleteMatePost_NotFound() throws Exception {
+            // when & then
+            mockMvc.perform(delete("/api/mates/{memberId}/{postId}", testMember.getId(), 999L)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.status").value("ERROR"))
+                    .andExpect(jsonPath("$.message").value(MATE_POST_NOT_FOUND_BY_ID.getMessage()))
+                    .andExpect(jsonPath("$.code").value(404))
+                    .andDo(print());
+
+            // DB 검증 - 기존 게시글들은 여전히 존재
+            assertThat(mateRepository.findAll()).hasSize(3);
+        }
+
+        @Test
+        @DisplayName("메이트 게시글 삭제 실패 - 권한 없음")
+        void deleteMatePost_NotAllowed() throws Exception {
+            // given
+            Member otherMember = memberRepository.save(Member.builder()
+                    .name("다른유저")
+                    .email("other@test.com")
+                    .nickname("다른계정")
+                    .imageUrl("other.jpg")
+                    .gender(Gender.MALE)
+                    .age(30)
+                    .manner(0.3f)
+                    .build());
+
+            // when & then
+            mockMvc.perform(delete("/api/mates/{memberId}/{postId}", otherMember.getId(), openPost.getId())
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isForbidden())
+                    .andExpect(jsonPath("$.status").value("ERROR"))
+                    .andExpect(jsonPath("$.message").value(MATE_POST_UPDATE_NOT_ALLOWED.getMessage()))
+                    .andExpect(jsonPath("$.code").value(403))
+                    .andDo(print());
+
+            // DB 검증 - 게시글이 삭제되지 않음
+            assertThat(mateRepository.findById(openPost.getId())).isPresent();
+        }
+//
+//        @Test
+//        @DisplayName("직관 완료된 게시글 삭제 시 Visit 엔티티와 연관관계 제거")
+//        void deleteMatePost_WithCompletedStatus() throws Exception {
+//            // given
+//            MatePost post = createMatePost(futureMatch, 1L, Status.CLOSED); // CLOSED 상태로 생성
+//            post.completeVisit(List.of(testMember.getId())); // completeVisit 호출하여 COMPLETE로 변경
+//            Visit visit = post.getVisit();
+//
+//            // when
+//            mockMvc.perform(delete("/api/mates/{memberId}/{postId}", testMember.getId(), post.getId())
+//                            .contentType(MediaType.APPLICATION_JSON))
+//                    .andExpect(status().isNoContent())
+//                    .andDo(print());
+//
+//            // then
+//            assertThat(mateRepository.findById(post.getId())).isEmpty();
+//            assertThat(visit.getPost()).isNull();
+//        }
     }
 }

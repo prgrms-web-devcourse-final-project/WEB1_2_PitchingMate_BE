@@ -19,6 +19,16 @@ public class FileValidator {
         }
     }
 
+    // 회원 프로필 이미지 파일 유효성 검사
+    public static void validateMyProfileImage(MultipartFile file) {
+        isNotImage(file);
+    }
+
+    // 메이트 게시글 이미지 파일 유효성 검사
+    public static void validateMatePostImage(MultipartFile file) {
+        isNotImage(file);
+    }
+
     private static void validateNotEmpty(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new CustomException(ErrorCode.FILE_IS_EMPTY);

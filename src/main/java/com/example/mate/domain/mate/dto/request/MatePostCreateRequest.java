@@ -41,7 +41,7 @@ public class MatePostCreateRequest {
     private Age age;
 
     @NotNull(message = "최대 참여 인원은 필수입니다.")
-    @Min(value = 2, message = "최대 참여 인원은 2명 이상이어야 합니다.")
+    @Min(value = 2, message = "최소 참여 인원은 2명 이상이어야 합니다.")
     @Max(value = 10, message = "최대 참여 인원은 10명 이하여야 합니다.")
     private Integer maxParticipants;
 

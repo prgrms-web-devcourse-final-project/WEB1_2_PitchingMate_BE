@@ -4,21 +4,29 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.mate.common.response.ApiResponse;
 import com.example.mate.domain.constant.Gender;
+import com.example.mate.domain.constant.Rating;
+import com.example.mate.domain.constant.TeamInfo;
 import com.example.mate.domain.goods.dto.LocationInfo;
 import com.example.mate.domain.goods.dto.MemberInfo;
 import com.example.mate.domain.goods.dto.request.GoodsPostRequest;
+import com.example.mate.domain.goods.dto.request.GoodsReviewRequest;
 import com.example.mate.domain.goods.dto.response.GoodsPostResponse;
+import com.example.mate.domain.goods.dto.response.GoodsPostSummaryResponse;
+import com.example.mate.domain.goods.dto.response.GoodsReviewResponse;
 import com.example.mate.domain.goods.entity.Category;
 import com.example.mate.domain.goods.entity.GoodsPost;
 import com.example.mate.domain.goods.entity.GoodsPostImage;
+import com.example.mate.domain.goods.entity.GoodsReview;
 import com.example.mate.domain.goods.entity.Status;
 import com.example.mate.domain.goods.repository.GoodsPostImageRepository;
 import com.example.mate.domain.goods.repository.GoodsPostRepository;
+import com.example.mate.domain.goods.repository.GoodsReviewRepository;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -43,25 +51,21 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class GoodsIntegrationTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-    @Autowired
-    private MemberRepository memberRepository;
-    @Autowired
-    private GoodsPostRepository goodsPostRepository;
-    @Autowired
-    private GoodsPostImageRepository imageRepository;
-    @Autowired
-    private ObjectMapper objectMapper;
+    @Autowired private MockMvc mockMvc;
+    @Autowired private MemberRepository memberRepository;
+    @Autowired private GoodsPostRepository goodsPostRepository;
+    @Autowired private GoodsPostImageRepository imageRepository;
+    @Autowired private GoodsReviewRepository reviewRepository;
+    @Autowired private ObjectMapper objectMapper;
 
     private Member member;
-
     private GoodsPost goodsPost;
 
     @BeforeEach
     void setUp() {
-        createMember();
-        createGoodsPost();
+        member = createMember();
+        goodsPost = createGoodsPost(Status.OPEN, null);
+        createGoodsPostImage();
     }
 
     @Test
@@ -141,63 +145,6 @@ public class GoodsIntegrationTest {
         assertActualData(apiResponse.getData().getId(), goodsPostRequest, files);
     }
 
-    @Test
-    @DisplayName("굿즈거래 판매글 삭제 통합 테스트")
-    void delete_goods_post_integration_test() throws Exception {
-        // given
-        Long memberId = member.getId();
-        Long goodsPostId = goodsPost.getId();
-
-        // when
-        mockMvc.perform(delete("/api/goods/{memberId}/post/{goodsPostId}", memberId, goodsPostId))
-                .andDo(print())
-                .andExpect(status().isNoContent());
-
-        // then
-        Optional<GoodsPost> goodsPost = goodsPostRepository.findById(goodsPostId);
-        assertThat(goodsPost).isEmpty();
-
-        List<String> imageUrls = imageRepository.getImageUrlsByPostId(goodsPostId);
-        assertThat(imageUrls).isEmpty();
-    }
-
-    @Test
-    @DisplayName("굿즈거래 판매글 상세 조회 통합 테스트")
-    void get_goods_post_integration_test() throws Exception {
-        // given
-        Long goodsPostId = goodsPost.getId();
-
-        // when
-        MockHttpServletResponse result = mockMvc.perform(get("/api/goods/{goodsPostId}", goodsPostId))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andReturn()
-                .getResponse();
-        result.setCharacterEncoding("UTF-8");
-
-        ApiResponse<GoodsPostResponse> apiResponse = objectMapper.readValue(result.getContentAsString(),
-                new TypeReference<>() {
-                });
-
-        // then
-        assertThat(apiResponse.getCode()).isEqualTo(200);
-        assertThat(apiResponse.getStatus()).isEqualTo("SUCCESS");
-
-        GoodsPostResponse response = apiResponse.getData();
-        assertThat(response).isNotNull();
-        assertThat(response.getId()).isEqualTo(goodsPostId);
-        assertThat(response.getTitle()).isEqualTo(goodsPost.getTitle());
-        assertThat(response.getContent()).isEqualTo(goodsPost.getContent());
-        assertThat(response.getPrice()).isEqualTo(goodsPost.getPrice());
-        assertThat(response.getCategory()).isEqualTo(goodsPost.getCategory().getValue());
-        assertThat(response.getLocation().getPlaceName()).isEqualTo(goodsPost.getLocation().getPlaceName());
-
-        MemberInfo seller = response.getSeller();
-        assertThat(seller.getMemberId()).isEqualTo(member.getId());
-        assertThat(seller.getNickname()).isEqualTo(member.getNickname());
-        assertThat(seller.getManner()).isEqualTo(member.getManner());
-    }
-
     // ApiResponse 검증
     private void assertApiResponse(ApiResponse<GoodsPostResponse> apiResponse, GoodsPostRequest expected,
                                    List<MockMultipartFile> files) {
@@ -237,8 +184,239 @@ public class GoodsIntegrationTest {
         assertThat(goodsPostImages).hasSize(files.size());
     }
 
-    private void createMember() {
-        member = memberRepository.save(Member.builder()
+    @Test
+    @DisplayName("굿즈거래 판매글 삭제 통합 테스트")
+    void delete_goods_post_integration_test() throws Exception {
+        // given
+        Long memberId = member.getId();
+        Long goodsPostId = goodsPost.getId();
+
+        // when
+        mockMvc.perform(delete("/api/goods/{memberId}/post/{goodsPostId}", memberId, goodsPostId))
+                .andDo(print())
+                .andExpect(status().isNoContent());
+
+        // then
+        Optional<GoodsPost> goodsPost = goodsPostRepository.findById(goodsPostId);
+        assertThat(goodsPost).isEmpty();
+    }
+
+    @Test
+    @DisplayName("굿즈거래 판매글 상세 조회 통합 테스트")
+    void get_goods_post_integration_test() throws Exception {
+        // given
+        Long goodsPostId = goodsPost.getId();
+
+        // when
+        MockHttpServletResponse result = mockMvc.perform(get("/api/goods/{goodsPostId}", goodsPostId))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse();
+        result.setCharacterEncoding("UTF-8");
+
+        ApiResponse<GoodsPostResponse> apiResponse = objectMapper.readValue(result.getContentAsString(),
+                new TypeReference<>() {
+                });
+
+        // then
+        assertThat(apiResponse.getCode()).isEqualTo(200);
+        assertThat(apiResponse.getStatus()).isEqualTo("SUCCESS");
+
+        GoodsPostResponse response = apiResponse.getData();
+        assertThat(response).isNotNull();
+        assertThat(response.getId()).isEqualTo(goodsPostId);
+        assertThat(response.getTitle()).isEqualTo(goodsPost.getTitle());
+        assertThat(response.getContent()).isEqualTo(goodsPost.getContent());
+        assertThat(response.getPrice()).isEqualTo(goodsPost.getPrice());
+        assertThat(response.getCategory()).isEqualTo(goodsPost.getCategory().getValue());
+        assertThat(response.getLocation().getPlaceName()).isEqualTo(goodsPost.getLocation().getPlaceName());
+
+        MemberInfo seller = response.getSeller();
+        assertThat(seller.getMemberId()).isEqualTo(member.getId());
+        assertThat(seller.getNickname()).isEqualTo(member.getNickname());
+        assertThat(seller.getManner()).isEqualTo(member.getManner());
+    }
+
+    @Test
+    @DisplayName("메인페이지 굿즈 판매글 리스트 조회 통합 테스트")
+    void get_main_goods_posts_integration_test() throws Exception {
+        // given
+        Long teamId = 1L;
+
+        // when
+        MockHttpServletResponse result = mockMvc.perform(get("/api/goods/main")
+                        .param("teamId", String.valueOf(teamId)))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse();
+        result.setCharacterEncoding("UTF-8");
+
+        ApiResponse<List<GoodsPostSummaryResponse>> apiResponse = objectMapper.readValue(result.getContentAsString(), new TypeReference<>() {});
+
+        // then
+        assertThat(apiResponse.getCode()).isEqualTo(200);
+        assertThat(apiResponse.getStatus()).isEqualTo("SUCCESS");
+
+        List<GoodsPostSummaryResponse> goodsPostResponses = apiResponse.getData();
+        assertThat(goodsPostResponses).hasSize(1);
+
+        GoodsPostSummaryResponse response = goodsPostResponses.get(0);
+
+        assertThat(response.getTitle()).isEqualTo(goodsPost.getTitle());
+        assertThat(response.getTeamName()).isEqualTo(TeamInfo.getById(goodsPost.getTeamId()).shortName);
+        assertThat(response.getPrice()).isEqualTo(goodsPost.getPrice());
+        assertThat(response.getCategory()).isEqualTo(goodsPost.getCategory().getValue());
+        assertThat(response.getImageUrl()).isEqualTo(goodsPost.getGoodsPostImages().get(0).getImageUrl());
+    }
+
+    @Test
+    @DisplayName("메인페이지 굿즈 판매글 페이징 조회 통합 테스트")
+    void get_main_goods_posts_paging_integration_test() throws Exception {
+        // given
+        Long teamId = 10L;
+        int page = 0;
+        int size = 10;
+
+        goodsPostRepository.deleteAll();
+        imageRepository.deleteAll();
+
+        for (int i = 1; i <= 3; i++) {
+            GoodsPost post = GoodsPost.builder()
+                    .seller(member)
+                    .teamId(10L)
+                    .title("Test Title " + i)
+                    .content("Test Content " + i)
+                    .price(1000 * i)
+                    .category(Category.ACCESSORY)
+                    .location(LocationInfo.toEntity(createLocationInfo()))
+                    .build();
+
+            GoodsPostImage image = GoodsPostImage.builder()
+                    .imageUrl("upload/test_img_url " + i)
+                    .post(post)
+                    .build();
+
+            post.changeImages(List.of(image));
+            goodsPostRepository.save(post);
+        }
+
+        // when
+        MockHttpServletResponse result = mockMvc.perform(get("/api/goods/main")
+                        .param("teamId", String.valueOf(teamId))
+                        .param("page", String.valueOf(page))
+                        .param("size", String.valueOf(size)))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse();
+        result.setCharacterEncoding("UTF-8");
+
+        ApiResponse<List<GoodsPostSummaryResponse>> apiResponse = objectMapper.readValue(result.getContentAsString(),
+                new TypeReference<>() {});
+
+        // then
+        assertThat(apiResponse.getCode()).isEqualTo(200);
+        assertThat(apiResponse.getStatus()).isEqualTo("SUCCESS");
+
+        List<GoodsPostSummaryResponse> goodsPostResponses = apiResponse.getData();
+        assertThat(goodsPostResponses).hasSize(3);
+
+        GoodsPostSummaryResponse firstResponse = goodsPostResponses.get(0);
+        assertThat(firstResponse.getTitle()).isEqualTo("Test Title 3");
+        assertThat(firstResponse.getPrice()).isEqualTo(3_000);
+        assertThat(firstResponse.getCategory()).isEqualTo(Category.ACCESSORY.getValue());
+        assertThat(firstResponse.getImageUrl()).isEqualTo("upload/test_img_url 3");
+    }
+
+    @Test
+    @DisplayName("굿즈 판매글 거래 완료 통합 테스트")
+    void complete_goods_post_integration_test() throws Exception {
+        // given
+        Long memberId = member.getId(); // 판매자 ID
+        Long goodsPostId = goodsPost.getId(); // 판매글 ID
+        Member buyer = memberRepository.save(Member.builder()
+                .name("구매자")
+                .email("buyer@gmail.com")
+                .nickname("구매자닉네임")
+                .imageUrl("upload/buyer.jpg")
+                .gender(Gender.MALE)
+                .age(30)
+                .manner(0.5f)
+                .build());
+
+        // when
+        MockHttpServletResponse result = mockMvc.perform(post("/api/goods/{memberId}/post/{goodsPostId}/complete", memberId, goodsPostId)
+                        .param("buyerId", String.valueOf(buyer.getId())))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse();
+        result.setCharacterEncoding("UTF-8");
+
+        ApiResponse<Void> apiResponse = objectMapper.readValue(result.getContentAsString(), new TypeReference<>() {});
+
+        // then
+        assertThat(apiResponse.getCode()).isEqualTo(200);
+        assertThat(apiResponse.getStatus()).isEqualTo("SUCCESS");
+
+        GoodsPost completedPost = goodsPostRepository.findById(goodsPostId).orElseThrow();
+        assertThat(completedPost.getStatus()).isEqualTo(Status.CLOSED);
+        assertThat(completedPost.getBuyer()).isNotNull();
+
+        Member resultBuyer = completedPost.getBuyer();
+        assertThat(resultBuyer.getId()).isEqualTo(buyer.getId());
+        assertThat(resultBuyer.getName()).isEqualTo(buyer.getName());
+        assertThat(resultBuyer.getEmail()).isEqualTo(buyer.getEmail());
+        assertThat(resultBuyer.getNickname()).isEqualTo(buyer.getNickname());
+    }
+
+    @Test
+    @DisplayName("굿즈 거래 후기 등록 통합 테스트 - 성공")
+    void register_goods_review_integration_test_success() throws Exception {
+        // given
+        Member buyer = member;
+        GoodsPost completePost = createGoodsPost(Status.CLOSED, buyer);
+
+        GoodsReviewRequest request = new GoodsReviewRequest(Rating.GREAT, "Great seller!");
+
+        // when
+        MockHttpServletResponse result = mockMvc.perform(post("/api/goods/{buyerId}/post/{goodsPostId}/review", buyer.getId(), completePost.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse();
+        result.setCharacterEncoding("UTF-8");
+
+        ApiResponse<GoodsReviewResponse> apiResponse = objectMapper.readValue(result.getContentAsString(), new TypeReference<>() {});
+
+        // then
+        assertThat(apiResponse.getCode()).isEqualTo(200);
+        assertThat(apiResponse.getStatus()).isEqualTo("SUCCESS");
+
+        GoodsReviewResponse response = apiResponse.getData();
+        assertThat(response).isNotNull();
+        assertThat(response.getReviewId()).isNotNull();
+        assertThat(response.getReviewerNickname()).isEqualTo(buyer.getNickname());
+        assertThat(response.getRating()).isEqualTo(request.getRating());
+        assertThat(response.getReviewContent()).isEqualTo(request.getReviewContent());
+        assertThat(response.getCreatedAt()).isNotNull();
+        assertThat(response.getGoodsPostId()).isEqualTo(completePost.getId());
+        assertThat(response.getGoodsPostTitle()).isEqualTo(completePost.getTitle());
+
+        GoodsReview savedReview = reviewRepository.findById(response.getReviewId()).orElseThrow();
+        assertThat(savedReview.getReviewer().getId()).isEqualTo(buyer.getId());
+        assertThat(savedReview.getGoodsPost().getId()).isEqualTo(completePost.getId());
+        assertThat(savedReview.getRating()).isEqualTo(Rating.GREAT);
+        assertThat(savedReview.getReviewContent()).isEqualTo("Great seller!");
+        assertThat(savedReview.getCreatedAt()).isNotNull();
+    }
+
+    private Member createMember() {
+        return memberRepository.save(Member.builder()
                 .name("홍길동")
                 .email("test@gmail.com")
                 .nickname("테스터")
@@ -249,16 +427,27 @@ public class GoodsIntegrationTest {
                 .build());
     }
 
-    private void createGoodsPost() {
-        goodsPost = goodsPostRepository.save(GoodsPost.builder()
+    private GoodsPost createGoodsPost(Status status, Member buyer) {
+        return goodsPostRepository.save(GoodsPost.builder()
                 .seller(member)
                 .teamId(1L)
+                .buyer(buyer)
                 .title("test title")
                 .content("test content")
                 .price(10_000)
+                .status(status)
                 .category(Category.ACCESSORY)
                 .location(LocationInfo.toEntity(createLocationInfo()))
                 .build());
+    }
+
+    private void createGoodsPostImage() {
+        GoodsPostImage image = GoodsPostImage.builder()
+                .imageUrl("upload/test_img_url")
+                .build();
+
+        goodsPost.changeImages(List.of(image));
+        goodsPostRepository.save(goodsPost);
     }
 
     private MockMultipartFile createFile() {

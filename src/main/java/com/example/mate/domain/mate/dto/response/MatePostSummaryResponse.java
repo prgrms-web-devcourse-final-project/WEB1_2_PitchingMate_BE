@@ -19,39 +19,44 @@ public class MatePostSummaryResponse {
     private String imageUrl;
     private String title;
     private Status status;
+    private String myTeamName;
     private String rivalTeamName;
-    private LocalDateTime rivalMatchTime;
+    private LocalDateTime matchTime;
     private String location;
     private Integer maxParticipants;
     private Age age;
     private Gender gender;
     private TransportType transportType;
+    private Long postId;
 
     public static MatePostSummaryResponse from(MatePost post) {
+        // 게시글 작성자의 팀이 myTeam
+        String myTeamName = TeamInfo.getById(post.getTeamId()).shortName;
+        String rivalTeamName = getRivalTeamName(post);
+
         return MatePostSummaryResponse.builder()
                 .imageUrl(post.getImageUrl())
                 .title(post.getTitle())
                 .status(post.getStatus())
-                .rivalTeamName(getRivalTeamName(post))
-                .rivalMatchTime(post.getMatch().getMatchTime())
+                .myTeamName(myTeamName)
+                .rivalTeamName(rivalTeamName)
+                .matchTime(post.getMatch().getMatchTime())
                 .location(post.getMatch().getStadium().name)
                 .maxParticipants(post.getMaxParticipants())
                 .age(post.getAge())
                 .gender(post.getGender())
                 .transportType(post.getTransport())
+                .postId(post.getId())
                 .build();
     }
 
     private static String getRivalTeamName(MatePost post) {
         Match match = post.getMatch();
-        Long postTeamId = post.getTeamId(); // 게시글 작성자가 선택한 팀
+        Long postTeamId = post.getTeamId();
 
-        // 게시글 작성자가 선택한 팀이 홈팀인 경우 원정팀이 상대팀
         if (postTeamId.equals(match.getHomeTeamId())) {
             return TeamInfo.getById(match.getAwayTeamId()).shortName;
-        }
-        // 게시글 작성자가 선택한 팀이 원정팀인 경우 홈팀이 상대팀
-        else {
+        } else {
             return TeamInfo.getById(match.getHomeTeamId()).shortName;
         }
     }

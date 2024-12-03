@@ -10,9 +10,7 @@ import lombok.Getter;
 public enum TransportType {
     ANY("상관없음"),
     PUBLIC("대중교통"),
-    CAR("자차"),
-    CARPOOL("카풀");
-
+    CAR("자차");
     @JsonValue
     private final String value;
 

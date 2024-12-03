@@ -1,8 +1,11 @@
 package com.example.mate.domain.member.dto.response;
 
-import java.time.LocalDate;
+import com.example.mate.domain.constant.TeamInfo;
+import com.example.mate.domain.match.entity.Match;
+import com.example.mate.domain.mate.entity.MateReview;
+import com.example.mate.domain.member.entity.Member;
 import java.time.LocalDateTime;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -19,13 +22,9 @@ public class MyVisitResponse {
     private String location;
     private LocalDateTime matchTime;
 
-    // 구인글 정보
-    private Long postId;
-    private String imageUrl;
-    private String title;
-    
     // 리뷰 정보
-    private List<MateReviewResponse> reviews;
+    @Builder.Default
+    private List<MateReviewResponse> reviews = new ArrayList<>();
 
     @Getter
     @Builder
@@ -36,26 +35,32 @@ public class MyVisitResponse {
         private String rating;
         private String content;
 
-        private static MateReviewResponse from() {
+        public static MateReviewResponse from(MateReview mateReview) {
             return MateReviewResponse.builder()
-                    .memberId(1L)
-                    .nickname("김아무개")
-                    .rating("좋았어요!")
-                    .content("정말 재미있는 직관이었어요. 함께해서 즐거웠습니다.")
+                    .memberId(mateReview.getReviewee().getId())
+                    .nickname(mateReview.getReviewee().getNickname())
+                    .rating(mateReview.getRating().getValue())
+                    .content(mateReview.getReviewContent())
+                    .build();
+        }
+
+        public static MateReviewResponse from(Member member) {
+            return MateReviewResponse.builder()
+                    .memberId(member.getId())
+                    .nickname(member.getNickname())
+                    .rating(null)
+                    .content(null)
                     .build();
         }
     }
 
-    public static MyVisitResponse from() {
+    public static MyVisitResponse of(Match match, List<MateReviewResponse> reviews) {
         return MyVisitResponse.builder()
-                .homeTeamName("삼성")
-                .awayTeamName("KT")
-                .location("대구 라이온스 파크")
-                .matchTime(LocalDateTime.now().minusDays(10))
-                .postId(1L)
-                .imageUrl("upload/default.jpg")
-                .title("구인 게시글 제목!")
-                .reviews(Collections.nCopies(3, MateReviewResponse.from()))
+                .homeTeamName(TeamInfo.getById(match.getHomeTeamId()).shortName)
+                .awayTeamName(TeamInfo.getById(match.getAwayTeamId()).shortName)
+                .location(match.getStadium().name)
+                .matchTime(match.getMatchTime())
+                .reviews(reviews)
                 .build();
     }
 }

@@ -1,5 +1,6 @@
 package com.example.mate.domain.mate.entity;
 
+import com.example.mate.domain.mate.dto.request.MateReviewCreateRequest;
 import com.example.mate.domain.member.entity.Member;
 import jakarta.persistence.*;
 import lombok.*;
@@ -20,25 +21,44 @@ public class Visit {
     private Long id;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "post_id", nullable = false)
+    @JoinColumn(name = "post_id")
     private MatePost post;
 
-    @OneToMany(mappedBy = "visit")
+    @OneToMany(mappedBy = "visit", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<VisitPart> participants = new ArrayList<>();
 
-    @OneToMany(mappedBy = "visit")
+    @OneToMany(mappedBy = "visit", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<MateReview> reviews = new ArrayList<>();
 
-    // 참여자 추가
-    public void addParticipants(List<Member> members) {
-        members.forEach(member -> {
+    public static Visit createForComplete(MatePost post, List<Member> participants) {
+        Visit visit = Visit.builder()
+                .post(post)
+                .build();
+
+        // 참여자 정보 초기 설정
+        participants.forEach(member -> {
             VisitPart visitPart = VisitPart.builder()
                     .member(member)
-                    .visit(this)
+                    .visit(visit)
                     .build();
-            this.participants.add(visitPart);
+            visit.participants.add(visitPart);
         });
+
+        return visit;
+    }
+
+    public MateReview createReview(Member reviewer, Member reviewee, MateReviewCreateRequest request) {
+        MateReview newMateReview = MateReview.builder()
+                .visit(this)
+                .reviewer(reviewer)
+                .reviewee(reviewee)
+                .reviewContent(request.getContent())
+                .rating(request.getRating())
+                .build();
+
+        reviews.add(newMateReview);
+        return newMateReview;
     }
 }
