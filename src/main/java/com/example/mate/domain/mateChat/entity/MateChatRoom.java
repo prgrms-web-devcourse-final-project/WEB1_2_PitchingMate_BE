@@ -31,11 +31,11 @@ public class MateChatRoom extends BaseTimeEntity {
     @Builder.Default
     private Integer currentMembers = 0;
 
-    @OneToMany(mappedBy = "chatRoom", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "mateChatRoom", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<MateChatRoomMember> members = new ArrayList<>();
 
-    @OneToMany(mappedBy = "chatRoom", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "mateChatRoom", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<MateChatMessage> messages = new ArrayList<>();
 
