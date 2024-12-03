@@ -21,18 +21,3 @@ springdoc:
   packages-to-scan: com.example.mate
   default-consumes-media-type: application/json
   default-produces-media-type: application/json
-
-jwt:
-  token:
-    client-secret: xk2+fIk2mX2V9I/0zI+4bTz5ZG9QvAox6g0f5pC9rcA=
-#    client-secret: ${JWT_SECRET_KEY}
-#    access-expiration-time: 300000
-#    refresh-expiration-time: 86400000
-oauth:
-  naver_client_id: fA8Vz3zehYEM20YeaSkj
-  naver_redirect_uri: http://localhost:8080/api/auth/login/naver
-  naver_client_secret: 7IbvOUjzLk
-#  oauth:
-#    naver_client_id: fA8Vz3zehYEM20YeaSkj
-#    naver_redirect_uri: http://localhost:8080/api/auth/login/naver
-#    naver_client_secret: 7IbvOUjzLk

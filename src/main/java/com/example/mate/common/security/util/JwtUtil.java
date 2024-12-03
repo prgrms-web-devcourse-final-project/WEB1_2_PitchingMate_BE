@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 public class JwtUtil {
 
     // 서명에 사용할 비밀 키 - application-local.yml 참조
-    @Value("${jwt.token.client-secret}")
+    @Value("${jwt.secret_key}")
     private String key;
 
     // JWT 서명을 위한 비밀 키 생성
