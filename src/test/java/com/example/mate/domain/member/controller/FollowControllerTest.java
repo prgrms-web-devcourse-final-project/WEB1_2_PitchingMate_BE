@@ -18,6 +18,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
 import com.example.mate.common.response.PageResponse;
+import com.example.mate.common.security.filter.JwtCheckFilter;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.member.dto.response.MemberSummaryResponse;
 import com.example.mate.domain.member.entity.Follow;
@@ -50,6 +51,9 @@ class FollowControllerTest {
 
     @MockBean
     private FollowService followService;
+
+    @MockBean
+    private JwtCheckFilter jwtCheckFilter;
 
     private MemberSummaryResponse createMemberSummaryResponse() {
         return MemberSummaryResponse.builder()

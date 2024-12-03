@@ -1,7 +1,25 @@
 package com.example.mate.domain.mate.controller;
 
+import static com.example.mate.common.error.ErrorCode.ALREADY_COMPLETED_POST;
+import static com.example.mate.common.error.ErrorCode.INVALID_MATE_POST_PARTICIPANT_IDS;
+import static com.example.mate.common.error.ErrorCode.MATE_POST_COMPLETE_TIME_NOT_ALLOWED;
+import static com.example.mate.common.error.ErrorCode.MATE_POST_MAX_PARTICIPANTS_EXCEEDED;
+import static com.example.mate.common.error.ErrorCode.MATE_POST_NOT_FOUND_BY_ID;
+import static com.example.mate.common.error.ErrorCode.MATE_POST_UPDATE_NOT_ALLOWED;
+import static com.example.mate.common.error.ErrorCode.NOT_CLOSED_STATUS_FOR_COMPLETION;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
+import com.example.mate.common.security.filter.JwtCheckFilter;
 import com.example.mate.domain.mate.dto.request.MatePostCompleteRequest;
 import com.example.mate.domain.mate.dto.request.MatePostStatusRequest;
 import com.example.mate.domain.mate.dto.response.MatePostCompleteResponse;
@@ -9,6 +27,7 @@ import com.example.mate.domain.mate.dto.response.MatePostResponse;
 import com.example.mate.domain.mate.entity.Status;
 import com.example.mate.domain.mate.service.MateService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -19,19 +38,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-
-import java.util.List;
-
-import static com.example.mate.common.error.ErrorCode.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(MateController.class)
 @MockBean(JpaMetamodelMappingContext.class)
@@ -46,6 +52,9 @@ class MateStatusControllerTest {
 
     @MockBean
     private MateService mateService;
+
+    @MockBean
+    private JwtCheckFilter jwtCheckFilter;
 
     @Nested
     @DisplayName("메이트 게시글 상태 변경")
@@ -120,7 +129,8 @@ class MateStatusControllerTest {
             List<Long> participantIds = List.of(2L, 3L);
             MatePostStatusRequest request = new MatePostStatusRequest(Status.CLOSED, participantIds);
 
-            given(mateService.updateMatePostStatus(eq(memberId), eq(nonExistentPostId), any(MatePostStatusRequest.class)))
+            given(mateService.updateMatePostStatus(eq(memberId), eq(nonExistentPostId),
+                    any(MatePostStatusRequest.class)))
                     .willThrow(new CustomException(MATE_POST_NOT_FOUND_BY_ID));
 
             // when & then
@@ -133,7 +143,8 @@ class MateStatusControllerTest {
                     .andExpect(jsonPath("$.message").exists())
                     .andExpect(jsonPath("$.code").value(404));
 
-            verify(mateService).updateMatePostStatus(eq(memberId), eq(nonExistentPostId), any(MatePostStatusRequest.class));
+            verify(mateService).updateMatePostStatus(eq(memberId), eq(nonExistentPostId),
+                    any(MatePostStatusRequest.class));
         }
 
         @Test

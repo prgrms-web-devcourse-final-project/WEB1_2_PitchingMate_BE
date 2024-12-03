@@ -30,7 +30,7 @@ public enum ErrorCode {
     MEMBER_NOT_FOUND_BY_ID(HttpStatus.NOT_FOUND, "M001", "해당 ID의 회원 정보를 찾을 수 없습니다"),
     UNSUPPORTED_RESPONSE_TYPE(HttpStatus.BAD_REQUEST, "M002", "회원 프로필 조회에서 지원하지 않는 응답 타입입니다."),
     ALREADY_USED_NICKNAME(HttpStatus.BAD_REQUEST, "M003", "이미 사용 중인 닉네임입니다."),
-    MEMBER_NOT_FOUND_BY_EMAIL(HttpStatus.NOT_FOUND, "M004", "해당 이메일의 회원 정보를 찾을 수 없습니다"),
+    MEMBER_NOT_FOUND_BY_EMAIL(HttpStatus.NOT_FOUND, "M004", "해당 이메일의 회원 정보를 찾을 수 없습니다."),
 
     // Follow
     ALREADY_FOLLOWED_MEMBER(HttpStatus.BAD_REQUEST, "F001", "이미 팔로우한 회원입니다."),
@@ -72,6 +72,7 @@ public enum ErrorCode {
     // Goods Chat
     GOODS_CHAT_CLOSED_POST(HttpStatus.BAD_REQUEST, "GC001", "거래완료된 판매글에 채팅을 시작할 수 없습니다."),
     GOODS_CHAT_SELLER_CANNOT_START(HttpStatus.BAD_REQUEST, "GC002", "자신의 판매글에 채팅을 시작할 수 없습니다."),
+    GOODS_CHAT_NOT_FOUND_CHAT_PART(HttpStatus.BAD_REQUEST, "GC003", "요청한 회원은 해당 채팅방에 참여한 회원이 아닙니다."),
 
     // Mate Review
     NOT_PARTICIPANT_OR_AUTHOR(HttpStatus.FORBIDDEN, "R002", "리뷰어와 리뷰 대상자 모두 직관 참여자여야 합니다."),

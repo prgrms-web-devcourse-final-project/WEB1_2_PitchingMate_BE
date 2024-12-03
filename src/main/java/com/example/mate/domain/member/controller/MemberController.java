@@ -1,6 +1,7 @@
 package com.example.mate.domain.member.controller;
 
 import com.example.mate.common.response.ApiResponse;
+import com.example.mate.common.security.auth.CustomUserPrincipal;
 import com.example.mate.domain.member.dto.request.JoinRequest;
 import com.example.mate.domain.member.dto.request.MemberInfoUpdateRequest;
 import com.example.mate.domain.member.dto.request.MemberLoginRequest;
@@ -15,6 +16,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -48,8 +50,11 @@ public class MemberController {
         return ResponseEntity.ok(ApiResponse.success(memberService.join(joinRequest)));
     }
 
-    // 자체 로그인 기능
-    @Operation(summary = "자체 로그인 기능")
+    /*
+    CATCH Mi 서비스 로그인
+    소셜 로그인 후, 받아온 이메일을 통해 로그인 처리
+     */
+    @Operation(summary = "CATCH Mi 서비스 로그인", description = "캐치미 서비스에 로그인합니다.")
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<MemberLoginResponse>> catchMiLogin(
             @Parameter(description = "회원 로그인 요청 정보", required = true) @Valid @RequestBody MemberLoginRequest request
@@ -93,5 +98,11 @@ public class MemberController {
     public ResponseEntity<Void> deleteMember(@RequestParam Long memberId) {
         memberService.deleteMember(memberId);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/test")
+    public String test(@AuthenticationPrincipal CustomUserPrincipal principal) {
+        return "principal getName == " + principal.getName() + " || " + "principal getMemberId == "
+                + principal.getMemberId();
     }
 }

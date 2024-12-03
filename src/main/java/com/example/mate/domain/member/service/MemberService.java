@@ -2,6 +2,8 @@ package com.example.mate.domain.member.service;
 
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
+import com.example.mate.common.jwt.JwtToken;
+import com.example.mate.common.security.util.JwtUtil;
 import com.example.mate.common.utils.file.FileUploader;
 import com.example.mate.common.utils.file.FileValidator;
 import com.example.mate.domain.constant.TeamInfo;
@@ -20,6 +22,7 @@ import com.example.mate.domain.member.dto.response.MyProfileResponse;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.FollowRepository;
 import com.example.mate.domain.member.repository.MemberRepository;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +39,7 @@ public class MemberService {
     private final GoodsReviewRepository goodsReviewRepository;
     private final MateReviewRepository mateReviewRepository;
     private final VisitPartRepository visitPartRepository;
+    private final JwtUtil jwtUtil;
 
     private static final String DEFAULT_IMAGE_URL = "image/default.png";
 
@@ -50,7 +54,20 @@ public class MemberService {
     public MemberLoginResponse loginByEmail(MemberLoginRequest request) {
         Member member = findByEmail(request.getEmail());
         // 토큰 발급한 뒤 member와 함께 넘기기
+        JwtToken jwtToken = makeToken(member);
         return MemberLoginResponse.from(member);
+    }
+
+    // JWT 토큰 생성
+    private JwtToken makeToken(Member member) {
+        Map<String, Object> payloadMap = member.getPayload();
+        String accessToken = jwtUtil.createToken(payloadMap, 60 * 24 * 3); // 3일 유효
+        String refreshToken = jwtUtil.createToken(Map.of("memberId", member.getId()), 60 * 24 * 7); // 7일 유효
+        return JwtToken.builder()
+                .grantType("Bearer")
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .build();
     }
 
     private Member findByEmail(String email) {

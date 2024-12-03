@@ -51,6 +51,19 @@ public class GlobalExceptionHandler {
                 ));
     }
 
+    // IllegalArgumentException 처리
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiResponse<Void>> handleIllegalArgumentException(IllegalArgumentException e) {
+        log.error("IllegalArgumentException: {}", e.getMessage());
+
+        return ResponseEntity
+                .badRequest()
+                .body(ApiResponse.error(
+                        e.getMessage(),
+                        HttpStatus.BAD_REQUEST.value()
+                ));
+    }
+
     // NumberFormatException 처리
     @ExceptionHandler(NumberFormatException.class)
     public ResponseEntity<ApiResponse<Void>> handleNumberFormatException(NumberFormatException e) {

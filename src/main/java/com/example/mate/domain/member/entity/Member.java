@@ -12,6 +12,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -61,6 +63,11 @@ public class Member {
     @Column(name = "about_me", length = 100)
     private String aboutMe;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false)
+    @Builder.Default
+    private Role role = Role.USER;
+
     public void changeNickname(String nickname) {
         this.nickname = nickname;
     }
@@ -86,5 +93,16 @@ public class Member {
                 .gender(Gender.fromCode(request.getGender()))
                 .teamId(request.getTeamId())
                 .build();
+    }
+
+    // Jwt 문자의 내용 반환
+    public Map<String, Object> getPayload() {
+        Map<String, Object> payloadMap = new HashMap<>();
+        payloadMap.put("memberId", id);
+        payloadMap.put("name", name);
+        payloadMap.put("nickname", nickname);
+        payloadMap.put("email", email);
+        payloadMap.put("role", role);
+        return payloadMap;
     }
 }

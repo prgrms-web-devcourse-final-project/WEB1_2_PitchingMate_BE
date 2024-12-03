@@ -15,6 +15,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.mate.common.response.PageResponse;
+import com.example.mate.common.security.filter.JwtCheckFilter;
 import com.example.mate.domain.constant.Rating;
 import com.example.mate.domain.goods.dto.LocationInfo;
 import com.example.mate.domain.goods.dto.request.GoodsPostRequest;
@@ -54,6 +55,9 @@ class GoodsControllerTest {
 
     @MockBean
     private GoodsService goodsService;
+
+    @MockBean
+    private JwtCheckFilter jwtCheckFilter;
 
     private GoodsPostRequest createGoodsPostRequest() {
         LocationInfo location = LocationInfo.builder()
@@ -108,10 +112,12 @@ class GoodsControllerTest {
                 objectMapper.writeValueAsBytes(postRequest)
         );
 
-        given(goodsService.registerGoodsPost(eq(memberId), any(GoodsPostRequest.class), anyList())).willReturn(response);
+        given(goodsService.registerGoodsPost(eq(memberId), any(GoodsPostRequest.class), anyList())).willReturn(
+                response);
 
         // when
-        MockMultipartHttpServletRequestBuilder multipartRequest = multipart("/api/goods/{memberId}", memberId).file(data);
+        MockMultipartHttpServletRequestBuilder multipartRequest = multipart("/api/goods/{memberId}", memberId).file(
+                data);
         files.forEach(multipartRequest::file);
 
         // then
@@ -147,7 +153,8 @@ class GoodsControllerTest {
                 .willReturn(response);
 
         // when
-        MockMultipartHttpServletRequestBuilder multipartRequest = multipart("/api/goods/{memberId}/post/{goodsPostId}", memberId, goodsPostId)
+        MockMultipartHttpServletRequestBuilder multipartRequest = multipart("/api/goods/{memberId}/post/{goodsPostId}",
+                memberId, goodsPostId)
                 .file(data);
         files.forEach(multipartRequest::file);
         multipartRequest.with(request -> {
@@ -180,7 +187,6 @@ class GoodsControllerTest {
         mockMvc.perform(delete("/api/goods/{memberId}/post/{goodsPostId}", memberId, goodsPostId))
                 .andDo(print())
                 .andExpect(status().isNoContent());
-
 
         verify(goodsService).deleteGoodsPost(memberId, goodsPostId);
     }
@@ -310,7 +316,8 @@ class GoodsControllerTest {
                 .goodsPostTitle("Sample Goods")
                 .build();
 
-        given(goodsService.registerGoodsReview(eq(reviewerId), eq(goodsPostId), any(GoodsReviewRequest.class))).willReturn(response);
+        given(goodsService.registerGoodsReview(eq(reviewerId), eq(goodsPostId),
+                any(GoodsReviewRequest.class))).willReturn(response);
 
         // when & then
         mockMvc.perform(post("/api/goods/{reviewerId}/post/{goodsPostId}/review", reviewerId, goodsPostId)

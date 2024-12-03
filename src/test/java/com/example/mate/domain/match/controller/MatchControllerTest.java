@@ -1,33 +1,6 @@
 package com.example.mate.domain.match.controller;
 
 
-import com.example.mate.domain.constant.StadiumInfo;
-import com.example.mate.domain.constant.TeamInfo;
-import com.example.mate.domain.match.dto.response.MatchResponse;
-
-import com.example.mate.domain.match.dto.response.WeeklyMatchesResponse;
-import com.example.mate.domain.match.entity.Match;
-import com.example.mate.domain.match.entity.MatchStatus;
-import com.example.mate.domain.match.service.MatchService;
-
-import com.example.mate.domain.match.util.WeekCalculator;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-
-import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -36,6 +9,30 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import com.example.mate.common.security.filter.JwtCheckFilter;
+import com.example.mate.domain.constant.StadiumInfo;
+import com.example.mate.domain.constant.TeamInfo;
+import com.example.mate.domain.match.dto.response.MatchResponse;
+import com.example.mate.domain.match.dto.response.WeeklyMatchesResponse;
+import com.example.mate.domain.match.entity.Match;
+import com.example.mate.domain.match.entity.MatchStatus;
+import com.example.mate.domain.match.service.MatchService;
+import com.example.mate.domain.match.util.WeekCalculator;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
 
 
 @WebMvcTest(MatchController.class)
@@ -49,55 +46,58 @@ class MatchControllerTest {
     @MockBean
     private MatchService matchService;
 
+    @MockBean
+    private JwtCheckFilter jwtCheckFilter;
+
     @Test
     @DisplayName("메인 배너 경기 조회 API 테스트")
     void getMainBannerMatches() throws Exception {
         // Given
         List<MatchResponse> mockResponses = List.of(
                 MatchResponse.from(Match.builder()
-                        .homeTeamId(TeamInfo.KIA.id)
-                        .awayTeamId(TeamInfo.LG.id)
-                        .stadiumId(StadiumInfo.GWANGJU.id)
-                        .matchTime(LocalDateTime.now().plusDays(1))
-                        .isCanceled(false)
-                        .status(MatchStatus.SCHEDULED)
-                        .build(),
+                                .homeTeamId(TeamInfo.KIA.id)
+                                .awayTeamId(TeamInfo.LG.id)
+                                .stadiumId(StadiumInfo.GWANGJU.id)
+                                .matchTime(LocalDateTime.now().plusDays(1))
+                                .isCanceled(false)
+                                .status(MatchStatus.SCHEDULED)
+                                .build(),
                         null),
                 MatchResponse.from(Match.builder()
-                        .homeTeamId(TeamInfo.NC.id)
-                        .awayTeamId(TeamInfo.SSG.id)
-                        .stadiumId(StadiumInfo.CHANGWON.id)
-                        .matchTime(LocalDateTime.now().plusDays(2))
-                        .isCanceled(false)
-                        .status(MatchStatus.SCHEDULED)
-                        .build(),
+                                .homeTeamId(TeamInfo.NC.id)
+                                .awayTeamId(TeamInfo.SSG.id)
+                                .stadiumId(StadiumInfo.CHANGWON.id)
+                                .matchTime(LocalDateTime.now().plusDays(2))
+                                .isCanceled(false)
+                                .status(MatchStatus.SCHEDULED)
+                                .build(),
                         null),
                 MatchResponse.from(Match.builder()
-                        .homeTeamId(TeamInfo.DOOSAN.id)
-                        .awayTeamId(TeamInfo.KT.id)
-                        .stadiumId(StadiumInfo.JAMSIL.id)
-                        .matchTime(LocalDateTime.now().plusDays(3))
-                        .isCanceled(false)
-                        .status(MatchStatus.SCHEDULED)
-                        .build(),
+                                .homeTeamId(TeamInfo.DOOSAN.id)
+                                .awayTeamId(TeamInfo.KT.id)
+                                .stadiumId(StadiumInfo.JAMSIL.id)
+                                .matchTime(LocalDateTime.now().plusDays(3))
+                                .isCanceled(false)
+                                .status(MatchStatus.SCHEDULED)
+                                .build(),
                         null),
                 MatchResponse.from(Match.builder()
-                        .homeTeamId(TeamInfo.SAMSUNG.id)
-                        .awayTeamId(TeamInfo.LOTTE.id)
-                        .stadiumId(StadiumInfo.DAEGU.id)
-                        .matchTime(LocalDateTime.now().plusDays(4))
-                        .isCanceled(false)
-                        .status(MatchStatus.SCHEDULED)
-                        .build(),
+                                .homeTeamId(TeamInfo.SAMSUNG.id)
+                                .awayTeamId(TeamInfo.LOTTE.id)
+                                .stadiumId(StadiumInfo.DAEGU.id)
+                                .matchTime(LocalDateTime.now().plusDays(4))
+                                .isCanceled(false)
+                                .status(MatchStatus.SCHEDULED)
+                                .build(),
                         null),
                 MatchResponse.from(Match.builder()
-                        .homeTeamId(TeamInfo.HANWHA.id)
-                        .awayTeamId(TeamInfo.KIWOOM.id)
-                        .stadiumId(StadiumInfo.DAEJEON.id)
-                        .matchTime(LocalDateTime.now().plusDays(5))
-                        .isCanceled(false)
-                        .status(MatchStatus.SCHEDULED)
-                        .build(),
+                                .homeTeamId(TeamInfo.HANWHA.id)
+                                .awayTeamId(TeamInfo.KIWOOM.id)
+                                .stadiumId(StadiumInfo.DAEJEON.id)
+                                .matchTime(LocalDateTime.now().plusDays(5))
+                                .isCanceled(false)
+                                .status(MatchStatus.SCHEDULED)
+                                .build(),
                         null)
         );
         when(matchService.getMainBannerMatches()).thenReturn(mockResponses);
@@ -119,31 +119,31 @@ class MatchControllerTest {
         Long teamId = 1L;
         List<MatchResponse> mockResponses = List.of(
                 MatchResponse.from(Match.builder()
-                        .homeTeamId(TeamInfo.KIA.id)
-                        .awayTeamId(TeamInfo.LG.id)
-                        .stadiumId(StadiumInfo.GWANGJU.id)
-                        .matchTime(LocalDateTime.now().plusDays(1))
-                        .isCanceled(false)
-                        .status(MatchStatus.SCHEDULED)
-                        .build(),
+                                .homeTeamId(TeamInfo.KIA.id)
+                                .awayTeamId(TeamInfo.LG.id)
+                                .stadiumId(StadiumInfo.GWANGJU.id)
+                                .matchTime(LocalDateTime.now().plusDays(1))
+                                .isCanceled(false)
+                                .status(MatchStatus.SCHEDULED)
+                                .build(),
                         null),
                 MatchResponse.from(Match.builder()
-                        .homeTeamId(TeamInfo.NC.id)
-                        .awayTeamId(TeamInfo.SSG.id)
-                        .stadiumId(StadiumInfo.CHANGWON.id)
-                        .matchTime(LocalDateTime.now().plusDays(2))
-                        .isCanceled(false)
-                        .status(MatchStatus.SCHEDULED)
-                        .build(),
+                                .homeTeamId(TeamInfo.NC.id)
+                                .awayTeamId(TeamInfo.SSG.id)
+                                .stadiumId(StadiumInfo.CHANGWON.id)
+                                .matchTime(LocalDateTime.now().plusDays(2))
+                                .isCanceled(false)
+                                .status(MatchStatus.SCHEDULED)
+                                .build(),
                         null),
                 MatchResponse.from(Match.builder()
-                        .homeTeamId(TeamInfo.DOOSAN.id)
-                        .awayTeamId(TeamInfo.KT.id)
-                        .stadiumId(StadiumInfo.JAMSIL.id)
-                        .matchTime(LocalDateTime.now().plusDays(3))
-                        .isCanceled(false)
-                        .status(MatchStatus.SCHEDULED)
-                        .build(),
+                                .homeTeamId(TeamInfo.DOOSAN.id)
+                                .awayTeamId(TeamInfo.KT.id)
+                                .stadiumId(StadiumInfo.JAMSIL.id)
+                                .matchTime(LocalDateTime.now().plusDays(3))
+                                .isCanceled(false)
+                                .status(MatchStatus.SCHEDULED)
+                                .build(),
                         null)
         );
         when(matchService.getTeamMatches(teamId)).thenReturn(mockResponses);
