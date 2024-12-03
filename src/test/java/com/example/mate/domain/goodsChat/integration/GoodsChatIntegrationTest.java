@@ -61,7 +61,8 @@ public class GoodsChatIntegrationTest {
         Long goodsPostId = goodsPost.getId();
 
         // when
-        MockHttpServletResponse result = mockMvc.perform(post("/api/goods/chat/{buyerId}", buyerId)
+        MockHttpServletResponse result = mockMvc.perform(post("/api/goods/chat", buyerId)
+                        .param("buyerId", String.valueOf(buyerId))
                         .param("goodsPostId", String.valueOf(goodsPostId)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("SUCCESS"))

@@ -50,7 +50,8 @@ class GoodsChatControllerTest {
                 .thenReturn(existingChatRoomResponse);
 
         // when & then
-        mockMvc.perform(post("/api/goods/chat/{buyerId}", buyerId)
+        mockMvc.perform(post("/api/goods/chat", buyerId)
+                        .param("buyerId", String.valueOf(buyerId))
                         .param("goodsPostId", String.valueOf(goodsPostId)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
@@ -89,7 +90,8 @@ class GoodsChatControllerTest {
                 .thenReturn(newChatRoomResponse);
 
         // when & then
-        mockMvc.perform(post("/api/goods/chat/{buyerId}", buyerId)
+        mockMvc.perform(post("/api/goods/chat", buyerId)
+                        .param("buyerId", String.valueOf(buyerId))
                         .param("goodsPostId", String.valueOf(goodsPostId)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("SUCCESS"))

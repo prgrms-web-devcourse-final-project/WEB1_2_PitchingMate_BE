@@ -5,7 +5,6 @@ import com.example.mate.domain.goodsChat.dto.response.GoodsChatRoomResponse;
 import com.example.mate.domain.goodsChat.service.GoodsChatService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -20,11 +19,11 @@ public class GoodsChatController {
 
     /*
     굿즈거래 상세 페이지 - 채팅방 입장
-    TODO: @PathVariable Long memberId -> @AuthenticationPrincipal 로 변경
+    TODO: @RequestParam Long memberId -> @AuthenticationPrincipal 로 변경
     "/api/goods/chat" 로 변경 예정
     */
-    @PostMapping("/{buyerId}")
-    public ResponseEntity<ApiResponse<GoodsChatRoomResponse>> createGoodsChatRoom(@PathVariable Long buyerId, @RequestParam Long goodsPostId) {
+    @PostMapping
+    public ResponseEntity<ApiResponse<GoodsChatRoomResponse>> createGoodsChatRoom(@RequestParam Long buyerId, @RequestParam Long goodsPostId) {
         GoodsChatRoomResponse response = goodsChatService.getOrCreateGoodsChatRoom(buyerId, goodsPostId);
 
         return ResponseEntity.ok(ApiResponse.success(response));
