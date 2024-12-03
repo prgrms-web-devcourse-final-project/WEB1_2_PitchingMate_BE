@@ -31,7 +31,7 @@ oauth:
     client-secret: ${NAVER_CLIENT_SECRET}
 
 jwt:
-  secret-key: ${JWT_SECRET_KEY}
+  secret_key: ${JWT_SECRET_KEY}
 
 openweather:
   api:
