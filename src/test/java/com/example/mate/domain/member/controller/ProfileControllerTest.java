@@ -12,6 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
 import com.example.mate.common.response.PageResponse;
+import com.example.mate.common.security.filter.JwtCheckFilter;
 import com.example.mate.domain.member.dto.response.MyGoodsRecordResponse;
 import com.example.mate.domain.member.dto.response.MyReviewResponse;
 import com.example.mate.domain.member.dto.response.MyVisitResponse;
@@ -46,6 +47,9 @@ class ProfileControllerTest {
 
     @MockBean
     private ProfileService profileService;
+
+    @MockBean
+    private JwtCheckFilter jwtCheckFilter;
 
     private MyGoodsRecordResponse createMyGoodsRecordResponse() {
         return MyGoodsRecordResponse.builder()

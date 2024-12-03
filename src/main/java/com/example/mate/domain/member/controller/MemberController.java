@@ -1,8 +1,11 @@
 package com.example.mate.domain.member.controller;
 
+import com.example.mate.common.jwt.JwtToken;
 import com.example.mate.common.response.ApiResponse;
+import com.example.mate.common.security.auth.CustomUserPrincipal;
 import com.example.mate.domain.member.dto.request.JoinRequest;
 import com.example.mate.domain.member.dto.request.MemberInfoUpdateRequest;
+import com.example.mate.domain.member.dto.request.MemberLoginRequest;
 import com.example.mate.domain.member.dto.response.JoinResponse;
 import com.example.mate.domain.member.dto.response.MemberProfileResponse;
 import com.example.mate.domain.member.dto.response.MyProfileResponse;
@@ -13,6 +16,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -44,6 +48,19 @@ public class MemberController {
             @Parameter(description = "소셜 로그인 정보와 사용자 추가 입력 정보") @RequestBody @Valid JoinRequest joinRequest
     ) {
         return ResponseEntity.ok(ApiResponse.success(memberService.join(joinRequest)));
+    }
+
+    /*
+    CATCH Mi 서비스 로그인
+    소셜 로그인 후, 받아온 이메일을 통해 로그인 처리
+     */
+    @Operation(summary = "CATCH Mi 서비스 로그인", description = "캐치미 서비스에 로그인합니다.")
+    @PostMapping("/login")
+    public ResponseEntity<ApiResponse<JwtToken>> catchMiLogin(
+            @Parameter(description = "회원 로그인 요청 정보", required = true) @Valid @RequestBody MemberLoginRequest request
+    ) {
+        JwtToken token = memberService.loginByEmail(request);
+        return ResponseEntity.ok(ApiResponse.success(token));
     }
 
     // TODO : 2024/11/29 - 내 프로필 조회 : 추후 @AuthenticationPrincipal Long memberId 받음
@@ -81,5 +98,11 @@ public class MemberController {
     public ResponseEntity<Void> deleteMember(@RequestParam Long memberId) {
         memberService.deleteMember(memberId);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/test")
+    public String test(@AuthenticationPrincipal CustomUserPrincipal principal) {
+        return "principal getName == " + principal.getName() + " || " + "principal getMemberId == "
+                + principal.getMemberId();
     }
 }

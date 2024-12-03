@@ -13,13 +13,14 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.test.web.servlet.MockMvc;
 
-@WebMvcTest(AuthController.class)
-@AutoConfigureMockMvc(addFilters = false)
+//@WebMvcTest(AuthController.class)   // webmvctest는 해당 클래스만 가져오므로, 시큐리티 설정이 동작을 안한다. 스프링 부트 테스트로.
+@SpringBootTest
+@AutoConfigureMockMvc
 @MockBean(JpaMetamodelMappingContext.class)
 public class AuthControllerTest {
 

@@ -28,3 +28,18 @@ Content-Type: application/json
   "teamId": 1,
   "nickname": "newTester"
 }
+
+
+### CATCH Mi 회원 로그인
+POST http://localhost:8080/api/members/login
+Content-Type: application/json
+
+{
+  "email": "test@example.com"
+}
+
+
+### @AuthenticationPrincipal Test
+GET http://localhost:8080/api/members/test
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiVVNFUiIsIm5hbWUiOiLtmY3quLjrj5kiLCJuaWNrbmFtZSI6InRlc3RlciIsImVtYWlsIjoidGVzdEBleGFtcGxlLmNvbSIsIm1lbWJlcklkIjoxfQ.14xQOj9lETbRh0v62NG7GBsCHSsKQ_l74M2xFPXmTgg
+

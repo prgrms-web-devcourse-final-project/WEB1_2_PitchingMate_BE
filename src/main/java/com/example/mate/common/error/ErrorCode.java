@@ -30,6 +30,7 @@ public enum ErrorCode {
     MEMBER_NOT_FOUND_BY_ID(HttpStatus.NOT_FOUND, "M001", "해당 ID의 회원 정보를 찾을 수 없습니다"),
     UNSUPPORTED_RESPONSE_TYPE(HttpStatus.BAD_REQUEST, "M002", "회원 프로필 조회에서 지원하지 않는 응답 타입입니다."),
     ALREADY_USED_NICKNAME(HttpStatus.BAD_REQUEST, "M003", "이미 사용 중인 닉네임입니다."),
+    MEMBER_NOT_FOUND_BY_EMAIL(HttpStatus.NOT_FOUND, "M004", "해당 이메일의 회원 정보를 찾을 수 없습니다."),
 
     // Follow
     ALREADY_FOLLOWED_MEMBER(HttpStatus.BAD_REQUEST, "F001", "이미 팔로우한 회원입니다."),

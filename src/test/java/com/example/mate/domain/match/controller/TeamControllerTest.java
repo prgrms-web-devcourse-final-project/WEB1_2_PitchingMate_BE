@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
+import com.example.mate.common.security.filter.JwtCheckFilter;
 import com.example.mate.domain.constant.TeamInfo;
 import com.example.mate.domain.match.dto.response.TeamResponse;
 import com.example.mate.domain.match.entity.TeamRecord;
@@ -35,6 +36,9 @@ class TeamControllerTest {
 
     @MockBean
     private TeamService teamService;
+
+    @MockBean
+    private JwtCheckFilter jwtCheckFilter;
 
     @Nested
     @DisplayName("팀 순위 조회")
