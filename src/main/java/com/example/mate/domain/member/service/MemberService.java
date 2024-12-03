@@ -12,7 +12,9 @@ import com.example.mate.domain.mate.repository.MateReviewRepository;
 import com.example.mate.domain.mate.repository.VisitPartRepository;
 import com.example.mate.domain.member.dto.request.JoinRequest;
 import com.example.mate.domain.member.dto.request.MemberInfoUpdateRequest;
+import com.example.mate.domain.member.dto.request.MemberLoginRequest;
 import com.example.mate.domain.member.dto.response.JoinResponse;
+import com.example.mate.domain.member.dto.response.MemberLoginResponse;
 import com.example.mate.domain.member.dto.response.MemberProfileResponse;
 import com.example.mate.domain.member.dto.response.MyProfileResponse;
 import com.example.mate.domain.member.entity.Member;
@@ -41,6 +43,19 @@ public class MemberService {
     public JoinResponse join(JoinRequest request) {
         Member savedMember = memberRepository.save(Member.from(request));
         return JoinResponse.from(savedMember);
+    }
+
+    // TODO : JWT 토큰 발급
+    // 자체 로그인 기능
+    public MemberLoginResponse loginByEmail(MemberLoginRequest request) {
+        Member member = findByEmail(request.getEmail());
+        // 토큰 발급한 뒤 member와 함께 넘기기
+        return MemberLoginResponse.from(member);
+    }
+
+    private Member findByEmail(String email) {
+        return memberRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND_BY_EMAIL));
     }
 
     // TODO : JWT 도입 이후 본인만 접근할 수 있도록 수정
