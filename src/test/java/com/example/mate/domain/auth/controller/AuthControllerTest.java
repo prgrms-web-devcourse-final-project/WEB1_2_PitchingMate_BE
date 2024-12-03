@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.example.mate.common.security.util.JwtUtil;
 import com.example.mate.domain.auth.dto.response.LoginResponse;
 import com.example.mate.domain.auth.dto.response.NaverProfileResponse;
 import com.example.mate.domain.auth.service.NaverAuthService;
@@ -29,6 +30,9 @@ public class AuthControllerTest {
 
     @MockBean
     private NaverAuthService naverAuthService;
+
+    @MockBean
+    private JwtUtil jwtUtil;
 
     @Test
     @DisplayName("네이버 소셜 로그인 요청 시, 네이버 인증 페이지로 리다이렉트 성공")

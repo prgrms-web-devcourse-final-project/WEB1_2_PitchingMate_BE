@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.mate.common.response.ApiResponse;
+import com.example.mate.common.security.util.JwtUtil;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.constant.Rating;
 import com.example.mate.domain.constant.TeamInfo;
@@ -39,6 +40,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.mock.web.MockMultipartFile;
@@ -60,6 +62,9 @@ public class GoodsIntegrationTest {
 
     private Member member;
     private GoodsPost goodsPost;
+
+    @MockBean
+    private JwtUtil jwtUtil;
 
     @BeforeEach
     void setUp() {

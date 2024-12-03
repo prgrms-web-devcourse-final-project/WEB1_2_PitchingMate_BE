@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.mate.common.response.ApiResponse;
+import com.example.mate.common.security.util.JwtUtil;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.goods.dto.LocationInfo;
 import com.example.mate.domain.goods.entity.Category;
@@ -35,6 +36,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -52,6 +54,9 @@ public class GoodsChatIntegrationTest {
     @Autowired private GoodsChatRoomRepository chatRoomRepository;
     @Autowired private GoodsChatMessageRepository messageRepository;
     @Autowired private ObjectMapper objectMapper;
+
+    @MockBean
+    private JwtUtil jwtUtil;
 
     private Member seller;
     private Member buyer;

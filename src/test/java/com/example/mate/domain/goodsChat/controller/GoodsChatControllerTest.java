@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.mate.common.response.PageResponse;
+import com.example.mate.common.security.util.JwtUtil;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatMsgResponse;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatRoomResponse;
 import com.example.mate.domain.goodsChat.service.GoodsChatService;
@@ -35,6 +36,9 @@ class GoodsChatControllerTest {
 
     @MockBean
     private GoodsChatService goodsChatService;
+
+    @MockBean
+    private JwtUtil jwtUtil;
 
     @Test
     @DisplayName("굿즈거래 채팅방 생성 성공 - 기존 채팅방이 있을 경우 해당 채팅방을 반환한다.")
