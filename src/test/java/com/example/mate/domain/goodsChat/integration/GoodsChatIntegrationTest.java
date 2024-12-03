@@ -1,6 +1,6 @@
 package com.example.mate.domain.goodsChat.integration;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -32,15 +32,20 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
-@AutoConfigureMockMvc
+@AutoConfigureMockMvc(addFilters = false)
 @Transactional
 public class GoodsChatIntegrationTest {
 
-    @Autowired private MockMvc mockMvc;
-    @Autowired private MemberRepository memberRepository;
-    @Autowired private GoodsPostRepository goodsPostRepository;
-    @Autowired private GoodsChatRoomRepository chatRoomRepository;
-    @Autowired private ObjectMapper objectMapper;
+    @Autowired
+    private MockMvc mockMvc;
+    @Autowired
+    private MemberRepository memberRepository;
+    @Autowired
+    private GoodsPostRepository goodsPostRepository;
+    @Autowired
+    private GoodsChatRoomRepository chatRoomRepository;
+    @Autowired
+    private ObjectMapper objectMapper;
 
     private Member member;
     private GoodsPost goodsPost;
@@ -76,7 +81,9 @@ public class GoodsChatIntegrationTest {
                 .getResponse();
 
         result.setCharacterEncoding("UTF-8");
-        ApiResponse<GoodsChatRoomResponse> apiResponse = objectMapper.readValue(result.getContentAsString(), new TypeReference<>() {});
+        ApiResponse<GoodsChatRoomResponse> apiResponse = objectMapper.readValue(result.getContentAsString(),
+                new TypeReference<>() {
+                });
         GoodsChatRoomResponse actualResponse = apiResponse.getData();
 
         // then

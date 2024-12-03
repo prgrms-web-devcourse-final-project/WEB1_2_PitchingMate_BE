@@ -1,5 +1,13 @@
 package com.example.mate.domain.mate.controller;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import com.example.mate.common.security.filter.JwtCheckFilter;
 import com.example.mate.domain.constant.Rating;
 import com.example.mate.domain.mate.dto.request.MateReviewCreateRequest;
 import com.example.mate.domain.mate.dto.response.MateReviewCreateResponse;
@@ -16,13 +24,6 @@ import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 @WebMvcTest(MateController.class)
 @MockBean(JpaMetamodelMappingContext.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -36,6 +37,9 @@ class MateReviewControllerTest {
 
     @MockBean
     private MateService mateService;
+
+    @MockBean
+    private JwtCheckFilter jwtCheckFilter;
 
     @Nested
     @DisplayName("메이트 직관 후기 작성")
