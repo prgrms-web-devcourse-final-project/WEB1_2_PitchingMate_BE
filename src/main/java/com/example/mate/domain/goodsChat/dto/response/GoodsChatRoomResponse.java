@@ -2,7 +2,6 @@ package com.example.mate.domain.goodsChat.dto.response;
 
 import com.example.mate.domain.constant.TeamInfo;
 import com.example.mate.domain.goods.entity.GoodsPost;
-import com.example.mate.domain.goods.entity.GoodsPostImage;
 import com.example.mate.domain.goodsChat.entity.GoodsChatRoom;
 import lombok.Builder;
 import lombok.Getter;
@@ -22,11 +21,9 @@ public class GoodsChatRoomResponse {
     private final String status;
     private final String imageUrl;
 
-    private static final String DEFAULT_IMAGE_URL = "upload/default.jpg";
-
     public static GoodsChatRoomResponse of(GoodsChatRoom chatRoom) {
         GoodsPost goodsPost = chatRoom.getGoodsPost();
-        String mainImageUrl = getMainImageUrl(goodsPost);
+        String mainImageUrl = goodsPost.getMainImageUrl();
         String teamName = getTeamName(goodsPost);
 
         return GoodsChatRoomResponse.builder()
@@ -39,14 +36,6 @@ public class GoodsChatRoomResponse {
                 .imageUrl(mainImageUrl)
                 .status(goodsPost.getStatus().getValue())
                 .build();
-    }
-
-    private static String getMainImageUrl(GoodsPost goodsPost) {
-        return goodsPost.getGoodsPostImages().stream()
-                .filter(GoodsPostImage::getIsMainImage)
-                .findFirst()
-                .map(GoodsPostImage::getImageUrl)
-                .orElse(DEFAULT_IMAGE_URL);
     }
 
     private static String getTeamName(GoodsPost goodsPost) {

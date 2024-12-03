@@ -109,4 +109,12 @@ public class GoodsPost extends BaseTimeEntity {
         this.buyer = buyer;
         this.status = Status.CLOSED;
     }
+
+    public String getMainImageUrl() {
+        return goodsPostImages.stream()
+                .filter(GoodsPostImage::getIsMainImage)
+                .findFirst()
+                .map(GoodsPostImage::getImageUrl)
+                .orElse("upload/default.jpg");
+    }
 }
