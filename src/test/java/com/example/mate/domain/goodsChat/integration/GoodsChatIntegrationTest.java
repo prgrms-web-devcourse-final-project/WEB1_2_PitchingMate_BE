@@ -1,6 +1,7 @@
 package com.example.mate.domain.goodsChat.integration;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -11,15 +12,21 @@ import com.example.mate.domain.goods.dto.LocationInfo;
 import com.example.mate.domain.goods.entity.Category;
 import com.example.mate.domain.goods.entity.GoodsPost;
 import com.example.mate.domain.goods.entity.GoodsPostImage;
+import com.example.mate.domain.goods.entity.Role;
 import com.example.mate.domain.goods.entity.Status;
 import com.example.mate.domain.goods.repository.GoodsPostRepository;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatRoomResponse;
+import com.example.mate.domain.goodsChat.entity.GoodsChatMessage;
+import com.example.mate.domain.goodsChat.entity.GoodsChatPart;
 import com.example.mate.domain.goodsChat.entity.GoodsChatRoom;
+import com.example.mate.domain.goodsChat.repository.GoodsChatMessageRepository;
 import com.example.mate.domain.goodsChat.repository.GoodsChatRoomRepository;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -27,6 +34,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,23 +49,37 @@ public class GoodsChatIntegrationTest {
     @Autowired private MemberRepository memberRepository;
     @Autowired private GoodsPostRepository goodsPostRepository;
     @Autowired private GoodsChatRoomRepository chatRoomRepository;
+    @Autowired private GoodsChatMessageRepository messageRepository;
     @Autowired private ObjectMapper objectMapper;
 
-    private Member member;
+    private Member seller;
+    private Member buyer;
     private GoodsPost goodsPost;
+    private GoodsChatRoom chatRoom;
+    private List<GoodsChatMessage> messages = new ArrayList<>();
 
     @BeforeEach
     void setUp() {
-        member = createMember("tester", "tester nickname", "test@gmail.com");
-        goodsPost = createGoodsPost(Status.OPEN, member, null);
+        seller = createMember("seller", "seller nickname", "seller@gmail.com");
+        buyer = createMember("buyer", "buyer nickname", "buyer@gmail.com");
+        goodsPost = createGoodsPost(Status.OPEN, seller, buyer);
         createGoodsPostImage(goodsPost);
+
+        chatRoom = createGoodsChatRoom(goodsPost);
+        chatRoom.addChatParticipant(seller, Role.SELLER);
+        chatRoom.addChatParticipant(buyer, Role.BUYER);
+        chatRoomRepository.saveAndFlush(chatRoom);
+
+        chatRoom.getChatParts().forEach(part -> {
+            messages.add(createChatMessage(part, "test message"));
+        });
     }
 
     @Test
     @DisplayName("굿즈거래 채팅방 생성 통합 테스트")
     void get_or_create_goods_chatroom_integration_test() throws Exception {
         // given
-        Member buyer = createMember("test buyer", "test buyer nickname", "buyer@gmail.com");
+        Member buyer = createMember("test buyer", "test buyer nickname", "test-buyer@gmail.com");
         Long buyerId = buyer.getId();
         Long goodsPostId = goodsPost.getId();
 
@@ -91,6 +114,29 @@ public class GoodsChatIntegrationTest {
 
         GoodsPostImage image = actualPost.getGoodsPostImages().get(0);
         assertThat(image.getImageUrl()).isEqualTo("upload/test_img_url");
+    }
+
+    @Test
+    @DisplayName("굿즈거래 채팅방 채팅내역 조회 통합 테스트")
+    void get_messages_for_chat_room() throws Exception {
+        // given
+        Long chatRoomId = chatRoom.getId();
+        Long memberId = buyer.getId();
+        Pageable pageable = PageRequest.of(0, 10);
+
+        // when & then
+        mockMvc.perform(get("/api/goods/chat/{chatRoomId}", chatRoomId)
+                        .param("memberId", String.valueOf(memberId))
+                        .param("page", String.valueOf(pageable.getPageNumber()))
+                        .param("size", String.valueOf(pageable.getPageSize())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("SUCCESS"))
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.content").isArray())
+                .andExpect(jsonPath("$.data.content[0].content").value("test message"))
+                .andExpect(jsonPath("$.data.content[1].content").value("test message"))
+                .andReturn()
+                .getResponse();
     }
 
     private Member createMember(String name, String nickname, String email) {
@@ -132,6 +178,16 @@ public class GoodsChatIntegrationTest {
 
         goodsPost.changeImages(List.of(image));
         goodsPostRepository.save(goodsPost);
+    }
+
+    private GoodsChatMessage createChatMessage(GoodsChatPart goodsChatPart, String content) {
+        return messageRepository.save(
+                GoodsChatMessage.builder()
+                        .goodsChatPart(goodsChatPart)
+                        .content(content)
+                        .sentAt(LocalDateTime.now())
+                        .build()
+        );
     }
 
     private LocationInfo createLocationInfo() {
