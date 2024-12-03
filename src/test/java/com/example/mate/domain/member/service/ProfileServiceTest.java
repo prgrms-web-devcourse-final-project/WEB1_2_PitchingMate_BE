@@ -10,6 +10,7 @@ import com.example.mate.common.error.CustomException;
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.constant.Rating;
+import com.example.mate.domain.constant.TeamInfo;
 import com.example.mate.domain.goods.dto.LocationInfo;
 import com.example.mate.domain.goods.entity.Category;
 import com.example.mate.domain.goods.entity.GoodsPost;
@@ -17,12 +18,20 @@ import com.example.mate.domain.goods.entity.GoodsPostImage;
 import com.example.mate.domain.goods.entity.Status;
 import com.example.mate.domain.goods.repository.GoodsPostRepository;
 import com.example.mate.domain.goods.repository.GoodsReviewRepositoryCustom;
+import com.example.mate.domain.match.entity.Match;
 import com.example.mate.domain.mate.entity.MateReview;
+import com.example.mate.domain.mate.repository.MateRepository;
+import com.example.mate.domain.mate.repository.MateReviewRepository;
 import com.example.mate.domain.mate.repository.MateReviewRepositoryCustom;
+import com.example.mate.domain.mate.repository.VisitPartRepository;
 import com.example.mate.domain.member.dto.response.MyGoodsRecordResponse;
 import com.example.mate.domain.member.dto.response.MyReviewResponse;
+import com.example.mate.domain.member.dto.response.MyTimelineResponse;
+import com.example.mate.domain.member.dto.response.MyVisitResponse;
+import com.example.mate.domain.member.dto.response.MyVisitResponse.MateReviewResponse;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
+import com.example.mate.domain.member.repository.TimelineRepositoryCustom;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -57,8 +66,21 @@ class ProfileServiceTest {
     @Mock
     private GoodsReviewRepositoryCustom goodsReviewRepositoryCustom;
 
+    @Mock
+    private TimelineRepositoryCustom timelineRepositoryCustom;
+
+    @Mock
+    private MateRepository mateRepository;
+
+    @Mock
+    private VisitPartRepository visitPartRepository;
+
+    @Mock
+    private MateReviewRepository mateReviewRepository;
+
     private Member member1;
     private Member member2;
+    private Member member3;
     private GoodsPost goodsPost;
     private GoodsPostImage goodsPostImage;
     private MateReview mateReview;
@@ -86,6 +108,15 @@ class ProfileServiceTest {
                 .name("김영희")
                 .nickname("tester2")
                 .email("tester2@example.com")
+                .age(20)
+                .gender(Gender.FEMALE)
+                .teamId(2L)
+                .build();
+        member3 = Member.builder()
+                .id(3L)
+                .name("안영희")
+                .nickname("tester3")
+                .email("tester3@example.com")
                 .age(20)
                 .gender(Gender.FEMALE)
                 .teamId(2L)
@@ -351,6 +382,78 @@ class ProfileServiceTest {
 
             verify(memberRepository).findById(invalidMemberId);
 
+        }
+    }
+
+    @Nested
+    @DisplayName("회원 타임라인 페이징 조회")
+    class ProfileTimelinePage {
+
+        @Test
+        @DisplayName("회원 타임라인 페이징 조회 성공")
+        void get_my_visit_page_success() {
+            // given
+            Long memberId = 1L;
+            Pageable pageable = PageRequest.of(0, 10);
+
+            // memberRepository의 mock 설정
+            given(memberRepository.findById(memberId)).willReturn(Optional.of(member1));
+
+            // timelineRepositoryCustom의 mock 설정
+            List<MyTimelineResponse> myTimelineResponseList = List.of(
+                    new MyTimelineResponse(1L, 1L, 1L)
+            );
+            Page<MyTimelineResponse> visitsByIdPage = new PageImpl<>(myTimelineResponseList, pageable,
+                    myTimelineResponseList.size());
+            given(timelineRepositoryCustom.findVisitsById(memberId, pageable)).willReturn(visitsByIdPage);
+
+            // mateRepository의 mock 설정
+            Match match = Match.builder().homeTeamId(1L).awayTeamId(2L).stadiumId(1L).build();
+            given(mateRepository.findMatchByMatePostId(1L)).willReturn(match);
+
+            // visitPartRepository의 mock 설정
+            given(visitPartRepository.findMembersByVisitIdExcludeMember(1L, memberId)).willReturn(
+                    List.of(member2, member3));
+
+            // when
+            PageResponse<MyVisitResponse> response = profileService.getMyVisitPage(memberId, pageable);
+
+            // then
+            assertThat(response).isNotNull();
+            assertThat(response.getContent()).isNotEmpty();
+            assertThat(response.getTotalElements()).isEqualTo(visitsByIdPage.getTotalElements());
+            assertThat(response.getTotalPages()).isEqualTo(visitsByIdPage.getTotalPages());
+            assertThat(response.getContent().size()).isEqualTo(myTimelineResponseList.size());
+
+            MyVisitResponse visitResponse = response.getContent().get(0);
+            assertThat(visitResponse.getHomeTeamName()).isEqualTo(TeamInfo.getById(match.getHomeTeamId()).shortName);
+            assertThat(visitResponse.getAwayTeamName()).isEqualTo(TeamInfo.getById(match.getAwayTeamId()).shortName);
+            assertThat(visitResponse.getLocation()).isEqualTo(match.getStadium().name);
+            assertThat(visitResponse.getMatchTime()).isEqualTo(match.getMatchTime());
+
+            // 리뷰 정보 검증
+            assertThat(visitResponse.getReviews()).hasSize(2);
+            MateReviewResponse review1 = visitResponse.getReviews().get(0);
+            assertThat(review1.getMemberId()).isEqualTo(member2.getId());
+            assertThat(review1.getNickname()).isEqualTo(member2.getNickname());
+        }
+
+        @Test
+        @DisplayName("회원 타임라인 페이징 조회 실패 - 유효하지 않은 회원 아이디로 조회")
+        void get_my_visit_page_fail_invalid_member_id() {
+            // given
+            Long invalidMemberId = 999L; // 존재하지 않는 회원 ID
+            Pageable pageable = PageRequest.of(0, 10);
+
+            given(memberRepository.findById(invalidMemberId)).willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> profileService.getMyVisitPage(invalidMemberId, pageable))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode",
+                            MEMBER_NOT_FOUND_BY_ID); // MEMBER_NOT_FOUND_BY_ID는 예외 처리 시 사용된 errorCode로, 실제 코드에 맞게 설정해주세요.
+
+            verify(memberRepository).findById(invalidMemberId);
         }
     }
 }

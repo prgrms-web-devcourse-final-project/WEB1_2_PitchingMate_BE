@@ -8,11 +8,23 @@ import com.example.mate.domain.goods.entity.GoodsPostImage;
 import com.example.mate.domain.goods.entity.Status;
 import com.example.mate.domain.goods.repository.GoodsPostRepository;
 import com.example.mate.domain.goods.repository.GoodsReviewRepositoryCustom;
+import com.example.mate.domain.match.entity.Match;
+import com.example.mate.domain.mate.entity.MateReview;
+import com.example.mate.domain.mate.repository.MateRepository;
+import com.example.mate.domain.mate.repository.MateReviewRepository;
 import com.example.mate.domain.mate.repository.MateReviewRepositoryCustom;
+import com.example.mate.domain.mate.repository.VisitPartRepository;
 import com.example.mate.domain.member.dto.response.MyGoodsRecordResponse;
 import com.example.mate.domain.member.dto.response.MyReviewResponse;
+import com.example.mate.domain.member.dto.response.MyTimelineResponse;
+import com.example.mate.domain.member.dto.response.MyVisitResponse;
+import com.example.mate.domain.member.dto.response.MyVisitResponse.MateReviewResponse;
+import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
+import com.example.mate.domain.member.repository.TimelineRepositoryCustom;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,6 +40,10 @@ public class ProfileService {
     private final GoodsPostRepository goodsPostRepository;
     private final MateReviewRepositoryCustom mateReviewRepositoryCustom;
     private final GoodsReviewRepositoryCustom goodsReviewRepositoryCustom;
+    private final TimelineRepositoryCustom timelineRepositoryCustom;
+    private final MateRepository mateRepository;
+    private final VisitPartRepository visitPartRepository;
+    private final MateReviewRepository mateReviewRepository;
 
     // 굿즈 판매기록 페이징 조회
     @Transactional(readOnly = true)
@@ -124,4 +140,69 @@ public class ProfileService {
                 .pageSize(goodsReviewPage.getSize())
                 .build();
     }
+
+    // TODO : 쿼리가 너무 많이 나오는 문제 -> 멘토링 및 리팩토링 필요
+    // 직관 타임라인 페이징 조회
+    @Transactional(readOnly = true)
+    public PageResponse<MyVisitResponse> getMyVisitPage(Long memberId, Pageable pageable) {
+        validateMemberId(memberId);
+
+        // 회원이 참여한 직관을 페이징하여 가져오기
+        Page<MyTimelineResponse> visitsByIdPage = timelineRepositoryCustom.findVisitsById(memberId, pageable);
+
+        // 응답 객체 생성
+        List<MyVisitResponse> responses = visitsByIdPage.getContent().stream()
+                .map(response -> createVisitResponse(response, memberId))
+                .collect(Collectors.toList());
+
+        // 페이징 정보 처리
+        return createPageResponse(visitsByIdPage, responses, pageable);
+    }
+
+    private MyVisitResponse createVisitResponse(MyTimelineResponse response, Long memberId) {
+        // 경기 정보 가져오기
+        Match match = mateRepository.findMatchByMatePostId(response.getMatePostId());
+
+        // 회원 본인을 제외한 직관 참여 리스트 가져오기
+        List<Member> mates = visitPartRepository.findMembersByVisitIdExcludeMember(response.getVisitId(), memberId);
+
+        // 각 메이트에 대한 리뷰 생성
+        List<MateReviewResponse> reviews = createMateReviews(response, mates, memberId);
+
+        return MyVisitResponse.of(match, reviews);
+    }
+
+    private List<MateReviewResponse> createMateReviews(MyTimelineResponse response, List<Member> mates, Long memberId) {
+        return mates.stream()
+                .map(mate -> {
+                    Optional<MateReview> mateReview = mateReviewRepository.findMateReviewByVisitIdAndReviewerIdAndRevieweeId(
+                            response.getVisitId(), memberId, mate.getId());
+                    return mateReview.map(MateReviewResponse::from) // 해당 mate에 대한 리뷰가 있으면 리뷰 채워서 반환
+                            .orElseGet(() -> MateReviewResponse.from(mate)); // 리뷰가 없으면 rating, content = null
+                })
+                .collect(Collectors.toList());
+    }
+
+    private PageResponse<MyVisitResponse> createPageResponse(Page<MyTimelineResponse> visitsByIdPage,
+                                                             List<MyVisitResponse> responses, Pageable pageable) {
+        int totalElements = (int) visitsByIdPage.getTotalElements();
+        int totalPages = visitsByIdPage.getTotalPages();
+
+        // 페이징 처리
+        int pageNumber = pageable.getPageNumber();
+        int pageSize = pageable.getPageSize();
+        int start = Math.min(pageNumber * pageSize, totalElements);
+        int end = Math.min(start + pageSize, totalElements);
+        List<MyVisitResponse> content = responses.subList(start, end);
+
+        return PageResponse.<MyVisitResponse>builder()
+                .content(content)
+                .totalPages(totalPages)
+                .totalElements(totalElements)
+                .hasNext(pageNumber + 1 < totalPages)
+                .pageNumber(pageNumber)
+                .pageSize(pageSize)
+                .build();
+    }
+
 }
