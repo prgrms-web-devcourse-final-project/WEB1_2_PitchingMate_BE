@@ -29,3 +29,7 @@ Accept: application/json
 ### KBO 리그 전체 순위를 조회
 GET http://localhost:8000/api/teams/rankings
 Content-Type: application/json
+
+### 특정 팀 순위 조회
+GET http://localhost:8000/api/teams/rankings/6
+Content-Type: application/json

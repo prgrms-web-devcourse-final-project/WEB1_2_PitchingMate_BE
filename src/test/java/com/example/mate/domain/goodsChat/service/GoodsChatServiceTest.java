@@ -10,16 +10,24 @@ import static org.mockito.Mockito.when;
 
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
+import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.goods.entity.Category;
 import com.example.mate.domain.goods.entity.GoodsPost;
 import com.example.mate.domain.goods.entity.Role;
 import com.example.mate.domain.goods.entity.Status;
 import com.example.mate.domain.goods.repository.GoodsPostRepository;
+import com.example.mate.domain.goodsChat.dto.response.GoodsChatMsgResponse;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatRoomResponse;
+import com.example.mate.domain.goodsChat.entity.GoodsChatMessage;
+import com.example.mate.domain.goodsChat.entity.GoodsChatPartId;
 import com.example.mate.domain.goodsChat.entity.GoodsChatRoom;
+import com.example.mate.domain.goodsChat.repository.GoodsChatMessageRepository;
+import com.example.mate.domain.goodsChat.repository.GoodsChatPartRepository;
 import com.example.mate.domain.goodsChat.repository.GoodsChatRoomRepository;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -28,6 +36,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 @ExtendWith(MockitoExtension.class)
 class GoodsChatServiceTest {
@@ -43,6 +55,12 @@ class GoodsChatServiceTest {
 
     @Mock
     private GoodsChatRoomRepository chatRoomRepository;
+
+    @Mock
+    private  GoodsChatPartRepository partRepository;
+
+    @Mock
+    private  GoodsChatMessageRepository messageRepository;
 
     private Member createMember(Long id, String name, String nickname) {
         return Member.builder()
@@ -70,6 +88,15 @@ class GoodsChatServiceTest {
         return GoodsChatRoom.builder()
                 .id(id)
                 .goodsPost(goodsPost)
+                .build();
+    }
+
+    private GoodsChatMessage createMessage(GoodsChatRoom chatRoom, Long id, int idx, String content, LocalDateTime sentAt) {
+        return GoodsChatMessage.builder()
+                .id(id)
+                .goodsChatPart(chatRoom.getChatParts().get(idx))
+                .content(content)
+                .sentAt(sentAt)
                 .build();
     }
 
@@ -195,6 +222,70 @@ class GoodsChatServiceTest {
             verify(goodsPostRepository).findById(goodsPostId);
             verify(chatRoomRepository, never()).findExistingChatRoom(anyLong(), anyLong(), any(Role.class));
             verify(chatRoomRepository, never()).save(any(GoodsChatRoom.class));
+        }
+    }
+
+    @Nested
+    @DisplayName("채팅 내역 조회 테스트")
+    class GoodsChatMessagePageTest {
+
+        @Test
+        @DisplayName("채팅 내역 조회 성공 - 회원이 채팅방에 참여한 경우 메시지를 페이지로 반환한다.")
+        void getMessagesForChatRoom_should_return_messages() {
+            // given
+            Member member = createMember(2L, "Test Member", "test_member");
+            GoodsChatRoom chatRoom = createGoodsChatRoom(1L, null);
+            Long memberId = member.getId();
+            Long chatRoomId = chatRoom.getId();
+            GoodsChatPartId goodsChatPartId = new GoodsChatPartId(chatRoomId, memberId);
+
+            chatRoom.addChatParticipant(member, Role.BUYER);
+            chatRoom.addChatParticipant(member, Role.SELLER);
+
+            Pageable pageable = PageRequest.of(0, 10);
+
+            GoodsChatMessage firstMessage = createMessage(chatRoom, 1L, 0, "first message", LocalDateTime.now().minusMinutes(10));
+            GoodsChatMessage secondMessage = createMessage(chatRoom, 2L, 1, "second message", LocalDateTime.now());
+
+            Page<GoodsChatMessage> messagePage = new PageImpl<>(List.of(secondMessage, firstMessage));
+
+            when(partRepository.existsById(goodsChatPartId)).thenReturn(true);
+            when(messageRepository.findByChatRoomId(chatRoomId, pageable)).thenReturn(messagePage);
+
+            // when
+            PageResponse<GoodsChatMsgResponse> result = goodsChatService.getMessagesForChatRoom(chatRoomId, memberId, pageable);
+
+            // then
+            assertThat(result.getContent()).hasSize(2);
+            assertThat(result.getContent().get(0).getContent()).isEqualTo(secondMessage.getContent());
+            assertThat(result.getContent().get(0).getChatMessageId()).isEqualTo(secondMessage.getId());
+            assertThat(result.getContent().get(0).getAuthorId()).isEqualTo(memberId);
+            assertThat(result.getContent().get(1).getContent()).isEqualTo(firstMessage.getContent());
+            assertThat(result.getContent().get(1).getChatMessageId()).isEqualTo(firstMessage.getId());
+
+            verify(partRepository).existsById(goodsChatPartId);
+            verify(messageRepository).findByChatRoomId(chatRoomId, pageable);
+        }
+
+        @Test
+        @DisplayName("채팅 내역 조회 실패 - 회원이 채팅방에 참여하지 않은 경우 예외를 발생시킨다.")
+        void getMessagesForChatRoom_should_throw_exception_for_non_participant() {
+            // given
+            Long chatRoomId = 1L;
+            Long memberId = 2L;
+            GoodsChatPartId goodsChatPartId = new GoodsChatPartId(chatRoomId, memberId);
+            Pageable pageable = PageRequest.of(0, 10);
+
+            when(partRepository.existsById(goodsChatPartId)).thenReturn(false);
+
+            // when
+            assertThatThrownBy(() -> goodsChatService.getMessagesForChatRoom(chatRoomId, memberId, pageable))
+                    .isInstanceOf(CustomException.class)
+                    .hasMessage(ErrorCode.GOODS_CHAT_NOT_FOUND_CHAT_PART.getMessage());
+
+            // then
+            verify(partRepository).existsById(goodsChatPartId);
+            verify(messageRepository, never()).findByChatRoomId(chatRoomId, pageable);
         }
     }
 }

@@ -72,6 +72,9 @@ dependencies {
     // WebDriverManager
     implementation 'io.github.bonigarcia:webdrivermanager:5.9.2'
 
+    // WebSocket
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
+
     implementation 'org.hibernate.validator:hibernate-validator'
 }
 
