@@ -2,11 +2,11 @@ package com.example.mate.domain.member.service;
 
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
+import com.example.mate.common.jwt.JwtToken;
+import com.example.mate.common.security.util.JwtUtil;
 import com.example.mate.common.utils.file.FileUploader;
 import com.example.mate.common.utils.file.FileValidator;
 import com.example.mate.domain.constant.TeamInfo;
-import com.example.mate.common.jwt.JwtToken;
-import com.example.mate.common.security.util.JwtUtil;
 import com.example.mate.domain.goods.entity.Status;
 import com.example.mate.domain.goods.repository.GoodsPostRepository;
 import com.example.mate.domain.goods.repository.GoodsReviewRepository;
@@ -14,8 +14,8 @@ import com.example.mate.domain.mate.repository.MateReviewRepository;
 import com.example.mate.domain.mate.repository.VisitPartRepository;
 import com.example.mate.domain.member.dto.request.JoinRequest;
 import com.example.mate.domain.member.dto.request.MemberInfoUpdateRequest;
-import com.example.mate.domain.member.dto.response.JoinResponse;
 import com.example.mate.domain.member.dto.request.MemberLoginRequest;
+import com.example.mate.domain.member.dto.response.JoinResponse;
 import com.example.mate.domain.member.dto.response.MemberProfileResponse;
 import com.example.mate.domain.member.dto.response.MyProfileResponse;
 import com.example.mate.domain.member.entity.Member;
@@ -133,7 +133,7 @@ public class MemberService {
     // JWT 토큰 생성
     private JwtToken makeToken(Member member) {
         Map<String, Object> payloadMap = member.getPayload();
-        String accessToken = jwtUtil.createToken(payloadMap, 60); // 60분 유효
+        String accessToken = jwtUtil.createToken(payloadMap, 60 * 24 * 3); // 3일 유효
         String refreshToken = jwtUtil.createToken(Map.of("memberId", member.getId()), 60 * 24 * 7); // 7일 유효
         return JwtToken.builder()
                 .grantType("Bearer")
