@@ -1,6 +1,6 @@
 package com.example.mate.common.security.filter;
 
-import com.example.mate.common.security.auth.CustomUserPrincipal;
+import com.example.mate.common.security.auth.AuthMember;
 import com.example.mate.common.security.util.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -91,7 +91,7 @@ public class JwtCheckFilter extends OncePerRequestFilter {
         Long memberId = Long.valueOf(claims.get("memberId").toString());
 
         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                new CustomUserPrincipal(userId, memberId),
+                new AuthMember(userId, memberId),
                 null, // 이미 인증되었으므로 null
                 Arrays.stream(roles)
                         .map(role -> new SimpleGrantedAuthority("ROLE_" + role))

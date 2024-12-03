@@ -1,7 +1,7 @@
 package com.example.mate.domain.member.controller;
 
 import com.example.mate.common.response.ApiResponse;
-import com.example.mate.common.security.auth.CustomUserPrincipal;
+import com.example.mate.common.security.auth.AuthMember;
 import com.example.mate.domain.member.dto.request.JoinRequest;
 import com.example.mate.domain.member.dto.request.MemberInfoUpdateRequest;
 import com.example.mate.domain.member.dto.request.MemberLoginRequest;
@@ -101,8 +101,8 @@ public class MemberController {
     }
 
     @GetMapping("/test")
-    public String test(@AuthenticationPrincipal CustomUserPrincipal principal) {
-        return "principal getName == " + principal.getName() + " || " + "principal getMemberId == "
-                + principal.getMemberId();
+    public String test(@AuthenticationPrincipal AuthMember authMember) {
+        return "principal getName == " + authMember.getName() + " || " + "principal getMemberId == "
+                + authMember.getMemberId();
     }
 }
