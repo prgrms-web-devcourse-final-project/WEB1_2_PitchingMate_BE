@@ -4,6 +4,7 @@ import com.example.mate.common.response.ApiResponse;
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatMsgResponse;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatRoomResponse;
+import com.example.mate.domain.goodsChat.dto.response.GoodsChatRoomSummaryResponse;
 import com.example.mate.domain.goodsChat.service.GoodsChatService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -46,6 +47,17 @@ public class GoodsChatController {
             @PageableDefault Pageable pageable
     ) {
         PageResponse<GoodsChatMsgResponse> response = goodsChatService.getMessagesForChatRoom(chatRoomId, memberId, pageable);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    /*
+    굿즈거래 채팅방 리스트 페이지 - 내가 참여한 채팅방 리스트 조회
+    TODO: @RequestParam Long memberId -> @AuthenticationPrincipal 로 변경
+    */
+    @GetMapping
+    public ResponseEntity<ApiResponse<PageResponse<GoodsChatRoomSummaryResponse>>> getGoodsChatRooms(@RequestParam Long memberId,
+                                                                                                     @PageableDefault Pageable pageable) {
+        PageResponse<GoodsChatRoomSummaryResponse> response = goodsChatService.getGoodsChatRooms(memberId, pageable);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 }
