@@ -13,11 +13,22 @@ jobs:
         uses: appleboy/ssh-action@v1.2.0
         env:
           APPLICATION_PROPERTIES: ${{ secrets.APPLICATION_PROPERTIES }}
+          NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+          NAVER_REDIRECT_URI: ${{ secrets.NAVER_REDIRECT_URI }}
+          NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
+          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+          OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_PRIVATE_KEY }}
-          envs: APPLICATION_PROPERTIES
+          envs: |
+            APPLICATION_PROPERTIES
+            NAVER_CLIENT_ID
+            NAVER_REDIRECT_URI
+            NAVER_CLIENT_SECRET
+            JWT_SECRET_KEY
+            OPENWEATHER_API_KEY
           script_stop: true
           script: |
             cd /home/ubuntu/WEB1_2_PitchingMate_BE
