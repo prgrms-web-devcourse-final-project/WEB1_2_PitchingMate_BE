@@ -1,7 +1,6 @@
 spring:
   profiles:
     group:
-      develop:
-      production:
-      local: local, common
-    active: local
+      develop: prod, common    # develop 브랜치에서는 prod와 common 프로필 사용
+      local: local, common    # 로컬에서는 local과 common 프로필 사용
+    active: ${SPRING_PROFILES_ACTIVE:develop}  # 기본값을 develop으로 설정
