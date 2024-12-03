@@ -71,6 +71,7 @@ public enum ErrorCode {
     // Goods Chat
     GOODS_CHAT_CLOSED_POST(HttpStatus.BAD_REQUEST, "GC001", "거래완료된 판매글에 채팅을 시작할 수 없습니다."),
     GOODS_CHAT_SELLER_CANNOT_START(HttpStatus.BAD_REQUEST, "GC002", "자신의 판매글에 채팅을 시작할 수 없습니다."),
+    GOODS_CHAT_NOT_FOUND_CHAT_PART(HttpStatus.BAD_REQUEST, "GC003", "요청한 회원은 해당 채팅방에 참여한 회원이 아닙니다."),
 
     // Mate Review
     NOT_PARTICIPANT_OR_AUTHOR(HttpStatus.FORBIDDEN, "R002", "리뷰어와 리뷰 대상자 모두 직관 참여자여야 합니다."),
