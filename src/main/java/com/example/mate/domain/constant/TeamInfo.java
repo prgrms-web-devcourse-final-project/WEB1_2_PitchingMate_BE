@@ -30,7 +30,7 @@ public final class TeamInfo {
     public static final Team LG = new Team(2L, "LG", "LG 트윈스", List.of(StadiumInfo.JAMSIL));
     public static final Team NC = new Team(3L, "NC", "NC 다이노스", List.of(StadiumInfo.CHANGWON));
     public static final Team SSG = new Team(4L, "SSG", "SSG 랜더스", List.of(StadiumInfo.INCHEON));
-    public static final Team KT = new Team(5L, "KT", "kt wiz", List.of(StadiumInfo.SUWON));
+    public static final Team KT = new Team(5L, "KT", "KT 위즈", List.of(StadiumInfo.SUWON));
     public static final Team DOOSAN = new Team(6L, "두산", "두산 베어스", List.of(StadiumInfo.JAMSIL, StadiumInfo.ICHON_DOOSAN_BEARS_PARK));
     public static final Team LOTTE = new Team(7L, "롯데", "롯데 자이언츠", List.of(StadiumInfo.SAJIK, StadiumInfo.ULSAN));
     public static final Team SAMSUNG = new Team(8L, "삼성", "삼성 라이온즈", List.of(StadiumInfo.DAEGU));
