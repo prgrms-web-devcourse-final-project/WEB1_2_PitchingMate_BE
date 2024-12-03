@@ -34,31 +34,50 @@ class TeamRecordIntegrationTest {
         teamRecordRepository.deleteAll();
     }
 
-    @Test
-    @DisplayName("팀 순위 조회 통합 테스트 - 성공")
-    void getTeamRankings_Success() throws Exception {
-        // given
-        List<TeamRecord> teamRecords = Arrays.asList(
-                createTeamRecord(TeamInfo.LG, 1, 86, 2, 56, 0.0),
-                createTeamRecord(TeamInfo.KT, 2, 81, 2, 61, 4.5),
-                createTeamRecord(TeamInfo.SSG, 3, 76, 2, 66, 8.5)
-        );
-        teamRecordRepository.saveAll(teamRecords);
+    @Nested
+    @DisplayName("팀 순위 조회")
+    class GetTeamRankings {
+        @Test
+        @DisplayName("전체 팀 순위 조회 성공")
+        void getTeamRankings_Success() throws Exception {
+            // given
+            List<TeamRecord> teamRecords = Arrays.asList(
+                    createTeamRecord(TeamInfo.LG, 1, 86, 2, 56, 0.0),
+                    createTeamRecord(TeamInfo.KT, 2, 81, 2, 61, 4.5),
+                    createTeamRecord(TeamInfo.SSG, 3, 76, 2, 66, 8.5)
+            );
+            teamRecordRepository.saveAll(teamRecords);
 
-        // when
-        ResultActions result = mockMvc.perform(MockMvcRequestBuilders.get("/api/teams/rankings")
-                .accept(MediaType.APPLICATION_JSON));
+            // when
+            ResultActions result = mockMvc.perform(MockMvcRequestBuilders.get("/api/teams/rankings")
+                    .accept(MediaType.APPLICATION_JSON));
 
-        // then
-        result.andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("SUCCESS"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data").isArray())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.length()").value(3))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data[0].rank").value(1))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data[0].teamName").value(TeamInfo.LG.fullName))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data[0].wins").value(86))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data[1].rank").value(2))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data[2].rank").value(3));
+            // then
+            result.andExpect(MockMvcResultMatchers.status().isOk())
+                    .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("SUCCESS"))
+                    .andExpect(MockMvcResultMatchers.jsonPath("$.data").isArray())
+                    .andExpect(MockMvcResultMatchers.jsonPath("$.data.length()").value(3))
+                    .andExpect(MockMvcResultMatchers.jsonPath("$.data[0].rank").value(1))
+                    .andExpect(MockMvcResultMatchers.jsonPath("$.data[0].teamName").value(TeamInfo.LG.fullName))
+                    .andExpect(MockMvcResultMatchers.jsonPath("$.data[0].wins").value(86))
+                    .andExpect(MockMvcResultMatchers.jsonPath("$.data[1].rank").value(2))
+                    .andExpect(MockMvcResultMatchers.jsonPath("$.data[2].rank").value(3));
+        }
+
+        @Test
+        @DisplayName("전체 팀 순위 조회 - 데이터 없음")
+        void getTeamRankings_EmptyList() throws Exception {
+
+            // when
+            ResultActions result = mockMvc.perform(MockMvcRequestBuilders.get("/api/teams/rankings")
+                    .accept(MediaType.APPLICATION_JSON));
+
+            // then
+            result.andExpect(MockMvcResultMatchers.status().isOk())
+                    .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("SUCCESS"))
+                    .andExpect(MockMvcResultMatchers.jsonPath("$.data").isArray())
+                    .andExpect(MockMvcResultMatchers.jsonPath("$.data.length()").value(0));
+        }
     }
 
 

@@ -36,30 +36,50 @@ class TeamControllerTest {
     @MockBean
     private TeamService teamService;
 
-    @Test
-    @DisplayName("팀 순위 조회 API 테스트")
-    void getTeamRankings() throws Exception {
-        // Given
-        List<TeamResponse.Detail> mockResponses = List.of(
-                createTeamResponse(TeamInfo.LG, 1, 86, 2, 56, 0.0),
-                createTeamResponse(TeamInfo.KT, 2, 81, 2, 61, 4.5),
-                createTeamResponse(TeamInfo.SSG, 3, 76, 2, 66, 8.5)
-        );
+    @Nested
+    @DisplayName("팀 순위 조회")
+    class GetTeamRankings {
+        @Test
+        @DisplayName("전체 팀 순위 조회 성공")
+        void getTeamRankings_Success() throws Exception {
+            // Given
+            List<TeamResponse.Detail> mockResponses = List.of(
+                    createTeamResponse(TeamInfo.LG, 1, 86, 2, 56, 0.0),
+                    createTeamResponse(TeamInfo.KT, 2, 81, 2, 61, 4.5),
+                    createTeamResponse(TeamInfo.SSG, 3, 76, 2, 66, 8.5)
+            );
 
-        when(teamService.getTeamRankings()).thenReturn(mockResponses);
+            when(teamService.getTeamRankings()).thenReturn(mockResponses);
 
-        // When & Then
-        mockMvc.perform(get("/api/teams/rankings")
-                        .accept(MediaType.APPLICATION_JSON))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("SUCCESS"))
-                .andExpect(jsonPath("$.data").isArray())
-                .andExpect(jsonPath("$.data", hasSize(3)))
-                .andExpect(jsonPath("$.data[0].rank").value(1))
-                .andExpect(jsonPath("$.data[0].wins").value(86))
-                .andExpect(jsonPath("$.data[1].rank").value(2))
-                .andExpect(jsonPath("$.data[2].rank").value(3));
+            // When & Then
+            mockMvc.perform(get("/api/teams/rankings")
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value("SUCCESS"))
+                    .andExpect(jsonPath("$.data").isArray())
+                    .andExpect(jsonPath("$.data", hasSize(3)))
+                    .andExpect(jsonPath("$.data[0].rank").value(1))
+                    .andExpect(jsonPath("$.data[0].wins").value(86))
+                    .andExpect(jsonPath("$.data[1].rank").value(2))
+                    .andExpect(jsonPath("$.data[2].rank").value(3));
+        }
+
+        @Test
+        @DisplayName("전체 팀 순위 조회 - 데이터 없음")
+        void getTeamRankings_EmptyList() throws Exception {
+            // Given
+            when(teamService.getTeamRankings()).thenReturn(List.of());
+
+            // When & Then
+            mockMvc.perform(get("/api/teams/rankings")
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value("SUCCESS"))
+                    .andExpect(jsonPath("$.data").isArray())
+                    .andExpect(jsonPath("$.data", hasSize(0)));
+        }
     }
 
     @Nested

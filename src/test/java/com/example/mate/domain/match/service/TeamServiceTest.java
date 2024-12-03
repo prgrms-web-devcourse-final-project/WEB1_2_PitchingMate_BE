@@ -28,25 +28,43 @@ class TeamServiceTest {
     @InjectMocks
     private TeamService teamService;
 
-    @Test
-    @DisplayName("팀 순위 조회 - 성공")
-    void getTeamRankings_Success() {
-        // Given
-        List<TeamRecord> teamRecords = createTeamRecords();
-        when(teamRecordRepository.findAllByOrderByRankAsc()).thenReturn(teamRecords);
+    @Nested
+    @DisplayName("팀 순위 조회")
+    class GetTeamRankings {
+        @Test
+        @DisplayName("전체 팀 순위 조회 성공")
+        void getTeamRankings_Success() {
+            // Given
+            List<TeamRecord> teamRecords = createTeamRecords();
+            when(teamRecordRepository.findAllByOrderByRankAsc()).thenReturn(teamRecords);
 
-        // When
-        List<TeamResponse.Detail> result = teamService.getTeamRankings();
+            // When
+            List<TeamResponse.Detail> result = teamService.getTeamRankings();
 
-        // Then
-        assertThat(result).hasSize(3);
-        verify(teamRecordRepository).findAllByOrderByRankAsc();
+            // Then
+            assertThat(result).hasSize(3);
+            verify(teamRecordRepository).findAllByOrderByRankAsc();
 
-        TeamResponse.Detail firstTeam = result.get(0);
-        assertThat(firstTeam.getRank()).isEqualTo(1);
-        assertThat(firstTeam.getWins()).isEqualTo(86);
-        assertThat(firstTeam.getDraws()).isEqualTo(2);
-        assertThat(firstTeam.getLosses()).isEqualTo(56);
+            TeamResponse.Detail firstTeam = result.get(0);
+            assertThat(firstTeam.getRank()).isEqualTo(1);
+            assertThat(firstTeam.getWins()).isEqualTo(86);
+            assertThat(firstTeam.getDraws()).isEqualTo(2);
+            assertThat(firstTeam.getLosses()).isEqualTo(56);
+        }
+
+        @Test
+        @DisplayName("전체 팀 순위 조회 - 데이터 없음")
+        void getTeamRankings_EmptyList() {
+            // Given
+            when(teamRecordRepository.findAllByOrderByRankAsc()).thenReturn(List.of());
+
+            // When
+            List<TeamResponse.Detail> result = teamService.getTeamRankings();
+
+            // Then
+            assertThat(result).isEmpty();
+            verify(teamRecordRepository).findAllByOrderByRankAsc();
+        }
     }
 
     @Nested
