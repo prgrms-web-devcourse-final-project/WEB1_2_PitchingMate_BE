@@ -13,9 +13,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Repository;
 
+@Repository
 @RequiredArgsConstructor
-public class MateReviewRepositoryImpl implements MateReviewRepositoryCustom {
+public class MateReviewRepositoryCustomImpl implements MateReviewRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
 
