@@ -39,7 +39,7 @@ public class GoodsChatController {
     굿즈거래 채팅방 페이지 - 채팅 내역 조회
     TODO: @RequestParam Long memberId -> @AuthenticationPrincipal 로 변경
     */
-    @GetMapping("/{chatRoomId}")
+    @GetMapping("/{chatRoomId}/message")
     public ResponseEntity<ApiResponse<PageResponse<GoodsChatMsgResponse>>> getGoodsChatRoomMessages(
             @PathVariable Long chatRoomId,
             @RequestParam Long memberId,

@@ -125,7 +125,7 @@ public class GoodsChatIntegrationTest {
         Pageable pageable = PageRequest.of(0, 10);
 
         // when & then
-        mockMvc.perform(get("/api/goods/chat/{chatRoomId}", chatRoomId)
+        mockMvc.perform(get("/api/goods/chat/{chatRoomId}/message", chatRoomId)
                         .param("memberId", String.valueOf(memberId))
                         .param("page", String.valueOf(pageable.getPageNumber()))
                         .param("size", String.valueOf(pageable.getPageSize())))

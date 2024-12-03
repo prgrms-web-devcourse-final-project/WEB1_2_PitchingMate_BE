@@ -144,7 +144,7 @@ class GoodsChatControllerTest {
         when(goodsChatService.getMessagesForChatRoom(chatRoomId, memberId, pageable)).thenReturn(pageResponse);
 
         // when & then
-        mockMvc.perform(get("/api/goods/chat/{chatRoomId}", chatRoomId)
+        mockMvc.perform(get("/api/goods/chat/{chatRoomId}/message", chatRoomId)
                         .param("memberId", String.valueOf(memberId))
                         .param("page", "0")
                         .param("size", "10"))
