@@ -117,11 +117,6 @@ public class GoodsChatService {
 
     // 채팅 참여 테이블에서 상대방 회원 정보를 찾음
     private Member getOpponentMember(GoodsChatRoom chatRoom, Member member) {
-        List<GoodsChatPart> chatParts = chatRoom.getChatParts();
-        for (GoodsChatPart chatPart : chatParts) {
-            System.out.println(chatPart);
-        }
-
         return chatRoom.getChatParts().stream()
                 .filter(part -> part.getMember() != member)
                 .findAny()
