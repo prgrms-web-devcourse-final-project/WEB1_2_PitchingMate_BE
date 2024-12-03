@@ -1,5 +1,7 @@
 package com.example.mate.domain.match.service;
 
+import com.example.mate.common.error.CustomException;
+import com.example.mate.common.error.ErrorCode;
 import com.example.mate.domain.constant.TeamInfo;
 import com.example.mate.domain.match.dto.response.TeamResponse;
 import com.example.mate.domain.match.entity.TeamRecord;
@@ -26,5 +28,13 @@ public class TeamService {
                     return TeamResponse.Detail.from(team, record);
                 })
                 .collect(Collectors.toList());
+    }
+
+    public TeamResponse.Detail getTeamRanking(Long teamId) {
+        TeamRecord teamRecord = teamRecordRepository.findByTeamId(teamId)
+                .orElseThrow(() -> new CustomException(ErrorCode.TEAM_NOT_FOUND));
+
+        TeamInfo.Team team = TeamInfo.getById(teamId);
+        return TeamResponse.Detail.from(team, teamRecord);
     }
 }
