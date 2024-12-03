@@ -9,7 +9,9 @@ import com.example.mate.domain.goods.entity.Status;
 import com.example.mate.domain.goods.repository.GoodsPostRepository;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatMsgResponse;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatRoomResponse;
+import com.example.mate.domain.goodsChat.dto.response.GoodsChatRoomSummaryResponse;
 import com.example.mate.domain.goodsChat.entity.GoodsChatMessage;
+import com.example.mate.domain.goodsChat.entity.GoodsChatPart;
 import com.example.mate.domain.goodsChat.entity.GoodsChatPartId;
 import com.example.mate.domain.goodsChat.entity.GoodsChatRoom;
 import com.example.mate.domain.goodsChat.repository.GoodsChatMessageRepository;
@@ -97,5 +99,33 @@ public class GoodsChatService {
         if (!partRepository.existsById(new GoodsChatPartId(chatRoomId, memberId))) {
             throw new CustomException(ErrorCode.GOODS_CHAT_NOT_FOUND_CHAT_PART);
         }
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<GoodsChatRoomSummaryResponse> getGoodsChatRooms(Long memberId, Pageable pageable) {
+        Member member = findMemberById(memberId);
+        Pageable validatePageable = PageResponse.validatePageable(pageable);
+
+        Page<GoodsChatRoom> chatRoomPage = chatRoomRepository.findChatRoomPageByMemberId(memberId, validatePageable);
+
+        List<GoodsChatRoomSummaryResponse> content = chatRoomPage.getContent().stream()
+                .map(chatRoom -> GoodsChatRoomSummaryResponse.of(chatRoom, getOpponentMember(chatRoom, member)))
+                .toList();
+
+        return PageResponse.from(chatRoomPage, content);
+    }
+
+    // 채팅 참여 테이블에서 상대방 회원 정보를 찾음
+    private Member getOpponentMember(GoodsChatRoom chatRoom, Member member) {
+        List<GoodsChatPart> chatParts = chatRoom.getChatParts();
+        for (GoodsChatPart chatPart : chatParts) {
+            System.out.println(chatPart);
+        }
+
+        return chatRoom.getChatParts().stream()
+                .filter(part -> part.getMember() != member)
+                .findAny()
+                .map(GoodsChatPart::getMember)
+                .orElseThrow(() -> new CustomException(ErrorCode.GOODS_CHAT_OPPONENT_NOT_FOUND));
     }
 }
