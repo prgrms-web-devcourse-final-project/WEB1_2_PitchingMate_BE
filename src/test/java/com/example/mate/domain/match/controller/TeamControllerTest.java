@@ -7,12 +7,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.example.mate.common.error.CustomException;
+import com.example.mate.common.error.ErrorCode;
 import com.example.mate.domain.constant.TeamInfo;
 import com.example.mate.domain.match.dto.response.TeamResponse;
 import com.example.mate.domain.match.entity.TeamRecord;
 import com.example.mate.domain.match.service.TeamService;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -57,6 +60,46 @@ class TeamControllerTest {
                 .andExpect(jsonPath("$.data[0].wins").value(86))
                 .andExpect(jsonPath("$.data[1].rank").value(2))
                 .andExpect(jsonPath("$.data[2].rank").value(3));
+    }
+
+    @Nested
+    @DisplayName("특정 팀 순위 조회")
+    class GetTeamRanking {
+        @Test
+        @DisplayName("특정 팀 순위 조회 성공")
+        void getTeamRanking_Success() throws Exception {
+            // Given
+            TeamResponse.Detail mockResponse = createTeamResponse(
+                    TeamInfo.LG, 1, 86, 2, 56, 0.0
+            );
+
+            when(teamService.getTeamRanking(TeamInfo.LG.id)).thenReturn(mockResponse);
+
+            // When & Then
+            mockMvc.perform(get("/api/teams/rankings/" + TeamInfo.LG.id)
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value("SUCCESS"))
+                    .andExpect(jsonPath("$.data.rank").value(1))
+                    .andExpect(jsonPath("$.data.wins").value(86))
+                    .andExpect(jsonPath("$.data.draws").value(2))
+                    .andExpect(jsonPath("$.data.losses").value(56));
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 팀 순위 조회 시 실패")
+        void getTeamRanking_TeamNotFound() throws Exception {
+            // Given
+            when(teamService.getTeamRanking(999L))
+                    .thenThrow(new CustomException(ErrorCode.TEAM_NOT_FOUND));
+
+            // When & Then
+            mockMvc.perform(get("/api/teams/rankings/999")
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andDo(print())
+                    .andExpect(status().isNotFound());
+        }
     }
 
     private TeamResponse.Detail createTeamResponse(TeamInfo.Team team, int rank,
