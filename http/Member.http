@@ -28,3 +28,13 @@ Content-Type: application/json
   "teamId": 1,
   "nickname": "newTester"
 }
+
+
+### 자체 로그인
+POST http://localhost:8080/api/members/login
+Content-Type: application/json
+
+{
+  "email": "tester1@example.com"
+}
+

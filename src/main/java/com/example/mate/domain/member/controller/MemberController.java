@@ -3,7 +3,9 @@ package com.example.mate.domain.member.controller;
 import com.example.mate.common.response.ApiResponse;
 import com.example.mate.domain.member.dto.request.JoinRequest;
 import com.example.mate.domain.member.dto.request.MemberInfoUpdateRequest;
+import com.example.mate.domain.member.dto.request.MemberLoginRequest;
 import com.example.mate.domain.member.dto.response.JoinResponse;
+import com.example.mate.domain.member.dto.response.MemberLoginResponse;
 import com.example.mate.domain.member.dto.response.MemberProfileResponse;
 import com.example.mate.domain.member.dto.response.MyProfileResponse;
 import com.example.mate.domain.member.service.MemberService;
@@ -44,6 +46,16 @@ public class MemberController {
             @Parameter(description = "소셜 로그인 정보와 사용자 추가 입력 정보") @RequestBody @Valid JoinRequest joinRequest
     ) {
         return ResponseEntity.ok(ApiResponse.success(memberService.join(joinRequest)));
+    }
+
+    // 자체 로그인 기능
+    @Operation(summary = "자체 로그인 기능")
+    @PostMapping("/login")
+    public ResponseEntity<ApiResponse<MemberLoginResponse>> catchMiLogin(
+            @Parameter(description = "회원 로그인 요청 정보", required = true) @Valid @RequestBody MemberLoginRequest request
+    ) {
+        MemberLoginResponse response = memberService.loginByEmail(request);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     // TODO : 2024/11/29 - 내 프로필 조회 : 추후 @AuthenticationPrincipal Long memberId 받음
