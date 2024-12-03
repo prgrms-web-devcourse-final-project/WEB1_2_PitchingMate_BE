@@ -5,6 +5,7 @@ import com.example.mate.common.error.ErrorCode;
 import com.example.mate.domain.auth.config.OAuthConfig;
 import com.example.mate.domain.auth.dto.response.LoginResponse;
 import com.example.mate.domain.auth.dto.response.NaverProfileResponse;
+import com.example.mate.domain.member.repository.MemberRepository;
 import com.nimbusds.jose.shaded.gson.JsonObject;
 import com.nimbusds.jose.shaded.gson.JsonParser;
 import java.util.Map;
@@ -24,6 +25,7 @@ public class NaverAuthService {
 
     private final OAuthConfig oAuthConfig;
     private final RestTemplate restTemplate;
+    private final MemberRepository memberRepository;
 
     /**
      * 네이버 로그인 연결 URL을 생성
@@ -154,8 +156,13 @@ public class NaverAuthService {
                 .grantType("Bearer")
                 .accessToken(tokens.get("accessToken"))
                 .refreshToken(tokens.get("refreshToken"))
-                .isNewMember(true)
+                .isNewMember(isNewMemberByEmail(userInfo.getEmail()))
                 .naverProfileResponse(userInfo)
                 .build();
+    }
+
+    // email을 통해 새로운 회원인지 검증
+    private boolean isNewMemberByEmail(String email) {
+        return !memberRepository.existsByEmail(email);
     }
 }
