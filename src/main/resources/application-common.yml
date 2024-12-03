@@ -22,10 +22,7 @@ springdoc:
   default-consumes-media-type: application/json
   default-produces-media-type: application/json
 
-logging:
-  level:
-    root: INFO
-    com.example.mate: DEBUG
+
 
 oauth:
   naver:
