@@ -20,6 +20,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
 import com.example.mate.common.response.PageResponse;
+import com.example.mate.common.security.util.JwtUtil;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.mate.dto.request.MatePostCreateRequest;
 import com.example.mate.domain.mate.dto.request.MatePostUpdateRequest;
@@ -61,6 +62,9 @@ class MateControllerTest {
 
     @MockBean
     private MateService mateService;
+
+    @MockBean
+    private JwtUtil jwtUtil;
 
     private MatePostSummaryResponse createMatePostSummaryResponse() {
         return MatePostSummaryResponse.builder()

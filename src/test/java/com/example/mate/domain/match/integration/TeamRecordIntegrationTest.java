@@ -1,5 +1,6 @@
 package com.example.mate.domain.match.integration;
 
+import com.example.mate.common.security.util.JwtUtil;
 import com.example.mate.domain.constant.TeamInfo;
 import com.example.mate.domain.match.entity.TeamRecord;
 import com.example.mate.domain.match.repository.TeamRecordRepository;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -33,6 +35,9 @@ class TeamRecordIntegrationTest {
     void setUp() {
         teamRecordRepository.deleteAll();
     }
+
+    @MockBean
+    private JwtUtil jwtUtil;
 
     @Nested
     @DisplayName("팀 순위 조회")
