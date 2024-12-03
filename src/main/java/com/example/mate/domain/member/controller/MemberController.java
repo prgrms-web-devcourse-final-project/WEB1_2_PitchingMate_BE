@@ -1,12 +1,12 @@
 package com.example.mate.domain.member.controller;
 
-import com.example.mate.common.jwt.JwtToken;
 import com.example.mate.common.response.ApiResponse;
-import com.example.mate.common.security.auth.CustomUserPrincipal;
+import com.example.mate.common.security.auth.AuthMember;
 import com.example.mate.domain.member.dto.request.JoinRequest;
 import com.example.mate.domain.member.dto.request.MemberInfoUpdateRequest;
 import com.example.mate.domain.member.dto.request.MemberLoginRequest;
 import com.example.mate.domain.member.dto.response.JoinResponse;
+import com.example.mate.domain.member.dto.response.MemberLoginResponse;
 import com.example.mate.domain.member.dto.response.MemberProfileResponse;
 import com.example.mate.domain.member.dto.response.MyProfileResponse;
 import com.example.mate.domain.member.service.MemberService;
@@ -56,11 +56,11 @@ public class MemberController {
      */
     @Operation(summary = "CATCH Mi 서비스 로그인", description = "캐치미 서비스에 로그인합니다.")
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<JwtToken>> catchMiLogin(
+    public ResponseEntity<ApiResponse<MemberLoginResponse>> catchMiLogin(
             @Parameter(description = "회원 로그인 요청 정보", required = true) @Valid @RequestBody MemberLoginRequest request
     ) {
-        JwtToken token = memberService.loginByEmail(request);
-        return ResponseEntity.ok(ApiResponse.success(token));
+        MemberLoginResponse response = memberService.loginByEmail(request);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     // TODO : 2024/11/29 - 내 프로필 조회 : 추후 @AuthenticationPrincipal Long memberId 받음
@@ -101,8 +101,8 @@ public class MemberController {
     }
 
     @GetMapping("/test")
-    public String test(@AuthenticationPrincipal CustomUserPrincipal principal) {
-        return "principal getName == " + principal.getName() + " || " + "principal getMemberId == "
-                + principal.getMemberId();
+    public String test(@AuthenticationPrincipal AuthMember authMember) {
+        return "principal getName == " + authMember.getName() + " || " + "principal getMemberId == "
+                + authMember.getMemberId();
     }
 }

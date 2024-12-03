@@ -12,6 +12,7 @@ import lombok.Getter;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class JoinResponse {
 
+    private Long memberId;
     private String name;
     private String nickname;
     private String email;
@@ -21,6 +22,7 @@ public class JoinResponse {
 
     public static JoinResponse from(Member member) {
         return JoinResponse.builder()
+                .memberId(member.getId())
                 .name(member.getName())
                 .nickname(member.getNickname())
                 .email(member.getEmail())

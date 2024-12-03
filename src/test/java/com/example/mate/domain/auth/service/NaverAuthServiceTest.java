@@ -11,6 +11,7 @@ import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
 import com.example.mate.domain.auth.config.OAuthConfig;
 import com.example.mate.domain.auth.dto.response.LoginResponse;
+import com.example.mate.domain.member.repository.MemberRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,6 +34,9 @@ public class NaverAuthServiceTest {
 
     @Mock
     private RestTemplate restTemplate;
+
+    @Mock
+    private MemberRepository memberRepository;
 
     @Test
     @DisplayName("네이버 로그인 연결 URL 생성")
