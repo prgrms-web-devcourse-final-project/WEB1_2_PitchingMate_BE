@@ -68,4 +68,4 @@ jobs:
             git pull origin develop  # 최신 코드 가져오기
             echo "$APPLICATION_PROPERTIES" > src/main/resources/application-dev.yml  # 설정 파일 생성
             sudo fuser -k -n tcp 8080 || true  # 8080 포트 사용중인 프로세스 종료
-            nohup java -jar *SNAPSHOT.jar > ./output.log 2>&1 &  # 새로운 버전 애플리케이션 실행
+            nohup java -jar mate-0.0.1-SNAPSHOT.jar > ./output.log 2>&1 &
