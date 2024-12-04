@@ -44,18 +44,18 @@ public class CrawlingScheduler {
     }
 
     // 매 분 실행 자동화 테스트 (현재 off-season )
-    @Scheduled(cron = "0 * * * * *", zone = "Asia/Seoul")
-    public void testScheduler() {
-        log.info("Test Scheduler is running!");
-        try {
-            // 현재 경기 크롤링
-            crawlingService.crawlAllCurrentMatches();
-            // 팀 순위 크롤링
-            crawlingService.crawlTeamRankings();
-        } catch (CustomException e) {
-            log.error("Evening update failed: {}", e.getErrorCode().getMessage(), e);
-        } catch (Exception e) {
-            log.error("Evening update failed with unexpected error", e);
-        }
-    }
+//    @Scheduled(cron = "0 * * * * *", zone = "Asia/Seoul")
+//    public void testScheduler() {
+//        log.info("Test Scheduler is running!");
+//        try {
+//            // 현재 경기 크롤링
+//            crawlingService.crawlAllCurrentMatches();
+//            // 팀 순위 크롤링
+//            crawlingService.crawlTeamRankings();
+//        } catch (CustomException e) {
+//            log.error("Evening update failed: {}", e.getErrorCode().getMessage(), e);
+//        } catch (Exception e) {
+//            log.error("Evening update failed with unexpected error", e);
+//        }
+//    }
 }
