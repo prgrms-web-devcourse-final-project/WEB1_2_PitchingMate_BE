@@ -117,7 +117,24 @@ public enum ErrorCode {
 
     //Weather
     WEATHER_DATA_NOT_FOUND(HttpStatus.NOT_FOUND, "W001", "날씨 데이터를 찾을 수 없습니다."),
-    WEATHER_API_ERROR(HttpStatus.NOT_FOUND, "W002", "날씨 API 호출 중 오류가 발생했습니다.");
+    WEATHER_API_ERROR(HttpStatus.NOT_FOUND, "W002", "날씨 API 호출 중 오류가 발생했습니다."),
+
+    // 채팅방 관련 에러
+    CHAT_ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "CHAT001", "존재하지 않는 채팅방입니다."),
+    CHAT_ROOM_MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "CHAT002", "채팅방 멤버가 아닙니다."),
+    CHAT_ROOM_FULL(HttpStatus.BAD_REQUEST, "CHAT003", "채팅방 인원이 가득 찼습니다. (최대 10명)"),
+    AUTHOR_CANNOT_JOIN_CHAT(HttpStatus.BAD_REQUEST, "CHAT004", "게시글 작성자는 채팅방에 참여할 수 없습니다."),
+    ALREADY_JOINED_CHAT_ROOM(HttpStatus.BAD_REQUEST, "CHAT005", "이미 참여 중인 채팅방입니다."),
+    CHAT_ROOM_CLOSED(HttpStatus.BAD_REQUEST, "CHAT006", "종료된 채팅방입니다."),
+
+    // 채팅 참여 제한 관련 에러
+    AGE_RESTRICTION_VIOLATED(HttpStatus.FORBIDDEN, "CHAT007", "연령 제한으로 입장할 수 없습니다."),
+    GENDER_RESTRICTION_VIOLATED(HttpStatus.FORBIDDEN, "CHAT008", "성별 제한으로 입장할 수 없습니다."),
+
+    // 채팅 기능 관련 에러
+    CHAT_NOT_AVAILABLE(HttpStatus.BAD_REQUEST, "CHAT009", "2명 이상의 사용자가 있어야 채팅이 가능합니다."),
+    MESSAGE_CONTENT_EMPTY(HttpStatus.BAD_REQUEST, "CHAT010", "메시지 내용을 입력해주세요."),
+    INVALID_MESSAGE_TYPE(HttpStatus.BAD_REQUEST, "CHAT011", "잘못된 메시지 타입입니다.");
 
     private final HttpStatus status;
     private final String code;
