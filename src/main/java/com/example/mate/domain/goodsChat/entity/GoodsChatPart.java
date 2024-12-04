@@ -2,6 +2,7 @@ package com.example.mate.domain.goodsChat.entity;
 
 import com.example.mate.domain.goods.entity.Role;
 import com.example.mate.domain.member.entity.Member;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -38,4 +39,8 @@ public class GoodsChatPart {
 
     @Enumerated(EnumType.STRING)
     private Role role;
+
+    @Column(name = "is_active")
+    @Builder.Default
+    private Boolean isActive = true;
 }

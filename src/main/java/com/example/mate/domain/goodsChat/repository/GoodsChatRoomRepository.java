@@ -34,8 +34,17 @@ public interface GoodsChatRoomRepository extends JpaRepository<GoodsChatRoom, Lo
                 FROM GoodsChatRoom gcr
                 JOIN gcr.chatParts gcp
                 WHERE gcp.member.id = :memberId
+                AND gcp.isActive = true
             )
             ORDER BY cr.lastChatSentAt DESC
             """)
     Page<GoodsChatRoom> findChatRoomPageByMemberId(@Param("memberId") Long memberId, Pageable pageable);
+
+    @Query("""
+            SELECT cr
+            FROM GoodsChatRoom cr
+            JOIN FETCH cr.goodsPost gp
+            WHERE cr.id = :chatRoomId
+            """)
+    Optional<GoodsChatRoom> findByChatRoomId(@Param("chatRoomId") Long chatRoomId);
 }
