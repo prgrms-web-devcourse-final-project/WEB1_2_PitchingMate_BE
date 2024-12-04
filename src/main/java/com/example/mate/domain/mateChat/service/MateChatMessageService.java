@@ -37,6 +37,10 @@ public class MateChatMessageService {
                 .build();
         chatMessageRepository.save(chatMessage);
 
+        // 마지막 메시지 정보 업데이트
+        chatRoom.updateLastChat(message.getMessage());
+        chatRoomRepository.save(chatRoom);
+
         MateChatMessageResponse response = MateChatMessageResponse.of(
                 message,
                 sender.getNickname(),
@@ -68,6 +72,10 @@ public class MateChatMessageService {
                 .build();
         chatMessageRepository.save(chatMessage);
 
+        // 마지막 메시지 정보 업데이트
+        chatRoom.updateLastChat(enterMessage);
+        chatRoomRepository.save(chatRoom);
+
         MateChatMessageResponse response = MateChatMessageResponse.of(
                 enterRequest,
                 member.getNickname(),
@@ -98,6 +106,10 @@ public class MateChatMessageService {
                 .content(leaveMessage)
                 .build();
         chatMessageRepository.save(chatMessage);
+
+        // 마지막 메시지 정보 업데이트
+        chatRoom.updateLastChat(leaveMessage);
+        chatRoomRepository.save(chatRoom);
 
         MateChatMessageResponse response = MateChatMessageResponse.of(
                 leaveRequest,

@@ -9,6 +9,7 @@ import com.example.mate.domain.mate.entity.MatePost;
 import com.example.mate.domain.mate.entity.Status;
 import com.example.mate.domain.mate.repository.MateRepository;
 import com.example.mate.domain.mateChat.dto.response.MateChatMessageResponse;
+import com.example.mate.domain.mateChat.dto.response.MateChatRoomListResponse;
 import com.example.mate.domain.mateChat.dto.response.MateChatRoomResponse;
 import com.example.mate.domain.mateChat.entity.MateChatMessage;
 import com.example.mate.domain.mateChat.entity.MateChatRoom;
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -154,6 +156,18 @@ public class MateChatRoomService {
                 .toList();
 
         return PageResponse.from(messagePage, content);
+    }
+
+    // 채팅 목록 조회
+    @Transactional(readOnly = true)
+    public PageResponse<MateChatRoomListResponse> getMyChatRooms(Long memberId, Pageable pageable) {
+        Page<MateChatRoom> chatRooms = chatRoomRepository.findActiveChatRoomsByMemberId(memberId, pageable);
+
+        List<MateChatRoomListResponse> content = chatRooms.getContent().stream()
+                .map(MateChatRoomListResponse::from)
+                .toList();
+
+        return PageResponse.from(chatRooms, content);
     }
 
 
