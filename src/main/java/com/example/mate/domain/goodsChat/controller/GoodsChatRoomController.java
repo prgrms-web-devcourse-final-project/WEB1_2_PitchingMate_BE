@@ -6,10 +6,13 @@ import com.example.mate.domain.goodsChat.dto.response.GoodsChatMessageResponse;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatRoomResponse;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatRoomSummaryResponse;
 import com.example.mate.domain.goodsChat.service.GoodsChatService;
+import com.example.mate.domain.member.dto.response.MemberSummaryResponse;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -60,7 +63,13 @@ public class GoodsChatRoomController {
         PageResponse<GoodsChatRoomSummaryResponse> response = goodsChatService.getGoodsChatRooms(memberId, pageable);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
+    // 채팅방 나가기
+    @DeleteMapping("/{chatRoomId}")
+    public ResponseEntity<Void> leaveGoodsChatRoom(@RequestParam Long memberId, @PathVariable Long chatRoomId) {
+        goodsChatService.deactivateGoodsChatPart(memberId, chatRoomId);
 
+        return ResponseEntity.noContent().build();
+    }
     /*
     굿즈거래 채팅방 리스트 페이지 - 채팅방 단건 조회
     TODO: @RequestParam Long memberId -> @AuthenticationPrincipal 로 변경
@@ -73,4 +82,10 @@ public class GoodsChatRoomController {
     }
 
     // 채팅방 하단 토글 - 현재 채팅에 참여한 사용자 프로필 조회
+    @GetMapping("/{chatRoomId}/members")
+    public ResponseEntity<ApiResponse<List<MemberSummaryResponse>>> getGoodsChatRoomMembers(@RequestParam Long memberId,
+                                                                                            @PathVariable Long chatRoomId) {
+        List<MemberSummaryResponse> responses = goodsChatService.getChatRoomMembers(memberId, chatRoomId);
+        return ResponseEntity.ok(ApiResponse.success(responses));
+    }
 }

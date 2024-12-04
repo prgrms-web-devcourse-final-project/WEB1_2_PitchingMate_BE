@@ -19,6 +19,7 @@ public interface GoodsChatRoomRepository extends JpaRepository<GoodsChatRoom, Lo
             WHERE cr.goodsPost.id = :postId
             AND cp.member.id = :buyerId
             AND cp.role = :role
+            AND cp.isActive = true
             """)
     Optional<GoodsChatRoom> findExistingChatRoom(@Param("postId") Long postId, @Param("buyerId") Long buyerId,
                                                  @Param("role") Role role);

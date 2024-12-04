@@ -67,4 +67,13 @@ public class GoodsChatRoom {
         this.lastChatContent = lastChatContent;
         this.lastChatSentAt = lastChatSentAt;
     }
+
+
+    public void deactivateRoom() {
+        this.isActive = false;
+    }
+
+    public boolean isRoomActive() {
+        return isActive;
+    }
 }
