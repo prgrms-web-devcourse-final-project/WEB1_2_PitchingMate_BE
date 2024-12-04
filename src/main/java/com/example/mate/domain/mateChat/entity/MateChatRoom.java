@@ -7,6 +7,7 @@ import com.example.mate.domain.mate.entity.MatePost;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,9 +38,16 @@ public class MateChatRoom extends BaseTimeEntity {
     @Builder.Default
     private List<MateChatRoomMember> members = new ArrayList<>();
 
-    @OneToMany(mappedBy = "mateChatRoom", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<MateChatMessage> messages = new ArrayList<>();
+    @Column(name = "last_chat_content", columnDefinition = "TEXT")
+    private String lastChatContent;
+
+    @Column(name = "last_chat_sent_at")
+    private LocalDateTime lastChatSentAt;
+
+    public void updateLastChat(String content) {
+        this.lastChatContent = content;
+        this.lastChatSentAt = LocalDateTime.now();
+    }
 
     public static MateChatRoom create(MatePost matePost) {
         return MateChatRoom.builder()
