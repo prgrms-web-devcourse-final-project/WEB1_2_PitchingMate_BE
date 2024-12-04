@@ -2,8 +2,11 @@ package com.example.mate.domain.member.controller;
 
 import static com.example.mate.common.response.PageResponse.validatePageable;
 
+import com.example.mate.common.error.CustomException;
+import com.example.mate.common.error.ErrorCode;
 import com.example.mate.common.response.ApiResponse;
 import com.example.mate.common.response.PageResponse;
+import com.example.mate.common.security.auth.AuthMember;
 import com.example.mate.domain.member.dto.response.MyGoodsRecordResponse;
 import com.example.mate.domain.member.dto.response.MyReviewResponse;
 import com.example.mate.domain.member.dto.response.MyVisitResponse;
@@ -15,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -50,15 +54,14 @@ public class ProfileController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    // TODO : 본인만 접근할 수 있도록 @AuthenticationPrincipal Long memberId
     @Operation(summary = "직관 타임라인 페이징 조회")
-    @GetMapping("/timeline/{memberId}")
+    @GetMapping("/timeline")
     public ResponseEntity<ApiResponse<PageResponse<MyVisitResponse>>> getMyVisits(
-            @Parameter(description = "회원 ID") @PathVariable Long memberId,
+            @Parameter(description = "회원 로그인 정보") @AuthenticationPrincipal AuthMember authMember,
             @Parameter(description = "페이지 요청 정보") @PageableDefault Pageable pageable
     ) {
         validatePageable(pageable);
-        PageResponse<MyVisitResponse> response = profileService.getMyVisitPage(memberId, pageable);
+        PageResponse<MyVisitResponse> response = profileService.getMyVisitPage(authMember.getMemberId(), pageable);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
@@ -73,13 +76,16 @@ public class ProfileController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    // TODO : 본인만 접근할 수 있도록 @AuthenticationPrincipal Long memberId
     @Operation(summary = "굿즈 구매기록 페이징 조회")
     @GetMapping("/{memberId}/goods/bought")
     public ResponseEntity<ApiResponse<PageResponse<MyGoodsRecordResponse>>> getBoughtGoods(
             @Parameter(description = "회원 ID") @PathVariable Long memberId,
-            @Parameter(description = "페이지 요청 정보") @PageableDefault Pageable pageable
+            @Parameter(description = "페이지 요청 정보") @PageableDefault Pageable pageable,
+            @Parameter(description = "회원 로그인 정보") @AuthenticationPrincipal AuthMember authMember
     ) {
+        if (!authMember.getMemberId().equals(memberId)) {
+            throw new CustomException(ErrorCode.MEMBER_UNAUTHORIZED_ACCESS);
+        }
         pageable = validatePageable(pageable);
         PageResponse<MyGoodsRecordResponse> response = profileService.getBoughtGoodsPage(memberId, pageable);
         return ResponseEntity.ok(ApiResponse.success(response));

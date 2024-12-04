@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.example.mate.config.WithAuthMember;
 import com.example.mate.common.security.util.JwtUtil;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.constant.Rating;
@@ -46,6 +47,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 
 @SpringBootTest
@@ -84,6 +86,10 @@ public class ProfileIntegrationTest {
     private GoodsReviewRepository goodsReviewRepository;
 
     @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+
+    @Autowired
     private ObjectMapper objectMapper;
 
     @MockBean
@@ -104,6 +110,10 @@ public class ProfileIntegrationTest {
 
     @BeforeEach
     void setUp() {
+        jdbcTemplate.execute("SET REFERENTIAL_INTEGRITY FALSE");
+        jdbcTemplate.execute("TRUNCATE TABLE member");
+        jdbcTemplate.execute("SET REFERENTIAL_INTEGRITY TRUE");
+
         createMember();
         goodsPost1 = createGoodsPost();
         createGoodsPostImage(goodsPost1);
@@ -312,6 +322,7 @@ public class ProfileIntegrationTest {
 
         @Test
         @DisplayName("회원 프로필 굿즈 구매기록 페이징 조회 성공")
+        @WithAuthMember(userId = "customUser", memberId = 4L)
         void get_bought_goods_page_success() throws Exception {
             // given
             Member buyer = memberRepository.save(Member.builder()
@@ -360,6 +371,7 @@ public class ProfileIntegrationTest {
 
         @Test
         @DisplayName("회원 프로필 굿즈 구매기록 페이징 조회 실패 - 유효하지 않은 회원 아이디로 조회")
+        @WithAuthMember(userId = "customUser", memberId = 1L)
         void get_bought_goods_page_invalid_member_id() throws Exception {
             // given
             Long invalidMemberId = member1.getId() + 999L; // 존재하지 않는 회원 ID
@@ -371,10 +383,10 @@ public class ProfileIntegrationTest {
                             .param("page", String.valueOf(page))
                             .param("size", String.valueOf(size)))
                     .andDo(print())
-                    .andExpect(status().isNotFound())
+                    .andExpect(status().isForbidden())
                     .andExpect(jsonPath("$.status").value("ERROR"))
-                    .andExpect(jsonPath("$.code").value(404))
-                    .andExpect(jsonPath("$.message").value("해당 ID의 회원 정보를 찾을 수 없습니다")); // 커스텀 에러 메시지
+                    .andExpect(jsonPath("$.code").value(403))
+                    .andExpect(jsonPath("$.message").value("해당 회원의 접근 권한이 없습니다.")); // 커스텀 에러 메시지
         }
     }
 
@@ -468,13 +480,14 @@ public class ProfileIntegrationTest {
 
         @Test
         @DisplayName("회원 타임라인 페이징 조회 성공")
+        @WithAuthMember(userId = "customUser", memberId = 1L)
         void get_my_visit_page_success() throws Exception {
             // given
             Long memberId = member1.getId();
             Pageable pageable = PageRequest.of(0, 10);
 
             // when & then
-            mockMvc.perform(get("/api/profile/timeline/{memberId}", memberId)
+            mockMvc.perform(get("/api/profile/timeline")
                             .param("page", String.valueOf(pageable.getPageNumber()))
                             .param("size", String.valueOf(pageable.getPageSize())))
                     .andDo(print())
@@ -485,22 +498,5 @@ public class ProfileIntegrationTest {
                     .andExpect(jsonPath("$.code").value(200));
         }
 
-        @Test
-        @DisplayName("회원 타임라인 페이징 조회 실패 - 유효하지 않은 회원 아이디로 조회")
-        void get_my_visit_page_fail_invalid_member_id() throws Exception {
-            // given
-            Long invalidMemberId = member1.getId() + 999L; // 존재 하지 않는 아이디
-            Pageable pageable = PageRequest.of(0, 10);
-
-            // when & then
-            mockMvc.perform(get("/api/profile/timeline/{memberId}", invalidMemberId)
-                            .param("page", String.valueOf(pageable.getPageNumber()))
-                            .param("size", String.valueOf(pageable.getPageNumber())))
-                    .andDo(print())
-                    .andExpect(status().isNotFound())
-                    .andExpect(jsonPath("$.status").value("ERROR"))
-                    .andExpect(jsonPath("$.code").value(404))
-                    .andExpect(jsonPath("$.message").value("해당 ID의 회원 정보를 찾을 수 없습니다"));
-        }
     }
 }

@@ -13,6 +13,7 @@ import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.common.security.filter.JwtCheckFilter;
+import com.example.mate.config.WithAuthMember;
 import com.example.mate.domain.member.dto.response.MyGoodsRecordResponse;
 import com.example.mate.domain.member.dto.response.MyReviewResponse;
 import com.example.mate.domain.member.dto.response.MyVisitResponse;
@@ -37,6 +38,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @WebMvcTest(ProfileController.class)
 @MockBean(JpaMetamodelMappingContext.class)
 @AutoConfigureMockMvc(addFilters = false)
+@WithAuthMember(userId = "customUser", memberId = 1L)
 class ProfileControllerTest {
 
     @Autowired
@@ -134,6 +136,7 @@ class ProfileControllerTest {
 
         @Test
         @DisplayName("회원 프로필 굿즈 구매기록 페이징 조회 성공")
+        @WithAuthMember(userId = "customUser", memberId = 2L)
         void get_bought_goods_page_success() throws Exception {
             // given
             Long memberId = 2L;
@@ -168,29 +171,6 @@ class ProfileControllerTest {
                     .andExpect(jsonPath("$.data.pageNumber").value(response.getPageNumber()))
                     .andExpect(jsonPath("$.data.pageSize").value(response.getPageSize()))
                     .andExpect(jsonPath("$.code").value(200));
-        }
-
-        @Test
-        @DisplayName("회원 프로필 굿즈 구매기록 페이징 조회 실패 - 유효하지 않은 회원 아이디로 조회")
-        void get_bought_goods_page_invalid_member_id() throws Exception {
-            // given
-            Long memberId = 999L; // 존재 하지 않는 아이디
-            Pageable pageable = PageRequest.of(0, 10);
-
-            willThrow(new CustomException(ErrorCode.MEMBER_NOT_FOUND_BY_ID))
-                    .given(profileService).getBoughtGoodsPage(memberId, pageable);
-
-            // when & then
-            mockMvc.perform(get("/api/profile/{memberId}/goods/bought", memberId)
-                            .param("page", String.valueOf(pageable.getPageNumber()))
-                            .param("size", String.valueOf(pageable.getPageSize())))
-                    .andDo(print())
-                    .andExpect(status().isNotFound())
-                    .andExpect(jsonPath("$.status").value("ERROR"))
-                    .andExpect(jsonPath("$.code").value(404))
-                    .andExpect(jsonPath("$.message").value(ErrorCode.MEMBER_NOT_FOUND_BY_ID.getMessage()));
-
-            verify(profileService, times(1)).getBoughtGoodsPage(memberId, pageable);
         }
     }
 
@@ -382,7 +362,7 @@ class ProfileControllerTest {
             given(profileService.getMyVisitPage(memberId, pageable)).willReturn(response);
 
             // when & then
-            mockMvc.perform(get("/api/profile/timeline/{memberId}", memberId)
+            mockMvc.perform(get("/api/profile/timeline")
                             .param("page", String.valueOf(pageable.getPageNumber()))
                             .param("size", String.valueOf(pageable.getPageSize())))
                     .andDo(print())
@@ -405,14 +385,14 @@ class ProfileControllerTest {
         @DisplayName("회원 타임라인 페이징 조회 실패 - 유효하지 않은 회원 아이디로 조회")
         void get_my_visit_page_fail_invalid_member_id() throws Exception {
             // given
-            Long memberId = 999L; // 존재 하지 않는 아이디
+            Long memberId = 1L; // 존재 하지 않는 아이디
             Pageable pageable = PageRequest.of(0, 10);
 
             willThrow(new CustomException(ErrorCode.MEMBER_NOT_FOUND_BY_ID))
                     .given(profileService).getMyVisitPage(memberId, pageable);
 
             // when & then
-            mockMvc.perform(get("/api/profile/timeline/{memberId}", memberId)
+            mockMvc.perform(get("/api/profile/timeline")
                             .param("page", String.valueOf(pageable.getPageNumber()))
                             .param("size", String.valueOf(pageable.getPageSize())))
                     .andDo(print())
