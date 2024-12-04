@@ -2,7 +2,7 @@ package com.example.mate.domain.goodsChat.controller;
 
 import com.example.mate.common.response.ApiResponse;
 import com.example.mate.common.response.PageResponse;
-import com.example.mate.domain.goodsChat.dto.response.GoodsChatMsgResponse;
+import com.example.mate.domain.goodsChat.dto.response.GoodsChatMessageResponse;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatRoomResponse;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatRoomSummaryResponse;
 import com.example.mate.domain.goodsChat.service.GoodsChatService;
@@ -41,12 +41,12 @@ public class GoodsChatRoomController {
     TODO: @RequestParam Long memberId -> @AuthenticationPrincipal 로 변경
     */
     @GetMapping("/{chatRoomId}/message")
-    public ResponseEntity<ApiResponse<PageResponse<GoodsChatMsgResponse>>> getGoodsChatRoomMessages(
+    public ResponseEntity<ApiResponse<PageResponse<GoodsChatMessageResponse>>> getGoodsChatRoomMessages(
             @PathVariable Long chatRoomId,
             @RequestParam Long memberId,
             @PageableDefault Pageable pageable
     ) {
-        PageResponse<GoodsChatMsgResponse> response = goodsChatService.getMessagesForChatRoom(chatRoomId, memberId, pageable);
+        PageResponse<GoodsChatMessageResponse> response = goodsChatService.getMessagesForChatRoom(chatRoomId, memberId, pageable);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
