@@ -18,7 +18,8 @@ public class GoodsChatRoomResponse {
     private final String title;
     private final String category;
     private final Integer price;
-    private final String status;
+    private final String postStatus;
+    private final String chatRoomStatus;
     private final String imageUrl;
 
     public static GoodsChatRoomResponse of(GoodsChatRoom chatRoom) {
@@ -34,7 +35,8 @@ public class GoodsChatRoomResponse {
                 .category(goodsPost.getCategory().getValue())
                 .price(goodsPost.getPrice())
                 .imageUrl(mainImageUrl)
-                .status(goodsPost.getStatus().getValue())
+                .postStatus(goodsPost.getStatus().getValue())
+                .chatRoomStatus(chatRoom.getIsActive().toString())
                 .build();
     }
 

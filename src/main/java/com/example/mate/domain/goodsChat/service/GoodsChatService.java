@@ -17,9 +17,11 @@ import com.example.mate.domain.goodsChat.entity.GoodsChatRoom;
 import com.example.mate.domain.goodsChat.repository.GoodsChatMessageRepository;
 import com.example.mate.domain.goodsChat.repository.GoodsChatPartRepository;
 import com.example.mate.domain.goodsChat.repository.GoodsChatRoomRepository;
+import com.example.mate.domain.member.dto.response.MemberSummaryResponse;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -60,6 +62,7 @@ public class GoodsChatService {
         }
     }
 
+    // 새로운 채팅방 생성 - "~ 님이 대화를 시작했습니다." (입장 메시지 전송)
     private GoodsChatRoom createChatRoom(GoodsPost goodsPost, Member buyer, Member seller) {
         GoodsChatRoom goodsChatRoom = GoodsChatRoom.builder()
                 .goodsPost(goodsPost)
@@ -131,5 +134,29 @@ public class GoodsChatService {
         GoodsChatRoom goodsChatRoom = chatRoomRepository.findByChatRoomId(chatRoomId)
                 .orElseThrow(() -> new CustomException(ErrorCode.GOODS_CHAT_ROOM_NOT_FOUND));
         return GoodsChatRoomResponse.of(goodsChatRoom);
+    }
+
+    @Transactional(readOnly = true)
+    public List<MemberSummaryResponse> getChatRoomMembers(Long memberId, Long chatRoomId) {
+        validateMemberParticipation(memberId, chatRoomId);
+        List<GoodsChatPart> goodsChatParts = partRepository.findAllWithMemberByChatRoomId(chatRoomId);
+
+        return goodsChatParts.stream()
+                .map(part -> MemberSummaryResponse.from(part.getMember()))
+                .collect(Collectors.toList());
+    }
+
+    public void deactivateGoodsChatPart(Long memberId, Long chatRoomId) {
+        Member member = findMemberById(memberId);
+        GoodsChatPart goodsChatPart = partRepository.findById(new GoodsChatPartId(memberId, chatRoomId))
+                .orElseThrow(() -> new CustomException(ErrorCode.GOODS_CHAT_NOT_FOUND_CHAT_PART));
+
+        if (!goodsChatPart.leaveAndCheckRoomStatus()) {
+            // 퇴장 메시지 전송
+            System.out.println(member.getNickname() + "님이 채팅방을 나갔습니다.");
+        } else {
+            // 모두 나갔다면 채팅방, 채팅 참여, 채팅 삭제
+            chatRoomRepository.deleteById(chatRoomId);
+        }
     }
 }
