@@ -42,7 +42,7 @@ public class NaverAuthServiceTest {
     @DisplayName("네이버 로그인 연결 URL 생성")
     public void getAuthUrl_Success() {
         // when
-        String authUrl = naverAuthService.getAuthUrl();
+        String authUrl = naverAuthService.getAuthUrl("state");
 
         // then
         assertTrue(authUrl.startsWith("https://nid.naver.com/oauth2.0/authorize"));

@@ -1,5 +1,6 @@
 package com.example.mate.domain.member.dto.response;
 
+import com.example.mate.common.jwt.JwtToken;
 import com.example.mate.domain.member.entity.Member;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -16,13 +17,12 @@ public class MemberLoginResponse {
     private final String accessToken;
     private final String refreshToken;
 
-    // TODO : 파라미터로 JwtToken 추가 및 토큰 매핑
-    public static MemberLoginResponse from(Member member) {
+    public static MemberLoginResponse from(Member member, JwtToken jwtToken) {
         return MemberLoginResponse.builder()
                 .memberId(member.getId())
-                .grantType("Bearer")
-                .accessToken("accessToken")
-                .refreshToken("refreshToken")
+                .grantType(jwtToken.getGrantType())
+                .accessToken(jwtToken.getAccessToken())
+                .refreshToken(jwtToken.getRefreshToken())
                 .build();
     }
 }

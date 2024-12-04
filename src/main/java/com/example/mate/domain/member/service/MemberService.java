@@ -49,13 +49,10 @@ public class MemberService {
         return JoinResponse.from(savedMember);
     }
 
-    // TODO : JWT 토큰 발급
     // 자체 로그인 기능
     public MemberLoginResponse loginByEmail(MemberLoginRequest request) {
         Member member = findByEmail(request.getEmail());
-        // 토큰 발급한 뒤 member와 함께 넘기기
-        JwtToken jwtToken = makeToken(member);
-        return MemberLoginResponse.from(member);
+        return MemberLoginResponse.from(member, makeToken(member));
     }
 
     // JWT 토큰 생성
@@ -75,7 +72,6 @@ public class MemberService {
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND_BY_EMAIL));
     }
 
-    // TODO : JWT 도입 이후 본인만 접근할 수 있도록 수정
     // 내 프로필 조회
     public MyProfileResponse getMyProfile(Long memberId) {
         return getProfile(memberId, MyProfileResponse.class);
@@ -86,7 +82,6 @@ public class MemberService {
         return getProfile(memberId, MemberProfileResponse.class);
     }
 
-    // TODO : JWT 도입 이후 본인만 접근할 수 있도록 수정
     // 회원 정보 수정
     public MyProfileResponse updateMyProfile(MultipartFile image, MemberInfoUpdateRequest request) {
         Member member = findByMemberId(request.getMemberId());
@@ -104,7 +99,6 @@ public class MemberService {
         return MyProfileResponse.from(memberRepository.save(member));
     }
 
-    // TODO : JWT 도입 이후 본인만 접근할 수 있도록 수정
     // 회원 탈퇴
     public void deleteMember(Long memberId) {
         findByMemberId(memberId);

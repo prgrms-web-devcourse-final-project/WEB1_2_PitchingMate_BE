@@ -24,7 +24,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -37,11 +36,6 @@ public class MemberController {
 
     private final MemberService memberService;
 
-    /*
-    TODO : 2024/11/29 - 소셜 회원가입 후, 자체 회원가입 기능
-    1. 소셜 로그인 후 사용자 정보가 바로 넘어오도록 처리
-    2. nickname, myTeam 정보 저장
-    */
     @Operation(summary = "자체 회원가입 기능")
     @PostMapping("/join")
     public ResponseEntity<ApiResponse<JoinResponse>> join(
@@ -50,10 +44,6 @@ public class MemberController {
         return ResponseEntity.ok(ApiResponse.success(memberService.join(joinRequest)));
     }
 
-    /*
-    CATCH Mi 서비스 로그인
-    소셜 로그인 후, 받아온 이메일을 통해 로그인 처리
-     */
     @Operation(summary = "CATCH Mi 서비스 로그인", description = "캐치미 서비스에 로그인합니다.")
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<MemberLoginResponse>> catchMiLogin(
@@ -63,11 +53,11 @@ public class MemberController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    // TODO : 2024/11/29 - 내 프로필 조회 : 추후 @AuthenticationPrincipal Long memberId 받음
     @Operation(summary = "내 프로필 조회")
     @GetMapping("/me")
-    public ResponseEntity<ApiResponse<MyProfileResponse>> findMyInfo(@RequestParam Long memberId) {
-        return ResponseEntity.ok(ApiResponse.success(memberService.getMyProfile(memberId)));
+    public ResponseEntity<ApiResponse<MyProfileResponse>> findMyInfo(
+            @Parameter(description = "회원 로그인 정보") @AuthenticationPrincipal AuthMember authMember) {
+        return ResponseEntity.ok(ApiResponse.success(memberService.getMyProfile(authMember.getMemberId())));
     }
 
     @Operation(summary = "다른 회원 프로필 조회")
@@ -77,32 +67,21 @@ public class MemberController {
         return ResponseEntity.ok(ApiResponse.success(memberService.getMemberProfile(memberId)));
     }
 
-    /*
-    TODO : 회원 정보 수정 :
-    1. JwtToken 을 통해 사용자 정보 조회 -> 본인만 수정 가능하도록
-    */
     @Operation(summary = "회원 내 정보 수정")
     @PutMapping(value = "/me")
     public ResponseEntity<ApiResponse<MyProfileResponse>> updateMemberInfo(
             @Parameter(description = "프로필 사진") @RequestPart(value = "image", required = false) MultipartFile image,
-            @Parameter(description = "수정할 회원 정보") @Valid @RequestPart(value = "data") MemberInfoUpdateRequest updateRequest) {
+            @Parameter(description = "수정할 회원 정보") @Valid @RequestPart(value = "data") MemberInfoUpdateRequest updateRequest,
+            @Parameter(description = "회원 로그인 정보") @AuthenticationPrincipal AuthMember authMember) {
+        updateRequest.setMemberId(authMember.getMemberId());
         return ResponseEntity.ok(ApiResponse.success(memberService.updateMyProfile(image, updateRequest)));
     }
 
-    /*
-    TODO : 회원 삭제 : 임시로 @RequestParam Long memberId
-    1. JwtToken 을 통해 사용자 정보 조회 -> 본인만 수정 가능하도록
-    */
     @Operation(summary = "회원 탈퇴")
     @DeleteMapping("/me")
-    public ResponseEntity<Void> deleteMember(@RequestParam Long memberId) {
-        memberService.deleteMember(memberId);
+    public ResponseEntity<Void> deleteMember(
+            @Parameter(description = "회원 로그인 정보") @AuthenticationPrincipal AuthMember authMember) {
+        memberService.deleteMember(authMember.getMemberId());
         return ResponseEntity.noContent().build();
-    }
-
-    @GetMapping("/test")
-    public String test(@AuthenticationPrincipal AuthMember authMember) {
-        return "principal getName == " + authMember.getName() + " || " + "principal getMemberId == "
-                + authMember.getMemberId();
     }
 }

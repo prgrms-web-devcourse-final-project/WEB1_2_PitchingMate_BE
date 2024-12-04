@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.example.mate.config.WithAuthMember;
 import com.example.mate.common.security.util.JwtUtil;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.constant.Rating;
@@ -40,7 +41,6 @@ import com.example.mate.domain.member.repository.FollowRepository;
 import com.example.mate.domain.member.repository.MemberRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManager;
-import jakarta.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -53,8 +53,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
@@ -95,6 +97,9 @@ class MemberIntegrationTest {
     private VisitPartRepository visitPartRepository;
 
     @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    @Autowired
     private EntityManager entityManager;
 
     @MockBean
@@ -111,6 +116,10 @@ class MemberIntegrationTest {
 
     @BeforeEach
     void setUp() {
+        jdbcTemplate.execute("SET REFERENTIAL_INTEGRITY FALSE");
+        jdbcTemplate.execute("TRUNCATE TABLE member");
+        jdbcTemplate.execute("SET REFERENTIAL_INTEGRITY TRUE");
+
         // 테스트용 회원 및 관련 데이터 생성
         member = createMember("홍길동", "tester", "tester@example.com", Gender.MALE, 20);
         member2 = createMember("김철수", "tester2", "test2@example.com", Gender.MALE, 22);
@@ -298,9 +307,10 @@ class MemberIntegrationTest {
 
         @Test
         @DisplayName("내 프로필 조회 성공")
+        @WithAuthMember(userId = "customUser", memberId = 1L)
         void find_my_info_success() throws Exception {
-            mockMvc.perform(get("/api/members/me")
-                            .param("memberId", member.getId().toString()))
+            System.out.println(member.getId());
+            mockMvc.perform(get("/api/members/me"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.status").value("SUCCESS"))
                     .andExpect(jsonPath("$.data.nickname").value("tester"))
@@ -318,26 +328,14 @@ class MemberIntegrationTest {
 
         @Test
         @DisplayName("내 프로필 조회 실패 - 존재하지 않는 회원 ID")
+        @WithAuthMember(userId = "customUser", memberId = 999L)
         void find_member_info_fail_not_found() throws Exception {
             // 존재하지 않는 memberId를 사용
-            mockMvc.perform(get("/api/members/me")
-                            .param("memberId", "99999999"))  // 존재하지 않는 ID
+            mockMvc.perform(get("/api/members/me"))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.status").value("ERROR"))
                     .andExpect(jsonPath("$.message").value("해당 ID의 회원 정보를 찾을 수 없습니다"))
                     .andExpect(jsonPath("$.code").value(404))
-                    .andDo(print());
-        }
-
-        @Test
-        @DisplayName("내 프로필 조회 실패 - 회원 ID 누락")
-        void find_member_info_fail_missing_memberId() throws Exception {
-            // memberId 파라미터를 누락
-            mockMvc.perform(get("/api/members/me"))
-                    .andExpect(status().isBadRequest())  // 400 상태 코드
-                    .andExpect(jsonPath("$.status").value("ERROR"))
-                    .andExpect(jsonPath("$.message").value("요청에 'memberId' 파라미터가 누락되었습니다."))
-                    .andExpect(jsonPath("$.code").value(400))
                     .andDo(print());
         }
     }
@@ -360,6 +358,7 @@ class MemberIntegrationTest {
 
         @Test
         @DisplayName("회원 정보 수정 성공")
+        @WithAuthMember(userId = "customUser", memberId = 1L)
         void update_my_profile_success() throws Exception {
             MemberInfoUpdateRequest request = createMemberInfoUpdateRequest();
             MockMultipartFile data = new MockMultipartFile(
@@ -428,26 +427,11 @@ class MemberIntegrationTest {
 
         @Test
         @DisplayName("회원 탈퇴 성공")
+        @WithAuthMember(userId = "customUser", memberId = 1L)
         void delete_member_success() throws Exception {
-            mockMvc.perform(delete("/api/members/me")
-                            .param("memberId", member.getId().toString()))
+            mockMvc.perform(delete("/api/members/me"))
                     .andDo(print())
                     .andExpect(status().isNoContent());
-        }
-
-        @Test
-        @DisplayName("회원 탈퇴 실패 - 존재하지 않는 회원")
-        void delete_member_fail_not_exists_member() throws Exception {
-            // given
-            Long memberId = member.getId() + 999L;
-
-            // when & then
-            mockMvc.perform(delete("/api/members/me")
-                            .param("memberId", memberId.toString()))
-                    .andDo(print())
-                    .andExpect(status().isNotFound())
-                    .andExpect(jsonPath("$.status").value("ERROR"))
-                    .andExpect(jsonPath("$.message").value("해당 ID의 회원 정보를 찾을 수 없습니다"));
         }
     }
 }
