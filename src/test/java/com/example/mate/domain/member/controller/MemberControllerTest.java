@@ -16,6 +16,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
 import com.example.mate.common.security.filter.JwtCheckFilter;
+import com.example.mate.config.WithAuthMember;
 import com.example.mate.domain.member.dto.request.JoinRequest;
 import com.example.mate.domain.member.dto.request.MemberInfoUpdateRequest;
 import com.example.mate.domain.member.dto.response.JoinResponse;
@@ -39,6 +40,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @WebMvcTest(MemberController.class)
 @MockBean(JpaMetamodelMappingContext.class)
 @AutoConfigureMockMvc(addFilters = false)
+@WithAuthMember(userId = "customUser", memberId = 1L)
 class MemberControllerTest {
 
     @Autowired
@@ -207,8 +209,7 @@ class MemberControllerTest {
             given(memberService.getMyProfile(memberId)).willReturn(response);
 
             // when & then
-            mockMvc.perform(get("/api/members/me")
-                            .param("memberId", memberId.toString()))
+            mockMvc.perform(get("/api/members/me"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.status").value("SUCCESS"))
                     .andExpect(jsonPath("$.data.nickname").value("tester"))
@@ -229,32 +230,16 @@ class MemberControllerTest {
         @DisplayName("내 프로필 조회 실패 - 회원이 존재하지 않는 경우")
         void get_my_profile_member_not_found() throws Exception {
             // given
-            Long memberId = 999L;
+            Long memberId = 1L;
 
             given(memberService.getMyProfile(memberId)).willThrow(
                     new CustomException(ErrorCode.MEMBER_NOT_FOUND_BY_ID));
 
             // when & then
-            mockMvc.perform(get("/api/members/me")
-                            .param("memberId", memberId.toString()))
+            mockMvc.perform(get("/api/members/me"))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.status").value("ERROR"))
                     .andExpect(jsonPath("$.message").value("해당 ID의 회원 정보를 찾을 수 없습니다"))
-                    .andDo(print());
-        }
-
-        @Test
-        @DisplayName("내 프로필 조회 실패 - 잘못된 memberId 형식")
-        void get_my_profile_invalid_member_id() throws Exception {
-            // given
-            String invalidMemberId = "invalid";  // 숫자가 아닌 잘못된 ID
-
-            // when & then
-            mockMvc.perform(get("/api/members/me")
-                            .param("memberId", invalidMemberId))
-                    .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.status").value("ERROR"))
-                    .andExpect(jsonPath("$.message").value("잘못된 입력 형식입니다. 'invalid' 타입이 'Long'로 변환될 수 없습니다."))
                     .andDo(print());
         }
     }
@@ -371,8 +356,7 @@ class MemberControllerTest {
             willDoNothing().given(memberService).deleteMember(memberId);
 
             // when & then
-            mockMvc.perform(delete("/api/members/me")
-                            .param("memberId", memberId.toString()))
+            mockMvc.perform(delete("/api/members/me"))
                     .andDo(print())
                     .andExpect(status().isNoContent());
 
@@ -383,14 +367,13 @@ class MemberControllerTest {
         @DisplayName("회원 탈퇴 실패 - 존재하지 않는 회원")
         void delete_member_fail_not_exists_member() throws Exception {
             // given
-            Long memberId = 999L;
+            Long memberId = 1L;
 
             willThrow(new CustomException(ErrorCode.MEMBER_NOT_FOUND_BY_ID))
                     .given(memberService).deleteMember(memberId);
 
             // when & then
-            mockMvc.perform(delete("/api/members/me")
-                            .param("memberId", memberId.toString()))
+            mockMvc.perform(delete("/api/members/me"))
                     .andDo(print())
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.status").value("ERROR"))
