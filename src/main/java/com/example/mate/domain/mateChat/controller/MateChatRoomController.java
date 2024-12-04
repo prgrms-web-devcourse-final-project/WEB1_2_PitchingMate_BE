@@ -3,6 +3,7 @@ package com.example.mate.domain.mateChat.controller;
 import com.example.mate.common.response.ApiResponse;
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.mateChat.dto.response.MateChatMessageResponse;
+import com.example.mate.domain.mateChat.dto.response.MateChatRoomListResponse;
 import com.example.mate.domain.mateChat.dto.response.MateChatRoomResponse;
 import com.example.mate.domain.mateChat.service.MateChatRoomService;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +37,16 @@ public class MateChatRoomController {
     ) {
         PageResponse<MateChatMessageResponse> messages = chatRoomService.getChatMessages(roomId, pageable);
         return ResponseEntity.ok(ApiResponse.success(messages));
+    }
+
+    // 채팅 페이지를 눌렀을 때 채팅 목록을 반환하기 위해서 호출됨.
+    @GetMapping("/rooms/me")
+    public ResponseEntity<ApiResponse<PageResponse<MateChatRoomListResponse>>> getMyChatRooms(
+            @RequestParam Long memberId,  // 추후 @AuthenticationPrincipal로 대체
+            @PageableDefault Pageable pageable
+    ) {
+        PageResponse<MateChatRoomListResponse> response = chatRoomService.getMyChatRooms(memberId, pageable);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     // 채팅방 나갈 때 호출되고, 이후 handleLeave 메서드 호출로 인해 퇴장 메세지 전송됨
