@@ -24,6 +24,7 @@ public class MateChatRoomController {
     private final MateChatRoomService chatRoomService;
 
     @PostMapping("/rooms/{matePostId}")
+    @Operation(summary = "채팅방 생성/입장", description = "")
     public ResponseEntity<ApiResponse<MateChatRoomResponse>> createOrJoinChatRoom(
             @Parameter(description = "메이트 게시글 ID") @PathVariable Long matePostId,
             @Parameter(description = "회원 ID (삭제 예정)") @RequestParam Long memberId  // 추후 @AuthenticationPrincipal로 대체
