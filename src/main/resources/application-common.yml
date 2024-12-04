@@ -25,10 +25,9 @@ springdoc:
 
 
 oauth:
-  naver:
-    client-id: ${NAVER_CLIENT_ID}
-    redirect-uri: ${NAVER_REDIRECT_URI}
-    client-secret: ${NAVER_CLIENT_SECRET}
+  naver_client_id: ${NAVER_CLIENT_ID}
+  naver_redirect_uri: ${NAVER_REDIRECT_URI}
+  naver_client_secret: ${NAVER_CLIENT_SECRET}
 
 jwt:
   secret_key: ${JWT_SECRET_KEY}
