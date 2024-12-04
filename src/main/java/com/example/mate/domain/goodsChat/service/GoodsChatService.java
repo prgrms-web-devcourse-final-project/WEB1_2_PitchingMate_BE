@@ -7,7 +7,7 @@ import com.example.mate.domain.goods.entity.GoodsPost;
 import com.example.mate.domain.goods.entity.Role;
 import com.example.mate.domain.goods.entity.Status;
 import com.example.mate.domain.goods.repository.GoodsPostRepository;
-import com.example.mate.domain.goodsChat.dto.response.GoodsChatMsgResponse;
+import com.example.mate.domain.goodsChat.dto.response.GoodsChatMessageResponse;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatRoomResponse;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatRoomSummaryResponse;
 import com.example.mate.domain.goodsChat.entity.GoodsChatMessage;
@@ -83,20 +83,20 @@ public class GoodsChatService {
     }
 
     @Transactional(readOnly = true)
-    public PageResponse<GoodsChatMsgResponse> getMessagesForChatRoom(Long chatRoomId, Long memberId, Pageable pageable) {
-        validateMemberParticipation(chatRoomId, memberId);
+    public PageResponse<GoodsChatMessageResponse> getMessagesForChatRoom(Long chatRoomId, Long memberId, Pageable pageable) {
+        validateMemberParticipation(memberId, chatRoomId);
         Pageable validatePageable = PageResponse.validatePageable(pageable);
 
         Page<GoodsChatMessage> chatMessagePage = messageRepository.findByChatRoomId(chatRoomId, validatePageable);
-        List<GoodsChatMsgResponse> content = chatMessagePage.getContent().stream()
-                .map(GoodsChatMsgResponse::of)
+        List<GoodsChatMessageResponse> content = chatMessagePage.getContent().stream()
+                .map(GoodsChatMessageResponse::of)
                 .toList();
 
         return PageResponse.from(chatMessagePage, content);
     }
 
-    private void validateMemberParticipation(Long chatRoomId, Long memberId) {
-        if (!partRepository.existsById(new GoodsChatPartId(chatRoomId, memberId))) {
+    private void validateMemberParticipation(Long memberId, Long chatRoomId) {
+        if (!partRepository.existsById(new GoodsChatPartId(memberId, chatRoomId))) {
             throw new CustomException(ErrorCode.GOODS_CHAT_NOT_FOUND_CHAT_PART);
         }
     }
@@ -126,7 +126,7 @@ public class GoodsChatService {
 
     @Transactional(readOnly = true)
     public GoodsChatRoomResponse getGoodsChatRoomInfo(Long memberId, Long chatRoomId) {
-        validateMemberParticipation(chatRoomId, memberId);
+        validateMemberParticipation(memberId, chatRoomId);
 
         GoodsChatRoom goodsChatRoom = chatRoomRepository.findByChatRoomId(chatRoomId)
                 .orElseThrow(() -> new CustomException(ErrorCode.GOODS_CHAT_ROOM_NOT_FOUND));

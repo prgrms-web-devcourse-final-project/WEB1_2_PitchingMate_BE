@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.example.mate.common.response.ApiResponse;
 import com.example.mate.domain.constant.Gender;
+import com.example.mate.domain.constant.MessageType;
 import com.example.mate.domain.goods.dto.LocationInfo;
 import com.example.mate.domain.goods.entity.Category;
 import com.example.mate.domain.goods.entity.GoodsPost;
@@ -133,8 +134,8 @@ public class GoodsChatIntegrationTest {
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data.content").isArray())
-                .andExpect(jsonPath("$.data.content[0].content").value("test message"))
-                .andExpect(jsonPath("$.data.content[1].content").value("test message"))
+                .andExpect(jsonPath("$.data.content[0].message").value("test message"))
+                .andExpect(jsonPath("$.data.content[1].message").value("test message"))
                 .andReturn()
                 .getResponse();
     }
@@ -185,6 +186,7 @@ public class GoodsChatIntegrationTest {
                 GoodsChatMessage.builder()
                         .goodsChatPart(goodsChatPart)
                         .content(content)
+                        .messageType(MessageType.TALK)
                         .sentAt(LocalDateTime.now())
                         .build()
         );
