@@ -32,12 +32,12 @@ public class NaverAuthService {
      *
      * @return 네이버 로그인 URL
      */
-    public String getAuthUrl() {
+    public String getAuthUrl(String state) {
         return "https://nid.naver.com/oauth2.0/authorize"
                 + "?client_id=" + oAuthConfig.getNaverClientId()
                 + "&redirect_uri=" + oAuthConfig.getNaverRedirectUri()
                 + "&response_type=code"
-                + "&state=STATE_STRING";
+                + "&state=" + state;
     }
 
     /**
