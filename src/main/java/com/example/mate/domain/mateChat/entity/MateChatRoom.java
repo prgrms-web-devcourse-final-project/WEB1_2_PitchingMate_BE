@@ -49,13 +49,6 @@ public class MateChatRoom extends BaseTimeEntity {
         this.lastChatSentAt = LocalDateTime.now();
     }
 
-    public static MateChatRoom create(MatePost matePost) {
-        return MateChatRoom.builder()
-                .matePost(matePost)
-                .currentMembers(1)
-                .build();
-    }
-
     public void incrementCurrentMembers() {
         if (this.currentMembers >= 10) {
             throw new CustomException(ErrorCode.CHAT_ROOM_FULL);

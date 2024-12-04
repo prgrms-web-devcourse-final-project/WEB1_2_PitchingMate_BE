@@ -31,12 +31,4 @@ public class MateChatMessage extends BaseTimeEntity {
 
     @Column(name = "content", nullable = false, columnDefinition = "TEXT")
     private String content;
-
-    private MateChatMessage(MateChatRoom mateChatRoom, Member sender, MessageType type,
-                        String content) {
-        this.mateChatRoom = mateChatRoom;
-        this.sender = sender;
-        this.type = type;
-        this.content = content;
-    }
 }

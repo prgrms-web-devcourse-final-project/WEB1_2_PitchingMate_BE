@@ -28,11 +28,6 @@ public class MateChatRoomMember extends BaseTimeEntity {
     @Builder.Default
     private Boolean isActive = true;
 
-    private MateChatRoomMember(MateChatRoom mateChatRoom, Member member) {
-        this.mateChatRoom = mateChatRoom;
-        this.member = member;
-    }
-
     public void deactivate() {
         this.isActive = false;
         this.mateChatRoom.decrementCurrentMembers();
