@@ -62,4 +62,9 @@ public class GoodsChatRoom {
 
         chatParts.add(chatPart);
     }
+
+    public void updateLastChat(String lastChatContent, LocalDateTime lastChatSentAt) {
+        this.lastChatContent = lastChatContent;
+        this.lastChatSentAt = lastChatSentAt;
+    }
 }
