@@ -8,8 +8,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.mate.common.response.PageResponse;
+import com.example.mate.domain.goodsChat.dto.response.GoodsChatMessageResponse;
 import com.example.mate.common.security.util.JwtUtil;
-import com.example.mate.domain.goodsChat.dto.response.GoodsChatMsgResponse;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatRoomResponse;
 import com.example.mate.domain.goodsChat.service.GoodsChatService;
 import java.time.LocalDateTime;
@@ -125,21 +125,21 @@ class GoodsChatRoomControllerTest {
         Long memberId = 2L;
         PageRequest pageable = PageRequest.of(0, 10);
 
-        GoodsChatMsgResponse firstMessage = GoodsChatMsgResponse.builder()
+        GoodsChatMessageResponse firstMessage = GoodsChatMessageResponse.builder()
                 .chatMessageId(1L)
-                .content("first message")
-                .authorId(memberId)
+                .message("first message")
+                .senderId(memberId)
                 .sentAt(LocalDateTime.now().minusMinutes(10))
                 .build();
 
-        GoodsChatMsgResponse secondMessage = GoodsChatMsgResponse.builder()
+        GoodsChatMessageResponse secondMessage = GoodsChatMessageResponse.builder()
                 .chatMessageId(2L)
-                .content("second message")
-                .authorId(memberId)
+                .message("second message")
+                .senderId(memberId)
                 .sentAt(LocalDateTime.now())
                 .build();
 
-        PageResponse<GoodsChatMsgResponse> pageResponse = PageResponse.from(
+        PageResponse<GoodsChatMessageResponse> pageResponse = PageResponse.from(
                 new PageImpl<>(List.of(secondMessage, firstMessage), pageable, 2),
                 List.of(secondMessage, firstMessage)
         );
@@ -155,9 +155,9 @@ class GoodsChatRoomControllerTest {
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data.content").isArray())
-                .andExpect(jsonPath("$.data.content[0].content").value(secondMessage.getContent()))
+                .andExpect(jsonPath("$.data.content[0].message").value(secondMessage.getMessage()))
                 .andExpect(jsonPath("$.data.content[0].chatMessageId").value(secondMessage.getChatMessageId()))
-                .andExpect(jsonPath("$.data.content[1].content").value(firstMessage.getContent()))
+                .andExpect(jsonPath("$.data.content[1].message").value(firstMessage.getMessage()))
                 .andExpect(jsonPath("$.data.content[1].chatMessageId").value(firstMessage.getChatMessageId()));
 
         verify(goodsChatService).getMessagesForChatRoom(chatRoomId, memberId, pageable);

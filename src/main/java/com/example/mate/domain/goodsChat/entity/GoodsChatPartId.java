@@ -10,6 +10,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class GoodsChatPartId implements Serializable {
 
-    private Long goodsChatRoom;
     private Long member;
+    private Long goodsChatRoom;
 }
