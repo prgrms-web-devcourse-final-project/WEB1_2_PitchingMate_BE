@@ -26,7 +26,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -145,13 +144,14 @@ public class MateChatRoomService {
 
         List<MateChatMessageResponse> content = messagePage.getContent().stream()
                 .map(message -> MateChatMessageResponse.builder()
-                        .type(message.getType())
+                        .chatMessageId(message.getId())
                         .roomId(roomId)
                         .senderId(message.getSender().getId())
                         .senderNickname(message.getSender().getNickname())
                         .message(message.getContent())
-                        .timestamp(message.getCreatedAt())
-                        .currentMembers(chatRoom.getCurrentMembers())
+                        .messageType(message.getType().getValue())
+                        .senderImageUrl(message.getSender().getImageUrl())
+                        .sendAt(message.getCreatedAt())
                         .build())
                 .toList();
 

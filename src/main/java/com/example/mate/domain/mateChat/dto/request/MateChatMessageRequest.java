@@ -1,12 +1,12 @@
 package com.example.mate.domain.mateChat.dto.request;
 
+import com.example.mate.domain.mateChat.entity.MateChatMessage;
+import com.example.mate.domain.mateChat.entity.MateChatRoom;
 import com.example.mate.domain.mateChat.message.MessageType;
+import com.example.mate.domain.member.entity.Member;
 import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -15,14 +15,13 @@ public class MateChatMessageRequest {
     private Long roomId;
     private Long senderId;
     private String message;
-    private LocalDateTime timestamp;
 
-    @Builder
-    private MateChatMessageRequest(String type, Long roomId, Long senderId, String message) {
-        this.type = type;
-        this.roomId = roomId;
-        this.senderId = senderId;
-        this.message = message;
-        this.timestamp = LocalDateTime.now();
+    public static MateChatMessage from(MateChatRoom mateChatRoom, MateChatMessageRequest message, Member sender) {
+        return MateChatMessage.builder()
+                .mateChatRoom(mateChatRoom)
+                .sender(sender)
+                .type(MessageType.valueOf(message.getType()))
+                .content(message.getMessage())
+                .build();
     }
 }

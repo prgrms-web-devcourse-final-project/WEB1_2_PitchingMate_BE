@@ -29,23 +29,13 @@ public class MateChatMessageService {
         MateChatRoom chatRoom = findById(message.getRoomId());
 
         // DB에 메시지 저장
-        MateChatMessage chatMessage = MateChatMessage.builder()
-                .type(message.getType())
-                .mateChatRoom(chatRoom)
-                .sender(sender)
-                .content(message.getMessage())
-                .build();
-        chatMessageRepository.save(chatMessage);
+        MateChatMessage chatMessage = chatMessageRepository.save(MateChatMessageRequest.from(chatRoom, message, sender));
 
         // 마지막 메시지 정보 업데이트
-        chatRoom.updateLastChat(message.getMessage());
+        chatRoom.updateLastChat(chatMessage.getContent());
         chatRoomRepository.save(chatRoom);
 
-        MateChatMessageResponse response = MateChatMessageResponse.of(
-                message,
-                sender.getNickname(),
-                chatRoom.getCurrentMembers()
-        );
+        MateChatMessageResponse response = MateChatMessageResponse.of(chatMessage);
 
         sendToSubscribers(message.getRoomId(), response);
     }
@@ -56,31 +46,16 @@ public class MateChatMessageService {
         MateChatRoom chatRoom = findById(message.getRoomId());
 
         String enterMessage = member.getNickname() + "님이 입장하셨습니다.";
-        MateChatMessageRequest enterRequest = createSystemMessage(
-                MessageType.ENTER,
-                message.getRoomId(),
-                message.getSenderId(),
-                enterMessage
-        );
 
         // DB에 메시지 저장
-        MateChatMessage chatMessage = MateChatMessage.builder()
-                .type(message.getType())
-                .mateChatRoom(chatRoom)
-                .sender(member)
-                .content(enterMessage)
-                .build();
-        chatMessageRepository.save(chatMessage);
+        MateChatMessage chatMessage = chatMessageRepository.save(MateChatMessageRequest.from(chatRoom, message, member));
+
 
         // 마지막 메시지 정보 업데이트
         chatRoom.updateLastChat(enterMessage);
         chatRoomRepository.save(chatRoom);
 
-        MateChatMessageResponse response = MateChatMessageResponse.of(
-                enterRequest,
-                member.getNickname(),
-                chatRoom.getCurrentMembers()
-        );
+        MateChatMessageResponse response = MateChatMessageResponse.of(chatMessage);
 
         sendToSubscribers(message.getRoomId(), response);
     }
@@ -91,31 +66,16 @@ public class MateChatMessageService {
         MateChatRoom chatRoom = findById(message.getRoomId());
 
         String leaveMessage = member.getNickname() + "님이 퇴장하셨습니다.";
-        MateChatMessageRequest leaveRequest = createSystemMessage(
-                MessageType.LEAVE,
-                message.getRoomId(),
-                message.getSenderId(),
-                leaveMessage
-        );
 
         // DB에 메시지 저장
-        MateChatMessage chatMessage = MateChatMessage.builder()
-                .type(message.getType())
-                .mateChatRoom(chatRoom)
-                .sender(member)
-                .content(leaveMessage)
-                .build();
-        chatMessageRepository.save(chatMessage);
+        MateChatMessage chatMessage = chatMessageRepository.save(MateChatMessageRequest.from(chatRoom, message, member));
+
 
         // 마지막 메시지 정보 업데이트
         chatRoom.updateLastChat(leaveMessage);
         chatRoomRepository.save(chatRoom);
 
-        MateChatMessageResponse response = MateChatMessageResponse.of(
-                leaveRequest,
-                member.getNickname(),
-                chatRoom.getCurrentMembers() - 1
-        );
+        MateChatMessageResponse response = MateChatMessageResponse.of(chatMessage);
 
         sendToSubscribers(message.getRoomId(), response);
     }
@@ -124,16 +84,6 @@ public class MateChatMessageService {
     private Member findMemberById(Long memberId) {
         return memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND_BY_ID));
-    }
-
-    private MateChatMessageRequest createSystemMessage(
-            MessageType type, Long roomId, Long senderId, String message) {
-        return MateChatMessageRequest.builder()
-                .type(type)
-                .roomId(roomId)
-                .senderId(senderId)
-                .message(message)
-                .build();
     }
 
     private void sendToSubscribers(Long roomId, MateChatMessageResponse message) {
