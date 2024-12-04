@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 public class MateChatRoomController {
     private final MateChatRoomService chatRoomService;
 
-    // 1. 최초 채팅방 입장 시 호출 됨. 이후 handleEnter 메서드 호출로 인해 입장 메세지 전송됨
+    // 1. 최초로 채팅방에 새로운 유저가 입장 시 호출 됨. 이후 handleEnter 메서드 호출로 인해 입장 메세지 전송됨
     // 2. 생성되어있던 채팅방에 새로운 유저가 입장 시 호출 됨. 이후 handleEnter 메서드 호출로 인해 입장 메세지 전송
     @PostMapping("/rooms/{matePostId}")
     public ResponseEntity<ApiResponse<MateChatRoomResponse>> createOrJoinChatRoom(
