@@ -25,12 +25,6 @@ public interface MateChatRoomMemberRepository extends JpaRepository<MateChatRoom
                                           @Param("memberId") Long memberId
     );
 
-    @Query("SELECT crm FROM MateChatRoomMember crm " +
-            "WHERE crm.mateChatRoom.id = :chatRoomId " +
-            "AND crm.isActive = true")
-    List<MateChatRoomMember> findAllByChatRoomIdAndIsActiveTrue(@Param("chatRoomId") Long chatRoomId
-    );
-
     @Query("SELECT COUNT(crm) FROM MateChatRoomMember crm " +
             "WHERE crm.mateChatRoom.id = :chatRoomId " +
             "AND crm.isActive = true")

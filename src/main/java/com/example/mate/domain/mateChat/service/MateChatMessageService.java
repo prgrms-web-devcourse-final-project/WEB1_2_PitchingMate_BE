@@ -28,15 +28,15 @@ public class MateChatMessageService {
         MateChatRoom chatRoom = findById(message.getRoomId());
 
         // DB에 메시지 저장
-        MateChatMessage chatMessage = chatMessageRepository.save(MateChatMessageRequest.from(chatRoom, message, sender));
+        MateChatMessage chatMessage = chatMessageRepository.save(
+                MateChatMessageRequest.from(chatRoom, message, sender)
+        );
 
         // 마지막 메시지 정보 업데이트
         chatRoom.updateLastChat(chatMessage.getContent());
         chatRoomRepository.save(chatRoom);
 
-        MateChatMessageResponse response = MateChatMessageResponse.of(chatMessage);
-
-        sendToSubscribers(message.getRoomId(), response);
+        sendToSubscribers(message.getRoomId(), MateChatMessageResponse.of(chatMessage));
     }
 
     // 입장 메시지 처리
@@ -44,19 +44,16 @@ public class MateChatMessageService {
         Member member = findMemberById(message.getSenderId());
         MateChatRoom chatRoom = findById(message.getRoomId());
 
-        String enterMessage = member.getNickname() + "님이 입장하셨습니다.";
-
         // DB에 메시지 저장
-        MateChatMessage chatMessage = chatMessageRepository.save(MateChatMessageRequest.from(chatRoom, message, member));
-
+        MateChatMessage chatMessage = chatMessageRepository.save(
+                MateChatMessageRequest.from(chatRoom, message, member)
+        );
 
         // 마지막 메시지 정보 업데이트
-        chatRoom.updateLastChat(enterMessage);
+        chatRoom.updateLastChat(message.getMessage());
         chatRoomRepository.save(chatRoom);
 
-        MateChatMessageResponse response = MateChatMessageResponse.of(chatMessage);
-
-        sendToSubscribers(message.getRoomId(), response);
+        sendToSubscribers(message.getRoomId(), MateChatMessageResponse.of(chatMessage));
     }
 
     // 퇴장 메시지 처리

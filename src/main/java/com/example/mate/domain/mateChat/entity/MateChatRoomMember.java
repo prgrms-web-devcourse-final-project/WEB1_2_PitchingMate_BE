@@ -28,6 +28,18 @@ public class MateChatRoomMember extends BaseTimeEntity {
     @Builder.Default
     private Boolean isActive = true;
 
+    @Column(name = "has_entered", nullable = false)
+    @Builder.Default
+    private Boolean hasEntered = false;  // 최초 입장 여부 추적
+
+    public boolean markAsEntered() {
+        if (!this.hasEntered) {
+            this.hasEntered = true;
+            return true;
+        }
+        return false;
+    }
+
     public void deactivate() {
         this.isActive = false;
         this.mateChatRoom.decrementCurrentMembers();

@@ -17,11 +17,6 @@ public class MateChatMessageController {
         mateChatMessageService.sendMessage(message);
     }
 
-    @MessageMapping("/chat/mate/enter")
-    public void handleEnter(@Payload MateChatMessageRequest message) {
-        mateChatMessageService.sendEnterMessage(message);
-    }
-
     @MessageMapping("/chat/mate/leave")
     public void handleLeave(@Payload MateChatMessageRequest message) {
         mateChatMessageService.sendLeaveMessage(message);
