@@ -12,20 +12,14 @@ import java.time.LocalDateTime;
 public class MateChatRoomResponse {
     private Long roomId;
     private Long matePostId;
-    private String matePostTitle;
-    private String authorNickname;
     private Integer currentMembers;
-    private Integer maxMembers;
     private LocalDateTime joinedAt;
 
     public static MateChatRoomResponse from(MateChatRoom chatRoom, MateChatRoomMember member) {
         return MateChatRoomResponse.builder()
                 .roomId(chatRoom.getId())
                 .matePostId(chatRoom.getMatePost().getId())
-                .matePostTitle(chatRoom.getMatePost().getTitle())
-                .authorNickname(chatRoom.getMatePost().getAuthor().getNickname())
                 .currentMembers(chatRoom.getCurrentMembers())
-                .maxMembers(10)  // 최대 인원 10명 고정
                 .joinedAt(member.getCreatedAt())
                 .build();
     }
