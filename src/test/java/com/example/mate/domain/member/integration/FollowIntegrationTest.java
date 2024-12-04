@@ -9,13 +9,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.mate.common.error.ErrorCode;
+import com.example.mate.config.WithAuthMember;
 import com.example.mate.common.security.util.JwtUtil;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.member.entity.Follow;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.FollowRepository;
 import com.example.mate.domain.member.repository.MemberRepository;
-import jakarta.transaction.Transactional;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -26,7 +26,9 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
@@ -45,12 +47,19 @@ public class FollowIntegrationTest {
     @MockBean
     private JwtUtil jwtUtil;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
     private Member member1;
     private Member member2;
     private Follow follow;
 
     @BeforeEach
     void setUp() {
+        jdbcTemplate.execute("SET REFERENTIAL_INTEGRITY FALSE");
+        jdbcTemplate.execute("TRUNCATE TABLE member");
+        jdbcTemplate.execute("SET REFERENTIAL_INTEGRITY TRUE");
+
         followRepository.deleteAll();
         memberRepository.deleteAll();
 
@@ -96,35 +105,35 @@ public class FollowIntegrationTest {
 
         @Test
         @DisplayName("회원 팔로우 성공")
+        @WithAuthMember(userId = "customUser", memberId = 1L)
         void follow_member_success() throws Exception {
             // given
             Long followerId = member2.getId();
             Long followingId = member1.getId();
 
             // when & then
-            mockMvc.perform(post("/api/profile/follow/{memberId}", followingId)
-                            .param("followerId", String.valueOf(followerId)))
+            mockMvc.perform(post("/api/profile/follow/{memberId}", followingId))
                     .andExpect(status().isOk())
                     .andDo(print());
 
             List<Follow> savedFollows = followRepository.findAll();
             assertThat(savedFollows).size().isEqualTo(2); // 기존 1개 + 새로 1개 추가
             assertThat(savedFollows.get(savedFollows.size() - 1)
-                    .getFollower().getId()).isEqualTo(followerId);
+                    .getFollower().getId()).isEqualTo(followingId);
             assertThat(savedFollows.get(savedFollows.size() - 1)
-                    .getFollowing().getId()).isEqualTo(followingId);
+                    .getFollowing().getId()).isEqualTo(followerId);
         }
 
         @Test
         @DisplayName("회원 팔로우 실패 -이미 팔로우한 회원을 다시 팔로우하려는 경우 예외 발생")
+        @WithAuthMember(userId = "customUser", memberId = 1L)
         void follow_member_already_followed() throws Exception {
             // given - 이미 팔로우 되어 있는 상태인 member1가 member2 팔로우 상황 가정
             Long followerId = member1.getId();
             Long followingId = member2.getId();
 
             // when & then
-            mockMvc.perform(post("/api/profile/follow/{memberId}", followingId)
-                            .param("followerId", String.valueOf(followerId)))
+            mockMvc.perform(post("/api/profile/follow/{memberId}", followingId))
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.status").value("ERROR"))
                     .andExpect(jsonPath("$.message").value("이미 팔로우한 회원입니다."))
@@ -140,17 +149,16 @@ public class FollowIntegrationTest {
 
         @Test
         @DisplayName("회원 팔로우 실패 - 존재하지 않는 팔로워 또는 팔로잉을 팔로우하려는 경우 예외 발생")
+        @WithAuthMember(userId = "customUser", memberId = 1L)
         void follow_member_not_found() throws Exception {
             // given
-            Long followerId = member1.getId() + 999L;
-            Long followingId = member1.getId();
+            Long followingId = member1.getId() + 999L;
 
             // when & then
-            mockMvc.perform(post("/api/profile/follow/{memberId}", followingId)
-                            .param("followerId", String.valueOf(followerId)))
+            mockMvc.perform(post("/api/profile/follow/{memberId}", followingId))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.status").value("ERROR"))
-                    .andExpect(jsonPath("$.message").value("해당 ID의 팔로워 회원을 찾을 수 없습니다."))
+                    .andExpect(jsonPath("$.message").value("해당 ID의 팔로잉 회원을 찾을 수 없습니다."))
                     .andDo(print());
 
             List<Follow> savedFollows = followRepository.findAll();
@@ -168,14 +176,14 @@ public class FollowIntegrationTest {
 
         @Test
         @DisplayName("회원 언팔로우 성공")
+        @WithAuthMember(userId = "customUser", memberId = 1L)
         void unfollow_member_success() throws Exception {
             // given
             Long unfollowerId = member1.getId();
             Long unfollowingId = member2.getId();
 
             // when & then
-            mockMvc.perform(delete("/api/profile/follow/{memberId}", unfollowingId)
-                            .param("unfollowerId", String.valueOf(unfollowerId)))
+            mockMvc.perform(delete("/api/profile/follow/{memberId}", unfollowingId))
                     .andExpect(status().isNoContent())  // 204 No Content
                     .andDo(print());
 
@@ -186,14 +194,14 @@ public class FollowIntegrationTest {
 
         @Test
         @DisplayName("회원 언팔로우 실패 - 팔로우 관계가 없는 회원을 언팔로우하려는 경우 예외 발생")
+        @WithAuthMember(userId = "customUser", memberId = 1L)
         void unfollow_member_not_followed() throws Exception {
             // given
             Long unfollowerId = member2.getId();  // member2가 member1을 팔로우하지 않은 상태
             Long unfollowingId = member1.getId();
 
             // when & then
-            mockMvc.perform(delete("/api/profile/follow/{memberId}", unfollowingId)
-                            .param("unfollowerId", String.valueOf(unfollowerId)))
+            mockMvc.perform(delete("/api/profile/follow/{memberId}", unfollowingId))
                     .andExpect(status().isBadRequest())  // 400 Bad Request
                     .andExpect(jsonPath("$.status").value("ERROR"))
                     .andExpect(jsonPath("$.message").value("이미 언팔로우한 회원입니다."))
@@ -206,17 +214,17 @@ public class FollowIntegrationTest {
 
         @Test
         @DisplayName("회원 언팔로우 실패 - 존재하지 않는 팔로워 또는 팔로잉을 언팔로우하려는 경우 예외 발생")
+        @WithAuthMember(userId = "customUser", memberId = 1L)
         void unfollow_member_not_found() throws Exception {
             // given
             Long unfollowerId = 999L;  // 존재하지 않는 팔로워 ID
-            Long unfollowingId = member2.getId();
+            Long unfollowingId = member2.getId() + 999L;
 
             // when & then
-            mockMvc.perform(delete("/api/profile/follow/{memberId}", unfollowingId)
-                            .param("unfollowerId", String.valueOf(unfollowerId)))
+            mockMvc.perform(delete("/api/profile/follow/{memberId}", unfollowingId))
                     .andExpect(status().isNotFound())  // 404 Not Found
                     .andExpect(jsonPath("$.status").value("ERROR"))
-                    .andExpect(jsonPath("$.message").value("해당 ID의 언팔로워 회원을 찾을 수 없습니다."))
+                    .andExpect(jsonPath("$.message").value("해당 ID의 언팔로잉 회원을 찾을 수 없습니다."))
                     .andDo(print());
 
             // 팔로우 관계가 여전히 존재하는지 확인

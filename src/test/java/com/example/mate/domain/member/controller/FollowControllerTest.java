@@ -19,6 +19,7 @@ import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.common.security.filter.JwtCheckFilter;
+import com.example.mate.config.WithAuthMember;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.member.dto.response.MemberSummaryResponse;
 import com.example.mate.domain.member.entity.Follow;
@@ -41,6 +42,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @WebMvcTest(FollowController.class)
 @MockBean(JpaMetamodelMappingContext.class)
 @AutoConfigureMockMvc(addFilters = false)
+@WithAuthMember(userId = "customUser", memberId = 1L)
 class FollowControllerTest {
 
     @Autowired
@@ -96,8 +98,7 @@ class FollowControllerTest {
             willDoNothing().given(followService).follow(followerId, followingId);
 
             // when & then
-            mockMvc.perform(post("/api/profile/follow/{memberId}", followingId)
-                            .param("followerId", String.valueOf(followerId)))
+            mockMvc.perform(post("/api/profile/follow/{memberId}", followingId))
                     .andExpect(status().isOk())
                     .andDo(print());
 
@@ -116,8 +117,7 @@ class FollowControllerTest {
                     .given(followService).follow(followerId, followingId);
 
             // when & then
-            mockMvc.perform(post("/api/profile/follow/{memberId}", followingId)
-                            .param("followerId", String.valueOf(followerId)))
+            mockMvc.perform(post("/api/profile/follow/{memberId}", followingId))
                     .andExpect(status().isBadRequest())  // 400 Bad Request
                     .andDo(print());
 
@@ -136,8 +136,7 @@ class FollowControllerTest {
                     .given(followService).follow(followerId, followingId);
 
             // when & then
-            mockMvc.perform(post("/api/profile/follow/{memberId}", followingId)
-                            .param("followerId", String.valueOf(followerId)))
+            mockMvc.perform(post("/api/profile/follow/{memberId}", followingId))
                     .andExpect(status().isNotFound())  // 404 Not Found
                     .andDo(print());
 
@@ -159,8 +158,7 @@ class FollowControllerTest {
             willDoNothing().given(followService).unfollow(unfollowerId, unfollowingId);
 
             // when & then
-            mockMvc.perform(delete("/api/profile/follow/{memberId}", unfollowingId)
-                            .param("unfollowerId", String.valueOf(unfollowerId)))
+            mockMvc.perform(delete("/api/profile/follow/{memberId}", unfollowingId))
                     .andExpect(status().isNoContent())
                     .andDo(print());
 
@@ -179,8 +177,7 @@ class FollowControllerTest {
                     .given(followService).unfollow(unfollowerId, unfollowingId);
 
             // when & then
-            mockMvc.perform(delete("/api/profile/follow/{memberId}", unfollowingId)
-                            .param("unfollowerId", String.valueOf(unfollowerId)))
+            mockMvc.perform(delete("/api/profile/follow/{memberId}", unfollowingId))
                     .andExpect(status().isBadRequest())
                     .andDo(print());
 
@@ -199,8 +196,7 @@ class FollowControllerTest {
                     .given(followService).unfollow(unfollowerId, unfollowingId);
 
             // when & then
-            mockMvc.perform(delete("/api/profile/follow/{memberId}", unfollowingId)
-                            .param("unfollowerId", String.valueOf(unfollowerId)))
+            mockMvc.perform(delete("/api/profile/follow/{memberId}", unfollowingId))
                     .andExpect(status().isNotFound())
                     .andDo(print());
 
