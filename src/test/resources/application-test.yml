@@ -18,16 +18,3 @@ spring:
     console:
       enabled: true
       path: /h2-console
-
-oauth:
-  naver:
-    client-id: ${NAVER_CLIENT_ID}
-    redirect-uri: ${NAVER_REDIRECT_URI}
-    client-secret: ${NAVER_CLIENT_SECRET}
-
-jwt:
-  secret_key: ${JWT_SECRET_KEY}
-
-openweather:
-  api:
-    key: ${OPENWEATHER_API_KEY}
