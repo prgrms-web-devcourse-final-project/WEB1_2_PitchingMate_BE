@@ -68,4 +68,10 @@ jobs:
             git pull origin develop  # 최신 코드 가져오기
             echo "$APPLICATION_PROPERTIES" > src/main/resources/application-dev.yml  # 설정 파일 생성
             sudo fuser -k -n tcp 8080 || true  # 8080 포트 사용중인 프로세스 종료
-            nohup java -jar mate-0.0.1-SNAPSHOT.jar > ./output.log 2>&1 &
+            sleep 5  # 프로세스가 완전히 종료되기를 기다림
+            cd /home/ubuntu/WEB1_2_PitchingMate_BE  # 프로젝트 루트 디렉토리로 다시 이동
+            ./gradlew bootJar  # 새로 빌드
+            cd build/libs  # 빌드된 jar 파일이 있는 디렉토리로 이동
+            nohup java -jar mate-0.0.1-SNAPSHOT.jar > ./output.log 2>&1 &  # 새로 빌드된 jar 실행
+            sleep 10  # 애플리케이션이 시작될 때까지 기다림
+            ps aux | grep java  # 프로세스가 실행 중인지 확인
