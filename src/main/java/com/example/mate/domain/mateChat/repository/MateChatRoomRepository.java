@@ -21,6 +21,4 @@ public interface MateChatRoomRepository extends JpaRepository<MateChatRoom, Long
             "AND crm.isActive = true " +
             "ORDER BY cr.lastChatSentAt DESC")
     Page<MateChatRoom> findActiveChatRoomsByMemberId(@Param("memberId") Long memberId, Pageable pageable);
-
-    boolean existsByMatePostId(Long matePostId);
 }

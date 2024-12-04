@@ -139,7 +139,6 @@ public class MateChatRoomService {
     // 채팅 내역 조회
     @Transactional(readOnly = true)
     public PageResponse<MateChatMessageResponse> getChatMessages(Long roomId, Pageable pageable) {
-        MateChatRoom chatRoom = findMateChatRoomById(roomId);
         Page<MateChatMessage> messagePage = chatMessageRepository.findByChatRoomIdOrderByCreatedAtDesc(roomId, pageable);
 
         List<MateChatMessageResponse> content = messagePage.getContent().stream()
