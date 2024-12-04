@@ -465,7 +465,7 @@ public class CrawlingService {
         String fullTeamName = switch (teamName) {
             case "삼성" -> "삼성 라이온즈";
             case "LG" -> "LG 트윈스";
-            case "KT", "kt" -> "kt wiz";
+            case "KT" -> "KT 위즈";
             case "NC" -> "NC 다이노스";
             case "SSG" -> "SSG 랜더스";
             case "롯데" -> "롯데 자이언츠";
