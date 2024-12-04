@@ -4,6 +4,7 @@ import com.example.mate.common.jwt.JwtToken;
 import com.example.mate.domain.auth.dto.response.LoginResponse;
 import com.example.mate.domain.auth.service.NaverAuthService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.RequiredArgsConstructor;
@@ -30,8 +31,9 @@ public class AuthController {
      */
     @Operation(summary = "네이버 소셜 인증 페이지 리다이렉트")
     @GetMapping("/connect/naver")
-    public RedirectView connectNaver() {
-        return new RedirectView(naverAuthService.getAuthUrl());
+    public RedirectView connectNaver(
+            @Parameter(description = "네이버 로그인 요청 state") @RequestParam String state) {
+        return new RedirectView(naverAuthService.getAuthUrl(state));
     }
 
     /**

@@ -77,7 +77,8 @@ public class NaverAuthIntegrationTest {
                 + "&state=STATE_STRING";
 
         // when & then
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/auth/connect/naver"))
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/auth/connect/naver")
+                        .param("state", "STATE_STRING"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(header().string("Location", is(expectedUrl)));
     }

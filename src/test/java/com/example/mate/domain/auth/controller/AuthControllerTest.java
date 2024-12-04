@@ -39,10 +39,11 @@ public class AuthControllerTest {
     void connectNaver_Success() throws Exception {
         // given
         String expectedAuthUrl = "https://nid.naver.com/oauth2.0/authorize?client_id=testClientId&redirect_uri=testRedirectUri&response_type=code&state=STATE_STRING";
-        when(naverAuthService.getAuthUrl()).thenReturn(expectedAuthUrl);
+        when(naverAuthService.getAuthUrl("state")).thenReturn(expectedAuthUrl);
 
         // when & then
-        mockMvc.perform(get("/api/auth/connect/naver"))
+        mockMvc.perform(get("/api/auth/connect/naver")
+                        .param("state", "state"))
                 .andExpect(status().is3xxRedirection()) // 3xx 리다이렉션 응답 상태
                 .andExpect(redirectedUrl(expectedAuthUrl)); // 리다이렉트 URL 확인
     }
