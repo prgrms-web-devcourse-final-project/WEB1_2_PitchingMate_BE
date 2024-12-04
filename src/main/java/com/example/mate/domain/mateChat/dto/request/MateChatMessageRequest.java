@@ -11,14 +11,14 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class MateChatMessageRequest {
-    private MessageType type;
+    private String type;
     private Long roomId;
     private Long senderId;
     private String message;
     private LocalDateTime timestamp;
 
     @Builder
-    private MateChatMessageRequest(MessageType type, Long roomId, Long senderId, String message) {
+    private MateChatMessageRequest(String type, Long roomId, Long senderId, String message) {
         this.type = type;
         this.roomId = roomId;
         this.senderId = senderId;
