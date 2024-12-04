@@ -34,6 +34,11 @@ public class JwtCheckFilter extends OncePerRequestFilter {
             return true;
         }
 
+        // 메인 페이지 인증 제외
+        if (isMainPagePath(request)) {
+            return true;
+        }
+
         return false;
     }
 
@@ -66,17 +71,22 @@ public class JwtCheckFilter extends OncePerRequestFilter {
         String requestURI = request.getRequestURI();
         String method = request.getMethod();
 
-        // 소셜 로그인/회원 가입 경로 인증 제외
-        if (requestURI.startsWith("/api/auth")) {
-            return true;
-        }
+        // 소셜 로그인/회원 가입 경로, mate 서비스 로그인/회원 가입 경로 인증 제외
+        return requestURI.startsWith("/api/auth") ||
+                requestURI.startsWith("/api/members/join") ||
+                requestURI.startsWith("/api/members/login");
+    }
 
-        // mate 서비스 회원 가입/로그인 경로 인증 제외
-        if (requestURI.startsWith("/api/members/join") || requestURI.startsWith("/api/members/login")) {
-            return true;
-        }
+    // 메인 페이지의 인증 필요없는 메서드인지 확인
+    private boolean isMainPagePath(HttpServletRequest request) {
+        String requestURI = request.getRequestURI();
 
-        return false;
+        // 메인 페이지와 관련된 경로
+        return requestURI.startsWith("/api/matches/main") ||
+                requestURI.startsWith("/api/mates/main") ||
+                requestURI.startsWith("/api/goods/main") ||
+                requestURI.startsWith("/api/teams/rankings") ||
+                requestURI.startsWith("/api/matches/team/") && requestURI.endsWith("/completed");
     }
 
     // 액세스 토큰 유효성 검사
