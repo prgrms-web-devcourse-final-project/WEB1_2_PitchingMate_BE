@@ -36,18 +36,13 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_PRIVATE_KEY }}
-          envs: |
-            APPLICATION_PROPERTIES
-            NAVER_CLIENT_ID
-            NAVER_REDIRECT_URI
-            NAVER_CLIENT_SECRET
-            JWT_SECRET_KEY
-            OPENWEATHER_API_KEY
+          source: "build/libs/*SNAPSHOT.jar"
+          target: "/home/ubuntu/WEB1_2_PitchingMate_BE"
+          strip_components: 2
+          envs: APPLICATION_PROPERTIES
           script_stop: true
           script: |
             cd /home/ubuntu/WEB1_2_PitchingMate_BE
-            git pull origin develop
             echo "$APPLICATION_PROPERTIES" > src/main/resources/application-dev.yml
-            ./gradlew clean build
             sudo fuser -k -n tcp 8080 || true
-            nohup java -jar build/libs/*SNAPSHOT.jar > ./output.log 2>&1 &
+            nohup java -jar *SNAPSHOT.jar > ./output.log 2>&1 &
