@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>메이트 채팅방 테스트</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <style>
+        .container {
+            width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .chat-window {
+            border: 1px solid #ccc;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .message-area {
+            height: 400px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .input-area {
+            display: flex;
+            gap: 10px;
+        }
+        input[type="text"] {
+            flex-grow: 1;
+            padding: 5px;
+        }
+        button {
+            padding: 5px 15px;
+        }
+        .message {
+            margin: 5px 0;
+            padding: 5px;
+        }
+        .system-message {
+            color: #666;
+            font-style: italic;
+        }
+        .user-message {
+            background-color: #e8f4ff;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>메이트 채팅방 테스트</h2>
+
+    <!-- 연결 정보 입력 -->
+    <div class="connection-info" id="connectionForm">
+        <h3>채팅방 접속</h3>
+        <div class="input-area">
+            <input type="text" id="roomId" placeholder="채팅방 ID">
+            <input type="text" id="memberId" placeholder="사용자 ID">
+            <button onclick="connect()">접속</button>
+        </div>
+    </div>
+
+    <!-- 채팅 창 -->
+    <div class="chat-window" id="chatWindow" style="display: none;">
+        <div class="message-area" id="messageArea"></div>
+        <div class="input-area">
+            <input type="text" id="message" placeholder="메시지를 입력하세요" onkeypress="handleKeyPress(event)">
+            <button onclick="sendMessage()">전송</button>
+            <button onclick="disconnect()" style="background-color: #ffecec;">퇴장</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let stompClient = null;
+    let currentRoomId = null;
+    let currentMemberId = null;
+
+    function connect() {
+        // 사용자가 입력한 roomId와 memberId를 가져옴
+        const roomId = document.getElementById('roomId').value;
+        const memberId = document.getElementById('memberId').value;
+
+        if (!roomId || !memberId) {
+            alert('채팅방 ID와 사용자 ID를 입력해주세요.');
+            return;
+        }
+
+        currentRoomId = roomId;
+        currentMemberId = memberId;
+
+        // 웹소켓 연결 및 구독
+        const socket = new SockJS('/ws/chat');
+        stompClient = Stomp.over(socket);
+
+        stompClient.connect({}, function(frame) {
+            console.log('Connected: ' + frame);
+
+            // 특정 채팅방의 메세지를 구독
+            stompClient.subscribe('/sub/chat/mate/' + roomId, function(message) {
+                const received = JSON.parse(message.body);
+                displayMessage(received);
+            });
+
+            // 입장 메시지 전송
+            stompClient.send("/pub/chat/mate/enter", {}, JSON.stringify({
+                type: 'ENTER',
+                roomId: roomId,
+                senderId: memberId
+            }));
+
+            // UI 전환
+            document.getElementById('connectionForm').style.display = 'none';
+            document.getElementById('chatWindow').style.display = 'block';
+        });
+    }
+
+    function disconnect() {
+        if (stompClient !== null) {
+            // 퇴장 메시지 전송
+            stompClient.send("/pub/chat/mate/leave", {}, JSON.stringify({
+                type: 'LEAVE',
+                roomId: currentRoomId,
+                senderId: currentMemberId
+            }));
+
+            stompClient.disconnect();
+        }
+
+        // UI 초기화
+        document.getElementById('connectionForm').style.display = 'block';
+        document.getElementById('chatWindow').style.display = 'none';
+        document.getElementById('messageArea').innerHTML = '';
+    }
+
+    // 일반 채팅 메시지 전송
+    function sendMessage() {
+        const messageInput = document.getElementById('message');
+        const message = messageInput.value;
+
+        if (message && stompClient) {
+            stompClient.send("/pub/chat/mate/message", {}, JSON.stringify({
+                type: 'TALK',
+                roomId: currentRoomId,
+                senderId: currentMemberId,
+                message: message
+            }));
+            messageInput.value = '';
+        }
+    }
+
+    function handleKeyPress(event) {
+        if (event.keyCode === 13) { // Enter key
+            sendMessage();
+        }
+    }
+
+    function displayMessage(message) {
+        const messageArea = document.getElementById('messageArea');
+        const messageDiv = document.createElement('div');
+
+        // 메시지 타입에 따른 스타일 적용
+        if (message.type === 'ENTER' || message.type === 'LEAVE') {
+            messageDiv.className = 'message system-message';
+        } else {
+            messageDiv.className = 'message user-message';
+        }
+
+        messageDiv.textContent = `${message.senderNickname}: ${message.message}`;
+        messageArea.appendChild(messageDiv);
+
+        // 스크롤을 항상 최신 메시지가 보이도록
+        messageArea.scrollTop = messageArea.scrollHeight;
+    }
+
+    // 페이지 종료 시 연결 종료
+    window.onbeforeunload = function() {
+        if (stompClient !== null) {
+            disconnect();
+        }
+    };
+</script>
+</body>
+</html>
