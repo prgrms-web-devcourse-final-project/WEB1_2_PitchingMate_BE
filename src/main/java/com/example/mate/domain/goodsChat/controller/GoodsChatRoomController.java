@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/goods/chat")
-public class GoodsChatController {
+public class GoodsChatRoomController {
 
     private final GoodsChatService goodsChatService;
 
@@ -60,4 +60,17 @@ public class GoodsChatController {
         PageResponse<GoodsChatRoomSummaryResponse> response = goodsChatService.getGoodsChatRooms(memberId, pageable);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
+
+    /*
+    굿즈거래 채팅방 리스트 페이지 - 채팅방 단건 조회
+    TODO: @RequestParam Long memberId -> @AuthenticationPrincipal 로 변경
+    */
+    @GetMapping("/{chatRoomId}")
+    public ResponseEntity<ApiResponse<GoodsChatRoomResponse>> getGoodsChatRoomInfo(@RequestParam Long memberId,
+                                                                                   @PathVariable Long chatRoomId) {
+        GoodsChatRoomResponse response = goodsChatService.getGoodsChatRoomInfo(memberId, chatRoomId);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    // 채팅방 하단 토글 - 현재 채팅에 참여한 사용자 프로필 조회
 }

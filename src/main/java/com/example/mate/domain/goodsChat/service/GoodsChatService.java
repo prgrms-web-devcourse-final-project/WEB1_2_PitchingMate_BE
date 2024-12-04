@@ -123,4 +123,13 @@ public class GoodsChatService {
                 .map(GoodsChatPart::getMember)
                 .orElseThrow(() -> new CustomException(ErrorCode.GOODS_CHAT_OPPONENT_NOT_FOUND));
     }
+
+    @Transactional(readOnly = true)
+    public GoodsChatRoomResponse getGoodsChatRoomInfo(Long memberId, Long chatRoomId) {
+        validateMemberParticipation(chatRoomId, memberId);
+
+        GoodsChatRoom goodsChatRoom = chatRoomRepository.findByChatRoomId(chatRoomId)
+                .orElseThrow(() -> new CustomException(ErrorCode.GOODS_CHAT_ROOM_NOT_FOUND));
+        return GoodsChatRoomResponse.of(goodsChatRoom);
+    }
 }
