@@ -24,10 +24,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.test.web.servlet.MockMvc;
 
-@WebMvcTest(GoodsChatController.class)
+@WebMvcTest(GoodsChatRoomController.class)
 @MockBean(JpaMetamodelMappingContext.class)
 @AutoConfigureMockMvc(addFilters = false)
-class GoodsChatControllerTest {
+class GoodsChatRoomControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
