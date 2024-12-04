@@ -1,6 +1,8 @@
 package com.example.mate.domain.mateChat.entity;
 
 import com.example.mate.common.BaseTimeEntity;
+import com.example.mate.common.error.CustomException;
+import com.example.mate.common.error.ErrorCode;
 import com.example.mate.domain.mate.entity.MatePost;
 import jakarta.persistence.*;
 import lombok.*;
@@ -29,7 +31,7 @@ public class MateChatRoom extends BaseTimeEntity {
 
     @Column(name = "current_members", nullable = false)
     @Builder.Default
-    private Integer currentMembers = 0;
+    private Integer currentMembers = 1;
 
     @OneToMany(mappedBy = "mateChatRoom", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
@@ -44,6 +46,13 @@ public class MateChatRoom extends BaseTimeEntity {
                 .matePost(matePost)
                 .currentMembers(1)
                 .build();
+    }
+
+    public void incrementCurrentMembers() {
+        if (this.currentMembers >= 10) {
+            throw new CustomException(ErrorCode.CHAT_ROOM_FULL);
+        }
+        this.currentMembers++;
     }
 
     public void decrementCurrentMembers() {

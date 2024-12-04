@@ -1,5 +1,6 @@
 package com.example.mate.domain.mateChat.entity;
 
+import com.example.mate.common.BaseTimeEntity;
 import com.example.mate.domain.member.entity.Member;
 import jakarta.persistence.*;
 import lombok.*;
@@ -10,7 +11,7 @@ import lombok.*;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
-public class MateChatRoomMember {
+public class MateChatRoomMember extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
