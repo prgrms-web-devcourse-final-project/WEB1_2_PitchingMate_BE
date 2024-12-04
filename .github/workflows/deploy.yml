@@ -6,16 +6,29 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+      NAVER_REDIRECT_URI: ${{ secrets.NAVER_REDIRECT_URI }}
+      NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
+      JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+      OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
+
     steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Build with Gradle
+        run: ./gradlew clean build
+
       - name: SSH로 EC2에 접속하기
         uses: appleboy/ssh-action@v1.2.0
         env:
           APPLICATION_PROPERTIES: ${{ secrets.APPLICATION_PROPERTIES }}
-          NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
-          NAVER_REDIRECT_URI: ${{ secrets.NAVER_REDIRECT_URI }}
-          NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
-          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
-          OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
