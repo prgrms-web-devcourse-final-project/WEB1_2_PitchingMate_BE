@@ -63,6 +63,7 @@ public class GoodsChatRoomController {
         PageResponse<GoodsChatRoomSummaryResponse> response = goodsChatService.getGoodsChatRooms(memberId, pageable);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
+
     // 채팅방 나가기
     @DeleteMapping("/{chatRoomId}")
     public ResponseEntity<Void> leaveGoodsChatRoom(@RequestParam Long memberId, @PathVariable Long chatRoomId) {
@@ -70,6 +71,7 @@ public class GoodsChatRoomController {
 
         return ResponseEntity.noContent().build();
     }
+
     /*
     굿즈거래 채팅방 리스트 페이지 - 채팅방 단건 조회
     TODO: @RequestParam Long memberId -> @AuthenticationPrincipal 로 변경
