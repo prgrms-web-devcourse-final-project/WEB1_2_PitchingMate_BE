@@ -4,4 +4,4 @@ spring:
       develop: dev, common
       production: prod, common
       local: local, common
-    active: ${SPRING_PROFILES_ACTIVE:develop}
+    active: ${SPRING_PROFILES_ACTIVE:local}

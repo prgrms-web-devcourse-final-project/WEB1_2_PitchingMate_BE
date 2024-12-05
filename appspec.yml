@@ -1,0 +1,20 @@
+version: 0.0
+os: linux
+
+files:
+  # S3에 저장한 파일들 중 destination(AWS EC2)으로 이동시킬 대상을 지정한다.
+  # / 이라고 지정하면 S3에 저장한 전체 파일을 뜻한다.
+  - source: /
+    # EC2의 어떤 경로에 저장할 지 지정한다.
+    destination: /home/ubuntu/WEB1_2_PitchingMate_BE
+
+permissions:
+  - object: /
+    owner: ubuntu
+    group: ubuntu
+
+hooks:
+  ApplicationStart:
+    - location: scripts/start-server.sh
+      timeout: 60
+      runas: ubuntu
