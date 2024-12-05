@@ -101,7 +101,7 @@ public class GoodsChatIntegrationTest {
                 .andExpect(jsonPath("$.data.title").value(goodsPost.getTitle()))
                 .andExpect(jsonPath("$.data.category").value(goodsPost.getCategory().getValue()))
                 .andExpect(jsonPath("$.data.price").value(goodsPost.getPrice()))
-                .andExpect(jsonPath("$.data.status").value(goodsPost.getStatus().getValue()))
+                .andExpect(jsonPath("$.data.postStatus").value(goodsPost.getStatus().getValue()))
                 .andExpect(jsonPath("$.data.imageUrl").value(goodsPost.getGoodsPostImages().get(0).getImageUrl()))
                 .andReturn()
                 .getResponse();

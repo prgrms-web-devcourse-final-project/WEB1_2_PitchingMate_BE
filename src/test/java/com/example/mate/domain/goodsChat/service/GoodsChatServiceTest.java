@@ -133,7 +133,7 @@ class GoodsChatServiceTest {
             // then
             assertThat(result.getChatRoomId()).isEqualTo(existingChatRoom.getId());
             assertThat(result.getGoodsPostId()).isEqualTo(goodsPost.getId());
-            assertThat(result.getStatus()).isEqualTo(goodsPost.getStatus().getValue());
+            assertThat(result.getPostStatus()).isEqualTo(goodsPost.getStatus().getValue());
 
             verify(memberRepository).findById(buyerId);
             verify(goodsPostRepository).findById(goodsPostId);
@@ -167,7 +167,7 @@ class GoodsChatServiceTest {
             // then
             assertThat(result.getChatRoomId()).isEqualTo(newGoodsChatRoom.getId());
             assertThat(result.getGoodsPostId()).isEqualTo(goodsPost.getId());
-            assertThat(result.getStatus()).isEqualTo(goodsPost.getStatus().getValue());
+            assertThat(result.getPostStatus()).isEqualTo(goodsPost.getStatus().getValue());
 
             verify(memberRepository).findById(buyerId);
             verify(goodsPostRepository).findById(goodsPostId);
