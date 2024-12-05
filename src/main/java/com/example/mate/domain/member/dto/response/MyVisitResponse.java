@@ -22,6 +22,9 @@ public class MyVisitResponse {
     private String location;
     private LocalDateTime matchTime;
 
+    // 메이트 게시글 정보
+    private Long matePostId;
+
     // 리뷰 정보
     @Builder.Default
     private List<MateReviewResponse> reviews = new ArrayList<>();
@@ -54,12 +57,13 @@ public class MyVisitResponse {
         }
     }
 
-    public static MyVisitResponse of(Match match, List<MateReviewResponse> reviews) {
+    public static MyVisitResponse of(Match match, List<MateReviewResponse> reviews, Long matePostId) {
         return MyVisitResponse.builder()
                 .homeTeamName(TeamInfo.getById(match.getHomeTeamId()).shortName)
                 .awayTeamName(TeamInfo.getById(match.getAwayTeamId()).shortName)
                 .location(match.getStadium().name)
                 .matchTime(match.getMatchTime())
+                .matePostId(matePostId)
                 .reviews(reviews)
                 .build();
     }

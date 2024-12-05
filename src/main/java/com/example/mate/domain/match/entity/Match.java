@@ -1,7 +1,6 @@
 package com.example.mate.domain.match.entity;
 
 import com.example.mate.domain.constant.StadiumInfo;
-import com.example.mate.domain.constant.TeamInfo;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

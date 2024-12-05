@@ -161,7 +161,7 @@ public class ProfileService {
         // 각 메이트에 대한 리뷰 생성
         List<MateReviewResponse> reviews = createMateReviews(response, mates, memberId);
 
-        return MyVisitResponse.of(match, reviews);
+        return MyVisitResponse.of(match, reviews, response.getMatePostId());
     }
 
     private List<MateReviewResponse> createMateReviews(MyTimelineResponse response, List<Member> mates, Long memberId) {
@@ -183,12 +183,9 @@ public class ProfileService {
         // 페이징 처리
         int pageNumber = pageable.getPageNumber();
         int pageSize = pageable.getPageSize();
-        int start = Math.min(pageNumber * pageSize, totalElements);
-        int end = Math.min(start + pageSize, totalElements);
-        List<MyVisitResponse> content = responses.subList(start, end);
 
         return PageResponse.<MyVisitResponse>builder()
-                .content(content)
+                .content(responses)
                 .totalPages(totalPages)
                 .totalElements(totalElements)
                 .hasNext(pageNumber + 1 < totalPages)
@@ -196,5 +193,4 @@ public class ProfileService {
                 .pageSize(pageSize)
                 .build();
     }
-
 }
