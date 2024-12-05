@@ -47,7 +47,7 @@ public class GoodsChatRoomController {
     public ResponseEntity<ApiResponse<PageResponse<GoodsChatMessageResponse>>> getGoodsChatRoomMessages(
             @PathVariable Long chatRoomId,
             @RequestParam Long memberId,
-            @PageableDefault Pageable pageable
+            @PageableDefault(page = 1, size = 20) Pageable pageable
     ) {
         PageResponse<GoodsChatMessageResponse> response = goodsChatService.getMessagesForChatRoom(chatRoomId, memberId, pageable);
         return ResponseEntity.ok(ApiResponse.success(response));
