@@ -1,77 +1,62 @@
-# GitHub Actions 워크플로우 이름 정의
 name: Deploy To EC2
-
-# 워크플로우 트리거 설정
-# develop 브랜치에 push가 발생할 때만 실행
 on:
-  push:
-    branches:
-      - develop
+  push
 
 jobs:
-  # 배포 작업 정의
   deploy:
-    runs-on: ubuntu-latest # 실행 환경 지정
-
-    # GitHub Actions에서 사용할 환경 변수 설정
-    # GitHub Secrets에서 값을 가져옴
+    runs-on: ubuntu-latest
     env:
       NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
       NAVER_REDIRECT_URI: ${{ secrets.NAVER_REDIRECT_URI }}
       NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
       JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
       OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
-
     steps:
-      # 레포지토리 코드를 체크아웃
-      - uses: actions/checkout@v3
+      - name: Github Repository 파일 불러오기
+        uses: actions/checkout@v4
 
-      # JDK 17 설정
-      - name: Set up JDK 17
-        uses: actions/setup-java@v3
+      - name: JDK 17버전 설치
+        uses: actions/setup-java@v4
         with:
-          java-version: '17'
-          distribution: 'temurin'
+          distribution: temurin
+          java-version: 17
 
-      # gradlew 파일에 실행 권한 부여
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
+      - name: application-dev.yml 파일 만들기
+        run: echo "${{ secrets.APPLICATION_PROPERTIES }}" > ./src/main/resources/application-dev.yml
 
-      # Gradle을 사용하여 프로젝트 빌드
-      - name: Build with Gradle
-        run: ./gradlew clean build
-
-      # 빌드된 JAR 파일을 EC2 서버로 전송
-      - name: Copy jar file to EC2
-        uses: appleboy/scp-action@master
+      - name: 테스트 및 빌드하기
+        run: |
+          chmod +x gradlew
+          ./gradlew clean build
+      - name: AWS Resource에 접근할 수 있게 AWS credentials 설정
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_PRIVATE_KEY }}
-          source: "build/libs/*SNAPSHOT.jar"  # 전송할 JAR 파일 경로
-          target: "/home/ubuntu/WEB1_2_PitchingMate_BE"  # EC2의 대상 경로
-          strip_components: 2  # source 경로에서 상위 2개 디렉토리 제거
+          aws-region: ap-northeast-2
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      - name: ECR에 로그인하기
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
 
-      # EC2 서버에 SSH로 접속하여 배포 스크립트 실행
-      - name: SSH로 EC2에 접속하기
-        uses: appleboy/ssh-action@v1.2.0
-        env:
-          APPLICATION_PROPERTIES: ${{ secrets.APPLICATION_PROPERTIES }}
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_PRIVATE_KEY }}
-          envs: APPLICATION_PROPERTIES  # EC2에 전달할 환경 변수
-          script_stop: true  # 스크립트 실행 중 오류 발생시 중단
-          script: |  # EC2에서 실행할 명령어들
-            cd /home/ubuntu/WEB1_2_PitchingMate_BE  # 프로젝트 디렉토리로 이동
-            git pull origin develop  # 최신 코드 가져오기
-            echo "$APPLICATION_PROPERTIES" > src/main/resources/application-dev.yml  # 설정 파일 생성
-            sudo fuser -k -n tcp 8080 || true  # 8080 포트 사용중인 프로세스 종료
-            sleep 5  # 프로세스가 완전히 종료되기를 기다림
-            cd /home/ubuntu/WEB1_2_PitchingMate_BE  # 프로젝트 루트 디렉토리로 다시 이동
-            ./gradlew bootJar  # 새로 빌드
-            cd build/libs  # 빌드된 jar 파일이 있는 디렉토리로 이동
-            nohup java -jar mate-0.0.1-SNAPSHOT.jar > ./output.log 2>&1 &  # 새로 빌드된 jar 실행
-            sleep 10  # 애플리케이션이 시작될 때까지 기다림
-            ps aux | grep java  # 프로세스가 실행 중인지 확인
+      - name: Docker 이미지 생성
+        run: docker build -t catchmi-server .
+
+      - name: Docker 이미지에 Tag 붙이기
+        run: docker tag catchmi-server ${{ steps.login-ecr.outputs.registry }}/catchmi-server:latest
+
+      - name: ECR에 Docker 이미지 Push하기
+        run: docker push ${{ steps.login-ecr.outputs.registry }}/catchmi-server:latest
+
+      - name: 압축하기
+        run: tar -czvf $GITHUB_SHA.tar.gz appspec.yml scripts
+
+      - name: S3에 프로젝트 폴더 업로드하기
+        run: aws s3 cp --region ap-northeast-2 ./$GITHUB_SHA.tar.gz s3://catchmi-bucket/$GITHUB_SHA.tar.gz
+
+      - name: Code Deploy를 활용해 EC2에 프로젝트 코드 배포
+        run: |
+          aws deploy create-deployment \
+          --application-name catchmi-server \
+          --deployment-config-name CodeDeployDefault.AllAtOnce \
+          --deployment-group-name Develop \
+          --s3-location bucket=catchmi-bucket,bundleType=tgz,key=$GITHUB_SHA.tar.gz
