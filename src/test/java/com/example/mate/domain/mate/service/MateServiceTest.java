@@ -538,6 +538,8 @@ class MateServiceTest {
             assertThat(response.getManner()).isEqualTo(0.3f);
             assertThat(response.getContent()).isEqualTo("테스트 내용");
             assertThat(response.getPostId()).isEqualTo(POST_ID);
+            assertThat(response.getAuthorId()).isEqualTo(testMember.getId());
+            assertThat(response.getMatchId()).isEqualTo(testMatch.getId());
 
             verify(mateRepository).findById(POST_ID);
         }

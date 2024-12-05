@@ -384,6 +384,8 @@ class MateControllerTest {
                     .manner(36.5f)
                     .content("테스트 내용입니다.")
                     .postId(1L)
+                    .matchId(1L)
+                    .authorId(1L)
                     .build();
         }
 
@@ -414,6 +416,8 @@ class MateControllerTest {
                     .andExpect(jsonPath("$.data.maxParticipants").value(response.getMaxParticipants()))
                     .andExpect(jsonPath("$.data.nickname").value(response.getNickname()))
                     .andExpect(jsonPath("$.data.manner").value(response.getManner()))
+                    .andExpect(jsonPath("$.data.matchId").value(response.getMatchId()))
+                    .andExpect(jsonPath("$.data.authorId").value(response.getAuthorId()))
                     .andExpect(jsonPath("$.code").value(200));
         }
 

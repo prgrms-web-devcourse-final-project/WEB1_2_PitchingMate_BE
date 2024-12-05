@@ -529,6 +529,8 @@ public class MateIntegrationTest {
                     .andExpect(jsonPath("$.status").value("SUCCESS"))
                     .andExpect(jsonPath("$.code").value(200))
                     .andExpect(jsonPath("$.data.postId").value(openPost.getId()))
+                    .andExpect(jsonPath("$.data.authorId").value(testMember.getId()))
+                    .andExpect(jsonPath("$.data.matchId").value(futureMatch.getId()))
                     .andExpect(jsonPath("$.data.title").value("테스트 제목"))
                     .andExpect(jsonPath("$.data.content").value("테스트 내용"))
                     .andExpect(jsonPath("$.data.status").value("모집중"))
