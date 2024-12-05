@@ -2,13 +2,13 @@ package com.example.mate.domain.goodsChat.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.mate.common.response.ApiResponse;
 import com.example.mate.common.security.util.JwtUtil;
+import com.example.mate.config.WithAuthMember;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.constant.MessageType;
 import com.example.mate.domain.goods.dto.LocationInfo;
@@ -40,6 +40,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
@@ -55,6 +56,7 @@ public class GoodsChatIntegrationTest {
     @Autowired private GoodsChatRoomRepository chatRoomRepository;
     @Autowired private GoodsChatMessageRepository messageRepository;
     @Autowired private ObjectMapper objectMapper;
+    @Autowired private JdbcTemplate jdbcTemplate;
 
     @MockBean
     private JwtUtil jwtUtil;
@@ -67,6 +69,8 @@ public class GoodsChatIntegrationTest {
 
     @BeforeEach
     void setUp() {
+        jdbcTemplate.execute("ALTER TABLE member ALTER COLUMN id RESTART WITH 1");
+
         seller = createMember("seller", "seller nickname", "seller@gmail.com");
         buyer = createMember("buyer", "buyer nickname", "buyer@gmail.com");
         goodsPost = createGoodsPost(Status.OPEN, seller, buyer);
@@ -84,6 +88,7 @@ public class GoodsChatIntegrationTest {
 
     @Test
     @DisplayName("굿즈거래 채팅방 생성 통합 테스트")
+    @WithAuthMember(memberId = 3L)
     void get_or_create_goods_chatroom_integration_test() throws Exception {
         // given
         Member buyer = createMember("test buyer", "test buyer nickname", "test-buyer@gmail.com");
@@ -92,7 +97,6 @@ public class GoodsChatIntegrationTest {
 
         // when
         MockHttpServletResponse result = mockMvc.perform(post("/api/goods/chat", buyerId)
-                        .param("buyerId", String.valueOf(buyerId))
                         .param("goodsPostId", String.valueOf(goodsPostId)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
@@ -125,6 +129,7 @@ public class GoodsChatIntegrationTest {
 
     @Test
     @DisplayName("굿즈거래 채팅방 채팅내역 조회 통합 테스트")
+    @WithAuthMember(memberId = 2L)
     void get_messages_for_chat_room() throws Exception {
         // given
         Long chatRoomId = chatRoom.getId();
@@ -133,7 +138,6 @@ public class GoodsChatIntegrationTest {
 
         // when & then
         mockMvc.perform(get("/api/goods/chat/{chatRoomId}/message", chatRoomId)
-                        .param("memberId", String.valueOf(memberId))
                         .param("page", String.valueOf(pageable.getPageNumber()))
                         .param("size", String.valueOf(pageable.getPageSize())))
                 .andExpect(status().isOk())

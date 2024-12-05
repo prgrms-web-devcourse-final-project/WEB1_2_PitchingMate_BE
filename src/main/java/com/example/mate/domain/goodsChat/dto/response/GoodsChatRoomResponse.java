@@ -1,5 +1,6 @@
 package com.example.mate.domain.goodsChat.dto.response;
 
+import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.constant.TeamInfo;
 import com.example.mate.domain.goods.entity.GoodsPost;
 import com.example.mate.domain.goodsChat.entity.GoodsChatRoom;
@@ -22,7 +23,9 @@ public class GoodsChatRoomResponse {
     private final String chatRoomStatus;
     private final String imageUrl;
 
-    public static GoodsChatRoomResponse of(GoodsChatRoom chatRoom) {
+    private final PageResponse<GoodsChatMessageResponse> initialMessages;
+
+    public static GoodsChatRoomResponse of(GoodsChatRoom chatRoom, PageResponse<GoodsChatMessageResponse> initialMessages) {
         GoodsPost goodsPost = chatRoom.getGoodsPost();
         String mainImageUrl = goodsPost.getMainImageUrl();
         String teamName = getTeamName(goodsPost);
@@ -37,6 +40,7 @@ public class GoodsChatRoomResponse {
                 .imageUrl(mainImageUrl)
                 .postStatus(goodsPost.getStatus().getValue())
                 .chatRoomStatus(chatRoom.getIsActive().toString())
+                .initialMessages(initialMessages)
                 .build();
     }
 
