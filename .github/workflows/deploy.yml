@@ -54,7 +54,8 @@ jobs:
         run: aws s3 cp --region ap-northeast-2 ./$GITHUB_SHA.tar.gz s3://catchmi-bucket/$GITHUB_SHA.tar.gz
 
       - name: Code Deploy를 활용해 EC2에 프로젝트 코드 배포
-        run: aws deploy create-deployment \
+        run: |
+          aws deploy create-deployment \
           --application-name catchmi-server \
           --deployment-config-name CodeDeployDefault.AllAtOnce \
           --deployment-group-name Develop \
