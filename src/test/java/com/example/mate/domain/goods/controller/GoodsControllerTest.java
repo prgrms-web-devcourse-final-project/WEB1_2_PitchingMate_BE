@@ -16,6 +16,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.common.security.filter.JwtCheckFilter;
+import com.example.mate.config.WithAuthMember;
 import com.example.mate.domain.constant.Rating;
 import com.example.mate.domain.goods.dto.LocationInfo;
 import com.example.mate.domain.goods.dto.request.GoodsPostRequest;
@@ -45,6 +46,7 @@ import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequ
 @WebMvcTest(GoodsController.class)
 @MockBean(JpaMetamodelMappingContext.class)
 @AutoConfigureMockMvc(addFilters = false)
+@WithAuthMember
 class GoodsControllerTest {
 
     @Autowired
@@ -116,8 +118,7 @@ class GoodsControllerTest {
                 response);
 
         // when
-        MockMultipartHttpServletRequestBuilder multipartRequest = multipart("/api/goods/{memberId}", memberId).file(
-                data);
+        MockMultipartHttpServletRequestBuilder multipartRequest = multipart("/api/goods").file(data);
         files.forEach(multipartRequest::file);
 
         // then
@@ -153,9 +154,7 @@ class GoodsControllerTest {
                 .willReturn(response);
 
         // when
-        MockMultipartHttpServletRequestBuilder multipartRequest = multipart("/api/goods/{memberId}/post/{goodsPostId}",
-                memberId, goodsPostId)
-                .file(data);
+        MockMultipartHttpServletRequestBuilder multipartRequest = multipart("/api/goods/{goodsPostId}", goodsPostId).file(data);
         files.forEach(multipartRequest::file);
         multipartRequest.with(request -> {
             request.setMethod("PUT"); // PUT 메서드로 변경
@@ -184,9 +183,7 @@ class GoodsControllerTest {
         willDoNothing().given(goodsService).deleteGoodsPost(memberId, goodsPostId);
 
         // when & then
-        mockMvc.perform(delete("/api/goods/{memberId}/post/{goodsPostId}", memberId, goodsPostId))
-                .andDo(print())
-                .andExpect(status().isNoContent());
+        mockMvc.perform(delete("/api/goods/{goodsPostId}", goodsPostId)).andDo(print()).andExpect(status().isNoContent());
 
         verify(goodsService).deleteGoodsPost(memberId, goodsPostId);
     }
@@ -289,8 +286,7 @@ class GoodsControllerTest {
         willDoNothing().given(goodsService).completeTransaction(memberId, goodsPostId, buyerId);
 
         // when & then
-        mockMvc.perform(post("/api/goods/{memberId}/post/{goodsPostId}/complete", memberId, goodsPostId)
-                        .param("buyerId", String.valueOf(buyerId)))
+        mockMvc.perform(post("/api/goods/{goodsPostId}/complete", goodsPostId).param("buyerId", String.valueOf(buyerId)))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
@@ -320,7 +316,7 @@ class GoodsControllerTest {
                 any(GoodsReviewRequest.class))).willReturn(response);
 
         // when & then
-        mockMvc.perform(post("/api/goods/{reviewerId}/post/{goodsPostId}/review", reviewerId, goodsPostId)
+        mockMvc.perform(post("/api/goods/{goodsPostId}/review", goodsPostId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andDo(print())

@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.example.mate.common.response.ApiResponse;
 import com.example.mate.common.security.util.JwtUtil;
+import com.example.mate.config.WithAuthMember;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.constant.Rating;
 import com.example.mate.domain.constant.TeamInfo;
@@ -42,6 +43,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
@@ -58,6 +60,7 @@ public class GoodsIntegrationTest {
     @Autowired private GoodsPostRepository goodsPostRepository;
     @Autowired private GoodsPostImageRepository imageRepository;
     @Autowired private GoodsReviewRepository reviewRepository;
+    @Autowired private JdbcTemplate jdbcTemplate;
     @Autowired private ObjectMapper objectMapper;
 
     private Member member;
@@ -68,6 +71,8 @@ public class GoodsIntegrationTest {
 
     @BeforeEach
     void setUp() {
+        jdbcTemplate.execute("ALTER TABLE member ALTER COLUMN id RESTART WITH 1");
+
         member = createMember();
         goodsPost = createGoodsPost(Status.OPEN, null);
         createGoodsPostImage();
@@ -75,6 +80,7 @@ public class GoodsIntegrationTest {
 
     @Test
     @DisplayName("굿즈거래 판매글 작성 통합 테스트")
+    @WithAuthMember
     void register_goods_post_integration_test() throws Exception {
         // given
         Long memberId = member.getId();
@@ -90,8 +96,7 @@ public class GoodsIntegrationTest {
         );
 
         // when
-        MockMultipartHttpServletRequestBuilder multipartRequest = multipart("/api/goods/{memberId}", memberId).file(
-                data);
+        MockMultipartHttpServletRequestBuilder multipartRequest = multipart("/api/goods").file(data);
         files.forEach(multipartRequest::file);
 
         MockHttpServletResponse result = mockMvc.perform(multipartRequest)
@@ -111,6 +116,7 @@ public class GoodsIntegrationTest {
 
     @Test
     @DisplayName("굿즈거래 판매글 수정 통합 테스트")
+    @WithAuthMember
     void update_goods_post_integration_test() throws Exception {
         // given
         Long memberId = member.getId();
@@ -127,8 +133,7 @@ public class GoodsIntegrationTest {
         );
 
         // when
-        MockMultipartHttpServletRequestBuilder multipartRequest
-                = multipart("/api/goods/{memberId}/post/{goodsPostId}", memberId, goodsPostId).file(data);
+        MockMultipartHttpServletRequestBuilder multipartRequest = multipart("/api/goods/{goodsPostId}", goodsPostId).file(data);
         files.forEach(multipartRequest::file);
         multipartRequest.with(request -> {
             request.setMethod("PUT"); // PUT 메서드로 변경
@@ -191,13 +196,14 @@ public class GoodsIntegrationTest {
 
     @Test
     @DisplayName("굿즈거래 판매글 삭제 통합 테스트")
+    @WithAuthMember
     void delete_goods_post_integration_test() throws Exception {
         // given
         Long memberId = member.getId();
         Long goodsPostId = goodsPost.getId();
 
         // when
-        mockMvc.perform(delete("/api/goods/{memberId}/post/{goodsPostId}", memberId, goodsPostId))
+        mockMvc.perform(delete("/api/goods/{goodsPostId}", goodsPostId))
                 .andDo(print())
                 .andExpect(status().isNoContent());
 
@@ -337,6 +343,7 @@ public class GoodsIntegrationTest {
 
     @Test
     @DisplayName("굿즈 판매글 거래 완료 통합 테스트")
+    @WithAuthMember
     void complete_goods_post_integration_test() throws Exception {
         // given
         Long memberId = member.getId(); // 판매자 ID
@@ -352,7 +359,7 @@ public class GoodsIntegrationTest {
                 .build());
 
         // when
-        MockHttpServletResponse result = mockMvc.perform(post("/api/goods/{memberId}/post/{goodsPostId}/complete", memberId, goodsPostId)
+        MockHttpServletResponse result = mockMvc.perform(post("/api/goods/{goodsPostId}/complete", goodsPostId)
                         .param("buyerId", String.valueOf(buyer.getId())))
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -379,6 +386,7 @@ public class GoodsIntegrationTest {
 
     @Test
     @DisplayName("굿즈 거래 후기 등록 통합 테스트 - 성공")
+    @WithAuthMember
     void register_goods_review_integration_test_success() throws Exception {
         // given
         Member buyer = member;
@@ -387,7 +395,7 @@ public class GoodsIntegrationTest {
         GoodsReviewRequest request = new GoodsReviewRequest(Rating.GREAT, "Great seller!");
 
         // when
-        MockHttpServletResponse result = mockMvc.perform(post("/api/goods/{buyerId}/post/{goodsPostId}/review", buyer.getId(), completePost.getId())
+        MockHttpServletResponse result = mockMvc.perform(post("/api/goods/{goodsPostId}/review", completePost.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andDo(print())
