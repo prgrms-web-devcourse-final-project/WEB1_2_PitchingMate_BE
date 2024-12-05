@@ -155,16 +155,8 @@ public class GoodsService {
     }
 
     private GoodsPostSummaryResponse convertToSummaryResponse(GoodsPost goodsPost) {
-        String mainImageUrl = getMainImageUrl(goodsPost);
+        String mainImageUrl = goodsPost.getMainImageUrl();
         return GoodsPostSummaryResponse.of(goodsPost, mainImageUrl);
-    }
-
-    private String getMainImageUrl(GoodsPost goodsPost) {
-        return goodsPost.getGoodsPostImages().stream()
-                .filter(GoodsPostImage::getIsMainImage)
-                .findFirst()
-                .map(GoodsPostImage::getImageUrl)
-                .orElse("upload/default.jpg");
     }
 
     private GoodsPost findGoodsPostById(Long goodsPostId) {

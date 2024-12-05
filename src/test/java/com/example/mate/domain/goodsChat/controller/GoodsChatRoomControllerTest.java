@@ -8,8 +8,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.mate.common.response.PageResponse;
+import com.example.mate.domain.goodsChat.dto.response.GoodsChatMessageResponse;
 import com.example.mate.common.security.util.JwtUtil;
-import com.example.mate.domain.goodsChat.dto.response.GoodsChatMsgResponse;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatRoomResponse;
 import com.example.mate.domain.goodsChat.service.GoodsChatService;
 import java.time.LocalDateTime;
@@ -18,18 +18,17 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.test.web.servlet.MockMvc;
 
-//@WebMvcTest(GoodsChatController.class)
-@SpringBootTest
+@WebMvcTest(GoodsChatRoomController.class)
 @MockBean(JpaMetamodelMappingContext.class)
 @AutoConfigureMockMvc(addFilters = false)
-class GoodsChatControllerTest {
+class GoodsChatRoomControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -53,7 +52,7 @@ class GoodsChatControllerTest {
                 .title("test title")
                 .category("ACCESSORY")
                 .price(10000)
-                .status("OPEN")
+                .postStatus("OPEN")
                 .imageUrl("/images/test.jpg")
                 .build();
 
@@ -73,8 +72,9 @@ class GoodsChatControllerTest {
                 .andExpect(jsonPath("$.data.title").value(existingChatRoomResponse.getTitle()))
                 .andExpect(jsonPath("$.data.category").value(existingChatRoomResponse.getCategory()))
                 .andExpect(jsonPath("$.data.price").value(existingChatRoomResponse.getPrice()))
-                .andExpect(jsonPath("$.data.status").value(existingChatRoomResponse.getStatus()))
+                .andExpect(jsonPath("$.data.postStatus").value(existingChatRoomResponse.getPostStatus()))
                 .andExpect(jsonPath("$.data.imageUrl").value(existingChatRoomResponse.getImageUrl()));
+
 
         verify(goodsChatService).getOrCreateGoodsChatRoom(buyerId, goodsPostId);
     }
@@ -92,7 +92,7 @@ class GoodsChatControllerTest {
                 .title("test title")
                 .category("ACCESSORY")
                 .price(10000)
-                .status("OPEN")
+                .postStatus("OPEN")
                 .imageUrl("/images/test.jpg")
                 .build();
 
@@ -112,7 +112,7 @@ class GoodsChatControllerTest {
                 .andExpect(jsonPath("$.data.title").value(newChatRoomResponse.getTitle()))
                 .andExpect(jsonPath("$.data.category").value(newChatRoomResponse.getCategory()))
                 .andExpect(jsonPath("$.data.price").value(newChatRoomResponse.getPrice()))
-                .andExpect(jsonPath("$.data.status").value(newChatRoomResponse.getStatus()))
+                .andExpect(jsonPath("$.data.postStatus").value(newChatRoomResponse.getPostStatus()))
                 .andExpect(jsonPath("$.data.imageUrl").value(newChatRoomResponse.getImageUrl()));
 
         verify(goodsChatService).getOrCreateGoodsChatRoom(buyerId, goodsPostId);
@@ -126,21 +126,21 @@ class GoodsChatControllerTest {
         Long memberId = 2L;
         PageRequest pageable = PageRequest.of(0, 10);
 
-        GoodsChatMsgResponse firstMessage = GoodsChatMsgResponse.builder()
+        GoodsChatMessageResponse firstMessage = GoodsChatMessageResponse.builder()
                 .chatMessageId(1L)
-                .content("first message")
-                .authorId(memberId)
+                .message("first message")
+                .senderId(memberId)
                 .sentAt(LocalDateTime.now().minusMinutes(10))
                 .build();
 
-        GoodsChatMsgResponse secondMessage = GoodsChatMsgResponse.builder()
+        GoodsChatMessageResponse secondMessage = GoodsChatMessageResponse.builder()
                 .chatMessageId(2L)
-                .content("second message")
-                .authorId(memberId)
+                .message("second message")
+                .senderId(memberId)
                 .sentAt(LocalDateTime.now())
                 .build();
 
-        PageResponse<GoodsChatMsgResponse> pageResponse = PageResponse.from(
+        PageResponse<GoodsChatMessageResponse> pageResponse = PageResponse.from(
                 new PageImpl<>(List.of(secondMessage, firstMessage), pageable, 2),
                 List.of(secondMessage, firstMessage)
         );
@@ -156,9 +156,9 @@ class GoodsChatControllerTest {
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data.content").isArray())
-                .andExpect(jsonPath("$.data.content[0].content").value(secondMessage.getContent()))
+                .andExpect(jsonPath("$.data.content[0].message").value(secondMessage.getMessage()))
                 .andExpect(jsonPath("$.data.content[0].chatMessageId").value(secondMessage.getChatMessageId()))
-                .andExpect(jsonPath("$.data.content[1].content").value(firstMessage.getContent()))
+                .andExpect(jsonPath("$.data.content[1].message").value(firstMessage.getMessage()))
                 .andExpect(jsonPath("$.data.content[1].chatMessageId").value(firstMessage.getChatMessageId()));
 
         verify(goodsChatService).getMessagesForChatRoom(chatRoomId, memberId, pageable);
