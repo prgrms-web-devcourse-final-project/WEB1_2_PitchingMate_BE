@@ -29,6 +29,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @WebMvcTest(GoodsChatRoomController.class)
 @MockBean(JpaMetamodelMappingContext.class)
 @AutoConfigureMockMvc(addFilters = false)
+@WithAuthMember
 class GoodsChatRoomControllerTest {
 
     @Autowired
@@ -42,7 +43,6 @@ class GoodsChatRoomControllerTest {
 
     @Test
     @DisplayName("굿즈거래 채팅방 생성 성공 - 기존 채팅방이 있을 경우 해당 채팅방을 반환한다.")
-    @WithAuthMember(memberId = 1L)
     void returnExistingChatRoom() throws Exception {
         // given
         Long buyerId = 1L;
@@ -83,7 +83,6 @@ class GoodsChatRoomControllerTest {
 
     @Test
     @DisplayName("굿즈거래 채팅방 생성 성공 - 기존 채팅방이 없을 경우 새로운 채팅방을 생성한다.")
-    @WithAuthMember(memberId = 1L)
     void createNewChatRoomIfNoneExists() throws Exception {
         // given
         Long buyerId = 1L;
@@ -122,11 +121,10 @@ class GoodsChatRoomControllerTest {
 
     @Test
     @DisplayName("채팅 내역 조회 성공 - 회원이 채팅방에 참여한 경우 메시지를 페이지로 반환한다.")
-    @WithAuthMember(memberId = 2L)
     void getMessagesForChatRoom_should_return_messages() throws Exception {
         // given
         Long chatRoomId = 1L;
-        Long memberId = 2L;
+        Long memberId = 1L;
         PageRequest pageable = PageRequest.of(0, 10);
 
         GoodsChatMessageResponse firstMessage = GoodsChatMessageResponse.builder()
