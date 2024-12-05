@@ -3,10 +3,13 @@ package com.example.mate.domain.goodsChat.service;
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
 import com.example.mate.common.response.PageResponse;
+import com.example.mate.domain.constant.MessageType;
 import com.example.mate.domain.goods.entity.GoodsPost;
 import com.example.mate.domain.goods.entity.Role;
 import com.example.mate.domain.goods.entity.Status;
 import com.example.mate.domain.goods.repository.GoodsPostRepository;
+import com.example.mate.domain.goodsChat.event.GoodsChatEvent;
+import com.example.mate.domain.goodsChat.event.GoodsChatEventPublisher;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatMessageResponse;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatRoomResponse;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatRoomSummaryResponse;
@@ -38,6 +41,7 @@ public class GoodsChatService {
     private final GoodsChatRoomRepository chatRoomRepository;
     private final GoodsChatPartRepository partRepository;
     private final GoodsChatMessageRepository messageRepository;
+    private final GoodsChatEventPublisher eventPublisher;
 
     public GoodsChatRoomResponse getOrCreateGoodsChatRoom(Long buyerId, Long goodsPostId) {
         Member buyer = findMemberById(buyerId);
@@ -62,7 +66,6 @@ public class GoodsChatService {
         }
     }
 
-    // 새로운 채팅방 생성 - "~ 님이 대화를 시작했습니다." (입장 메시지 전송)
     private GoodsChatRoom createChatRoom(GoodsPost goodsPost, Member buyer, Member seller) {
         GoodsChatRoom goodsChatRoom = GoodsChatRoom.builder()
                 .goodsPost(goodsPost)
@@ -71,6 +74,9 @@ public class GoodsChatService {
         GoodsChatRoom savedChatRoom = chatRoomRepository.save(goodsChatRoom);
         savedChatRoom.addChatParticipant(buyer, Role.BUYER);
         savedChatRoom.addChatParticipant(seller, Role.SELLER);
+
+        // 새로운 채팅방 생성 - 입장 메시지 전송
+        eventPublisher.publish(GoodsChatEvent.from(goodsChatRoom.getId(), buyer, MessageType.ENTER));
 
         return savedChatRoom;
     }
@@ -153,7 +159,7 @@ public class GoodsChatService {
 
         if (!goodsChatPart.leaveAndCheckRoomStatus()) {
             // 퇴장 메시지 전송
-            System.out.println(member.getNickname() + "님이 채팅방을 나갔습니다.");
+            eventPublisher.publish(GoodsChatEvent.from(chatRoomId, member, MessageType.LEAVE));
         } else {
             // 모두 나갔다면 채팅방, 채팅 참여, 채팅 삭제
             chatRoomRepository.deleteById(chatRoomId);
