@@ -29,11 +29,6 @@ public class GoodsChatRoomController {
 
     private final GoodsChatService goodsChatService;
 
-    /*
-    굿즈거래 상세 페이지 - 채팅방 입장
-    TODO: @RequestParam Long memberId -> @AuthenticationPrincipal 로 변경
-    "/api/goods/chat" 로 변경 예정
-    */
     @PostMapping
     public ResponseEntity<ApiResponse<GoodsChatRoomResponse>> createGoodsChatRoom(@AuthenticationPrincipal AuthMember member,
                                                                                   @RequestParam Long goodsPostId) {
@@ -41,10 +36,6 @@ public class GoodsChatRoomController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    /*
-    굿즈거래 채팅방 페이지 - 채팅 내역 조회
-    TODO: @RequestParam Long memberId -> @AuthenticationPrincipal 로 변경
-    */
     @GetMapping("/{chatRoomId}/message")
     public ResponseEntity<ApiResponse<PageResponse<GoodsChatMessageResponse>>> getGoodsChatRoomMessages(
             @AuthenticationPrincipal AuthMember member,
@@ -55,10 +46,6 @@ public class GoodsChatRoomController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    /*
-    굿즈거래 채팅방 리스트 페이지 - 내가 참여한 채팅방 리스트 조회
-    TODO: @RequestParam Long memberId -> @AuthenticationPrincipal 로 변경
-    */
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<GoodsChatRoomSummaryResponse>>> getGoodsChatRooms(@AuthenticationPrincipal AuthMember member,
                                                                                                      @PageableDefault Pageable pageable) {
@@ -66,7 +53,6 @@ public class GoodsChatRoomController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    // 채팅방 나가기
     @DeleteMapping("/{chatRoomId}")
     public ResponseEntity<Void> leaveGoodsChatRoom(@AuthenticationPrincipal AuthMember member, @PathVariable Long chatRoomId) {
         goodsChatService.deactivateGoodsChatPart(member.getMemberId(), chatRoomId);
@@ -74,10 +60,6 @@ public class GoodsChatRoomController {
         return ResponseEntity.noContent().build();
     }
 
-    /*
-    굿즈거래 채팅방 리스트 페이지 - 채팅방 단건 조회
-    TODO: @RequestParam Long memberId -> @AuthenticationPrincipal 로 변경
-    */
     @GetMapping("/{chatRoomId}")
     public ResponseEntity<ApiResponse<GoodsChatRoomResponse>> getGoodsChatRoomInfo(@AuthenticationPrincipal AuthMember member,
                                                                                    @PathVariable Long chatRoomId) {
@@ -85,7 +67,6 @@ public class GoodsChatRoomController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    // 채팅방 하단 토글 - 현재 채팅에 참여한 사용자 프로필 조회
     @GetMapping("/{chatRoomId}/members")
     public ResponseEntity<ApiResponse<List<MemberSummaryResponse>>> getGoodsChatRoomMembers(@AuthenticationPrincipal AuthMember member,
                                                                                             @PathVariable Long chatRoomId) {
