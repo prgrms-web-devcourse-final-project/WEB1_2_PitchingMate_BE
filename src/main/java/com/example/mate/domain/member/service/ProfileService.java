@@ -93,16 +93,8 @@ public class ProfileService {
     }
 
     private MyGoodsRecordResponse convertToRecordResponse(GoodsPost goodsPost) {
-        String mainImageUrl = getMainImageUrl(goodsPost);
+        String mainImageUrl = goodsPost.getMainImageUrl();
         return MyGoodsRecordResponse.of(goodsPost, mainImageUrl);
-    }
-
-    private String getMainImageUrl(GoodsPost goodsPost) {
-        return goodsPost.getGoodsPostImages().stream()
-                .filter(GoodsPostImage::getIsMainImage)
-                .findFirst()
-                .map(GoodsPostImage::getImageUrl)
-                .orElse("upload/default.jpg");
     }
 
     // 메이트 후기 페이징 조회

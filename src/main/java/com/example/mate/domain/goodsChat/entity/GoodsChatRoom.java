@@ -45,6 +45,10 @@ public class GoodsChatRoom {
     @Column(name = "last_chat_sent_at")
     private LocalDateTime lastChatSentAt;
 
+    @Column(name = "is_active", nullable = false)
+    @Builder.Default
+    private Boolean isActive = true;
+
     @OneToMany(mappedBy = "goodsChatRoom", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<GoodsChatPart> chatParts = new ArrayList<>();
@@ -57,5 +61,19 @@ public class GoodsChatRoom {
                 .build();
 
         chatParts.add(chatPart);
+    }
+
+    public void updateLastChat(String lastChatContent, LocalDateTime lastChatSentAt) {
+        this.lastChatContent = lastChatContent;
+        this.lastChatSentAt = lastChatSentAt;
+    }
+
+
+    public void deactivateRoom() {
+        this.isActive = false;
+    }
+
+    public boolean isRoomActive() {
+        return isActive;
     }
 }

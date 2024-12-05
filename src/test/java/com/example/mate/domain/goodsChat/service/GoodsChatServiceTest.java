@@ -11,16 +11,18 @@ import static org.mockito.Mockito.when;
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
 import com.example.mate.common.response.PageResponse;
+import com.example.mate.domain.constant.MessageType;
 import com.example.mate.domain.goods.entity.Category;
 import com.example.mate.domain.goods.entity.GoodsPost;
 import com.example.mate.domain.goods.entity.Role;
 import com.example.mate.domain.goods.entity.Status;
 import com.example.mate.domain.goods.repository.GoodsPostRepository;
-import com.example.mate.domain.goodsChat.dto.response.GoodsChatMsgResponse;
+import com.example.mate.domain.goodsChat.dto.response.GoodsChatMessageResponse;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatRoomResponse;
 import com.example.mate.domain.goodsChat.entity.GoodsChatMessage;
 import com.example.mate.domain.goodsChat.entity.GoodsChatPartId;
 import com.example.mate.domain.goodsChat.entity.GoodsChatRoom;
+import com.example.mate.domain.goodsChat.event.GoodsChatEventPublisher;
 import com.example.mate.domain.goodsChat.repository.GoodsChatMessageRepository;
 import com.example.mate.domain.goodsChat.repository.GoodsChatPartRepository;
 import com.example.mate.domain.goodsChat.repository.GoodsChatRoomRepository;
@@ -62,6 +64,9 @@ class GoodsChatServiceTest {
     @Mock
     private  GoodsChatMessageRepository messageRepository;
 
+    @Mock
+    private GoodsChatEventPublisher eventPublisher;
+
     private Member createMember(Long id, String name, String nickname) {
         return Member.builder()
                 .id(id)
@@ -97,6 +102,7 @@ class GoodsChatServiceTest {
                 .goodsChatPart(chatRoom.getChatParts().get(idx))
                 .content(content)
                 .sentAt(sentAt)
+                .messageType(MessageType.TALK)
                 .build();
     }
 
@@ -131,7 +137,7 @@ class GoodsChatServiceTest {
             // then
             assertThat(result.getChatRoomId()).isEqualTo(existingChatRoom.getId());
             assertThat(result.getGoodsPostId()).isEqualTo(goodsPost.getId());
-            assertThat(result.getStatus()).isEqualTo(goodsPost.getStatus().getValue());
+            assertThat(result.getPostStatus()).isEqualTo(goodsPost.getStatus().getValue());
 
             verify(memberRepository).findById(buyerId);
             verify(goodsPostRepository).findById(goodsPostId);
@@ -165,7 +171,7 @@ class GoodsChatServiceTest {
             // then
             assertThat(result.getChatRoomId()).isEqualTo(newGoodsChatRoom.getId());
             assertThat(result.getGoodsPostId()).isEqualTo(goodsPost.getId());
-            assertThat(result.getStatus()).isEqualTo(goodsPost.getStatus().getValue());
+            assertThat(result.getPostStatus()).isEqualTo(goodsPost.getStatus().getValue());
 
             verify(memberRepository).findById(buyerId);
             verify(goodsPostRepository).findById(goodsPostId);
@@ -237,7 +243,7 @@ class GoodsChatServiceTest {
             GoodsChatRoom chatRoom = createGoodsChatRoom(1L, null);
             Long memberId = member.getId();
             Long chatRoomId = chatRoom.getId();
-            GoodsChatPartId goodsChatPartId = new GoodsChatPartId(chatRoomId, memberId);
+            GoodsChatPartId goodsChatPartId = new GoodsChatPartId(memberId, chatRoomId);
 
             chatRoom.addChatParticipant(member, Role.BUYER);
             chatRoom.addChatParticipant(member, Role.SELLER);
@@ -253,14 +259,14 @@ class GoodsChatServiceTest {
             when(messageRepository.findByChatRoomId(chatRoomId, pageable)).thenReturn(messagePage);
 
             // when
-            PageResponse<GoodsChatMsgResponse> result = goodsChatService.getMessagesForChatRoom(chatRoomId, memberId, pageable);
+            PageResponse<GoodsChatMessageResponse> result = goodsChatService.getMessagesForChatRoom(chatRoomId, memberId, pageable);
 
             // then
             assertThat(result.getContent()).hasSize(2);
-            assertThat(result.getContent().get(0).getContent()).isEqualTo(secondMessage.getContent());
+            assertThat(result.getContent().get(0).getMessage()).isEqualTo(secondMessage.getContent());
             assertThat(result.getContent().get(0).getChatMessageId()).isEqualTo(secondMessage.getId());
-            assertThat(result.getContent().get(0).getAuthorId()).isEqualTo(memberId);
-            assertThat(result.getContent().get(1).getContent()).isEqualTo(firstMessage.getContent());
+            assertThat(result.getContent().get(0).getSenderId()).isEqualTo(memberId);
+            assertThat(result.getContent().get(1).getMessage()).isEqualTo(firstMessage.getContent());
             assertThat(result.getContent().get(1).getChatMessageId()).isEqualTo(firstMessage.getId());
 
             verify(partRepository).existsById(goodsChatPartId);
@@ -273,7 +279,7 @@ class GoodsChatServiceTest {
             // given
             Long chatRoomId = 1L;
             Long memberId = 2L;
-            GoodsChatPartId goodsChatPartId = new GoodsChatPartId(chatRoomId, memberId);
+            GoodsChatPartId goodsChatPartId = new GoodsChatPartId(memberId, chatRoomId);
             Pageable pageable = PageRequest.of(0, 10);
 
             when(partRepository.existsById(goodsChatPartId)).thenReturn(false);
