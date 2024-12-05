@@ -22,6 +22,7 @@ import com.example.mate.domain.goodsChat.dto.response.GoodsChatRoomResponse;
 import com.example.mate.domain.goodsChat.entity.GoodsChatMessage;
 import com.example.mate.domain.goodsChat.entity.GoodsChatPartId;
 import com.example.mate.domain.goodsChat.entity.GoodsChatRoom;
+import com.example.mate.domain.goodsChat.event.GoodsChatEventPublisher;
 import com.example.mate.domain.goodsChat.repository.GoodsChatMessageRepository;
 import com.example.mate.domain.goodsChat.repository.GoodsChatPartRepository;
 import com.example.mate.domain.goodsChat.repository.GoodsChatRoomRepository;
@@ -62,6 +63,9 @@ class GoodsChatServiceTest {
 
     @Mock
     private  GoodsChatMessageRepository messageRepository;
+
+    @Mock
+    private GoodsChatEventPublisher eventPublisher;
 
     private Member createMember(Long id, String name, String nickname) {
         return Member.builder()
