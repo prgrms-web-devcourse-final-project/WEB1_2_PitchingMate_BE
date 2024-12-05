@@ -18,7 +18,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -52,7 +52,7 @@ class GoodsChatRoomControllerTest {
                 .title("test title")
                 .category("ACCESSORY")
                 .price(10000)
-                .status("OPEN")
+                .postStatus("OPEN")
                 .imageUrl("/images/test.jpg")
                 .build();
 
@@ -72,8 +72,9 @@ class GoodsChatRoomControllerTest {
                 .andExpect(jsonPath("$.data.title").value(existingChatRoomResponse.getTitle()))
                 .andExpect(jsonPath("$.data.category").value(existingChatRoomResponse.getCategory()))
                 .andExpect(jsonPath("$.data.price").value(existingChatRoomResponse.getPrice()))
-                .andExpect(jsonPath("$.data.status").value(existingChatRoomResponse.getStatus()))
+                .andExpect(jsonPath("$.data.postStatus").value(existingChatRoomResponse.getPostStatus()))
                 .andExpect(jsonPath("$.data.imageUrl").value(existingChatRoomResponse.getImageUrl()));
+
 
         verify(goodsChatService).getOrCreateGoodsChatRoom(buyerId, goodsPostId);
     }
@@ -91,7 +92,7 @@ class GoodsChatRoomControllerTest {
                 .title("test title")
                 .category("ACCESSORY")
                 .price(10000)
-                .status("OPEN")
+                .postStatus("OPEN")
                 .imageUrl("/images/test.jpg")
                 .build();
 
@@ -111,7 +112,7 @@ class GoodsChatRoomControllerTest {
                 .andExpect(jsonPath("$.data.title").value(newChatRoomResponse.getTitle()))
                 .andExpect(jsonPath("$.data.category").value(newChatRoomResponse.getCategory()))
                 .andExpect(jsonPath("$.data.price").value(newChatRoomResponse.getPrice()))
-                .andExpect(jsonPath("$.data.status").value(newChatRoomResponse.getStatus()))
+                .andExpect(jsonPath("$.data.postStatus").value(newChatRoomResponse.getPostStatus()))
                 .andExpect(jsonPath("$.data.imageUrl").value(newChatRoomResponse.getImageUrl()));
 
         verify(goodsChatService).getOrCreateGoodsChatRoom(buyerId, goodsPostId);
