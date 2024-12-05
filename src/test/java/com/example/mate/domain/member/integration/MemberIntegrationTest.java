@@ -116,6 +116,10 @@ class MemberIntegrationTest {
 
     @BeforeEach
     void setUp() {
+
+        // H2 데이터베이스의 ID 초기화 문법
+        jdbcTemplate.execute("ALTER TABLE member ALTER COLUMN id RESTART WITH 1");
+
         jdbcTemplate.execute("SET REFERENTIAL_INTEGRITY FALSE");
         jdbcTemplate.execute("TRUNCATE TABLE member");
         jdbcTemplate.execute("SET REFERENTIAL_INTEGRITY TRUE");
