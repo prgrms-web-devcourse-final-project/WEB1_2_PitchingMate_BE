@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.mate.common.response.PageResponse;
+import com.example.mate.config.WithAuthMember;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatMessageResponse;
 import com.example.mate.common.security.util.JwtUtil;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatRoomResponse;
@@ -41,6 +42,7 @@ class GoodsChatRoomControllerTest {
 
     @Test
     @DisplayName("굿즈거래 채팅방 생성 성공 - 기존 채팅방이 있을 경우 해당 채팅방을 반환한다.")
+    @WithAuthMember(memberId = 1L)
     void returnExistingChatRoom() throws Exception {
         // given
         Long buyerId = 1L;
@@ -81,6 +83,7 @@ class GoodsChatRoomControllerTest {
 
     @Test
     @DisplayName("굿즈거래 채팅방 생성 성공 - 기존 채팅방이 없을 경우 새로운 채팅방을 생성한다.")
+    @WithAuthMember(memberId = 1L)
     void createNewChatRoomIfNoneExists() throws Exception {
         // given
         Long buyerId = 1L;
@@ -101,7 +104,6 @@ class GoodsChatRoomControllerTest {
 
         // when & then
         mockMvc.perform(post("/api/goods/chat", buyerId)
-                        .param("buyerId", String.valueOf(buyerId))
                         .param("goodsPostId", String.valueOf(goodsPostId)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
@@ -120,6 +122,7 @@ class GoodsChatRoomControllerTest {
 
     @Test
     @DisplayName("채팅 내역 조회 성공 - 회원이 채팅방에 참여한 경우 메시지를 페이지로 반환한다.")
+    @WithAuthMember(memberId = 2L)
     void getMessagesForChatRoom_should_return_messages() throws Exception {
         // given
         Long chatRoomId = 1L;
@@ -149,7 +152,6 @@ class GoodsChatRoomControllerTest {
 
         // when & then
         mockMvc.perform(get("/api/goods/chat/{chatRoomId}/message", chatRoomId)
-                        .param("memberId", String.valueOf(memberId))
                         .param("page", "0")
                         .param("size", "10"))
                 .andExpect(status().isOk())
