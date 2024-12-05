@@ -10,10 +10,10 @@ import org.springframework.data.repository.query.Param;
 public interface GoodsChatMessageRepository extends JpaRepository<GoodsChatMessage, Long> {
 
     @Query("""
-            SELECT cm
-            FROM GoodsChatMessage cm
-            WHERE cm.goodsChatPart.goodsChatRoom.id = :chatRoomId
-            ORDER BY cm.sentAt DESC
-            """)
-    Page<GoodsChatMessage> findByChatRoomId(@Param("chatRoomId") Long chatRoomId, Pageable pageable);
+        SELECT cm
+        FROM GoodsChatMessage cm
+        WHERE cm.goodsChatPart.goodsChatRoom.id = :chatRoomId
+        ORDER BY cm.sentAt DESC
+        """)
+    Page<GoodsChatMessage> getChatMessages(@Param("chatRoomId") Long chatRoomId, Pageable pageable);
 }
