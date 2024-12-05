@@ -2,6 +2,8 @@ package com.example.mate.domain.goodsChat.entity;
 
 import com.example.mate.domain.goods.entity.Role;
 import com.example.mate.domain.member.entity.Member;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -10,7 +12,10 @@ import jakarta.persistence.Id;
 import jakarta.persistence.IdClass;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -38,4 +43,21 @@ public class GoodsChatPart {
 
     @Enumerated(EnumType.STRING)
     private Role role;
+
+    @Column(name = "is_active")
+    @Builder.Default
+    private Boolean isActive = true;
+
+    @OneToMany(mappedBy = "goodsChatPart", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    List<GoodsChatMessage> goodsChatMessages = new ArrayList<>();
+
+    public boolean leaveAndCheckRoomStatus() {
+        if (!goodsChatRoom.isRoomActive()) {
+            return true;
+        }
+        goodsChatRoom.deactivateRoom();
+        this.isActive = false;
+        return false;
+    }
 }
