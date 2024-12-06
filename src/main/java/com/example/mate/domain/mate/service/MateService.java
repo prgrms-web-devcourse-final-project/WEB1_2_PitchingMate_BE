@@ -2,9 +2,9 @@ package com.example.mate.domain.mate.service;
 
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.response.PageResponse;
-import com.example.mate.common.utils.file.FileUploader;
-import com.example.mate.common.utils.file.FileValidator;
 import com.example.mate.domain.constant.TeamInfo;
+import com.example.mate.domain.file.FileService;
+import com.example.mate.domain.file.FileValidator;
 import com.example.mate.domain.match.entity.Match;
 import com.example.mate.domain.match.repository.MatchRepository;
 import com.example.mate.domain.mate.dto.request.*;
@@ -18,6 +18,7 @@ import com.example.mate.domain.mate.repository.MateReviewRepository;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -39,8 +41,12 @@ public class MateService {
     private final MatchRepository matchRepository;
     private final MemberRepository memberRepository;
     private final MateReviewRepository mateReviewRepository;
+    private final FileService fileService;
 
-    public MatePostResponse createMatePost(MatePostCreateRequest request, MultipartFile file) {
+    @Value("${cloud.aws.s3.bucket}")
+    private String bucket;
+
+    public MatePostResponse createMatePost(MatePostCreateRequest request, MultipartFile file) throws IOException {
         Member author = findMemberById(request.getMemberId());
 
         Match match = findMatchById(request.getMatchId());
@@ -51,7 +57,7 @@ public class MateService {
                 .author(author)
                 .teamId(request.getTeamId())
                 .match(match)
-                .imageUrl(null) //TODO - image 서비스 배포 후 구현
+                .imageUrl(getDefaultMateImageUrl())
                 .title(request.getTitle())
                 .content(request.getContent())
                 .status(Status.OPEN)
@@ -62,7 +68,17 @@ public class MateService {
                 .build();
         MatePost savedPost = mateRepository.save(matePost);
 
+        handleFileUpload(file, matePost);
+
         return MatePostResponse.from(savedPost);
+    }
+
+    private void handleFileUpload(MultipartFile file, MatePost matePost) throws IOException {
+        if (file != null && !file.isEmpty()) {
+            FileValidator.validateSingleImage(file);
+            String imageUrl = fileService.uploadFile(file);
+            matePost.changeImageUrl(imageUrl);
+        }
     }
 
     @Transactional(readOnly = true)
@@ -87,11 +103,11 @@ public class MateService {
 
     @Transactional(readOnly = true)
     public PageResponse<MatePostSummaryResponse> getMatePagePosts(MatePostSearchRequest request, Pageable pageable) {
-        if (request.getTeamId()!= null && !TeamInfo.existById(request.getTeamId())) {
+        if (request.getTeamId() != null && !TeamInfo.existById(request.getTeamId())) {
             throw new CustomException(TEAM_NOT_FOUND);
         }
 
-        Page<MatePost> matePostPage = mateRepository.findMatePostsByFilter(request ,pageable);
+        Page<MatePost> matePostPage = mateRepository.findMatePostsByFilter(request, pageable);
 
         List<MatePostSummaryResponse> content = matePostPage.getContent().stream()
                 .map(MatePostSummaryResponse::from)
@@ -114,7 +130,8 @@ public class MateService {
         return MatePostDetailResponse.from(matePost);
     }
 
-    public MatePostResponse updateMatePost(Long memberId, Long postId, MatePostUpdateRequest request, MultipartFile file) {
+    public MatePostResponse updateMatePost(Long memberId, Long postId, MatePostUpdateRequest request,
+                                           MultipartFile file) throws IOException {
         MatePost matePost = findMatePostById(postId);
         validateAuthorization(matePost, memberId);
         validatePostStatus(matePost.getStatus());
@@ -139,21 +156,25 @@ public class MateService {
                 .orElseThrow(() -> new CustomException(MATCH_NOT_FOUND_BY_ID));
     }
 
-    private String updateImage(String currentImageUrl, MultipartFile newFile) {
+    private String updateImage(String currentImageUrl, MultipartFile newFile) throws IOException {
         if (newFile == null || newFile.isEmpty()) {
             return currentImageUrl;
         }
 
-        // 새 파일이 있는 경우에만 유효성 검증 수행
-        FileValidator.validateMatePostImage(newFile);
+        FileValidator.validateSingleImage(newFile);
+        deleteNonDefaultImage(currentImageUrl);
 
-        // 기존 파일이 있으면 삭제
-        if (currentImageUrl != null) {
-            FileUploader.deleteFile(currentImageUrl);
+        return fileService.uploadFile(newFile);
+    }
+
+    private void deleteNonDefaultImage(String imageUrl) {
+        if (!imageUrl.equals(getDefaultMateImageUrl())) {
+            fileService.deleteFile(imageUrl);
         }
+    }
 
-        // 새 파일 업로드
-        return FileUploader.uploadFile(newFile);
+    private String getDefaultMateImageUrl() {
+        return "https://" + bucket + ".s3.ap-northeast-2.amazonaws.com/mate_default.svg";
     }
 
     public MatePostResponse updateMatePostStatus(Long memberId, Long postId, MatePostStatusRequest request) {
@@ -162,7 +183,7 @@ public class MateService {
         validateAuthorization(matePost, memberId);
         validatePostStatus(matePost.getStatus());
 
-        if(request.getStatus() == Status.CLOSED) {
+        if (request.getStatus() == Status.CLOSED) {
             findAndValidateParticipants(request.getParticipantIds(), matePost.getMaxParticipants());
         }
         matePost.changeStatus(request.getStatus());
@@ -175,6 +196,7 @@ public class MateService {
 
         validateAuthorization(matePost, memberId);
         validatePostStatus(matePost.getStatus());
+        deleteNonDefaultImage(matePost.getImageUrl());
 
         mateRepository.delete(matePost);
     }
@@ -192,7 +214,8 @@ public class MateService {
         validateCompletionTime(matePost);
         validateCompletionStatus(matePost);
 
-        List<Member> participants = findAndValidateParticipants(request.getParticipantIds(), matePost.getMaxParticipants());
+        List<Member> participants = findAndValidateParticipants(request.getParticipantIds(),
+                matePost.getMaxParticipants());
 
         matePost.complete(participants);
         return MatePostCompleteResponse.from(matePost);
