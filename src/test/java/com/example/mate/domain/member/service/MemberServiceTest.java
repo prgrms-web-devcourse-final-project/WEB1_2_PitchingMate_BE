@@ -1,16 +1,11 @@
 package com.example.mate.domain.member.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.verify;
-
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.constant.Rating;
 import com.example.mate.domain.constant.TeamInfo;
+import com.example.mate.domain.file.FileService;
 import com.example.mate.domain.goods.entity.GoodsPost;
 import com.example.mate.domain.goods.entity.GoodsReview;
 import com.example.mate.domain.goods.entity.Status;
@@ -29,7 +24,6 @@ import com.example.mate.domain.member.entity.Follow;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.FollowRepository;
 import com.example.mate.domain.member.repository.MemberRepository;
-import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -41,6 +35,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class MemberServiceTest {
@@ -65,6 +68,9 @@ class MemberServiceTest {
 
     @Mock
     private VisitPartRepository visitPartRepository;
+
+    @Mock
+    private FileService fileService;
 
 
     private Member member;
@@ -93,8 +99,10 @@ class MemberServiceTest {
     private void createTestMember() {
         member = Member.builder()
                 .id(1L)
+                .imageUrl("image.png")
                 .name("홍길동")
                 .nickname("tester")
+                .imageUrl("image.png")
                 .email("test@example.com")
                 .age(30)
                 .gender(Gender.MALE)
@@ -329,7 +337,7 @@ class MemberServiceTest {
 
         @Test
         @DisplayName("회원 정보 수정 성공")
-        void update_my_profile_success() {
+        void update_my_profile_success() throws IOException {
             // given
             Long memberId = 1L;
             MemberInfoUpdateRequest request = MemberInfoUpdateRequest.builder()
