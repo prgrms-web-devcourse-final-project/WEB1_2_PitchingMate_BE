@@ -1,31 +1,27 @@
-package com.example.mate.common.utils.file;
+package com.example.mate.domain.file;
 
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
-import java.util.List;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 public class FileValidator {
 
     private static final int MAX_GOODS_POST_IMAGE_COUNT = 10;
 
-    // 굿즈 판매글 이미지 파일 유효성 검사
+    // 여러 파일 유효성 검사 : 굿즈 판매글
     public static void validateGoodsPostImages(List<MultipartFile> files) {
-        files.forEach(FileValidator::validateNotEmpty);
-        files.forEach(FileValidator::isNotImage);
-
         if (files.size() > MAX_GOODS_POST_IMAGE_COUNT) {
             throw new CustomException(ErrorCode.FILE_UPLOAD_LIMIT_EXCEEDED);
         }
+
+        files.forEach(FileValidator::validateNotEmpty);
+        files.forEach(FileValidator::isNotImage);
     }
 
-    // 회원 프로필 이미지 파일 유효성 검사
-    public static void validateMyProfileImage(MultipartFile file) {
-        isNotImage(file);
-    }
-
-    // 메이트 게시글 이미지 파일 유효성 검사
-    public static void validateMatePostImage(MultipartFile file) {
+    // 단일 파일 유효성 검사 : 회원 프로필, 메이트 구인글
+    public static void validateSingleImage(MultipartFile file) {
         isNotImage(file);
     }
 
