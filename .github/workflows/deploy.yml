@@ -16,6 +16,7 @@ jobs:
           java-version: 17
 
       - name: application-dev.yml 파일 만들기
+        echo "secrets: ${{ secrets.APPLICATION_PROPERTIES }}"  # 값 확인
         run: echo "${{ secrets.APPLICATION_PROPERTIES }}" > ./src/main/resources/application.yml
 
       - name: 테스트 및 빌드하기
