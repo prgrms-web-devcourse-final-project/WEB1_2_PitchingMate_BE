@@ -4,6 +4,7 @@ import com.example.mate.common.error.CustomException;
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.constant.StadiumInfo;
+import com.example.mate.domain.file.FileService;
 import com.example.mate.domain.match.entity.Match;
 import com.example.mate.domain.match.repository.MatchRepository;
 import com.example.mate.domain.mate.dto.request.MatePostCreateRequest;
@@ -28,6 +29,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
@@ -57,6 +59,9 @@ class MateServiceTest {
     @Mock
     private MemberRepository memberRepository;
 
+    @Mock
+    private FileService fileService;
+
     private static final Long TEST_MEMBER_ID = 1L;
     private static final Long TEST_MATCH_ID = 1L;
 
@@ -85,7 +90,7 @@ class MateServiceTest {
 
         @Test
         @DisplayName("메이트 게시글 작성 성공")
-        void createMatePost_Success() {
+        void createMatePost_Success() throws IOException {
             // given
             Member testMember = createTestMember();
             Match testMatch = createTestMatch();
@@ -599,7 +604,7 @@ class MateServiceTest {
 
         @Test
         @DisplayName("메이트 게시글 수정 성공")
-        void updateMatePost_Success() {
+        void updateMatePost_Success() throws IOException {
             // given
             Member testMember = createTestMember();
             Match testMatch = createTestMatch();
@@ -880,6 +885,7 @@ class MateServiceTest {
                     .match(testMatch)
                     .title("테스트 제목")
                     .content("테스트 내용")
+                    .imageUrl("image.png")
                     .status(Status.OPEN)
                     .maxParticipants(4)
                     .age(Age.TWENTIES)
@@ -911,6 +917,7 @@ class MateServiceTest {
                     .author(testMember)
                     .teamId(1L)
                     .match(testMatch)
+                    .imageUrl("image.png")
                     .title("테스트 제목")
                     .content("테스트 내용")
                     .status(Status.OPEN)
