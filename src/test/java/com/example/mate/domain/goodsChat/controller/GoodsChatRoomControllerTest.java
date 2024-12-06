@@ -164,4 +164,54 @@ class GoodsChatRoomControllerTest {
         verify(goodsChatService).getMessagesForChatRoom(chatRoomId, memberId, pageable);
     }
 
+    @Test
+    @DisplayName("굿즈거래 채팅방 상세 조회 성공")
+    void getGoodsChatRoomInfo_should_return_chatroom_info_and_latest_message() throws Exception {
+        // given
+        Long chatRoomId = 1L;
+        Long memberId = 1L;
+        Long goodsPostId = 1L;
+
+        GoodsChatMessageResponse firstMessage = GoodsChatMessageResponse.builder()
+                .chatMessageId(1L)
+                .message("first message")
+                .senderId(memberId)
+                .sentAt(LocalDateTime.now().minusMinutes(10))
+                .build();
+
+        GoodsChatMessageResponse secondMessage = GoodsChatMessageResponse.builder()
+                .chatMessageId(2L)
+                .message("second message")
+                .senderId(memberId)
+                .sentAt(LocalDateTime.now())
+                .build();
+
+        List<GoodsChatMessageResponse> message = List.of(secondMessage, firstMessage);
+
+        GoodsChatRoomResponse existingChatRoomResponse = GoodsChatRoomResponse.builder()
+                .chatRoomId(1L)
+                .goodsPostId(goodsPostId)
+                .teamName("test team")
+                .title("test title")
+                .category("ACCESSORY")
+                .price(10000)
+                .postStatus("OPEN")
+                .imageUrl("/images/test.jpg")
+                .initialMessages(PageResponse.from(new PageImpl<>(List.of(message)), message))
+                .build();
+
+        when(goodsChatService.getGoodsChatRoomInfo(memberId, chatRoomId)).thenReturn(existingChatRoomResponse);
+
+        mockMvc.perform(get("/api/goods/chat/{chatRoomId}", chatRoomId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("SUCCESS"))
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.chatRoomId").value(chatRoomId))
+                .andExpect(jsonPath("$.data.goodsPostId").value(goodsPostId))
+                .andExpect(jsonPath("$.data.initialMessages.content").isArray())
+                .andExpect(jsonPath("$.data.initialMessages.content[0].chatMessageId").value(secondMessage.getChatMessageId()))
+                .andExpect(jsonPath("$.data.initialMessages.content[0].message").value(secondMessage.getMessage()))
+                .andExpect(jsonPath("$.data.initialMessages.content[1].chatMessageId").value(firstMessage.getChatMessageId()))
+                .andExpect(jsonPath("$.data.initialMessages.content[1].message").value(firstMessage.getMessage()));
+    }
 }

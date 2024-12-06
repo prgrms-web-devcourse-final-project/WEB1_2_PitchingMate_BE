@@ -14,6 +14,7 @@ import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.constant.MessageType;
 import com.example.mate.domain.goods.entity.Category;
 import com.example.mate.domain.goods.entity.GoodsPost;
+import com.example.mate.domain.goods.entity.GoodsPostImage;
 import com.example.mate.domain.goods.entity.Role;
 import com.example.mate.domain.goods.entity.Status;
 import com.example.mate.domain.goods.repository.GoodsPostRepository;
@@ -86,6 +87,13 @@ class GoodsChatServiceTest {
                 .price(10_000)
                 .status(status)
                 .category(Category.ACCESSORY)
+                .build();
+    }
+
+    private GoodsPostImage createGoodsPostImage(GoodsPost goodsPost) {
+        return GoodsPostImage.builder()
+                .post(goodsPost)
+                .imageUrl("main_image_url")
                 .build();
     }
 
@@ -296,6 +304,108 @@ class GoodsChatServiceTest {
             // then
             verify(partRepository).existsById(goodsChatPartId);
             verify(messageRepository, never()).getChatMessages(chatRoomId, pageable);
+        }
+    }
+
+    @Nested
+    @DisplayName("채팅방 정보 조회 테스트")
+    class GoodsChatRoomInfoTest {
+
+        @Test
+        @DisplayName("채팅방 정보 조회 성공")
+        void getGoodsChatRoomInfo_should_return_chatroom_info_and_latest_message() {
+            // given
+            Member member = createMember(1L, "Test Member", "test_member");
+            GoodsPost goodsPost = createGoodsPost(1L, member, null, Status.OPEN);
+            goodsPost.changeImages(List.of(createGoodsPostImage(goodsPost)));
+            GoodsChatRoom chatRoom = createGoodsChatRoom(1L, goodsPost);
+
+            Long memberId = member.getId();
+            Long chatRoomId = chatRoom.getId();
+            GoodsChatPartId goodsChatPartId = new GoodsChatPartId(memberId, chatRoomId);
+
+            chatRoom.addChatParticipant(member, Role.BUYER);
+            chatRoom.addChatParticipant(member, Role.SELLER);
+
+            GoodsChatMessage firstMessage = createMessage(chatRoom, 1L, 0, "first message", LocalDateTime.now().minusMinutes(10));
+            GoodsChatMessage secondMessage = createMessage(chatRoom, 2L, 1, "second message", LocalDateTime.now());
+
+            Page<GoodsChatMessage> messages = new PageImpl<>(List.of(secondMessage, firstMessage));
+
+            when(partRepository.existsById(goodsChatPartId)).thenReturn(true);
+            when(chatRoomRepository.findByChatRoomId(chatRoomId)).thenReturn(Optional.of(chatRoom));
+            when(messageRepository.getChatMessages(chatRoomId, PageRequest.of(0, 20))).thenReturn(messages);
+
+            // when
+            GoodsChatRoomResponse goodsChatRoomInfo = goodsChatService.getGoodsChatRoomInfo(memberId, chatRoomId);
+
+            // then
+            assertThat(goodsChatRoomInfo.getChatRoomId()).isEqualTo(chatRoomId);
+            assertThat(goodsChatRoomInfo.getGoodsPostId()).isEqualTo(goodsPost.getId());
+            assertThat(goodsChatRoomInfo.getTeamName()).isEqualTo("KIA");
+            assertThat(goodsChatRoomInfo.getTitle()).isEqualTo(goodsPost.getTitle());
+            assertThat(goodsChatRoomInfo.getCategory()).isEqualTo(goodsPost.getCategory().getValue());
+            assertThat(goodsChatRoomInfo.getPrice()).isEqualTo(goodsPost.getPrice());
+            assertThat(goodsChatRoomInfo.getPostStatus()).isEqualTo(goodsPost.getStatus().getValue());
+            assertThat(goodsChatRoomInfo.getChatRoomStatus()).isEqualTo(chatRoom.getIsActive().toString());
+            assertThat(goodsChatRoomInfo.getImageUrl()).isEqualTo(goodsPost.getMainImageUrl());
+
+            assertThat(goodsChatRoomInfo.getInitialMessages().getContent())
+                    .hasSize(2)
+                    .extracting(GoodsChatMessageResponse::getMessage)
+                    .containsExactly("second message", "first message");
+
+            verify(partRepository).existsById(goodsChatPartId);
+            verify(chatRoomRepository).findByChatRoomId(chatRoomId);
+            verify(messageRepository).getChatMessages(chatRoomId, PageRequest.of(0, 20));
+        }
+
+        @Test
+        @DisplayName("채팅방 정보 조회 실패 - 채팅방에 참여하지 않은 회원")
+        void getGoodsChatRoomInfo_should_throw_CustomException_for_not_participant() {
+            // given
+            Member member = createMember(1L, "Test Member", "test_member");
+            GoodsChatRoom chatRoom = createGoodsChatRoom(1L, null);
+
+            Long memberId = member.getId();
+            Long chatRoomId = chatRoom.getId();
+
+            GoodsChatPartId goodsChatPartId = new GoodsChatPartId(memberId, chatRoomId);
+            when(partRepository.existsById(goodsChatPartId)).thenReturn(false);
+
+            // when
+            assertThatThrownBy(() -> goodsChatService.getGoodsChatRoomInfo(memberId, chatRoomId))
+                    .isInstanceOf(CustomException.class)
+                    .hasMessage(ErrorCode.GOODS_CHAT_NOT_FOUND_CHAT_PART.getMessage());
+
+            // then
+            verify(partRepository).existsById(goodsChatPartId);
+            verify(chatRoomRepository, never()).findByChatRoomId(chatRoomId);
+            verify(messageRepository, never()).getChatMessages(chatRoomId, PageRequest.of(0, 20));
+        }
+
+        @Test
+        @DisplayName("채팅방 정보 조회 실패 - 존재하지 않는 채팅방")
+        void getGoodsChatRoomInfo_should_throw_CustomException_for_invalid_chatroom() {
+            Member member = createMember(1L, "Test Member", "test_member");
+            GoodsChatRoom chatRoom = createGoodsChatRoom(1L, null);
+
+            Long memberId = member.getId();
+            Long chatRoomId = chatRoom.getId();
+
+            GoodsChatPartId goodsChatPartId = new GoodsChatPartId(memberId, chatRoomId);
+            when(partRepository.existsById(goodsChatPartId)).thenReturn(true);
+            when(chatRoomRepository.findByChatRoomId(chatRoomId)).thenReturn(Optional.empty());
+
+            // when
+            assertThatThrownBy(() -> goodsChatService.getGoodsChatRoomInfo(memberId, chatRoomId))
+                    .isInstanceOf(CustomException.class)
+                    .hasMessage(ErrorCode.GOODS_CHAT_ROOM_NOT_FOUND.getMessage());
+
+            // then
+            verify(partRepository).existsById(goodsChatPartId);
+            verify(chatRoomRepository).findByChatRoomId(chatRoomId);
+            verify(messageRepository, never()).getChatMessages(chatRoomId, PageRequest.of(0, 20));
         }
     }
 }

@@ -150,6 +150,44 @@ public class GoodsChatIntegrationTest {
                 .getResponse();
     }
 
+    @Test
+    @DisplayName("굿즈거래 채팅방 상세 조회 테스트")
+    @WithAuthMember(memberId = 2L)
+    void get_goods_chat_room_info() throws Exception {
+        // given
+        Long chatRoomId = chatRoom.getId();
+        Long memberId = buyer.getId();
+
+        // when
+        MockHttpServletResponse result = mockMvc.perform(get("/api/goods/chat/{chatRoomId}", chatRoomId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("SUCCESS"))
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.initialMessages.content").isArray())
+                .andExpect(jsonPath("$.data.initialMessages.content[0].message").value("test message"))
+                .andExpect(jsonPath("$.data.initialMessages.content[1].message").value("test message"))
+                .andReturn()
+                .getResponse();
+
+        result.setCharacterEncoding("UTF-8");
+        ApiResponse<GoodsChatRoomResponse> apiResponse = objectMapper.readValue(result.getContentAsString(), new TypeReference<>() {});
+        GoodsChatRoomResponse response = apiResponse.getData();
+
+        // then
+        GoodsChatRoom actualChatRoom = chatRoomRepository.findById(chatRoomId).orElse(null);
+        GoodsPost actualPost = actualChatRoom.getGoodsPost();
+
+        assertThat(response.getChatRoomId()).isEqualTo(chatRoomId);
+        assertThat(response.getGoodsPostId()).isEqualTo(actualPost.getId());
+        assertThat(response.getTitle()).isEqualTo(actualPost.getTitle());
+        assertThat(response.getPrice()).isEqualTo(actualPost.getPrice());
+        assertThat(response.getPostStatus()).isEqualTo(actualPost.getStatus().getValue());
+
+        GoodsPostImage image = actualPost.getGoodsPostImages().get(0);
+        assertThat(image.getImageUrl()).isEqualTo("upload/test_img_url");
+    }
+
+
     private Member createMember(String name, String nickname, String email) {
         return memberRepository.save(Member.builder()
                 .name(name)
