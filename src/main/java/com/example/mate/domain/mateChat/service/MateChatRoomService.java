@@ -181,4 +181,84 @@ public class MateChatRoomService {
         return chatRoomMemberRepository.save(chatRoomMember);
     }
 
+    // 채팅방 퇴장
+    public void leaveChatRoom(Long roomId, Long memberId) {
+        MateChatRoom chatRoom = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new CustomException(ErrorCode.CHAT_ROOM_NOT_FOUND));
+
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND_BY_ID));
+
+        MateChatRoomMember chatRoomMember = chatRoomMemberRepository.findByChatRoomIdAndMemberId(roomId, memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.CHAT_ROOM_MEMBER_NOT_FOUND));
+
+
+        // 방장 퇴장 시 검증
+        if (isAuthor(chatRoom, member)) {
+            validateAuthorLeave(chatRoom.getMatePost());
+        }
+
+        // 퇴장 처리
+        chatRoomMember.deactivate();
+        sendLeaveMessage(roomId, member);
+
+        // 방장 퇴장 시 채팅방 상태 변경
+        if (isAuthor(chatRoom, member)) {
+            chatRoom.setAuthorLeft(true);
+            List<MateChatRoomMember> remainingMembers = chatRoomMemberRepository.findActiveMembers(roomId);
+            remainingMembers.forEach(m -> m.getMateChatRoom().setMessageable(false));
+        }
+
+        // 채팅방 상태 업데이트
+        updateChatRoomStatus(chatRoom);
+    }
+
+    private void validateAuthorLeave(MatePost matePost) {
+        if (matePost.getStatus() != Status.VISIT_COMPLETE) {
+            throw new CustomException(ErrorCode.AUTHOR_LEAVE_NOT_ALLOWED);
+        }
+    }
+
+    private void updateChatRoomStatus(MateChatRoom chatRoom) {
+        // 현재 채팅방의 활성화된(아직 퇴장하지 않은) 멤버 수를 조회
+        int activeMembers = chatRoomMemberRepository.countByChatRoomIdAndIsActiveTrue(chatRoom.getId());
+
+        // 활성화된 멤버가 0명인 경우
+        if (activeMembers == 0) {
+            // 채팅방을 비활성화 처리
+            // - isActive를 false로 설정
+            // - isMessageable을 false로 설정
+            chatRoom.deactivate();
+
+            // 활성화된 멤버가 1명인 경우
+        } else if (activeMembers == 1) {
+            // 채팅방은 활성화 상태로 유지하되, 메시지 전송은 불가능하도록 설정
+            // 채팅방 목록에서는 조회되지만 메시지를 보낼 수는 없는 상태가 됨
+            chatRoom.setMessageable(false);
+        }
+        // 활성화된 멤버가 2명 이상인 경우는 정상적으로 채팅방 유지
+    }
+
+    // 채팅 메시지 조회
+    @Transactional(readOnly = true)
+    public PageResponse<MateChatMessageResponse> getChatMessages(Long roomId, Long memberId, Pageable pageable) {
+        validateChatRoomAccess(roomId, memberId);
+        MateChatRoomMember member = chatRoomMemberRepository.findByChatRoomIdAndMemberId(roomId, memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.CHAT_ROOM_MEMBER_NOT_FOUND));
+
+
+        Page<MateChatMessage> messagePage = chatMessageRepository
+                .findByChatRoomIdAndCreatedAtAfterOrderByCreatedAtDesc(
+                        roomId,
+                        member.getLastEnteredAt(),
+                        pageable
+                );
+
+        List<MateChatMessageResponse> messages = messagePage.getContent().stream()
+                .map(MateChatMessageResponse::of)
+                .toList();
+
+        return PageResponse.from(messagePage, messages);
+    }
+
 }
