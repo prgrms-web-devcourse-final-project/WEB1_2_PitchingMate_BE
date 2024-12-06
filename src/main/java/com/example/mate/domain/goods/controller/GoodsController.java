@@ -11,23 +11,16 @@ import com.example.mate.domain.goods.service.GoodsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/goods")
@@ -47,7 +40,7 @@ public class GoodsController {
             @Parameter(description = "판매글 등록 데이터", required = true) @Validated @RequestPart("data") GoodsPostRequest request,
             @Parameter(description = "판매글 이미지 리스트", required = true) @RequestPart("files") List<MultipartFile> files,
             @Parameter(description = "판매자 ID (삭제 예정)", required = true) @PathVariable Long memberId
-    ) {
+    ) throws IOException {
         GoodsPostResponse response = goodsService.registerGoodsPost(memberId, request, files);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
@@ -63,7 +56,7 @@ public class GoodsController {
             @Parameter(description = "판매글 ID", required = true) @PathVariable Long goodsPostId,
             @Parameter(description = "수정할 판매글 데이터", required = true) @Validated @RequestPart("data") GoodsPostRequest request,
             @Parameter(description = "수정할 첨부 파일 리스트", required = true) @RequestPart("files") List<MultipartFile> files
-    ) {
+    ) throws IOException {
         GoodsPostResponse response = goodsService.updateGoodsPost(memberId, goodsPostId, request, files);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
@@ -76,24 +69,25 @@ public class GoodsController {
     @Operation(summary = "굿즈거래 판매글 삭제", description = "굿즈거래 판매글 상세 페이지에서 판매글을 삭제합니다.")
     public ResponseEntity<Void> deleteGoodsPost(
             @Parameter(description = "판매자 ID (삭제 예정)", required = true) @PathVariable Long memberId,
-            @Parameter(description = "삭제할 판매글 ID", required = true) @PathVariable Long goodsPostId)
-    {
+            @Parameter(description = "삭제할 판매글 ID", required = true) @PathVariable Long goodsPostId) {
         goodsService.deleteGoodsPost(memberId, goodsPostId);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{goodsPostId}")
     @Operation(summary = "굿즈거래 판매글 상세 조회", description = "굿즈거래 판매글 상세 페이지에서 판매글을 조회합니다.")
-    public ResponseEntity<ApiResponse<GoodsPostResponse>> getGoodsPost(@Parameter(description = "조회할 판매글 ID", required = true)
-                                                                       @PathVariable Long goodsPostId) {
+    public ResponseEntity<ApiResponse<GoodsPostResponse>> getGoodsPost(
+            @Parameter(description = "조회할 판매글 ID", required = true)
+            @PathVariable Long goodsPostId) {
         GoodsPostResponse response = goodsService.getGoodsPost(goodsPostId);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @GetMapping("/main")
     @Operation(summary = "메인페이지 굿즈거래 판매글 조회", description = "메인 페이지에서 굿즈거래 판매글을 요약한 4개의 리스트를 조회합니다.")
-    public ResponseEntity<ApiResponse<List<GoodsPostSummaryResponse>>> getGoodsPostsMain(@Parameter(description = "팀 ID")
-                                                                                         @RequestParam(required = false) Long teamId) {
+    public ResponseEntity<ApiResponse<List<GoodsPostSummaryResponse>>> getGoodsPostsMain(
+            @Parameter(description = "팀 ID")
+            @RequestParam(required = false) Long teamId) {
         List<GoodsPostSummaryResponse> responses = goodsService.getMainGoodsPosts(teamId);
         return ResponseEntity.ok(ApiResponse.success(responses));
     }
@@ -105,7 +99,8 @@ public class GoodsController {
             @Parameter(description = "카테고리") @RequestParam(required = false) String category,
             @Parameter(description = "페이징 정보", required = true) @PageableDefault Pageable pageable
     ) {
-        PageResponse<GoodsPostSummaryResponse> pageGoodsPosts = goodsService.getPageGoodsPosts(teamId, category, pageable);
+        PageResponse<GoodsPostSummaryResponse> pageGoodsPosts = goodsService.getPageGoodsPosts(teamId, category,
+                pageable);
 
         return ResponseEntity.ok(ApiResponse.success(pageGoodsPosts));
     }
@@ -120,7 +115,7 @@ public class GoodsController {
             @Parameter(description = "판매자 ID (삭제 예정)", required = true) @PathVariable Long sellerId,
             @Parameter(description = "판매글 ID", required = true) @PathVariable Long goodsPostId,
             @Parameter(description = "구매자 ID", required = true) @RequestParam Long buyerId
-            ) {
+    ) {
         goodsService.completeTransaction(sellerId, goodsPostId, buyerId);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
