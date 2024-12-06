@@ -21,7 +21,7 @@ jobs:
       - name: 테스트 및 빌드하기
         run: |
           chmod +x gradlew
-          ./gradlew clean build
+          ./gradlew clean build -Dspring.profiles.active=dev
 
       - name: AWS Resource에 접근할 수 있게 AWS credentials 설정
         uses: aws-actions/configure-aws-credentials@v4
