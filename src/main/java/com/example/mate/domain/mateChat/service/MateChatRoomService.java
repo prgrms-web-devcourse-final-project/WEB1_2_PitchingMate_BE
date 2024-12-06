@@ -28,7 +28,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -36,7 +36,6 @@ import java.util.Optional;
 @Transactional
 @RequiredArgsConstructor
 public class MateChatRoomService {
-
     private final MateChatRoomRepository chatRoomRepository;
     private final MateChatRoomMemberRepository chatRoomMemberRepository;
     private final MateChatMessageRepository chatMessageRepository;
@@ -45,104 +44,83 @@ public class MateChatRoomService {
     private final MateChatMessageService mateChatMessageService;
     private final VisitPartRepository visitPartRepository;
 
-    // 채팅방 생성 또는 입장
-    public MateChatRoomResponse createOrJoinChatRoom(Long matePostId, Long memberId) {
-        // 1. 사용자와 메이트 게시글 조회
-        Member member = findMemberById(memberId);
-        MatePost matePost = findMatePostById(matePostId);
+    // 메이트 게시글에서 채팅방 생성/입장
+    public MateChatRoomResponse createOrJoinChatRoomFromPost(Long postId, Long memberId) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND_BY_ID));
 
-        // 2. 입장 가능 여부 검증
+        MatePost matePost = mateRepository.findById(postId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MATE_POST_NOT_FOUND_BY_ID));
+
+        // 1. 입장 가능 여부 검증
         validateChatRoomJoin(matePost, member);
 
-        // 3. 채팅방 생성 또는 조회
-        MateChatRoom chatRoom = chatRoomRepository.findByMatePostId(matePostId)
+        // 2. 채팅방 생성 또는 조회
+        MateChatRoom chatRoom = chatRoomRepository.findByMatePostId(postId)
                 .orElseGet(() -> createChatRoom(matePost));
 
-        // 4. 채팅방 멤버로 등록 또는 조회
+        return processChatRoomJoin(chatRoom, member);
+    }
+
+    // 채팅방 목록에서 기존 채팅방 입장
+    public MateChatRoomResponse joinExistingChatRoom(Long roomId, Long memberId) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND_BY_ID));
+
+        MateChatRoom chatRoom = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new CustomException(ErrorCode.CHAT_ROOM_NOT_FOUND));
+
+        // 1. 입장 가능 여부 검증
+        validateChatRoomJoin(chatRoom.getMatePost(), member);
+
+        return processChatRoomJoin(chatRoom, member);
+    }
+
+    // 채팅방 입장 공통 로직
+    private MateChatRoomResponse processChatRoomJoin(MateChatRoom chatRoom, Member member) {
+        // 1. 채팅방 멤버로 등록 또는 조회
         MateChatRoomMember chatRoomMember = joinAsMember(chatRoom, member);
 
-        // 5. 초기 메시지 처리
-        PageResponse<MateChatMessageResponse> initialMessages;
-        if (chatRoomMember.markAsEntered()) {
-            initialMessages = createEmptyMessagePage();
+        // 2. 입장 체크 및 메시지 전송
+        // 최초 입장이거나 (hasEntered가 false) 이전에 나갔다가 다시 들어온 경우 (isActive가 false였다가 true가 된 경우)
+        boolean wasInactive = !chatRoomMember.getIsActive();
+        if (!chatRoomMember.getHasEntered() || wasInactive) {
+            chatRoomMember.markAsEntered();
             sendEnterMessage(chatRoom.getId(), member);
-        } else {
-            initialMessages = getChatMessages(chatRoom.getId(), PageRequest.of(0, 20));
         }
 
-        // 6. 최초 입장인 경우 입장 메시지 전송
-        if (chatRoomMember.markAsEntered()) {
-            sendEnterMessage(chatRoom.getId(), member);
+        // 3. 채팅 가능 상태 업데이트
+        int activeMembers = chatRoomMemberRepository.countByChatRoomIdAndIsActiveTrue(chatRoom.getId());
+        if (activeMembers >= 2) {
+            chatRoom.setMessageable(true);
         }
+
+        // 4. 메시지 조회
+        PageResponse<MateChatMessageResponse> initialMessages =
+                getChatMessages(chatRoom.getId(), member.getId(), PageRequest.of(0, 20));
 
         return MateChatRoomResponse.from(chatRoom, chatRoomMember, initialMessages);
     }
 
-    // 채팅방 메시지 내역 조회
-    @Transactional(readOnly = true)
-    public PageResponse<MateChatMessageResponse> getChatMessages(Long roomId, Pageable pageable) {
-        validateChatRoom(roomId);
-
-        Page<MateChatMessage> messagePage = chatMessageRepository
-                .findByChatRoomIdOrderByCreatedAtDesc(roomId, pageable);
-
-        List<MateChatMessageResponse> content = messagePage.getContent().stream()
-                .map(MateChatMessageResponse::of)
-                .toList();
-
-        return PageResponse.from(messagePage, content);
-    }
-
-    // 내 채팅방 목록 조회
-    @Transactional(readOnly = true)
-    public PageResponse<MateChatRoomListResponse> getMyChatRooms(Long memberId, Pageable pageable) {
-        validateMember(memberId);
-
-        Page<MateChatRoom> chatRooms = chatRoomRepository
-                .findActiveChatRoomsByMemberId(memberId, pageable);
-
-        List<MateChatRoomListResponse> content = chatRooms.getContent().stream()
-                .map(MateChatRoomListResponse::from)
-                .toList();
-
-        return PageResponse.from(chatRooms, content);
-    }
-
-    // 채팅방 퇴장 처리
-    public void leaveChatRoom(Long roomId, Long memberId) {
-        MateChatRoomMember chatRoomMember = findChatRoomMember(roomId, memberId);
-
-        // 퇴장 처리 및 메시지 전송
-        chatRoomMember.deactivate();
-        sendLeaveMessage(roomId, findMemberById(memberId));
-
-        // 채팅방 내 활성 멤버가 없으면 채팅방 비활성화
-        if (chatRoomMemberRepository.countByChatRoomIdAndIsActiveTrue(roomId) == 0) {
-            MateChatRoom chatRoom = chatRoomMember.getMateChatRoom();
-            chatRoom.deactivate();
-        }
-    }
-
-    // 유틸 메서드들
     private void validateChatRoomJoin(MatePost matePost, Member member) {
-        // 1. 작성자 검증 (작성자는 참여 불가)
+        // 방장인 경우 모든 제한을 건너뜀
         if (matePost.getAuthor().getId().equals(member.getId())) {
-            throw new CustomException(ErrorCode.AUTHOR_CANNOT_JOIN_CHAT);
+            return;
         }
 
-        // 2. 연령대 제한 검증
+        // 방장이 아닌 경우에만 연령대/성별 제한 검증
+        // 1. 연령대 제한 검증
         if (matePost.getAge() != Age.ALL && !isAgeEligible(matePost.getAge(), member.getAge())) {
             throw new CustomException(ErrorCode.AGE_RESTRICTION_VIOLATED);
         }
 
-        // 3. 성별 제한 검증
+        // 2. 성별 제한 검증
         if (matePost.getGender() != Gender.ANY && member.getGender() != matePost.getGender()) {
             throw new CustomException(ErrorCode.GENDER_RESTRICTION_VIOLATED);
         }
 
-        // 4. 채팅방 상태 검증
+        // 3. 직관 완료 상태인 경우 접근 권한 검증
         if (matePost.getStatus() == Status.VISIT_COMPLETE) {
-            // 직관 완료 상태일 경우, 직관 참여자인지 확인
             boolean isVisitParticipant = visitPartRepository.existsByVisitAndMember(
                     matePost.getVisit(), member);
             boolean isAuthor = matePost.getAuthor().getId().equals(member.getId());
@@ -150,13 +128,6 @@ public class MateChatRoomService {
             if (!isVisitParticipant && !isAuthor) {
                 throw new CustomException(ErrorCode.CHAT_ROOM_ACCESS_DENIED);
             }
-        }
-
-        // 5. 이미 참여 중인지 검증
-        MateChatRoom existingChatRoom = chatRoomRepository.findByMatePostId(matePost.getId()).orElse(null);
-        if (existingChatRoom != null &&
-                chatRoomMemberRepository.existsByChatRoomIdAndMemberId(existingChatRoom.getId(), member.getId())) {
-            throw new CustomException(ErrorCode.ALREADY_JOINED_CHAT_ROOM);
         }
     }
 
@@ -172,6 +143,7 @@ public class MateChatRoomService {
                 .mateChatRoom(mateChatRoom)
                 .member(matePost.getAuthor())
                 .hasEntered(true)  // 방장은 입장 처리된 것으로 간주
+                .lastEnteredAt(LocalDateTime.now())
                 .build();
         chatRoomMemberRepository.save(authorMember);
 
@@ -185,10 +157,16 @@ public class MateChatRoomService {
 
         // 이미 존재하는 멤버라면 해당 멤버 정보 반환
         if (existingMember.isPresent()) {
-            return existingMember.get();
+            MateChatRoomMember chatRoomMember = existingMember.get();
+            // 비활성 상태였다면 다시 활성화
+            if (!chatRoomMember.getIsActive()) {
+                chatRoomMember.activate();
+                chatRoom.incrementCurrentMembers();
+            }
+            return chatRoomMember;
         }
 
-        // 신규 멤버인 경우에만 인원 검증 및 멤버 등록 수행
+        // 신규 멤버인 경우 인원 검증 및 멤버 등록 (기존 코드)
         int currentMembers = chatRoomMemberRepository.countByChatRoomIdAndIsActiveTrue(chatRoom.getId());
         if (currentMembers >= 10) {
             throw new CustomException(ErrorCode.CHAT_ROOM_FULL);
@@ -203,70 +181,4 @@ public class MateChatRoomService {
         return chatRoomMemberRepository.save(chatRoomMember);
     }
 
-    private PageResponse<MateChatMessageResponse> createEmptyMessagePage() {
-        return PageResponse.<MateChatMessageResponse>builder()
-                .content(Collections.emptyList())
-                .totalElements(0)
-                .totalPages(0)
-                .hasNext(false)
-                .pageNumber(0)
-                .pageSize(0)
-                .build();
-    }
-
-    private void sendEnterMessage(Long roomId, Member member) {
-        MateChatMessageRequest enterMessage = MateChatMessageRequest.createEnterMessage(
-                roomId,
-                member.getId(),
-                member.getNickname()
-        );
-        mateChatMessageService.sendEnterMessage(enterMessage);
-    }
-
-    private void sendLeaveMessage(Long roomId, Member member) {
-        MateChatMessageRequest leaveMessage = MateChatMessageRequest.createLeaveMessage(
-                roomId,
-                member.getId(),
-                member.getNickname()
-        );
-        mateChatMessageService.sendLeaveMessage(leaveMessage);
-    }
-
-    private boolean isAgeEligible(Age requiredAge, int memberAge) {
-        return switch (requiredAge) {
-            case TEENS -> memberAge >= 10 && memberAge < 20;
-            case TWENTIES -> memberAge >= 20 && memberAge < 30;
-            case THIRTIES -> memberAge >= 30 && memberAge < 40;
-            case FORTIES -> memberAge >= 40 && memberAge < 50;
-            case OVER_FIFTIES -> memberAge >= 50;
-            case ALL -> true;
-        };
-    }
-
-    private Member findMemberById(Long memberId) {
-        return memberRepository.findById(memberId)
-                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND_BY_ID));
-    }
-
-    private MatePost findMatePostById(Long postId) {
-        return mateRepository.findById(postId)
-                .orElseThrow(() -> new CustomException(ErrorCode.MATE_POST_NOT_FOUND_BY_ID));
-    }
-
-    private void validateChatRoom(Long roomId) {
-        if (!chatRoomRepository.existsById(roomId)) {
-            throw new CustomException(ErrorCode.CHAT_ROOM_NOT_FOUND);
-        }
-    }
-
-    private void validateMember(Long memberId) {
-        if (!memberRepository.existsById(memberId)) {
-            throw new CustomException(ErrorCode.MEMBER_NOT_FOUND_BY_ID);
-        }
-    }
-
-    private MateChatRoomMember findChatRoomMember(Long roomId, Long memberId) {
-        return chatRoomMemberRepository.findByChatRoomIdAndMemberId(roomId, memberId)
-                .orElseThrow(() -> new CustomException(ErrorCode.CHAT_ROOM_MEMBER_NOT_FOUND));
-    }
 }
