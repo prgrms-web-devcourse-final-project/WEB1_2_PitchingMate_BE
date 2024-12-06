@@ -1,35 +1,22 @@
 package com.example.mate.domain.goods.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.constant.Rating;
+import com.example.mate.domain.file.FileService;
 import com.example.mate.domain.goods.dto.LocationInfo;
 import com.example.mate.domain.goods.dto.request.GoodsPostRequest;
 import com.example.mate.domain.goods.dto.request.GoodsReviewRequest;
 import com.example.mate.domain.goods.dto.response.GoodsPostResponse;
 import com.example.mate.domain.goods.dto.response.GoodsPostSummaryResponse;
 import com.example.mate.domain.goods.dto.response.GoodsReviewResponse;
-import com.example.mate.domain.goods.entity.Category;
-import com.example.mate.domain.goods.entity.GoodsPost;
-import com.example.mate.domain.goods.entity.GoodsPostImage;
-import com.example.mate.domain.goods.entity.GoodsReview;
-import com.example.mate.domain.goods.entity.Status;
+import com.example.mate.domain.goods.entity.*;
 import com.example.mate.domain.goods.repository.GoodsPostImageRepository;
 import com.example.mate.domain.goods.repository.GoodsPostRepository;
 import com.example.mate.domain.goods.repository.GoodsReviewRepository;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
-import java.util.List;
-import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -43,6 +30,16 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class GoodsServiceTest {
@@ -61,6 +58,9 @@ class GoodsServiceTest {
 
     @Mock
     private GoodsReviewRepository reviewRepository;
+
+    @Mock
+    private FileService fileService;
 
     private Member member;
 
@@ -128,7 +128,7 @@ class GoodsServiceTest {
     class GoodsServiceRegisterTest {
         @Test
         @DisplayName("굿즈거래 판매글 작성 성공")
-        void register_goods_post_success() {
+        void register_goods_post_success() throws IOException {
             // given
             GoodsPostRequest request = new GoodsPostRequest(1L, "title", Category.ACCESSORY, 10_000, "content", createLocationInfo());
             List<MultipartFile> files = List.of(createFile(MediaType.IMAGE_JPEG_VALUE));
@@ -193,7 +193,7 @@ class GoodsServiceTest {
 
         @Test
         @DisplayName("굿즈거래 판매글 수정 성공")
-        void update_goods_post_success() {
+        void update_goods_post_success() throws IOException {
             // given
             Long goodsPostId = 1L;
             GoodsPostRequest request = new GoodsPostRequest(1L, "title", Category.CAP, 100_000, "test....", createLocationInfo());
@@ -201,7 +201,7 @@ class GoodsServiceTest {
 
             given(memberRepository.findById(member.getId())).willReturn(Optional.of(member));
             given(goodsPostRepository.findById(goodsPostId)).willReturn(Optional.of(goodsPost));
-            given(imageRepository.getImageUrlsByPostId(goodsPostId)).willReturn(List.of());
+            given(imageRepository.getImageUrlsByPostId(goodsPostId)).willReturn(List.of("test.png"));
 
             // when
             GoodsPostResponse actual = goodsService.updateGoodsPost(member.getId(), goodsPostId, request, files);
