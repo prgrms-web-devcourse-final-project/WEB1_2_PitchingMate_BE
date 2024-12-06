@@ -253,9 +253,6 @@ public class MateService {
         // 리뷰어와 리뷰 대상자 모두 참여자(또는 방장) 여부 검증
         validateParticipant(matePost, reviewer);
         validateParticipant(matePost, reviewee);
-
-        // 자기 자신 리뷰 검증
-        validateSelfReview(reviewer, reviewee);
     }
 
     private void validateParticipant(MatePost matePost, Member member) {
@@ -274,12 +271,6 @@ public class MateService {
     private boolean isVisitParticipant(Visit visit, Member member) {
         return visit.getParticipants().stream()
                 .anyMatch(part -> part.getMember().equals(member));
-    }
-
-    private void validateSelfReview(Member reviewer, Member reviewee) {
-        if (reviewer.equals(reviewee)) {
-            throw new CustomException(SELF_REVIEW_NOT_ALLOWED);
-        }
     }
 
     private Member findMemberById(Long id) {

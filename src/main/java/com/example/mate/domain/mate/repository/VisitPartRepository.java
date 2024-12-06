@@ -1,5 +1,6 @@
 package com.example.mate.domain.mate.repository;
 
+import com.example.mate.domain.mate.entity.Visit;
 import com.example.mate.domain.mate.entity.VisitPart;
 import com.example.mate.domain.mate.entity.VisitPartId;
 import com.example.mate.domain.member.entity.Member;
@@ -19,4 +20,6 @@ public interface VisitPartRepository extends JpaRepository<VisitPart, VisitPartI
             AND vp.member.id != :memberId
             """)
     List<Member> findMembersByVisitIdExcludeMember(@Param("visitId") Long visitId, @Param("memberId") Long memberId);
+
+    boolean existsByVisitAndMember(Visit visit, Member member);
 }
