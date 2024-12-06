@@ -14,7 +14,7 @@ public interface MateChatMessageRepository extends JpaRepository<MateChatMessage
     @Query("SELECT m FROM MateChatMessage m " +
             "WHERE m.mateChatRoom.id = :roomId " +
             "AND m.createdAt >= :enterTime " +
-            "ORDER BY m.createdAt ASC")
+            "ORDER BY m.createdAt DESC ")
     Page<MateChatMessage> findByChatRoomIdAndCreatedAtAfterOrderByCreatedAtDesc(@Param("roomId") Long roomId,
                                                                                 @Param("enterTime") LocalDateTime enterTime,
                                                                                 Pageable pageable);
