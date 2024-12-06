@@ -108,4 +108,8 @@ public class MatePost extends BaseTimeEntity {
         this.status = Status.VISIT_COMPLETE;
         this.visit = Visit.createForComplete(this, participants);
     }
+
+    public void changeImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
 }

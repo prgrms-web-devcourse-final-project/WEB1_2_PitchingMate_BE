@@ -12,24 +12,16 @@ import com.example.mate.domain.goods.service.GoodsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/goods")
@@ -45,7 +37,7 @@ public class GoodsController {
             @AuthenticationPrincipal AuthMember member,
             @Parameter(description = "판매글 등록 데이터", required = true) @Validated @RequestPart("data") GoodsPostRequest request,
             @Parameter(description = "판매글 이미지 리스트", required = true) @RequestPart("files") List<MultipartFile> files
-            ) {
+    ) {
         GoodsPostResponse response = goodsService.registerGoodsPost(member.getMemberId(), request, files);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
@@ -66,8 +58,7 @@ public class GoodsController {
     @Operation(summary = "굿즈거래 판매글 삭제", description = "굿즈거래 판매글 상세 페이지에서 판매글을 삭제합니다.")
     public ResponseEntity<Void> deleteGoodsPost(
             @AuthenticationPrincipal AuthMember member,
-            @Parameter(description = "삭제할 판매글 ID", required = true) @PathVariable Long goodsPostId)
-    {
+            @Parameter(description = "삭제할 판매글 ID", required = true) @PathVariable Long goodsPostId) {
         goodsService.deleteGoodsPost(member.getMemberId(), goodsPostId);
         return ResponseEntity.noContent().build();
     }
@@ -106,7 +97,7 @@ public class GoodsController {
             @AuthenticationPrincipal AuthMember member,
             @Parameter(description = "판매글 ID", required = true) @PathVariable Long goodsPostId,
             @Parameter(description = "구매자 ID", required = true) @RequestParam Long buyerId
-            ) {
+    ) {
         goodsService.completeTransaction(member.getMemberId(), goodsPostId, buyerId);
         return ResponseEntity.ok(ApiResponse.success(null));
     }

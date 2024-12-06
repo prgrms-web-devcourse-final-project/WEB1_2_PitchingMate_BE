@@ -4,9 +4,9 @@ import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
 import com.example.mate.common.jwt.JwtToken;
 import com.example.mate.common.security.util.JwtUtil;
-import com.example.mate.common.utils.file.FileUploader;
-import com.example.mate.common.utils.file.FileValidator;
 import com.example.mate.domain.constant.TeamInfo;
+import com.example.mate.domain.file.FileService;
+import com.example.mate.domain.file.FileValidator;
 import com.example.mate.domain.goods.entity.Status;
 import com.example.mate.domain.goods.repository.GoodsPostRepository;
 import com.example.mate.domain.goods.repository.GoodsReviewRepository;
@@ -22,11 +22,12 @@ import com.example.mate.domain.member.dto.response.MyProfileResponse;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.FollowRepository;
 import com.example.mate.domain.member.repository.MemberRepository;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.Map;
 
 @Service
 @Transactional
@@ -40,16 +41,16 @@ public class MemberService {
     private final MateReviewRepository mateReviewRepository;
     private final VisitPartRepository visitPartRepository;
     private final JwtUtil jwtUtil;
-
-    private static final String DEFAULT_IMAGE_URL = "image/default.png";
+    private final FileService fileService;
 
     // 자체 회원가입 기능
     public JoinResponse join(JoinRequest request) {
-        Member savedMember = memberRepository.save(Member.from(request));
+        Member savedMember = memberRepository.save(Member.of(request, getDefaultMemberImageUrl()));
         return JoinResponse.from(savedMember);
     }
 
     // 자체 로그인 기능
+    @Transactional(readOnly = true)
     public MemberLoginResponse loginByEmail(MemberLoginRequest request) {
         Member member = findByEmail(request.getEmail());
         return MemberLoginResponse.from(member, makeToken(member));
@@ -73,27 +74,29 @@ public class MemberService {
     }
 
     // 내 프로필 조회
+    @Transactional(readOnly = true)
     public MyProfileResponse getMyProfile(Long memberId) {
         return getProfile(memberId, MyProfileResponse.class);
     }
 
     // 다른 회원 프로필 조회
+    @Transactional(readOnly = true)
     public MemberProfileResponse getMemberProfile(Long memberId) {
         return getProfile(memberId, MemberProfileResponse.class);
     }
 
     // 회원 정보 수정
-    public MyProfileResponse updateMyProfile(MultipartFile image, MemberInfoUpdateRequest request) {
+    public MyProfileResponse updateMyProfile(MultipartFile file, MemberInfoUpdateRequest request) {
         Member member = findByMemberId(request.getMemberId());
 
-        checkNickNameAndChange(member, request.getNickname()); // 닉네임 중복 검증한 뒤 바뀐 경우에만 수정
+        checkNicknameAndChange(member, request.getNickname()); // 닉네임 중복 검증한 뒤 바뀐 경우에만 수정
         member.changeTeam(TeamInfo.getById(request.getTeamId()));
         member.changeAboutMe(request.getAboutMe());
-        if (image != null && !image.isEmpty()) {
-            FileValidator.validateMyProfileImage(image);
-            member.changeImageUrl(FileUploader.uploadFile(image)); // TODO : 실제 업로드 처리 필요
-        } else {
-            member.changeImageUrl(DEFAULT_IMAGE_URL);
+
+        if (file != null && !file.isEmpty()) {
+            FileValidator.validateSingleImage(file);
+            deleteNonDefaultImage(member.getImageUrl());
+            member.changeImageUrl(fileService.uploadFile(file));
         }
 
         return MyProfileResponse.from(memberRepository.save(member));
@@ -101,11 +104,22 @@ public class MemberService {
 
     // 회원 탈퇴
     public void deleteMember(Long memberId) {
-        findByMemberId(memberId);
+        Member member = findByMemberId(memberId);
+        deleteNonDefaultImage(member.getImageUrl());
         memberRepository.deleteById(memberId);
     }
 
-    private void checkNickNameAndChange(Member member, String request) {
+    private void deleteNonDefaultImage(String imageUrl) {
+        if (!imageUrl.equals(getDefaultMemberImageUrl())) {
+            fileService.deleteFile(imageUrl);
+        }
+    }
+
+    private String getDefaultMemberImageUrl() {
+        return "https://" + fileService.getBucket() + ".s3.ap-northeast-2.amazonaws.com/member_default.svg";
+    }
+
+    private void checkNicknameAndChange(Member member, String request) {
         if (member.getNickname().equals(request)) {
             return;
         }

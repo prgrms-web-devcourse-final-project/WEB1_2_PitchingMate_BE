@@ -3,26 +3,20 @@ package com.example.mate.domain.goods.service;
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
 import com.example.mate.common.response.PageResponse;
-import com.example.mate.common.utils.file.FileUploader;
-import com.example.mate.common.utils.file.FileValidator;
 import com.example.mate.domain.constant.TeamInfo;
+import com.example.mate.domain.file.FileService;
+import com.example.mate.domain.file.FileValidator;
 import com.example.mate.domain.goods.dto.request.GoodsPostRequest;
 import com.example.mate.domain.goods.dto.request.GoodsReviewRequest;
 import com.example.mate.domain.goods.dto.response.GoodsPostResponse;
 import com.example.mate.domain.goods.dto.response.GoodsPostSummaryResponse;
 import com.example.mate.domain.goods.dto.response.GoodsReviewResponse;
-import com.example.mate.domain.goods.entity.Category;
-import com.example.mate.domain.goods.entity.GoodsPost;
-import com.example.mate.domain.goods.entity.GoodsPostImage;
-import com.example.mate.domain.goods.entity.GoodsReview;
-import com.example.mate.domain.goods.entity.Status;
+import com.example.mate.domain.goods.entity.*;
 import com.example.mate.domain.goods.repository.GoodsPostImageRepository;
 import com.example.mate.domain.goods.repository.GoodsPostRepository;
 import com.example.mate.domain.goods.repository.GoodsReviewRepository;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -30,6 +24,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @Transactional
@@ -40,6 +37,7 @@ public class GoodsService {
     private final GoodsPostRepository goodsPostRepository;
     private final GoodsPostImageRepository imageRepository;
     private final GoodsReviewRepository reviewRepository;
+    private final FileService fileService;
 
     public GoodsPostResponse registerGoodsPost(Long memberId, GoodsPostRequest request, List<MultipartFile> files) {
         Member seller = findMemberById(memberId);
@@ -54,7 +52,8 @@ public class GoodsService {
         return GoodsPostResponse.of(savedPost);
     }
 
-    public GoodsPostResponse updateGoodsPost(Long memberId, Long goodsPostId, GoodsPostRequest request, List<MultipartFile> files) {
+    public GoodsPostResponse updateGoodsPost(Long memberId, Long goodsPostId, GoodsPostRequest request,
+                                             List<MultipartFile> files) {
         Member seller = findMemberById(memberId);
         GoodsPost goodsPost = findGoodsPostById(goodsPostId);
 
@@ -96,11 +95,13 @@ public class GoodsService {
     }
 
     @Transactional(readOnly = true)
-    public PageResponse<GoodsPostSummaryResponse> getPageGoodsPosts(Long teamId, String categoryVal, Pageable pageable) {
+    public PageResponse<GoodsPostSummaryResponse> getPageGoodsPosts(Long teamId, String categoryVal,
+                                                                    Pageable pageable) {
         validateTeamInfo(teamId);
         Category category = Category.from(categoryVal);
 
-        Page<GoodsPost> pageGoodsPosts = goodsPostRepository.findPageGoodsPosts(teamId, Status.OPEN, category, pageable);
+        Page<GoodsPost> pageGoodsPosts = goodsPostRepository.findPageGoodsPosts(teamId, Status.OPEN, category,
+                pageable);
         List<GoodsPostSummaryResponse> responses = pageGoodsPosts.getContent().stream()
                 .map(this::convertToSummaryResponse).toList();
 
@@ -134,7 +135,7 @@ public class GoodsService {
         List<GoodsPostImage> images = new ArrayList<>();
 
         for (MultipartFile file : files) {
-            String uploadUrl = FileUploader.uploadFile(file);
+            String uploadUrl = fileService.uploadFile(file);
             GoodsPostImage image = GoodsPostImage.builder()
                     .imageUrl(uploadUrl)
                     .post(savedPost)
@@ -146,11 +147,7 @@ public class GoodsService {
 
     private void deleteExistingImageFiles(Long goodsPostId) {
         List<String> imageUrls = imageRepository.getImageUrlsByPostId(goodsPostId);
-        imageUrls.forEach(url -> {
-            if (!FileUploader.deleteFile(url)) {
-                throw new CustomException(ErrorCode.FILE_DELETE_ERROR);
-            }
-        });
+        imageUrls.forEach(fileService::deleteFile);
         imageRepository.deleteAllByPostId(goodsPostId);
     }
 

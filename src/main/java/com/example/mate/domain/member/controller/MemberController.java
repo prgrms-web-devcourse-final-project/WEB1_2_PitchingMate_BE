@@ -17,15 +17,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
@@ -70,7 +62,7 @@ public class MemberController {
     @Operation(summary = "회원 내 정보 수정")
     @PutMapping(value = "/me")
     public ResponseEntity<ApiResponse<MyProfileResponse>> updateMemberInfo(
-            @Parameter(description = "프로필 사진") @RequestPart(value = "image", required = false) MultipartFile image,
+            @Parameter(description = "프로필 사진") @RequestPart(value = "file", required = false) MultipartFile image,
             @Parameter(description = "수정할 회원 정보") @Valid @RequestPart(value = "data") MemberInfoUpdateRequest updateRequest,
             @Parameter(description = "회원 로그인 정보") @AuthenticationPrincipal AuthMember authMember) {
         updateRequest.setMemberId(authMember.getMemberId());

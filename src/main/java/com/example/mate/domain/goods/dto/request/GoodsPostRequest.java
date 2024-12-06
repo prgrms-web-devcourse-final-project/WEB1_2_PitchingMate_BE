@@ -5,11 +5,7 @@ import com.example.mate.domain.goods.dto.LocationInfo;
 import com.example.mate.domain.goods.entity.Category;
 import com.example.mate.domain.goods.entity.GoodsPost;
 import com.example.mate.domain.member.entity.Member;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -39,7 +35,6 @@ public class GoodsPostRequest {
 
     @NotNull(message = "위치 정보는 필수 입력 값입니다.")
     private LocationInfo location;
-
 
     public static GoodsPost toEntity(Member seller, GoodsPostRequest request) {
         LocationInfo locationInfo = request.getLocation();

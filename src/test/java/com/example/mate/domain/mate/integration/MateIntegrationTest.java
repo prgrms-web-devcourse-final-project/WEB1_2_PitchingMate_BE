@@ -1,19 +1,5 @@
 package com.example.mate.domain.mate.integration;
 
-import static com.example.mate.common.error.ErrorCode.MATCH_NOT_FOUND_BY_ID;
-import static com.example.mate.common.error.ErrorCode.MATE_POST_NOT_FOUND_BY_ID;
-import static com.example.mate.common.error.ErrorCode.MATE_POST_UPDATE_NOT_ALLOWED;
-import static com.example.mate.common.error.ErrorCode.MEMBER_NOT_FOUND_BY_ID;
-import static com.example.mate.common.error.ErrorCode.TEAM_NOT_FOUND;
-import static com.example.mate.domain.match.entity.MatchStatus.SCHEDULED;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import com.example.mate.common.security.util.JwtUtil;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.match.entity.Match;
@@ -28,8 +14,6 @@ import com.example.mate.domain.mate.repository.MateRepository;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.time.LocalDateTime;
-import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -43,6 +27,17 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+import static com.example.mate.common.error.ErrorCode.*;
+import static com.example.mate.domain.match.entity.MatchStatus.SCHEDULED;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
@@ -128,6 +123,7 @@ public class MateIntegrationTest {
                 .content("테스트 내용")
                 .status(status)
                 .maxParticipants(4)
+                .imageUrl("imageUrl")
                 .age(Age.TWENTIES)
                 .gender(Gender.FEMALE)
                 .transport(TransportType.PUBLIC)
