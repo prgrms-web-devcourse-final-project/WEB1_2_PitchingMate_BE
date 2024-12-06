@@ -11,6 +11,8 @@ import java.util.Optional;
 
 @Repository
 public interface MateChatRoomMemberRepository extends JpaRepository<MateChatRoomMember, Long> {
+
+    // 특정 채팅방의 특정 멤버 조회
     @Query("SELECT crm FROM MateChatRoomMember crm " +
             "WHERE crm.mateChatRoom.id = :chatRoomId " +
             "AND crm.member.id = :memberId")
@@ -18,16 +20,16 @@ public interface MateChatRoomMemberRepository extends JpaRepository<MateChatRoom
                                                              @Param("memberId") Long memberId
     );
 
-    @Query("SELECT COUNT(crm) > 0 FROM MateChatRoomMember crm " +
-            "WHERE crm.mateChatRoom.id = :chatRoomId " +
-            "AND crm.member.id = :memberId")
-    boolean existsByChatRoomIdAndMemberId(@Param("chatRoomId") Long chatRoomId,
-                                          @Param("memberId") Long memberId
-    );
-
+    // 특정 채팅방의 활성화된 멤버 수 카운트
     @Query("SELECT COUNT(crm) FROM MateChatRoomMember crm " +
             "WHERE crm.mateChatRoom.id = :chatRoomId " +
             "AND crm.isActive = true")
-    int countByChatRoomIdAndIsActiveTrue(@Param("chatRoomId") Long chatRoomId
-    );
+    int countByChatRoomIdAndIsActiveTrue(@Param("chatRoomId") Long chatRoomId);
+
+    // 특정 채팅방의 활성화된 멤버 목록 조회
+    @Query("SELECT crm FROM MateChatRoomMember crm " +
+            "JOIN FETCH crm.member " +
+            "WHERE crm.mateChatRoom.id = :chatRoomId " +
+            "AND crm.isActive = true")
+    List<MateChatRoomMember> findActiveMembers(@Param("chatRoomId") Long chatRoomId);
 }
