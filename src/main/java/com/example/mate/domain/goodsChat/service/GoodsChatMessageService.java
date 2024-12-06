@@ -31,9 +31,8 @@ public class GoodsChatMessageService {
     private final GoodsChatMessageRepository messageRepository;
     private final SimpMessagingTemplate messagingTemplate;
 
-    private static final String MEMBER_ENTER_MESSAGE = "님이 채팅방에 입장하셨습니다.";
-    private static final String MEMBER_LEAVE_MESSAGE = "님이 채팅방을 떠나셨습니다.";
-
+    private static final String MEMBER_ENTER_MESSAGE = "님이 대화를 시작했습니다.";
+    private static final String MEMBER_LEAVE_MESSAGE = "님이 대화를 떠났습니다.";
 
     public void sendMessage(GoodsChatMessageRequest message) {
         Member sender = findMemberById(message.getSenderId());

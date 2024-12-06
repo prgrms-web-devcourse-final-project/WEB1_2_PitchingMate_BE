@@ -112,7 +112,7 @@ class GoodsChatServiceTest {
     class GoodsChatRoomCreateTest {
 
         @Test
-        @DisplayName("굿즈거래 채팅방 생성 성공 - 기존 채팅방이 있을 경우 해당 채팅방을 반환한다.")
+        @DisplayName("굿즈거래 채팅방 생성 성공 - 기존 채팅방이 있을 경우 해당 채팅방과 채팅내역을 반환한다.")
         void get_Or_Create_GoodsChatRoom_should_return_existing_chatroom() {
             // given
             Member buyer = createMember(1L, "test buyer", "test buyer nickname");
@@ -126,10 +126,14 @@ class GoodsChatServiceTest {
             existingChatRoom.addChatParticipant(buyer, Role.BUYER);
             existingChatRoom.addChatParticipant(seller, Role.SELLER);
 
+            GoodsChatMessage message = createMessage(existingChatRoom, 1L, 0, "test Message", LocalDateTime.now());
+            PageImpl<GoodsChatMessage> goodsChatMessages = new PageImpl<>(List.of(message));
+
             when(memberRepository.findById(buyerId)).thenReturn(Optional.of(buyer));
             when(goodsPostRepository.findById(goodsPostId)).thenReturn(Optional.of(goodsPost));
             when(chatRoomRepository.findExistingChatRoom(goodsPostId, buyerId, Role.BUYER))
                     .thenReturn(Optional.of(existingChatRoom));
+            when(messageRepository.getChatMessages(existingChatRoom.getId(), PageRequest.of(0, 20))).thenReturn(goodsChatMessages);
 
             // when
             GoodsChatRoomResponse result = goodsChatService.getOrCreateGoodsChatRoom(buyerId, goodsPostId);
@@ -256,7 +260,7 @@ class GoodsChatServiceTest {
             Page<GoodsChatMessage> messagePage = new PageImpl<>(List.of(secondMessage, firstMessage));
 
             when(partRepository.existsById(goodsChatPartId)).thenReturn(true);
-            when(messageRepository.findByChatRoomId(chatRoomId, pageable)).thenReturn(messagePage);
+            when(messageRepository.getChatMessages(chatRoomId, pageable)).thenReturn(messagePage);
 
             // when
             PageResponse<GoodsChatMessageResponse> result = goodsChatService.getMessagesForChatRoom(chatRoomId, memberId, pageable);
@@ -270,7 +274,7 @@ class GoodsChatServiceTest {
             assertThat(result.getContent().get(1).getChatMessageId()).isEqualTo(firstMessage.getId());
 
             verify(partRepository).existsById(goodsChatPartId);
-            verify(messageRepository).findByChatRoomId(chatRoomId, pageable);
+            verify(messageRepository).getChatMessages(chatRoomId, pageable);
         }
 
         @Test
@@ -291,7 +295,7 @@ class GoodsChatServiceTest {
 
             // then
             verify(partRepository).existsById(goodsChatPartId);
-            verify(messageRepository, never()).findByChatRoomId(chatRoomId, pageable);
+            verify(messageRepository, never()).getChatMessages(chatRoomId, pageable);
         }
     }
 }

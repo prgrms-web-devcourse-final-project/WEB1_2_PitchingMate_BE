@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.mate.common.response.PageResponse;
+import com.example.mate.config.WithAuthMember;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatMessageResponse;
 import com.example.mate.common.security.util.JwtUtil;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatRoomResponse;
@@ -28,6 +29,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @WebMvcTest(GoodsChatRoomController.class)
 @MockBean(JpaMetamodelMappingContext.class)
 @AutoConfigureMockMvc(addFilters = false)
+@WithAuthMember
 class GoodsChatRoomControllerTest {
 
     @Autowired
@@ -101,7 +103,6 @@ class GoodsChatRoomControllerTest {
 
         // when & then
         mockMvc.perform(post("/api/goods/chat", buyerId)
-                        .param("buyerId", String.valueOf(buyerId))
                         .param("goodsPostId", String.valueOf(goodsPostId)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
@@ -123,7 +124,7 @@ class GoodsChatRoomControllerTest {
     void getMessagesForChatRoom_should_return_messages() throws Exception {
         // given
         Long chatRoomId = 1L;
-        Long memberId = 2L;
+        Long memberId = 1L;
         PageRequest pageable = PageRequest.of(0, 10);
 
         GoodsChatMessageResponse firstMessage = GoodsChatMessageResponse.builder()
@@ -149,7 +150,6 @@ class GoodsChatRoomControllerTest {
 
         // when & then
         mockMvc.perform(get("/api/goods/chat/{chatRoomId}/message", chatRoomId)
-                        .param("memberId", String.valueOf(memberId))
                         .param("page", "0")
                         .param("size", "10"))
                 .andExpect(status().isOk())

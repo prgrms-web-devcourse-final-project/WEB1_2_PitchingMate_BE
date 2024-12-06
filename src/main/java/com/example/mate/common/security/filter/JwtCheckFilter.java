@@ -74,6 +74,7 @@ public class JwtCheckFilter extends OncePerRequestFilter {
         // 소셜 로그인/회원 가입 경로, mate 서비스 로그인/회원 가입 경로 인증 제외
         return requestURI.startsWith("/api/auth") ||
                 requestURI.startsWith("/api/members/join") ||
+                requestURI.startsWith("/swagger-ui") ||
                 requestURI.startsWith("/api/members/login");
     }
 
