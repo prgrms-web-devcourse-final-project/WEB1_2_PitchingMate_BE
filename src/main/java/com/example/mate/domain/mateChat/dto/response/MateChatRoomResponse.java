@@ -13,7 +13,11 @@ public class MateChatRoomResponse {
     private Long matePostId;
     private Long memberId;
     private Integer currentMembers;
-    private PageResponse<MateChatMessageResponse> initialMessages;  // 추가
+    private Boolean isRoomActive;
+    private Boolean isMessageable;
+    private Boolean isAuthorLeft;
+    private Boolean isAuthor;
+    private PageResponse<MateChatMessageResponse> initialMessages;
 
     public static MateChatRoomResponse from(
             MateChatRoom chatRoom,
@@ -24,6 +28,10 @@ public class MateChatRoomResponse {
                 .matePostId(chatRoom.getMatePost().getId())
                 .memberId(member.getMember().getId())
                 .currentMembers(chatRoom.getCurrentMembers())
+                .isRoomActive(chatRoom.getIsActive())
+                .isMessageable(chatRoom.getIsMessageable())
+                .isAuthorLeft(chatRoom.getIsAuthorLeft())
+                .isAuthor(chatRoom.getMatePost().getAuthor().getId().equals(member.getMember().getId()))
                 .initialMessages(messages)
                 .build();
     }
