@@ -17,8 +17,11 @@ public class MateChatRoomListResponse {
     private LocalDateTime lastMessageTime;
     private Integer currentMembers;
     private Boolean isActive;
+    private Boolean isMessageable;
+    private Boolean isAuthorLeft;
+    private Boolean isAuthor;
 
-    public static MateChatRoomListResponse from(MateChatRoom chatRoom) {
+    public static MateChatRoomListResponse from(MateChatRoom chatRoom, boolean isAuthor) {
         return MateChatRoomListResponse.builder()
                 .roomId(chatRoom.getId())
                 .postId(chatRoom.getMatePost().getId())
@@ -27,7 +30,10 @@ public class MateChatRoomListResponse {
                 .lastMessageContent(chatRoom.getLastChatContent())
                 .lastMessageTime(chatRoom.getLastChatSentAt())
                 .currentMembers(chatRoom.getCurrentMembers())
-                .isActive(chatRoom.getActive())
+                .isActive(chatRoom.getIsActive())
+                .isMessageable(chatRoom.getIsMessageable())
+                .isAuthorLeft(chatRoom.getIsAuthorLeft())
+                .isAuthor(isAuthor)
                 .build();
     }
 }
