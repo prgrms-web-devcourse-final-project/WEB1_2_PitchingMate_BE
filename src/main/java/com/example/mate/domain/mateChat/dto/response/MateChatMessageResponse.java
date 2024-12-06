@@ -1,7 +1,6 @@
 package com.example.mate.domain.mateChat.dto.response;
 
 import com.example.mate.domain.mateChat.entity.MateChatMessage;
-import com.example.mate.domain.member.entity.Member;
 import lombok.Builder;
 import lombok.Getter;
 
