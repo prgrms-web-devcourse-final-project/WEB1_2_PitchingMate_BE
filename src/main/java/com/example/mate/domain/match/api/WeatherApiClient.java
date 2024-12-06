@@ -5,6 +5,7 @@ import com.example.mate.common.error.ErrorCode;
 import com.example.mate.domain.match.dto.response.WeatherApiResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -22,12 +23,13 @@ import java.util.Map;
 public class WeatherApiClient {
     private final RestTemplate restTemplate;
 
+    @Value("${openweather.api.key}")
+    private String apiKey;
 
     public WeatherApiResponse getWeather(String latitude, String longitude, LocalDateTime dateTime) {
         try {
             log.debug("Fetching weather for lat: {}, lon: {}, time: {}", latitude, longitude, dateTime);
-
-            String apiKey = "74e753ed53a1e821e215b1ba1908c821";
+            
             String url = UriComponentsBuilder
                     .fromHttpUrl("https://api.openweathermap.org/data/2.5/forecast")
                     .queryParam("lat", latitude)
