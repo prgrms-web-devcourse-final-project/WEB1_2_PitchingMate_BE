@@ -6,6 +6,8 @@ import com.example.mate.domain.member.entity.Member;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "mate_chat_message")
 @Getter
@@ -22,7 +24,7 @@ public class MateChatMessage extends BaseTimeEntity {
     private MateChatRoom mateChatRoom;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "sender_id")  // 시스템 메시지는 sender가 null일 수 있음
+    @JoinColumn(name = "sender_id")
     private Member sender;
 
     @Enumerated(EnumType.STRING)
@@ -31,4 +33,7 @@ public class MateChatMessage extends BaseTimeEntity {
 
     @Column(name = "content", nullable = false, columnDefinition = "TEXT")
     private String content;
+
+    @Column(name = "send_time", nullable = false)
+    private LocalDateTime sendTime;
 }
