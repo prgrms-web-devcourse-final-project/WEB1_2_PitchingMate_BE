@@ -1,13 +1,13 @@
 package com.example.mate.domain.mate.repository;
 
-import com.example.mate.domain.mate.entity.Visit;
 import com.example.mate.domain.mate.entity.VisitPart;
 import com.example.mate.domain.mate.entity.VisitPartId;
 import com.example.mate.domain.member.entity.Member;
-import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
+import java.util.List;
 
 public interface VisitPartRepository extends JpaRepository<VisitPart, VisitPartId> {
 
@@ -21,5 +21,12 @@ public interface VisitPartRepository extends JpaRepository<VisitPart, VisitPartI
             """)
     List<Member> findMembersByVisitIdExcludeMember(@Param("visitId") Long visitId, @Param("memberId") Long memberId);
 
-    boolean existsByVisitAndMember(Visit visit, Member member);
+    @Query("""
+            SELECT COUNT(vp) > 0
+            FROM VisitPart vp
+            WHERE vp.visit.id = :visitId
+            AND vp.member.id = :memberId
+            """)
+    boolean existsByVisitAndMember(@Param("visitId") Long visitId, @Param("memberId") Long memberId);
+
 }

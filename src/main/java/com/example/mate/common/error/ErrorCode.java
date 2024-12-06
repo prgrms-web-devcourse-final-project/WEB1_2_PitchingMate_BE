@@ -130,6 +130,7 @@ public enum ErrorCode {
     ALREADY_JOINED_CHAT_ROOM(HttpStatus.BAD_REQUEST, "CHAT004", "이미 참여 중인 채팅방입니다."),
     CHAT_ROOM_CLOSED(HttpStatus.BAD_REQUEST, "CHAT005", "종료된 채팅방입니다."),
     CHAT_ROOM_ACCESS_DENIED(HttpStatus.FORBIDDEN, "CHAT006", "직관 완료된 채팅방에는 새로운 유저가 입장할 수 없습니다."),
+    CHAT_AUTHOR_JOIN_DENIED(HttpStatus.FORBIDDEN, "CHAT006", "방장은 채팅방 퇴장 시 재입장할 수 없습니다."),
     AUTHOR_LEAVE_NOT_ALLOWED(HttpStatus.FORBIDDEN, "CHAT007", "방장은 직관완료가 안된 채팅방에서 나갈 수 없습니다."),
     CHAT_ROOM_NOT_MESSAGEABLE(HttpStatus.FORBIDDEN, "CHAT008", "메세지 전송이 불가능한 채팅방입니다."),
 

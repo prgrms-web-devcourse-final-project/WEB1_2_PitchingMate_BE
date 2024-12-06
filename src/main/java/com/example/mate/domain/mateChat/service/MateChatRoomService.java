@@ -103,8 +103,11 @@ public class MateChatRoomService {
     }
 
     private void validateChatRoomJoin(MatePost matePost, Member member) {
-        // 방장인 경우 모든 제한을 건너뜀
+        // 방장인 경우, 직관 완료 상태가 아닐 때만 입장 가능
         if (matePost.getAuthor().getId().equals(member.getId())) {
+            if (matePost.getStatus() == Status.VISIT_COMPLETE) {
+                throw new CustomException(ErrorCode.CHAT_AUTHOR_JOIN_DENIED);
+            }
             return;
         }
 
@@ -120,12 +123,13 @@ public class MateChatRoomService {
         }
 
         // 3. 직관 완료 상태인 경우 접근 권한 검증
-        if (matePost.getStatus() == Status.VISIT_COMPLETE) {
+        if (matePost.getStatus() == Status.VISIT_COMPLETE && matePost.getVisit() != null) {
             boolean isVisitParticipant = visitPartRepository.existsByVisitAndMember(
-                    matePost.getVisit(), member);
-            boolean isAuthor = matePost.getAuthor().getId().equals(member.getId());
+                    matePost.getVisit().getId(),  // Visit 엔티티 대신 ID 전달
+                    member.getId()                 // Member 엔티티 대신 ID 전달
+            );
 
-            if (!isVisitParticipant && !isAuthor) {
+            if (!isVisitParticipant) {
                 throw new CustomException(ErrorCode.CHAT_ROOM_ACCESS_DENIED);
             }
         }
