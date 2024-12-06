@@ -1,6 +1,6 @@
 name: Deploy To EC2
-on:
-  push
+
+on: push
 
 jobs:
   deploy:
@@ -15,9 +15,15 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Check if secret exists
-        if: "${{ secrets.APPLICATION_PROPERTIES != '' }}"
-        run: echo "Secret is set"
+      - name: Verify secret
+        run: |
+          if [ -z "${{ secrets.APPLICATION_PROPERTIES }}" ]
+          then
+            echo "❌ Secret is empty"
+            exit 1
+          else
+            echo "✅ Secret exists"
+          fi
 
       - name: application-dev.yml 파일 만들기
         run: echo "${{ secrets.APPLICATION_PROPERTIES }}" > ./src/main/resources/application.yml
