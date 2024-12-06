@@ -123,9 +123,11 @@ public class MateChatRoomService {
         }
 
         // 3. 직관 완료 상태인 경우 접근 권한 검증
-        if (matePost.getStatus() == Status.VISIT_COMPLETE) {
+        if (matePost.getStatus() == Status.VISIT_COMPLETE && matePost.getVisit() != null) {
             boolean isVisitParticipant = visitPartRepository.existsByVisitAndMember(
-                    matePost.getVisit(), member);
+                    matePost.getVisit().getId(),  // Visit 엔티티 대신 ID 전달
+                    member.getId()                 // Member 엔티티 대신 ID 전달
+            );
 
             if (!isVisitParticipant) {
                 throw new CustomException(ErrorCode.CHAT_ROOM_ACCESS_DENIED);
