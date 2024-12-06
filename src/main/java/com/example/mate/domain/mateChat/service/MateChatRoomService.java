@@ -261,4 +261,60 @@ public class MateChatRoomService {
         return PageResponse.from(messagePage, messages);
     }
 
+    // 내 채팅방 목록 조회
+    @Transactional(readOnly = true)
+    public PageResponse<MateChatRoomListResponse> getMyChatRooms(Long memberId, Pageable pageable) {
+        Page<MateChatRoom> chatRooms = chatRoomRepository.findActiveChatRoomsByMemberId(memberId, pageable);
+
+        List<MateChatRoomListResponse> responses = chatRooms.getContent().stream()
+                .map(room -> {
+                    boolean isAuthor = room.getMatePost().getAuthor().getId().equals(memberId);
+                    return MateChatRoomListResponse.from(room, isAuthor);
+                })
+                .toList();
+
+        return PageResponse.from(chatRooms, responses);
+    }
+
+    private void sendEnterMessage(Long roomId, Member member) {
+        MateChatMessageRequest enterMessage = MateChatMessageRequest.createEnterMessage(
+                roomId,
+                member.getId(),
+                member.getNickname()
+        );
+        mateChatMessageService.sendEnterMessage(enterMessage);
+    }
+
+    private void sendLeaveMessage(Long roomId, Member member) {
+        MateChatMessageRequest leaveMessage = MateChatMessageRequest.createLeaveMessage(
+                roomId,
+                member.getId(),
+                member.getNickname()
+        );
+        mateChatMessageService.sendLeaveMessage(leaveMessage);
+    }
+
+    private void validateChatRoomAccess(Long roomId, Long memberId) {
+        MateChatRoomMember member = chatRoomMemberRepository.findByChatRoomIdAndMemberId(roomId, memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.CHAT_ROOM_MEMBER_NOT_FOUND));
+
+        if (!member.getIsActive()) {
+            throw new CustomException(ErrorCode.CHAT_ROOM_ACCESS_DENIED);
+        }
+    }
+
+    private boolean isAuthor(MateChatRoom chatRoom, Member member) {
+        return chatRoom.getMatePost().getAuthor().getId().equals(member.getId());
+    }
+
+    private boolean isAgeEligible(Age requiredAge, int memberAge) {
+        return switch (requiredAge) {
+            case TEENS -> memberAge >= 10 && memberAge < 20;
+            case TWENTIES -> memberAge >= 20 && memberAge < 30;
+            case THIRTIES -> memberAge >= 30 && memberAge < 40;
+            case FORTIES -> memberAge >= 40 && memberAge < 50;
+            case OVER_FIFTIES -> memberAge >= 50;
+            case ALL -> true;
+        };
+    }
 }
