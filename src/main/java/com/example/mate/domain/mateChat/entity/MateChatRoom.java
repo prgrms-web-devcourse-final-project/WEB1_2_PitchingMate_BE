@@ -26,9 +26,17 @@ public class MateChatRoom extends BaseTimeEntity {
     @JoinColumn(name = "mate_post_id", nullable = false)
     private MatePost matePost;
 
-    @Column(name = "active", nullable = false)
+    @Column(name = "is_active", nullable = false)
     @Builder.Default
-    private Boolean active = true;
+    private Boolean isActive = true;
+
+    @Column(name = "is_messageable", nullable = false)
+    @Builder.Default
+    private Boolean isMessageable = true;
+
+    @Column(name = "is_author_left", nullable = false)
+    @Builder.Default
+    private Boolean isAuthorLeft = false;
 
     @Column(name = "current_members", nullable = false)
     @Builder.Default
@@ -49,21 +57,53 @@ public class MateChatRoom extends BaseTimeEntity {
         this.lastChatSentAt = LocalDateTime.now();
     }
 
+    public void setAuthorLeft(boolean authorLeft) {
+        this.isAuthorLeft = authorLeft;
+        if (authorLeft) {
+            this.isMessageable = false;
+        }
+    }
+
+    public void setMessageable(boolean messageable) {
+        this.isMessageable = messageable;
+    }
+
+    public void deactivate() {
+        this.isActive = false;
+        this.isMessageable = false;
+    }
+
     public void incrementCurrentMembers() {
         if (this.currentMembers >= 10) {
             throw new CustomException(ErrorCode.CHAT_ROOM_FULL);
         }
         this.currentMembers++;
-    }
 
-    public void decrementCurrentMembers() {
-        this.currentMembers--;
-        if (this.currentMembers == 0) {
-            this.active = false;
+        // 2명 이상이면 메시지 전송 가능하도록 설정
+        if (this.currentMembers >= 2 && !this.isAuthorLeft) {
+            this.isMessageable = true;
+        }
+
+        // 멤버가 있으면 채팅방 활성화
+        if (this.currentMembers > 0) {
+            this.isActive = true;
         }
     }
 
-    public void deactivate() {
-        this.active = false;
+    public void decrementCurrentMembers() {
+        if (this.currentMembers > 0) {
+            this.currentMembers--;
+        }
+
+        // 1명 이하면 메시지 전송 불가능하도록 설정
+        if (this.currentMembers <= 1) {
+            this.isMessageable = false;
+        }
+
+        // 멤버가 없으면 채팅방 비활성화
+        if (this.currentMembers == 0) {
+            this.isActive = false;
+            this.isMessageable = false;
+        }
     }
 }
