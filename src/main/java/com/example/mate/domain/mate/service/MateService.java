@@ -26,7 +26,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -46,7 +45,7 @@ public class MateService {
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;
 
-    public MatePostResponse createMatePost(MatePostCreateRequest request, MultipartFile file) throws IOException {
+    public MatePostResponse createMatePost(MatePostCreateRequest request, MultipartFile file) {
         Member author = findMemberById(request.getMemberId());
 
         Match match = findMatchById(request.getMatchId());
@@ -73,7 +72,7 @@ public class MateService {
         return MatePostResponse.from(savedPost);
     }
 
-    private void handleFileUpload(MultipartFile file, MatePost matePost) throws IOException {
+    private void handleFileUpload(MultipartFile file, MatePost matePost) {
         if (file != null && !file.isEmpty()) {
             FileValidator.validateSingleImage(file);
             String imageUrl = fileService.uploadFile(file);
@@ -131,7 +130,7 @@ public class MateService {
     }
 
     public MatePostResponse updateMatePost(Long memberId, Long postId, MatePostUpdateRequest request,
-                                           MultipartFile file) throws IOException {
+                                           MultipartFile file) {
         MatePost matePost = findMatePostById(postId);
         validateAuthorization(matePost, memberId);
         validatePostStatus(matePost.getStatus());
@@ -156,7 +155,7 @@ public class MateService {
                 .orElseThrow(() -> new CustomException(MATCH_NOT_FOUND_BY_ID));
     }
 
-    private String updateImage(String currentImageUrl, MultipartFile newFile) throws IOException {
+    private String updateImage(String currentImageUrl, MultipartFile newFile) {
         if (newFile == null || newFile.isEmpty()) {
             return currentImageUrl;
         }

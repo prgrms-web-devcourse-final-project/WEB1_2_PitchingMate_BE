@@ -21,7 +21,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -38,7 +37,7 @@ public class GoodsController {
             @AuthenticationPrincipal AuthMember member,
             @Parameter(description = "판매글 등록 데이터", required = true) @Validated @RequestPart("data") GoodsPostRequest request,
             @Parameter(description = "판매글 이미지 리스트", required = true) @RequestPart("files") List<MultipartFile> files
-    ) throws IOException {
+    ) {
         GoodsPostResponse response = goodsService.registerGoodsPost(member.getMemberId(), request, files);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
@@ -50,7 +49,7 @@ public class GoodsController {
             @Parameter(description = "판매글 ID", required = true) @PathVariable Long goodsPostId,
             @Parameter(description = "수정할 판매글 데이터", required = true) @Validated @RequestPart("data") GoodsPostRequest request,
             @Parameter(description = "수정할 첨부 파일 리스트", required = true) @RequestPart("files") List<MultipartFile> files
-    ) throws IOException {
+    ) {
         GoodsPostResponse response = goodsService.updateGoodsPost(member.getMemberId(), goodsPostId, request, files);
         return ResponseEntity.ok(ApiResponse.success(response));
     }

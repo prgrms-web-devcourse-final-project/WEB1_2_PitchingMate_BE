@@ -29,7 +29,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
@@ -90,7 +89,7 @@ class MateServiceTest {
 
         @Test
         @DisplayName("메이트 게시글 작성 성공")
-        void createMatePost_Success() throws IOException {
+        void createMatePost_Success() {
             // given
             Member testMember = createTestMember();
             Match testMatch = createTestMatch();
@@ -604,7 +603,7 @@ class MateServiceTest {
 
         @Test
         @DisplayName("메이트 게시글 수정 성공")
-        void updateMatePost_Success() throws IOException {
+        void updateMatePost_Success() {
             // given
             Member testMember = createTestMember();
             Match testMatch = createTestMatch();

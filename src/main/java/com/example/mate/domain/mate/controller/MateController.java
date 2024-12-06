@@ -21,7 +21,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -37,7 +36,7 @@ public class MateController {
     public ResponseEntity<ApiResponse<MatePostResponse>> createMatePost(@Parameter(description = "구인글 등록 데이터", required = true)
                                                                         @Valid @RequestPart(value = "data") MatePostCreateRequest request,
                                                                         @Parameter(description = "구인글 대표사진", required = true)
-                                                                        @RequestPart(value = "file", required = false) MultipartFile file) throws IOException {
+                                                                        @RequestPart(value = "file", required = false) MultipartFile file) {
         //TODO - member 정보를 request가 아니라  @AuthenticationPrincipal Long memberId로 받도록 변경
         MatePostResponse response = mateService.createMatePost(request, file);
         return ResponseEntity.ok(ApiResponse.success(response));
@@ -100,7 +99,7 @@ public class MateController {
                                                                         @Parameter(description = "수정할 구인글 데이터", required = true)
                                                                         @Valid @RequestPart(value = "data") MatePostUpdateRequest request,
                                                                         @Parameter(description = "수정할 대표사진 파일 ", required = true)
-                                                                        @RequestPart(value = "file", required = false) MultipartFile file) throws IOException {
+                                                                        @RequestPart(value = "file", required = false) MultipartFile file) {
 
         MatePostResponse response = mateService.updateMatePost(memberId, postId, request, file);
         return ResponseEntity.ok(ApiResponse.success(response));

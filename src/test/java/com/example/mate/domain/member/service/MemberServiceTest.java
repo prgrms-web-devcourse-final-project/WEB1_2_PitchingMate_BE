@@ -36,7 +36,6 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -337,7 +336,7 @@ class MemberServiceTest {
 
         @Test
         @DisplayName("회원 정보 수정 성공")
-        void update_my_profile_success() throws IOException {
+        void update_my_profile_success() {
             // given
             Long memberId = 1L;
             MemberInfoUpdateRequest request = MemberInfoUpdateRequest.builder()

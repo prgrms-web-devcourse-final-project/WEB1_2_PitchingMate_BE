@@ -1,6 +1,5 @@
 package com.example.mate.domain.file;
 
-import com.amazonaws.SdkClientException;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.example.mate.common.error.CustomException;
@@ -50,7 +49,7 @@ public class FileService {
         String key = extractKeyFromUrl(imageUrl);
         try {
             amazonS3.deleteObject(bucket, key);    // 파일 삭제
-        } catch (SdkClientException e) {
+        } catch (Exception e) {
             throw new CustomException(ErrorCode.FILE_DELETE_ERROR);
         }
     }

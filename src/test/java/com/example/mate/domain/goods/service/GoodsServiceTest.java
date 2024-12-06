@@ -31,7 +31,6 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
@@ -128,7 +127,7 @@ class GoodsServiceTest {
     class GoodsServiceRegisterTest {
         @Test
         @DisplayName("굿즈거래 판매글 작성 성공")
-        void register_goods_post_success() throws IOException {
+        void register_goods_post_success() {
             // given
             GoodsPostRequest request = new GoodsPostRequest(1L, "title", Category.ACCESSORY, 10_000, "content", createLocationInfo());
             List<MultipartFile> files = List.of(createFile(MediaType.IMAGE_JPEG_VALUE));
@@ -193,7 +192,7 @@ class GoodsServiceTest {
 
         @Test
         @DisplayName("굿즈거래 판매글 수정 성공")
-        void update_goods_post_success() throws IOException {
+        void update_goods_post_success() {
             // given
             Long goodsPostId = 1L;
             GoodsPostRequest request = new GoodsPostRequest(1L, "title", Category.CAP, 100_000, "test....", createLocationInfo());

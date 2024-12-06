@@ -20,8 +20,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/members")
@@ -66,7 +64,7 @@ public class MemberController {
     public ResponseEntity<ApiResponse<MyProfileResponse>> updateMemberInfo(
             @Parameter(description = "프로필 사진") @RequestPart(value = "file", required = false) MultipartFile image,
             @Parameter(description = "수정할 회원 정보") @Valid @RequestPart(value = "data") MemberInfoUpdateRequest updateRequest,
-            @Parameter(description = "회원 로그인 정보") @AuthenticationPrincipal AuthMember authMember) throws IOException {
+            @Parameter(description = "회원 로그인 정보") @AuthenticationPrincipal AuthMember authMember) {
         updateRequest.setMemberId(authMember.getMemberId());
         return ResponseEntity.ok(ApiResponse.success(memberService.updateMyProfile(image, updateRequest)));
     }

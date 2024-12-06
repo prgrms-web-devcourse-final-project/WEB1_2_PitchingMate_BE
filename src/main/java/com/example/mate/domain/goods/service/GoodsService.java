@@ -25,7 +25,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,8 +39,7 @@ public class GoodsService {
     private final GoodsReviewRepository reviewRepository;
     private final FileService fileService;
 
-    public GoodsPostResponse registerGoodsPost(Long memberId, GoodsPostRequest request, List<MultipartFile> files)
-            throws IOException {
+    public GoodsPostResponse registerGoodsPost(Long memberId, GoodsPostRequest request, List<MultipartFile> files) {
         Member seller = findMemberById(memberId);
         validateTeamInfo(request.getTeamId());
         FileValidator.validateGoodsPostImages(files);
@@ -55,7 +53,7 @@ public class GoodsService {
     }
 
     public GoodsPostResponse updateGoodsPost(Long memberId, Long goodsPostId, GoodsPostRequest request,
-                                             List<MultipartFile> files) throws IOException {
+                                             List<MultipartFile> files) {
         Member seller = findMemberById(memberId);
         GoodsPost goodsPost = findGoodsPostById(goodsPostId);
 
@@ -128,12 +126,12 @@ public class GoodsService {
         return GoodsReviewResponse.of(reviewRepository.save(review));
     }
 
-    private void attachImagesToGoodsPost(GoodsPost goodsPost, List<MultipartFile> files) throws IOException {
+    private void attachImagesToGoodsPost(GoodsPost goodsPost, List<MultipartFile> files) {
         List<GoodsPostImage> images = uploadImageFiles(files, goodsPost);
         goodsPost.changeImages(images);
     }
 
-    private List<GoodsPostImage> uploadImageFiles(List<MultipartFile> files, GoodsPost savedPost) throws IOException {
+    private List<GoodsPostImage> uploadImageFiles(List<MultipartFile> files, GoodsPost savedPost) {
         List<GoodsPostImage> images = new ArrayList<>();
 
         for (MultipartFile file : files) {
