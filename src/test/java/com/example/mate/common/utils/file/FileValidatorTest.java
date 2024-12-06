@@ -1,14 +1,8 @@
 package com.example.mate.common.utils.file;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import com.example.mate.domain.file.FileValidator;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,6 +11,14 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class FileValidatorTest {
@@ -76,9 +78,6 @@ class FileValidatorTest {
         // given
         MultipartFile mockFile = mock(MultipartFile.class);
         List<MultipartFile> files = new ArrayList<>(Collections.nCopies(11, mockFile));
-
-        // when
-        when(mockFile.getContentType()).thenReturn("image/jpg");
 
         // then
         assertThatThrownBy(() -> FileValidator.validateGoodsPostImages(files))
