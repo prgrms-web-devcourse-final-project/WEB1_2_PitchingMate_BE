@@ -123,10 +123,11 @@ public enum ErrorCode {
     CHAT_ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "CHAT001", "존재하지 않는 채팅방입니다."),
     CHAT_ROOM_MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "CHAT002", "채팅방 멤버가 아닙니다."),
     CHAT_ROOM_FULL(HttpStatus.BAD_REQUEST, "CHAT003", "채팅방 인원이 가득 찼습니다. (최대 10명)"),
-    AUTHOR_CANNOT_JOIN_CHAT(HttpStatus.BAD_REQUEST, "CHAT004", "게시글 작성자는 채팅방에 참여할 수 없습니다."),
-    ALREADY_JOINED_CHAT_ROOM(HttpStatus.BAD_REQUEST, "CHAT005", "이미 참여 중인 채팅방입니다."),
-    CHAT_ROOM_CLOSED(HttpStatus.BAD_REQUEST, "CHAT006", "종료된 채팅방입니다."),
-    CHAT_ROOM_ACCESS_DENIED(HttpStatus.FORBIDDEN, "CHAT007", "직관 완료된 채팅방에는 새로운 유저가 입장할 수 없습니다."),
+    ALREADY_JOINED_CHAT_ROOM(HttpStatus.BAD_REQUEST, "CHAT004", "이미 참여 중인 채팅방입니다."),
+    CHAT_ROOM_CLOSED(HttpStatus.BAD_REQUEST, "CHAT005", "종료된 채팅방입니다."),
+    CHAT_ROOM_ACCESS_DENIED(HttpStatus.FORBIDDEN, "CHAT006", "직관 완료된 채팅방에는 새로운 유저가 입장할 수 없습니다."),
+    AUTHOR_LEAVE_NOT_ALLOWED(HttpStatus.FORBIDDEN, "CHAT007", "방장은 직관완료가 안된 채팅방에서 나갈 수 없습니다."),
+    CHAT_ROOM_NOT_MESSAGEABLE(HttpStatus.FORBIDDEN, "CHAT008", "메세지 전송이 불가능한 채팅방입니다."),
 
     // 채팅 참여 제한 관련 에러
     AGE_RESTRICTION_VIOLATED(HttpStatus.FORBIDDEN, "CHAT007", "연령 제한으로 입장할 수 없습니다."),
