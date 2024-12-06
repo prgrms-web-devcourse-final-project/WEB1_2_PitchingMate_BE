@@ -18,7 +18,6 @@ import com.example.mate.domain.mate.repository.MateReviewRepository;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -41,9 +40,6 @@ public class MateService {
     private final MemberRepository memberRepository;
     private final MateReviewRepository mateReviewRepository;
     private final FileService fileService;
-
-    @Value("${cloud.aws.s3.bucket}")
-    private String bucket;
 
     public MatePostResponse createMatePost(MatePostCreateRequest request, MultipartFile file) {
         Member author = findMemberById(request.getMemberId());
@@ -173,7 +169,7 @@ public class MateService {
     }
 
     private String getDefaultMateImageUrl() {
-        return "https://" + bucket + ".s3.ap-northeast-2.amazonaws.com/mate_default.svg";
+        return "https://" + fileService.getBucket() + ".s3.ap-northeast-2.amazonaws.com/mate_default.svg";
     }
 
     public MatePostResponse updateMatePostStatus(Long memberId, Long postId, MatePostStatusRequest request) {

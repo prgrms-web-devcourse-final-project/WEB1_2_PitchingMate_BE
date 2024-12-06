@@ -4,6 +4,7 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,6 +26,7 @@ public class FileService {
 
     private final AmazonS3 amazonS3;
 
+    @Getter
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;
 

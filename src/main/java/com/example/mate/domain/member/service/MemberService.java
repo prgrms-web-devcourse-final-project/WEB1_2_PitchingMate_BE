@@ -23,7 +23,6 @@ import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.FollowRepository;
 import com.example.mate.domain.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -43,9 +42,6 @@ public class MemberService {
     private final VisitPartRepository visitPartRepository;
     private final JwtUtil jwtUtil;
     private final FileService fileService;
-
-    @Value("${cloud.aws.s3.bucket}")
-    private String bucket;
 
     // 자체 회원가입 기능
     public JoinResponse join(JoinRequest request) {
@@ -120,7 +116,7 @@ public class MemberService {
     }
 
     private String getDefaultMemberImageUrl() {
-        return "https://" + bucket + ".s3.ap-northeast-2.amazonaws.com/member_default.svg";
+        return "https://" + fileService.getBucket() + ".s3.ap-northeast-2.amazonaws.com/member_default.svg";
     }
 
     private void checkNicknameAndChange(Member member, String request) {
