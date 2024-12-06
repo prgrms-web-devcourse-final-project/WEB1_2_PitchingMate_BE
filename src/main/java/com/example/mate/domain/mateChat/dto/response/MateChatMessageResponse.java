@@ -10,27 +10,25 @@ import java.time.LocalDateTime;
 @Getter
 @Builder
 public class MateChatMessageResponse {
-    private Long chatMessageId;
+    private Long messageId;
     private Long roomId;
     private Long senderId;
     private String senderNickname;
     private String message;
     private String messageType;
     private String senderImageUrl;
-    private LocalDateTime sendAt;
+    private LocalDateTime sendTime;
 
-    public static MateChatMessageResponse of(MateChatMessage chatMessage) {
-        Member sender = chatMessage.getSender();
-
+    public static MateChatMessageResponse of(MateChatMessage message) {
         return MateChatMessageResponse.builder()
-                .chatMessageId(chatMessage.getId())
-                .roomId(chatMessage.getMateChatRoom().getId())
-                .senderId(sender.getId())
-                .senderNickname(sender.getNickname())
-                .message(chatMessage.getContent())
-                .messageType(chatMessage.getType().getValue())
-                .senderImageUrl(sender.getImageUrl())
-                .sendAt(chatMessage.getCreatedAt())
+                .messageId(message.getId())
+                .roomId(message.getMateChatRoom().getId())
+                .senderId(message.getSender().getId())
+                .senderNickname(message.getSender().getNickname())
+                .message(message.getContent())
+                .messageType(message.getType().getValue())
+                .senderImageUrl(message.getSender().getImageUrl())
+                .sendTime(message.getSendTime())
                 .build();
     }
 }
