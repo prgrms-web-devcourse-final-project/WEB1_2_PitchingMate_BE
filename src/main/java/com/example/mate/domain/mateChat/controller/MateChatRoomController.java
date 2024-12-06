@@ -35,21 +35,21 @@ public class MateChatRoomController {
     @PostMapping("/{chatroomId}/join")
     @Operation(summary = "채팅방 목록 -> 채팅방 입장", description = "채팅 목록 페이지에서 채팅방으로 입장")
     public ResponseEntity<ApiResponse<MateChatRoomResponse>> joinExistingChatRoom(
-            @Parameter(description = "채팅방 ID") @PathVariable Long roomId,
+            @Parameter(description = "채팅방 ID") @PathVariable Long chatroomId,
             @Parameter(description = "회원 ID (삭제 예정)") @RequestParam Long memberId
     ) {
-        MateChatRoomResponse response = chatRoomService.joinExistingChatRoom(roomId, memberId);
+        MateChatRoomResponse response = chatRoomService.joinExistingChatRoom(chatroomId, memberId);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @GetMapping("/{chatroomId}/members/{memberId}/messages")
     @Operation(summary = "채팅방 메세지 조회", description = "채팅 목록 페이지 -> 채팅방 입장 시, 메시지 내역을 조회합니다.")
     public ResponseEntity<ApiResponse<PageResponse<MateChatMessageResponse>>> getChatMessages(
-            @Parameter(description = "채팅방 ID") @PathVariable Long roomId,
+            @Parameter(description = "채팅방 ID") @PathVariable Long chatroomId,
             @PathVariable Long memberId,
             @Parameter(description = "페이지 정보") @PageableDefault Pageable pageable
     ) {
-        PageResponse<MateChatMessageResponse> messages = chatRoomService.getChatMessages(roomId, memberId, pageable);
+        PageResponse<MateChatMessageResponse> messages = chatRoomService.getChatMessages(chatroomId, memberId, pageable);
         return ResponseEntity.ok(ApiResponse.success(messages));
     }
 
@@ -66,10 +66,10 @@ public class MateChatRoomController {
     @DeleteMapping("{chatroomId}/leave")
     @Operation(summary = "채팅방 나가기", description = "채팅방에서 퇴장합니다.")
     public ResponseEntity<Void> leaveChatRoom(
-            @Parameter(description = "채팅방 ID") @PathVariable Long roomId,
+            @Parameter(description = "채팅방 ID") @PathVariable Long chatroomId,
             @Parameter(description = "회원 ID (삭제 예정)") @RequestParam Long memberId  // 추후 @AuthenticationPrincipal로 대체
     ) {
-        chatRoomService.leaveChatRoom(roomId, memberId);
+        chatRoomService.leaveChatRoom(chatroomId, memberId);
         return ResponseEntity.noContent().build();
     }
 }
