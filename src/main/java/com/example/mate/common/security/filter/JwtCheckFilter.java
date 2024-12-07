@@ -3,7 +3,6 @@ package com.example.mate.common.security.filter;
 import com.example.mate.common.security.auth.AuthMember;
 import com.example.mate.common.security.util.JwtUtil;
 import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -25,28 +24,18 @@ public class JwtCheckFilter extends OncePerRequestFilter {
 
     // 필터링 적용하지 않을 URI 체크
     @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
-
+    protected boolean shouldNotFilter(HttpServletRequest request) {
         // TODO : 2024/11/28 - 각 도메인별로 인증이 필요없는 경로 추가
-
         // 사용자 로그인, 회원가입 경로 인증 제외 (토큰 발급 경로)
-        if (isAuthExcludedPath(request)) {
-            return true;
-        }
-
-        // 메인 페이지 인증 제외
-        if (isMainPagePath(request)) {
-            return true;
-        }
-
-        return false;
+        String requestURI = request.getRequestURI();
+        return isExcludedPath(requestURI) || isMainPagePath(requestURI);
     }
 
     // 필터링 적용 - 액세스 토큰 확인
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException {
+                                    FilterChain filterChain) throws IOException {
         String headerAuth = request.getHeader("Authorization");
 
         // 액세스 토큰 유효성 검사
@@ -67,21 +56,17 @@ public class JwtCheckFilter extends OncePerRequestFilter {
     }
 
     // 사용자 로그인 또는 회원가입 경로인지 확인
-    private boolean isAuthExcludedPath(HttpServletRequest request) {
-        String requestURI = request.getRequestURI();
-        String method = request.getMethod();
-
+    private boolean isExcludedPath(String requestURI) {
         // 소셜 로그인/회원 가입 경로, mate 서비스 로그인/회원 가입 경로 인증 제외
-        return requestURI.startsWith("/api/auth") ||
+        return requestURI.startsWith("/ws/chat") ||
+                requestURI.startsWith("/api/auth") ||
                 requestURI.startsWith("/api/members/join") ||
                 requestURI.startsWith("/swagger-ui") ||
                 requestURI.startsWith("/api/members/login");
     }
 
     // 메인 페이지의 인증 필요없는 메서드인지 확인
-    private boolean isMainPagePath(HttpServletRequest request) {
-        String requestURI = request.getRequestURI();
-
+    private boolean isMainPagePath(String requestURI) {
         // 메인 페이지와 관련된 경로
         return requestURI.startsWith("/api/matches/main") ||
                 requestURI.startsWith("/api/mates/main") ||
