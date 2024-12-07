@@ -296,7 +296,7 @@ class MateStatusControllerTest {
                     .willReturn(response);
 
             // when & then
-            mockMvc.perform(patch("/api/mates/{memberId}/{postId}/complete", MEMBER_ID, POST_ID)
+            mockMvc.perform(patch("/api/mates/{postId}/complete", POST_ID)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
@@ -321,7 +321,7 @@ class MateStatusControllerTest {
                     .willThrow(new CustomException(MATE_POST_NOT_FOUND_BY_ID));
 
             // when & then
-            mockMvc.perform(patch("/api/mates/{memberId}/{postId}/complete", MEMBER_ID, POST_ID)
+            mockMvc.perform(patch("/api/mates/{postId}/complete", POST_ID)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
@@ -341,7 +341,7 @@ class MateStatusControllerTest {
                     .willThrow(new CustomException(MATE_POST_UPDATE_NOT_ALLOWED));
 
             // when & then
-            mockMvc.perform(patch("/api/mates/{memberId}/{postId}/complete", MEMBER_ID, POST_ID)
+            mockMvc.perform(patch("/api/mates/{postId}/complete", POST_ID)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
@@ -361,7 +361,7 @@ class MateStatusControllerTest {
                     .willThrow(new CustomException(MATE_POST_COMPLETE_TIME_NOT_ALLOWED));
 
             // when & then
-            mockMvc.perform(patch("/api/mates/{memberId}/{postId}/complete", MEMBER_ID, POST_ID)
+            mockMvc.perform(patch("/api/mates/{postId}/complete", POST_ID)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
@@ -381,7 +381,7 @@ class MateStatusControllerTest {
                     .willThrow(new CustomException(NOT_CLOSED_STATUS_FOR_COMPLETION));
 
             // when & then
-            mockMvc.perform(patch("/api/mates/{memberId}/{postId}/complete", MEMBER_ID, POST_ID)
+            mockMvc.perform(patch("/api/mates/{postId}/complete", POST_ID)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
@@ -401,7 +401,7 @@ class MateStatusControllerTest {
                     .willThrow(new CustomException(MATE_POST_MAX_PARTICIPANTS_EXCEEDED));
 
             // when & then
-            mockMvc.perform(patch("/api/mates/{memberId}/{postId}/complete", MEMBER_ID, POST_ID)
+            mockMvc.perform(patch("/api/mates/{postId}/complete", POST_ID)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())

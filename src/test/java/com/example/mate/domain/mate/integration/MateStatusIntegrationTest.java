@@ -53,6 +53,7 @@ import org.springframework.transaction.annotation.Transactional;
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
 @Transactional
+@WithAuthMember
 public class MateStatusIntegrationTest {
 
     @Autowired
@@ -152,7 +153,6 @@ public class MateStatusIntegrationTest {
 
         @Test
         @DisplayName("모집중에서 모집완료로 상태 변경 성공")
-        @WithAuthMember
         void updateMatePostStatus_OpenToClosed_Success() throws Exception {
             // given
             List<Long> participantIds = Arrays.asList(participant1.getId(), participant2.getId());
@@ -176,7 +176,6 @@ public class MateStatusIntegrationTest {
 
         @Test
         @DisplayName("모집완료에서 모집중으로 상태 변경 성공")
-        @WithAuthMember
         void updateMatePostStatus_ClosedToOpen_Success() throws Exception {
             // given
             List<Long> participantIds = Collections.singletonList(participant1.getId());  // 최소 1명의 참여자 필요
@@ -200,7 +199,6 @@ public class MateStatusIntegrationTest {
 
         @Test
         @DisplayName("직관완료 상태로 직접 변경 시도시 실패")
-        @WithAuthMember
         void updateMatePostStatus_ToComplete_Failure() throws Exception {
             // given
             List<Long> participantIds = Arrays.asList(participant1.getId(), participant2.getId());
@@ -223,7 +221,6 @@ public class MateStatusIntegrationTest {
 
         @Test
         @DisplayName("이미 직관완료된 게시글 상태 변경 시도시 실패")
-        @WithAuthMember
         void updateMatePostStatus_AlreadyCompleted_Failure() throws Exception {
             // given
             List<Long> participantIds = Collections.singletonList(participant1.getId());  // 최소 1명의 참여자 필요
@@ -246,7 +243,6 @@ public class MateStatusIntegrationTest {
 
         @Test
         @DisplayName("존재하지 않는 게시글의 상태 변경 시도시 실패")
-        @WithAuthMember
         void updateMatePostStatus_PostNotFound_Failure() throws Exception {
             // given
             List<Long> participantIds = Arrays.asList(participant1.getId(), participant2.getId());
@@ -265,7 +261,6 @@ public class MateStatusIntegrationTest {
 
         @Test
         @DisplayName("모집완료로 변경 시 참여자 수가 최대 인원을 초과하면 실패")
-        @WithAuthMember
         void updateMatePostStatus_ExceedMaxParticipants_Failure() throws Exception {
             // given
             Member participant3 = createTestMember("part3");
@@ -293,7 +288,6 @@ public class MateStatusIntegrationTest {
 
         @Test
         @DisplayName("모집완료로 변경 시 존재하지 않는 참여자 ID가 포함되면 실패")
-        @WithAuthMember
         void updateMatePostStatus_InvalidParticipantId_Failure() throws Exception {
             // given
             List<Long> participantIds = Arrays.asList(participant1.getId(), 999L);
@@ -328,8 +322,8 @@ public class MateStatusIntegrationTest {
             );
 
             // when & then
-            mockMvc.perform(patch("/api/mates/{memberId}/{postId}/complete",
-                            testMember.getId(), closedPost.getId())
+            mockMvc.perform(patch("/api/mates/{postId}/complete",
+                             closedPost.getId())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsBytes(request)))
                     .andExpect(status().isOk())
@@ -352,6 +346,7 @@ public class MateStatusIntegrationTest {
 
         @Test
         @DisplayName("직관 완료 처리 실패 - 권한 없음")
+        @WithAuthMember(memberId = 2L)
         void completeVisit_Fail_NotAuthor() throws Exception {
             // given
             MatePostCompleteRequest request = new MatePostCompleteRequest(
@@ -359,8 +354,8 @@ public class MateStatusIntegrationTest {
             );
 
             // when & then
-            mockMvc.perform(patch("/api/mates/{memberId}/{postId}/complete",
-                            participant1.getId(), closedPost.getId())
+            mockMvc.perform(patch("/api/mates/{postId}/complete"
+                            ,closedPost.getId())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsBytes(request)))
                     .andExpect(status().isForbidden())
@@ -385,8 +380,8 @@ public class MateStatusIntegrationTest {
             );
 
             // when & then
-            mockMvc.perform(patch("/api/mates/{memberId}/{postId}/complete",
-                            testMember.getId(), openPost.getId())
+            mockMvc.perform(patch("/api/mates/{postId}/complete",
+                            openPost.getId())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsBytes(request)))
                     .andExpect(status().isBadRequest())
@@ -411,8 +406,8 @@ public class MateStatusIntegrationTest {
             );
 
             // when & then
-            mockMvc.perform(patch("/api/mates/{memberId}/{postId}/complete",
-                            testMember.getId(), futureClosedPost.getId())
+            mockMvc.perform(patch("/api/mates/{postId}/complete",
+                            futureClosedPost.getId())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsBytes(request)))
                     .andExpect(status().isForbidden())
@@ -437,8 +432,8 @@ public class MateStatusIntegrationTest {
         );
 
         // when & then
-        mockMvc.perform(patch("/api/mates/{memberId}/{postId}/complete",
-                        testMember.getId(), closedPost.getId())
+        mockMvc.perform(patch("/api/mates/{postId}/complete",
+                        closedPost.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsBytes(request)))
                 .andExpect(status().isBadRequest())
@@ -463,8 +458,8 @@ public class MateStatusIntegrationTest {
         );
 
         // when & then
-        mockMvc.perform(patch("/api/mates/{memberId}/{postId}/complete",
-                        testMember.getId(), closedPost.getId())
+        mockMvc.perform(patch("/api/mates/{postId}/complete",
+                         closedPost.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsBytes(request)))
                 .andExpect(status().isBadRequest())

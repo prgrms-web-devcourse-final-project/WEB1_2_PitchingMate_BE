@@ -130,32 +130,28 @@ public class MateController {
         return ResponseEntity.noContent().build();
     }
 
-    // TODO: @PathVariable Long memberId -> @AuthenticationPrincipal 로 변경
-    @PatchMapping("/{memberId}/{postId}/complete")
+    @PatchMapping("/{postId}/complete")
     @Operation(summary = "직관완료 처리", description = "메이트 구인글 채팅방에서 직관완료 처리를 진행합니다.")
-    public ResponseEntity<ApiResponse<MatePostCompleteResponse>> completeVisit(@Parameter(description = "작성자 ID (삭제 예정)", required = true)
-                                                                               @PathVariable Long memberId,
+    public ResponseEntity<ApiResponse<MatePostCompleteResponse>> completeVisit(  @AuthenticationPrincipal AuthMember member,
                                                                                @Parameter(description = "구인글 ID", required = true)
-                                                                               @PathVariable Long postId,
+                                                                                 @PathVariable Long postId,
                                                                                @Parameter(description = "실제 직관 참여자 리스트 ID", required = true)
-                                                                               @Valid @RequestBody MatePostCompleteRequest request) {
+                                                                                 @Valid @RequestBody MatePostCompleteRequest request) {
 
-        MatePostCompleteResponse response = mateService.completeVisit(memberId, postId, request);
+        MatePostCompleteResponse response = mateService.completeVisit(member.getMemberId(), postId, request);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    // TODO: @PathVariable Long memberId -> @AuthenticationPrincipal 로 변경
-    @PostMapping("/{memberId}/{postId}/reviews")
+    @PostMapping("/{postId}/reviews")
     @Operation(summary = "메이트 직관 후기 등록", description = "직관 타임라인 페이지에서 메이트에 대한 후기를 등록합니다.")
-    public ResponseEntity<ApiResponse<MateReviewCreateResponse>> createMateReview(@Parameter(description = "작성자 ID (삭제 예정)", required = true)
-                                                                                  @PathVariable Long memberId,
+    public ResponseEntity<ApiResponse<MateReviewCreateResponse>> createMateReview(  @AuthenticationPrincipal AuthMember member,
                                                                                   @Parameter(description = "구인글 ID", required = true)
-                                                                                  @PathVariable Long postId,
+                                                                                    @PathVariable Long postId,
                                                                                   @Parameter(description = "리뷰 대상자 ID와 평점 및 코멘트", required = true)
-                                                                                  @Valid @RequestBody MateReviewCreateRequest request
+                                                                                    @Valid @RequestBody MateReviewCreateRequest request
     ) {
 
-        MateReviewCreateResponse response = mateService.createReview(postId, memberId, request);
+        MateReviewCreateResponse response = mateService.createReview(postId, member.getMemberId(), request);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 }
