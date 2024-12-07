@@ -30,6 +30,7 @@ import com.example.mate.domain.goodsChat.entity.GoodsChatRoom;
 import com.example.mate.domain.goodsChat.repository.GoodsChatMessageRepository;
 import com.example.mate.domain.goodsChat.repository.GoodsChatPartRepository;
 import com.example.mate.domain.goodsChat.repository.GoodsChatRoomRepository;
+import com.example.mate.domain.member.dto.response.MemberSummaryResponse;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -309,6 +310,45 @@ public class GoodsChatIntegrationTest {
 
         List<GoodsChatPart> existingMember = chatPartRepository.findAllWithMemberByChatRoomId(chatRoomId);
         assertThat(existingMember).isEmpty();
+    }
+
+    @Test
+    @DisplayName("굿즈거래 채팅방 참여자 목록 조회 성공 통합 테스트")
+    @WithAuthMember(memberId = 2L)
+    void getGoodsChatRoomMembers_integration_test() throws Exception {
+        // given
+        Long chatRoomId = chatRoom.getId();
+        Long memberId = buyer.getId();
+
+        // when
+        MockHttpServletResponse response = mockMvc.perform(get("/api/goods/chat/{chatRoomId}/members", chatRoomId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("SUCCESS"))
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data").isArray())
+                .andReturn()
+                .getResponse();
+
+        response.setCharacterEncoding("UTF-8");
+
+        // then
+        ApiResponse<List<MemberSummaryResponse>> apiResponse = objectMapper.readValue(response.getContentAsString(), new TypeReference<>() {});
+        List<MemberSummaryResponse> actualMembers = apiResponse.getData();
+
+        // 실제 데이터 조회
+        List<GoodsChatPart> chatParts = chatPartRepository.findAllWithMemberByChatRoomId(chatRoomId);
+        List<Member> expectedMembers = chatParts.stream().map(GoodsChatPart::getMember).toList();
+
+        assertThat(actualMembers.size()).isEqualTo(expectedMembers.size());
+
+        for (int i = 0; i < actualMembers.size(); i++) {
+            MemberSummaryResponse actualMember = actualMembers.get(i);
+            Member expectedMember = expectedMembers.get(i);
+
+            assertThat(actualMember.getMemberId()).isEqualTo(expectedMember.getId());
+            assertThat(actualMember.getNickname()).isEqualTo(expectedMember.getNickname());
+            assertThat(actualMember.getImageUrl()).isEqualTo(expectedMember.getImageUrl());
+        }
     }
 
     private Member createMember(String name, String nickname, String email) {

@@ -31,6 +31,7 @@ import com.example.mate.domain.goodsChat.event.GoodsChatEventPublisher;
 import com.example.mate.domain.goodsChat.repository.GoodsChatMessageRepository;
 import com.example.mate.domain.goodsChat.repository.GoodsChatPartRepository;
 import com.example.mate.domain.goodsChat.repository.GoodsChatRoomRepository;
+import com.example.mate.domain.member.dto.response.MemberSummaryResponse;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
 import java.time.LocalDateTime;
@@ -672,6 +673,60 @@ class GoodsChatServiceTest {
                 verify(chatRoomRepository, never()).deleteById(chatRoomId);
                 verify(eventPublisher, never()).publish(any(GoodsChatEvent.class));
             }
+        }
+    }
+
+    @Nested
+    @DisplayName("채팅방 참여자 조회 테스트")
+    class GoodsChatRoomMemberTest {
+
+        @Test
+        @DisplayName("채팅방 참여자 조회 성공 - 참여자가 존재하는 경우 참여자 목록을 반환")
+        void getChatRoomMembers_should_return_list_of_participants() {
+            // given
+            Long memberId = 1L;
+            Long chatRoomId = 1L;
+            GoodsChatRoom goodsChatRoom = createGoodsChatRoom(chatRoomId, null);
+
+            Member member = createMember(memberId, "Test Member", "test_member");
+            Member anotherMember = createMember(2L, "Test Another Member", "test_another_member");
+
+            goodsChatRoom.addChatParticipant(member, Role.BUYER);
+            goodsChatRoom.addChatParticipant(anotherMember, Role.SELLER);
+
+            when(partRepository.existsById(new GoodsChatPartId(memberId, chatRoomId))).thenReturn(true);
+            when(partRepository.findAllWithMemberByChatRoomId(chatRoomId)).thenReturn(goodsChatRoom.getChatParts());
+
+            // when
+            List<MemberSummaryResponse> result = goodsChatService.getChatRoomMembers(memberId, chatRoomId);
+
+            // then
+            assertThat(result).hasSize(2);
+            assertThat(result.get(0).getMemberId()).isEqualTo(member.getId());
+            assertThat(result.get(0).getNickname()).isEqualTo(member.getNickname());
+            assertThat(result.get(1).getMemberId()).isEqualTo(anotherMember.getId());
+            assertThat(result.get(1).getNickname()).isEqualTo(anotherMember.getNickname());
+
+            verify(partRepository).existsById(new GoodsChatPartId(memberId, chatRoomId));
+            verify(partRepository).findAllWithMemberByChatRoomId(chatRoomId);
+        }
+
+        @Test
+        @DisplayName("채팅방 참여자 조회 실패 - 참여하지 않은 회원이 참여자 목록을 요청한 경우 예외 발생")
+        void getChatRoomMembers_should_throw_exception_for_non_participant() {
+            // given
+            Long memberId = 1L;
+            Long chatRoomId = 1L;
+
+            when(partRepository.existsById(new GoodsChatPartId(memberId, chatRoomId))).thenReturn(false);
+
+            // when & then
+            assertThatThrownBy(() -> goodsChatService.getChatRoomMembers(memberId, chatRoomId))
+                    .isInstanceOf(CustomException.class)
+                    .hasMessage(ErrorCode.GOODS_CHAT_NOT_FOUND_CHAT_PART.getMessage());
+
+            verify(partRepository).existsById(new GoodsChatPartId(memberId, chatRoomId));
+            verify(partRepository, never()).findAllWithMemberByChatRoomId(chatRoomId);
         }
     }
 }
