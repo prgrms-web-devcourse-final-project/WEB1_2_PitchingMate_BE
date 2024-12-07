@@ -23,6 +23,7 @@ import com.example.mate.domain.goodsChat.dto.response.GoodsChatMessageResponse;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatRoomResponse;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatRoomSummaryResponse;
 import com.example.mate.domain.goodsChat.entity.GoodsChatMessage;
+import com.example.mate.domain.goodsChat.entity.GoodsChatPart;
 import com.example.mate.domain.goodsChat.entity.GoodsChatPartId;
 import com.example.mate.domain.goodsChat.entity.GoodsChatRoom;
 import com.example.mate.domain.goodsChat.event.GoodsChatEvent;
@@ -561,6 +562,116 @@ class GoodsChatServiceTest {
             // then
             verify(partRepository).existsById(goodsChatPartId);
             verify(messageRepository, never()).getChatMessages(anyLong(), any(Pageable.class));
+        }
+
+        @Nested
+        @DisplayName("굿즈 채팅방 퇴장 테스트")
+        class GoodsChatroomLeaveTest {
+
+            @Test
+            @DisplayName("채팅방 퇴장 성공 - 남아있는 참여자가 있는 경우 퇴장 메시지 전송")
+            void deactivateGoodsChatPart_should_publish_leave_event_when_other_members_remain() {
+                // given
+                Long memberId = 1L;
+                Long chatRoomId = 1L;
+                GoodsChatRoom chatRoom = createGoodsChatRoom(chatRoomId, null);
+
+                Member member = createMember(memberId, "Test Member", "test_member");
+                Member anotherMember = createMember(2L, "Another Member", "another_member");
+
+                chatRoom.addChatParticipant(member, Role.BUYER);
+                chatRoom.addChatParticipant(anotherMember, Role.SELLER);
+
+                GoodsChatPart goodsChatPart = chatRoom.getChatParts().get(0);
+
+                when(memberRepository.findById(memberId)).thenReturn(Optional.of(member));
+                when(partRepository.findById(new GoodsChatPartId(memberId, chatRoomId))).thenReturn(Optional.of(goodsChatPart));
+
+                // when
+                goodsChatService.deactivateGoodsChatPart(memberId, chatRoomId);
+
+                // then
+                assertThat(goodsChatPart.getIsActive()).isFalse();
+                assertThat(chatRoom.getIsActive()).isFalse();
+                verify(memberRepository).findById(memberId);
+                verify(partRepository).findById(new GoodsChatPartId(memberId, chatRoomId));
+                verify(chatRoomRepository, never()).deleteById(chatRoomId);
+                verify(eventPublisher).publish(any(GoodsChatEvent.class));
+            }
+
+            @Test
+            @DisplayName("채팅방 퇴장 성공 - 채팅방에 남아있는 참여자가 없는 경우 채팅방 삭제")
+            void deactivateGoodsChatPart_should_delete_chat_room_when_no_members_remain() {
+                // given
+                Long memberId = 1L;
+                Long chatRoomId = 1L;
+                GoodsChatRoom chatRoom = createGoodsChatRoom(chatRoomId, null);
+
+                Member member = createMember(memberId, "Test Member", "test_member");
+                Member anotherMember = createMember(2L, "Another Member", "another_member");
+
+                chatRoom.addChatParticipant(member, Role.BUYER);
+                chatRoom.addChatParticipant(anotherMember, Role.SELLER);
+
+                GoodsChatPart goodsChatPart = chatRoom.getChatParts().get(0);
+
+                // 미리  anotherMember 는 채팅방을 나가도록 설정 (채팅방 비활성화)
+                chatRoom.getChatParts().get(1).leaveAndCheckRoomStatus();
+
+                when(memberRepository.findById(memberId)).thenReturn(Optional.of(member));
+                when(partRepository.findById(new GoodsChatPartId(memberId, chatRoomId))).thenReturn(Optional.of(goodsChatPart));
+
+                // when
+                goodsChatService.deactivateGoodsChatPart(memberId, chatRoomId);
+
+                // then
+                verify(memberRepository).findById(memberId);
+                verify(partRepository).findById(new GoodsChatPartId(memberId, chatRoomId));
+                verify(chatRoomRepository).deleteById(chatRoomId);
+                verify(eventPublisher, never()).publish(any(GoodsChatEvent.class));
+            }
+
+            @Test
+            @DisplayName("채팅방 퇴장 실패 - 존재하지 않는 회원일 경우 예외 발생")
+            void deactivateGoodsChatPart_should_throw_exception_when_member_not_found() {
+                // given
+                Long memberId = 1L;
+                Long chatRoomId = 1L;
+
+                when(memberRepository.findById(memberId)).thenReturn(Optional.empty());
+
+                // when & then
+                assertThatThrownBy(() -> goodsChatService.deactivateGoodsChatPart(memberId, chatRoomId))
+                        .isInstanceOf(CustomException.class)
+                        .hasMessage(ErrorCode.MEMBER_NOT_FOUND_BY_ID.getMessage());
+
+                verify(memberRepository).findById(memberId);
+                verify(partRepository, never()).findById(any(GoodsChatPartId.class));
+                verify(chatRoomRepository, never()).deleteById(anyLong());
+                verify(eventPublisher, never()).publish(any(GoodsChatEvent.class));
+            }
+
+            @Test
+            @DisplayName("채팅방 퇴장 실패 - 참여하지 않은 회원이 퇴장을 시도할 경우 예외 발생")
+            void deactivateGoodsChatPart_should_throw_exception_when_member_not_in_chatroom() {
+                // given
+                Long memberId = 1L;
+                Long chatRoomId = 1L;
+                Member member = createMember(memberId, "Test Member", "test_member");
+
+                when(memberRepository.findById(memberId)).thenReturn(Optional.of(member));
+                when(partRepository.findById(new GoodsChatPartId(memberId, chatRoomId))).thenReturn(Optional.empty());
+
+                // when & then
+                assertThatThrownBy(() -> goodsChatService.deactivateGoodsChatPart(memberId, chatRoomId))
+                        .isInstanceOf(CustomException.class)
+                        .hasMessage(ErrorCode.GOODS_CHAT_NOT_FOUND_CHAT_PART.getMessage());
+
+                verify(memberRepository).findById(memberId);
+                verify(partRepository).findById(new GoodsChatPartId(memberId, chatRoomId));
+                verify(chatRoomRepository, never()).deleteById(chatRoomId);
+                verify(eventPublisher, never()).publish(any(GoodsChatEvent.class));
+            }
         }
     }
 }

@@ -1,6 +1,7 @@
 package com.example.mate.domain.goodsChat.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -24,8 +25,10 @@ import com.example.mate.domain.goodsChat.dto.response.GoodsChatMessageResponse;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatRoomResponse;
 import com.example.mate.domain.goodsChat.entity.GoodsChatMessage;
 import com.example.mate.domain.goodsChat.entity.GoodsChatPart;
+import com.example.mate.domain.goodsChat.entity.GoodsChatPartId;
 import com.example.mate.domain.goodsChat.entity.GoodsChatRoom;
 import com.example.mate.domain.goodsChat.repository.GoodsChatMessageRepository;
+import com.example.mate.domain.goodsChat.repository.GoodsChatPartRepository;
 import com.example.mate.domain.goodsChat.repository.GoodsChatRoomRepository;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
@@ -34,6 +37,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -58,6 +62,7 @@ public class GoodsChatIntegrationTest {
     @Autowired private MemberRepository memberRepository;
     @Autowired private GoodsPostRepository goodsPostRepository;
     @Autowired private GoodsChatRoomRepository chatRoomRepository;
+    @Autowired private GoodsChatPartRepository chatPartRepository;
     @Autowired private GoodsChatMessageRepository messageRepository;
     @Autowired private ObjectMapper objectMapper;
     @Autowired private JdbcTemplate jdbcTemplate;
@@ -263,6 +268,48 @@ public class GoodsChatIntegrationTest {
         }
     }
 
+    @Test
+    @DisplayName("굿즈거래 채팅방 나가기 통합 테스트 - 채팅방에 한명이 남을 경우 채팅방과 당사자는 비활성화 된다.")
+    @WithAuthMember(memberId = 2L)
+    void leaveGoodsChatRoom_integration_test_single_member_left() throws Exception {
+        // given
+        Long chatRoomId = chatRoom.getId();
+        Long memberId = buyer.getId();
+
+        // when
+        mockMvc.perform(delete("/api/goods/chat/{chatRoomId}", chatRoomId)).andExpect(status().isNoContent());
+
+        // then
+        GoodsChatRoom goodsChatRoom = chatRoomRepository.findById(chatRoomId).orElseThrow();
+        assertThat(goodsChatRoom.isRoomActive()).isFalse();
+
+        GoodsChatPart goodsChatPart = chatPartRepository.findById(new GoodsChatPartId(memberId, chatRoomId)).orElseThrow();
+        assertThat(goodsChatPart.getIsActive()).isFalse();
+    }
+
+    @Test
+    @DisplayName("굿즈거래 채팅방 나가기 통합 테스트 - 채팅방에 아무도 남지 않을 경우 채팅방과 채팅참여, 채팅은 모두 삭제된다.")
+    @WithAuthMember(memberId = 2L)
+    void leaveGoodsChatRoom_integration_test_no_participants_left() throws Exception {
+        // given
+        Long chatRoomId = chatRoom.getId();
+        Long memberId = buyer.getId();
+
+        GoodsChatPart goodsChatPart = chatRoom.getChatParts().get(1);
+        goodsChatPart.leaveAndCheckRoomStatus();
+
+        chatRoomRepository.saveAndFlush(chatRoom);
+
+        // when
+        mockMvc.perform(delete("/api/goods/chat/{chatRoomId}", chatRoomId)).andExpect(status().isNoContent());
+
+        // then
+        Optional<GoodsChatRoom> goodsChatRoom = chatRoomRepository.findById(chatRoomId);
+        assertThat(goodsChatRoom).isEmpty();
+
+        List<GoodsChatPart> existingMember = chatPartRepository.findAllWithMemberByChatRoomId(chatRoomId);
+        assertThat(existingMember).isEmpty();
+    }
 
     private Member createMember(String name, String nickname, String email) {
         return memberRepository.save(Member.builder()

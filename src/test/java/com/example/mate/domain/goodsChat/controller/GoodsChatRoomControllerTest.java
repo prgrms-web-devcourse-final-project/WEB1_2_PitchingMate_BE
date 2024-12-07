@@ -1,7 +1,9 @@
 package com.example.mate.domain.goodsChat.controller;
 
+import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -301,5 +303,21 @@ class GoodsChatRoomControllerTest {
                 .andExpect(jsonPath("$.data.content[1].message").value(firstMessage.getMessage()));
 
         verify(goodsChatService).getMessagesForChatRoom(chatRoomId, memberId, pageable);
+    }
+
+    @Test
+    @DisplayName("굿즈거래 채팅방 나가기 성공")
+    void leaveGoodsChatRoom_should_deactivate_chat_part_and_return_no_content() throws Exception {
+        // given
+        Long memberId = 1L;
+        Long chatRoomId = 1L;
+
+        willDoNothing().given(goodsChatService).deactivateGoodsChatPart(memberId, chatRoomId);
+
+        // when & then
+        mockMvc.perform(delete("/api/goods/chat/{chatRoomId}", chatRoomId))
+                .andExpect(status().isNoContent());
+
+        verify(goodsChatService).deactivateGoodsChatPart(memberId, chatRoomId);
     }
 }
