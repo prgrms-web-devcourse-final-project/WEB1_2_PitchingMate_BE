@@ -37,7 +37,7 @@ public class MateChatRoomController {
     }
 
     @GetMapping("/me")
-    @Operation(summary = "내 채팅방 목록 조회", description = "사용자의 채팅방 목록을 조회합니다.")
+    @Operation(summary = "채팅방 목록 조회", description = "사용자의 채팅방 목록을 조회합니다.")
     public ResponseEntity<ApiResponse<PageResponse<MateChatRoomListResponse>>> getMyChatRooms(
             @Parameter(description = "페이지 정보") @PageableDefault Pageable pageable,
                                                     @AuthenticationPrincipal AuthMember member
@@ -51,11 +51,11 @@ public class MateChatRoomController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    @PostMapping("chat/{chatroomId}/join")
-    @Operation(summary = "내 채팅방 목록 -> 채팅방 입장", description = "채팅 목록 페이지에서 채팅방으로 입장")
+    @PostMapping("/{chatroomId}/join")
+    @Operation(summary = "채팅방 목록 -> 채팅방 입장", description = "채팅 목록 페이지에서 채팅방으로 입장")
     public ResponseEntity<ApiResponse<MateChatRoomResponse>> joinExistingChatRoom(
             @Parameter(description = "채팅방 ID") @PathVariable Long chatroomId,
-                                                    @AuthenticationPrincipal AuthMember member
+            @AuthenticationPrincipal AuthMember member
     ) {
         MateChatRoomResponse response = chatRoomService.joinExistingChatRoom(chatroomId, member.getMemberId());
         return ResponseEntity.ok(ApiResponse.success(response));
