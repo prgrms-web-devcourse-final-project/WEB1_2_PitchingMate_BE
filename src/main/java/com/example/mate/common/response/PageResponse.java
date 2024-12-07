@@ -38,4 +38,22 @@ public class PageResponse<T> {
                 .pageSize(page.getSize())
                 .build();
     }
+
+    /**
+     * Page 객체를 기반으로 PageResponse 를 생성하는 팩토리 메서드
+     *
+     * @param page    Spring Data JPA 의 Page 객체
+     * @param <T>     변환된 데이터 타입
+     * @return PageResponse
+     */
+    public static <T> PageResponse<T> from(Page<T> page) {
+        return PageResponse.<T>builder()
+                .content(page.getContent())
+                .totalPages(page.getTotalPages())
+                .totalElements(page.getTotalElements())
+                .hasNext(page.hasNext())
+                .pageNumber(page.getNumber())
+                .pageSize(page.getSize())
+                .build();
+    }
 }
