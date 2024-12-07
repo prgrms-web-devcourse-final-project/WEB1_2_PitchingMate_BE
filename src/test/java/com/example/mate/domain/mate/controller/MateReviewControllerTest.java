@@ -1,12 +1,5 @@
 package com.example.mate.domain.mate.controller;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import com.example.mate.common.security.filter.JwtCheckFilter;
 import com.example.mate.config.WithAuthMember;
 import com.example.mate.domain.constant.Rating;
@@ -24,6 +17,13 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(MateController.class)
 @MockBean(JpaMetamodelMappingContext.class)
@@ -97,7 +97,6 @@ class MateReviewControllerTest {
         @DisplayName("메이트 직관 후기 작성 실패 - 리뷰 대상자 ID 누락")
         void createMateReview_failWithoutRevieweeId() throws Exception {
             // given
-            Long memberId = 1L;
             Long postId = 1L;
             MateReviewCreateRequest request = MateReviewCreateRequest.builder()
                     .rating(Rating.GOOD)
