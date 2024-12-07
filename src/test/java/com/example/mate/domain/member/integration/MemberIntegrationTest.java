@@ -1,17 +1,7 @@
 package com.example.mate.domain.member.integration;
 
-import static com.example.mate.domain.match.entity.MatchStatus.SCHEDULED;
-import static com.example.mate.domain.mate.entity.Status.CLOSED;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import com.example.mate.config.WithAuthMember;
 import com.example.mate.common.security.util.JwtUtil;
+import com.example.mate.config.WithAuthMember;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.constant.Rating;
 import com.example.mate.domain.goods.dto.LocationInfo;
@@ -23,26 +13,20 @@ import com.example.mate.domain.goods.repository.GoodsPostRepository;
 import com.example.mate.domain.goods.repository.GoodsReviewRepository;
 import com.example.mate.domain.match.entity.Match;
 import com.example.mate.domain.match.repository.MatchRepository;
-import com.example.mate.domain.mate.entity.Age;
-import com.example.mate.domain.mate.entity.MatePost;
-import com.example.mate.domain.mate.entity.MateReview;
-import com.example.mate.domain.mate.entity.TransportType;
-import com.example.mate.domain.mate.entity.Visit;
-import com.example.mate.domain.mate.entity.VisitPart;
+import com.example.mate.domain.mate.entity.*;
 import com.example.mate.domain.mate.repository.MateRepository;
 import com.example.mate.domain.mate.repository.MateReviewRepository;
 import com.example.mate.domain.mate.repository.VisitPartRepository;
 import com.example.mate.domain.mate.repository.VisitRepository;
 import com.example.mate.domain.member.dto.request.JoinRequest;
 import com.example.mate.domain.member.dto.request.MemberInfoUpdateRequest;
+import com.example.mate.domain.member.dto.request.MemberLoginRequest;
 import com.example.mate.domain.member.entity.Follow;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.FollowRepository;
 import com.example.mate.domain.member.repository.MemberRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManager;
-import java.time.LocalDateTime;
-import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -57,6 +41,16 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+import static com.example.mate.domain.match.entity.MatchStatus.SCHEDULED;
+import static com.example.mate.domain.mate.entity.Status.CLOSED;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
@@ -436,6 +430,51 @@ class MemberIntegrationTest {
             mockMvc.perform(delete("/api/members/me"))
                     .andDo(print())
                     .andExpect(status().isNoContent());
+        }
+    }
+
+    @Nested
+    @DisplayName("회원 로그인")
+    class LoginMember {
+
+        @Test
+        @DisplayName("회원 로그인 성공")
+        void login_member_success() throws Exception {
+            // given
+            MemberLoginRequest request = MemberLoginRequest.builder()
+                    .email("tester@example.com")
+                    .build();
+
+            // when & then
+            mockMvc.perform(post("/api/members/login")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value("SUCCESS"))
+                    .andExpect(jsonPath("$.data.memberId").value("1"))
+                    .andExpect(jsonPath("$.data.nickname").value("tester"))
+                    .andExpect(jsonPath("$.data.teamId").value("1"))
+                    .andExpect(jsonPath("$.data.gender").value("남자"))
+                    .andExpect(jsonPath("$.data.age").value("20"))
+                    .andDo(print());
+        }
+
+        @Test
+        @DisplayName("회원 로그인 실패 - 존재하지 않는 이메일")
+        void login_member_fail_non_exists_email() throws Exception {
+            // given
+            MemberLoginRequest request = MemberLoginRequest.builder()
+                    .email("test10000@example.com")
+                    .build();
+
+            // when & then
+            mockMvc.perform(post("/api/members/login")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andDo(print())
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.status").value("ERROR"))
+                    .andExpect(jsonPath("$.message").value("해당 이메일의 회원 정보를 찾을 수 없습니다."));
         }
     }
 }

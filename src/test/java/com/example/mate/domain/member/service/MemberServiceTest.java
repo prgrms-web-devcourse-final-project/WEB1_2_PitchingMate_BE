@@ -2,6 +2,7 @@ package com.example.mate.domain.member.service;
 
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
+import com.example.mate.common.security.util.JwtUtil;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.constant.Rating;
 import com.example.mate.domain.constant.TeamInfo;
@@ -17,7 +18,9 @@ import com.example.mate.domain.mate.repository.MateReviewRepository;
 import com.example.mate.domain.mate.repository.VisitPartRepository;
 import com.example.mate.domain.member.dto.request.JoinRequest;
 import com.example.mate.domain.member.dto.request.MemberInfoUpdateRequest;
+import com.example.mate.domain.member.dto.request.MemberLoginRequest;
 import com.example.mate.domain.member.dto.response.JoinResponse;
+import com.example.mate.domain.member.dto.response.MemberLoginResponse;
 import com.example.mate.domain.member.dto.response.MemberProfileResponse;
 import com.example.mate.domain.member.dto.response.MyProfileResponse;
 import com.example.mate.domain.member.entity.Follow;
@@ -71,6 +74,8 @@ class MemberServiceTest {
     @Mock
     private FileService fileService;
 
+    @Mock
+    private JwtUtil jwtUtil;
 
     private Member member;
     private Member member2;
@@ -472,6 +477,53 @@ class MemberServiceTest {
                     .hasMessage(ErrorCode.MEMBER_NOT_FOUND_BY_ID.getMessage());
 
             verify(memberRepository).findById(memberId);
+        }
+    }
+
+    @Nested
+    @DisplayName("회원 로그인")
+    class LoginMember {
+
+        @Test
+        @DisplayName("회원 로그인 성공")
+        void login_member_success() {
+            // given
+            String email = "test@example.com";
+            MemberLoginRequest request = MemberLoginRequest.builder()
+                    .email("test@example.com")
+                    .build();
+
+            given(memberRepository.findByEmail(email)).willReturn(Optional.of(member));
+
+            // when
+            MemberLoginResponse response = memberService.loginByEmail(request);
+
+            // then
+            assertThat(response).isNotNull();
+            assertThat(response.getNickname()).isEqualTo("tester");
+            assertThat(response.getAge()).isEqualTo(30);
+            assertThat(response.getTeamId()).isEqualTo(1L);
+
+            verify(memberRepository).findByEmail(member.getEmail());
+        }
+
+        @Test
+        @DisplayName("회원 로그인 실패 - 존재하지 않는 이메일")
+        void login_member_fail_non_exists_email() {
+            // given
+            String email = "test10@example.com";
+            MemberLoginRequest request = MemberLoginRequest.builder()
+                    .email("test10@example.com")
+                    .build();
+
+            given(memberRepository.findByEmail(email)).willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> memberService.loginByEmail(request))
+                    .isInstanceOf(CustomException.class)
+                    .hasMessage(ErrorCode.MEMBER_NOT_FOUND_BY_EMAIL.getMessage());
+
+            verify(memberRepository).findByEmail(email);
         }
     }
 }

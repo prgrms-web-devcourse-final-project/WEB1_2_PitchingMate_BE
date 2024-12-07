@@ -1,25 +1,14 @@
 package com.example.mate.domain.member.controller;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.BDDMockito.willDoNothing;
-import static org.mockito.BDDMockito.willThrow;
-import static org.mockito.Mockito.verify;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
 import com.example.mate.common.security.filter.JwtCheckFilter;
 import com.example.mate.config.WithAuthMember;
 import com.example.mate.domain.member.dto.request.JoinRequest;
 import com.example.mate.domain.member.dto.request.MemberInfoUpdateRequest;
+import com.example.mate.domain.member.dto.request.MemberLoginRequest;
 import com.example.mate.domain.member.dto.response.JoinResponse;
+import com.example.mate.domain.member.dto.response.MemberLoginResponse;
 import com.example.mate.domain.member.dto.response.MemberProfileResponse;
 import com.example.mate.domain.member.dto.response.MyProfileResponse;
 import com.example.mate.domain.member.service.MemberService;
@@ -36,6 +25,14 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.*;
+import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(MemberController.class)
 @MockBean(JpaMetamodelMappingContext.class)
@@ -380,6 +377,46 @@ class MemberControllerTest {
                     .andExpect(jsonPath("$.message").value("해당 ID의 회원 정보를 찾을 수 없습니다"));
 
             verify(memberService).deleteMember(memberId);
+        }
+    }
+
+    @Nested
+    @DisplayName("회원 로그인")
+    class LoginMember {
+
+        @Test
+        @DisplayName("회원 로그인 성공")
+        void login_member_success() throws Exception {
+            // given
+            MemberLoginRequest request = MemberLoginRequest.builder()
+                    .email("test@example.com")
+                    .build();
+
+            MemberLoginResponse response = MemberLoginResponse.builder()
+                    .memberId(1L)
+                    .grantType("Bearer")
+                    .accessToken("accessToken")
+                    .refreshToken("refreshToken")
+                    .nickname("tester")
+                    .teamId(1L)
+                    .gender("남자")
+                    .age(20)
+                    .build();
+
+            given(memberService.loginByEmail(any(MemberLoginRequest.class))).willReturn(response);
+
+            // when & then
+            mockMvc.perform(post("/api/members/login")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value("SUCCESS"))
+                    .andExpect(jsonPath("$.data.memberId").value("1"))
+                    .andExpect(jsonPath("$.data.nickname").value("tester"))
+                    .andExpect(jsonPath("$.data.teamId").value("1"))
+                    .andExpect(jsonPath("$.data.gender").value("남자"))
+                    .andExpect(jsonPath("$.data.age").value("20"))
+                    .andDo(print());
         }
     }
 }

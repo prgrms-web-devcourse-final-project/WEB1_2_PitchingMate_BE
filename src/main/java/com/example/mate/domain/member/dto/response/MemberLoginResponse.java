@@ -16,6 +16,10 @@ public class MemberLoginResponse {
     private final String grantType;
     private final String accessToken;
     private final String refreshToken;
+    private final String nickname;
+    private final Long teamId;
+    private final String gender;
+    private final Integer age;
 
     public static MemberLoginResponse from(Member member, JwtToken jwtToken) {
         return MemberLoginResponse.builder()
@@ -23,6 +27,10 @@ public class MemberLoginResponse {
                 .grantType(jwtToken.getGrantType())
                 .accessToken(jwtToken.getAccessToken())
                 .refreshToken(jwtToken.getRefreshToken())
+                .nickname(member.getNickname())
+                .teamId(member.getTeamId())
+                .gender(member.getGender().getValue())
+                .age(member.getAge())
                 .build();
     }
 }
