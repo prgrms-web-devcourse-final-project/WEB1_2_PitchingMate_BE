@@ -1,7 +1,5 @@
 package com.example.mate.domain.member.controller;
 
-import static com.example.mate.common.response.PageResponse.validatePageable;
-
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
 import com.example.mate.common.response.ApiResponse;
@@ -38,7 +36,6 @@ public class ProfileController {
             @Parameter(description = "회원 ID") @PathVariable Long memberId,
             @Parameter(description = "페이지 요청 정보") @ValidPageable Pageable pageable
     ) {
-        validatePageable(pageable);
         PageResponse<MyReviewResponse> response = profileService.getGoodsReviewPage(memberId, pageable);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
@@ -49,7 +46,6 @@ public class ProfileController {
             @Parameter(description = "회원 ID") @PathVariable Long memberId,
             @Parameter(description = "페이지 요청 정보") @ValidPageable Pageable pageable
     ) {
-        validatePageable(pageable);
         PageResponse<MyReviewResponse> response = profileService.getMateReviewPage(memberId, pageable);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
@@ -60,7 +56,6 @@ public class ProfileController {
             @Parameter(description = "회원 로그인 정보") @AuthenticationPrincipal AuthMember authMember,
             @Parameter(description = "페이지 요청 정보") @ValidPageable Pageable pageable
     ) {
-        validatePageable(pageable);
         PageResponse<MyVisitResponse> response = profileService.getMyVisitPage(authMember.getMemberId(), pageable);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
@@ -71,7 +66,6 @@ public class ProfileController {
             @Parameter(description = "회원 ID") @PathVariable Long memberId,
             @Parameter(description = "페이지 요청 정보") @ValidPageable Pageable pageable
     ) {
-        pageable = validatePageable(pageable);
         PageResponse<MyGoodsRecordResponse> response = profileService.getSoldGoodsPage(memberId, pageable);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
@@ -86,7 +80,6 @@ public class ProfileController {
         if (!authMember.getMemberId().equals(memberId)) {
             throw new CustomException(ErrorCode.MEMBER_UNAUTHORIZED_ACCESS);
         }
-        pageable = validatePageable(pageable);
         PageResponse<MyGoodsRecordResponse> response = profileService.getBoughtGoodsPage(memberId, pageable);
         return ResponseEntity.ok(ApiResponse.success(response));
     }

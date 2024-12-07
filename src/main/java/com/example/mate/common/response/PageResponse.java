@@ -6,8 +6,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 
 @Getter
 @Builder
@@ -39,15 +37,5 @@ public class PageResponse<T> {
                 .pageNumber(page.getNumber())
                 .pageSize(page.getSize())
                 .build();
-    }
-
-    // Pageable 검증 메서드
-    public static Pageable validatePageable(Pageable pageable) {
-        // pageNumber 검증: 0보다 작은 값은 0으로 처리
-        int pageNumber = Math.max(pageable.getPageNumber(), 0);
-
-        // pageSize 검증: 0 이하이면 기본값 10으로 설정
-        int pageSize = pageable.getPageSize() <= 0 ? 10 : pageable.getPageSize();
-        return PageRequest.of(pageNumber, pageSize, pageable.getSort());
     }
 }

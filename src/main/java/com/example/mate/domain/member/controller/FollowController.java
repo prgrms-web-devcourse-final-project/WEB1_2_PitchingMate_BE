@@ -1,7 +1,5 @@
 package com.example.mate.domain.member.controller;
 
-import static com.example.mate.common.response.PageResponse.validatePageable;
-
 import com.example.mate.common.response.ApiResponse;
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.common.security.auth.AuthMember;
@@ -54,7 +52,6 @@ public class FollowController {
             @Parameter(description = "특정 회원 ID") @PathVariable Long memberId,
             @Parameter(description = "페이지 요청 정보") @ValidPageable Pageable pageable
     ) {
-        pageable = validatePageable(pageable);
         PageResponse<MemberSummaryResponse> response = followService.getFollowingsPage(memberId, pageable);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
@@ -65,7 +62,6 @@ public class FollowController {
             @Parameter(description = "특정 회원 ID") @PathVariable Long memberId,
             @Parameter(description = "페이지 요청 정보") @ValidPageable Pageable pageable
     ) {
-        pageable = validatePageable(pageable);
         PageResponse<MemberSummaryResponse> response = followService.getFollowersPage(memberId, pageable);
 
         return ResponseEntity.ok(ApiResponse.success(response));
