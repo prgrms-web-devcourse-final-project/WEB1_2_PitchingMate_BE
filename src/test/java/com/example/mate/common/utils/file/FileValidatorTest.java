@@ -1,7 +1,8 @@
-package com.example.mate.domain.file;
+package com.example.mate.common.utils.file;
 
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
+import com.example.mate.domain.file.FileValidator;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

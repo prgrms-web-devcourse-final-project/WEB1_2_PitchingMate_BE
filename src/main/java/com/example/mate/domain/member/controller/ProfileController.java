@@ -1,11 +1,12 @@
 package com.example.mate.domain.member.controller;
 
+import static com.example.mate.common.response.PageResponse.validatePageable;
+
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
 import com.example.mate.common.response.ApiResponse;
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.common.security.auth.AuthMember;
-import com.example.mate.common.validator.ValidPageable;
 import com.example.mate.domain.member.dto.response.MyGoodsRecordResponse;
 import com.example.mate.domain.member.dto.response.MyReviewResponse;
 import com.example.mate.domain.member.dto.response.MyVisitResponse;
@@ -15,6 +16,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,8 +36,9 @@ public class ProfileController {
     @GetMapping("/{memberId}/review/goods")
     public ResponseEntity<ApiResponse<PageResponse<MyReviewResponse>>> getGoodsReviews(
             @Parameter(description = "회원 ID") @PathVariable Long memberId,
-            @Parameter(description = "페이지 요청 정보") @ValidPageable Pageable pageable
+            @Parameter(description = "페이지 요청 정보") @PageableDefault Pageable pageable
     ) {
+        validatePageable(pageable);
         PageResponse<MyReviewResponse> response = profileService.getGoodsReviewPage(memberId, pageable);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
@@ -44,8 +47,9 @@ public class ProfileController {
     @GetMapping("{memberId}/review/mate")
     public ResponseEntity<ApiResponse<PageResponse<MyReviewResponse>>> getMateReviews(
             @Parameter(description = "회원 ID") @PathVariable Long memberId,
-            @Parameter(description = "페이지 요청 정보") @ValidPageable Pageable pageable
+            @Parameter(description = "페이지 요청 정보") @PageableDefault Pageable pageable
     ) {
+        validatePageable(pageable);
         PageResponse<MyReviewResponse> response = profileService.getMateReviewPage(memberId, pageable);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
@@ -54,8 +58,9 @@ public class ProfileController {
     @GetMapping("/timeline")
     public ResponseEntity<ApiResponse<PageResponse<MyVisitResponse>>> getMyVisits(
             @Parameter(description = "회원 로그인 정보") @AuthenticationPrincipal AuthMember authMember,
-            @Parameter(description = "페이지 요청 정보") @ValidPageable Pageable pageable
+            @Parameter(description = "페이지 요청 정보") @PageableDefault Pageable pageable
     ) {
+        validatePageable(pageable);
         PageResponse<MyVisitResponse> response = profileService.getMyVisitPage(authMember.getMemberId(), pageable);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
@@ -64,8 +69,9 @@ public class ProfileController {
     @GetMapping("/{memberId}/goods/sold")
     public ResponseEntity<ApiResponse<PageResponse<MyGoodsRecordResponse>>> getSoldGoods(
             @Parameter(description = "회원 ID") @PathVariable Long memberId,
-            @Parameter(description = "페이지 요청 정보") @ValidPageable Pageable pageable
+            @Parameter(description = "페이지 요청 정보") @PageableDefault Pageable pageable
     ) {
+        pageable = validatePageable(pageable);
         PageResponse<MyGoodsRecordResponse> response = profileService.getSoldGoodsPage(memberId, pageable);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
@@ -74,12 +80,13 @@ public class ProfileController {
     @GetMapping("/{memberId}/goods/bought")
     public ResponseEntity<ApiResponse<PageResponse<MyGoodsRecordResponse>>> getBoughtGoods(
             @Parameter(description = "회원 ID") @PathVariable Long memberId,
-            @Parameter(description = "페이지 요청 정보") @ValidPageable Pageable pageable,
+            @Parameter(description = "페이지 요청 정보") @PageableDefault Pageable pageable,
             @Parameter(description = "회원 로그인 정보") @AuthenticationPrincipal AuthMember authMember
     ) {
         if (!authMember.getMemberId().equals(memberId)) {
             throw new CustomException(ErrorCode.MEMBER_UNAUTHORIZED_ACCESS);
         }
+        pageable = validatePageable(pageable);
         PageResponse<MyGoodsRecordResponse> response = profileService.getBoughtGoodsPage(memberId, pageable);
         return ResponseEntity.ok(ApiResponse.success(response));
     }

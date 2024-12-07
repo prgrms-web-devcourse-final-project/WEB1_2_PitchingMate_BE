@@ -1,6 +1,6 @@
 package com.example.mate.domain.goods.dto.request;
 
-import com.example.mate.common.validator.ValidEnum;
+import com.example.mate.common.utils.validator.ValidEnum;
 import com.example.mate.domain.goods.dto.LocationInfo;
 import com.example.mate.domain.goods.entity.Category;
 import com.example.mate.domain.goods.entity.GoodsPost;

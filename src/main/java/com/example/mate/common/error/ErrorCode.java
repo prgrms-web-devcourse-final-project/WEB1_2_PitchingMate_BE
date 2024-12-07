@@ -15,7 +15,6 @@ public enum ErrorCode {
     AUTH_UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "A002", "인증에 실패했습니다. 유효한 토큰을 제공해주세요."),
     AUTH_FORBIDDEN(HttpStatus.FORBIDDEN, "A003", "접근 권한이 없습니다. 권한을 확인해주세요."),
     UNAUTHORIZED_USER(HttpStatus.UNAUTHORIZED, "A004", "인증되지 않은 사용자입니다"),
-    INVALID_AUTH_TOKEN(HttpStatus.BAD_REQUEST, "A005", "잘못된 토큰 형식입니다."),
 
     // Team
     TEAM_NOT_FOUND(HttpStatus.NOT_FOUND, "T001", "팀을 찾을 수 없습니다"),

@@ -1,5 +1,7 @@
 package com.example.mate.common.config;
 
+//import com.example.mate.common.security.filter.JwtCheckFilter;
+
 import com.example.mate.common.security.filter.JwtCheckFilter;
 import java.util.List;
 import lombok.RequiredArgsConstructor;

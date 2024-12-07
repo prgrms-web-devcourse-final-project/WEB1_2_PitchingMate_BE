@@ -3,7 +3,6 @@ package com.example.mate.domain.goods.controller;
 import com.example.mate.common.response.ApiResponse;
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.common.security.auth.AuthMember;
-import com.example.mate.common.validator.ValidPageable;
 import com.example.mate.domain.goods.dto.request.GoodsPostRequest;
 import com.example.mate.domain.goods.dto.request.GoodsReviewRequest;
 import com.example.mate.domain.goods.dto.response.GoodsPostResponse;
@@ -15,6 +14,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
@@ -84,7 +84,7 @@ public class GoodsController {
     public ResponseEntity<ApiResponse<PageResponse<GoodsPostSummaryResponse>>> getGoodsPosts(
             @Parameter(description = "팀 ID") @RequestParam(required = false) Long teamId,
             @Parameter(description = "카테고리") @RequestParam(required = false) String category,
-            @Parameter(description = "페이징 정보", required = true) @ValidPageable Pageable pageable
+            @Parameter(description = "페이징 정보", required = true) @PageableDefault Pageable pageable
     ) {
         PageResponse<GoodsPostSummaryResponse> pageGoodsPosts = goodsService.getPageGoodsPosts(teamId, category, pageable);
 

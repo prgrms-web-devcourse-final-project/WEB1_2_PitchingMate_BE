@@ -4,6 +4,7 @@ import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.goods.entity.GoodsPost;
+import com.example.mate.domain.goods.entity.GoodsPostImage;
 import com.example.mate.domain.goods.entity.Status;
 import com.example.mate.domain.goods.repository.GoodsPostRepository;
 import com.example.mate.domain.goods.repository.GoodsReviewRepositoryCustom;
@@ -55,7 +56,14 @@ public class ProfileService {
         List<MyGoodsRecordResponse> content = soldGoodsPage.getContent().stream()
                 .map(this::convertToRecordResponse).toList();
 
-        return PageResponse.from(soldGoodsPage, content);
+        return PageResponse.<MyGoodsRecordResponse>builder()
+                .content(content)
+                .totalPages(soldGoodsPage.getTotalPages())
+                .totalElements(soldGoodsPage.getTotalElements())
+                .hasNext(soldGoodsPage.hasNext())
+                .pageNumber(soldGoodsPage.getNumber())
+                .pageSize(soldGoodsPage.getSize())
+                .build();
     }
 
     // 굿즈 구매기록 페이징 조회
@@ -69,7 +77,14 @@ public class ProfileService {
         List<MyGoodsRecordResponse> content = boughtGoodsPage.getContent().stream()
                 .map(this::convertToRecordResponse).toList();
 
-        return PageResponse.from(boughtGoodsPage, content);
+        return PageResponse.<MyGoodsRecordResponse>builder()
+                .content(content)
+                .totalPages(boughtGoodsPage.getTotalPages())
+                .totalElements(boughtGoodsPage.getTotalElements())
+                .hasNext(boughtGoodsPage.hasNext())
+                .pageNumber(boughtGoodsPage.getNumber())
+                .pageSize(boughtGoodsPage.getSize())
+                .build();
     }
 
     private void validateMemberId(Long memberId) {
@@ -90,7 +105,14 @@ public class ProfileService {
         Page<MyReviewResponse> mateReviewPage = mateReviewRepositoryCustom.findMateReviewsByRevieweeId(
                 memberId, pageable);
 
-        return PageResponse.from(mateReviewPage);
+        return PageResponse.<MyReviewResponse>builder()
+                .content(mateReviewPage.getContent())
+                .totalPages(mateReviewPage.getTotalPages())
+                .totalElements(mateReviewPage.getTotalElements())
+                .hasNext(mateReviewPage.hasNext())
+                .pageNumber(mateReviewPage.getNumber())
+                .pageSize(mateReviewPage.getSize())
+                .build();
     }
 
     // 굿즈거래 후기 페이징 조회
@@ -101,7 +123,14 @@ public class ProfileService {
         Page<MyReviewResponse> goodsReviewPage = goodsReviewRepositoryCustom.findGoodsReviewsByRevieweeId(
                 memberId, pageable);
 
-        return PageResponse.from(goodsReviewPage);
+        return PageResponse.<MyReviewResponse>builder()
+                .content(goodsReviewPage.getContent())
+                .totalPages(goodsReviewPage.getTotalPages())
+                .totalElements(goodsReviewPage.getTotalElements())
+                .hasNext(goodsReviewPage.hasNext())
+                .pageNumber(goodsReviewPage.getNumber())
+                .pageSize(goodsReviewPage.getSize())
+                .build();
     }
 
     // TODO : 쿼리가 너무 많이 나오는 문제 -> 멘토링 및 리팩토링 필요
