@@ -15,6 +15,7 @@ import com.example.mate.domain.mate.entity.Age;
 import com.example.mate.domain.mate.entity.Status;
 import com.example.mate.domain.mate.entity.TransportType;
 import com.example.mate.domain.mate.service.MateService;
+import com.example.mate.domain.member.service.LogoutRedisService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -59,6 +60,9 @@ class MateControllerTest {
 
     @MockBean
     private JwtUtil jwtUtil;
+
+    @MockBean
+    private LogoutRedisService logoutRedisService;
 
     private MatePostSummaryResponse createMatePostSummaryResponse() {
         return MatePostSummaryResponse.builder()

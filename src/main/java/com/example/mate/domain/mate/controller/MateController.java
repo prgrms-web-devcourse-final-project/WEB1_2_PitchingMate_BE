@@ -48,7 +48,6 @@ public class MateController {
     @Operation(summary = "메인페이지 메이트 구인글 조회", description = "메인 페이지에서 메이트 구인글을 요약한 4개의 리스트를 조회합니다.")
     public ResponseEntity<ApiResponse<List<MatePostSummaryResponse>>> getMainPagePosts(@Parameter(description = "팀 ID")
                                                                                        @RequestParam(required = false) Long teamId) {
-
         List<MatePostSummaryResponse> matePostMain = mateService.getMainPagePosts(teamId);
         return ResponseEntity.ok(ApiResponse.success(matePostMain));
     }

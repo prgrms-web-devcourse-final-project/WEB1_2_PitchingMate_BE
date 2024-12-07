@@ -1,6 +1,6 @@
 package com.example.mate.domain.mate.dto.request;
 
-import com.example.mate.common.utils.validator.ValidEnum;
+import com.example.mate.common.validator.ValidEnum;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.mate.entity.Age;
 import com.example.mate.domain.mate.entity.TransportType;
