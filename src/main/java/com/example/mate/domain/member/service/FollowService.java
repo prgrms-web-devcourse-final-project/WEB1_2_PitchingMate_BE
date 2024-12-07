@@ -56,14 +56,7 @@ public class FollowService {
                 .map(MemberSummaryResponse::from)
                 .toList();
 
-        return PageResponse.<MemberSummaryResponse>builder()
-                .content(content)
-                .totalPages(followingsPage.getTotalPages())
-                .totalElements(followingsPage.getTotalElements())
-                .hasNext(followingsPage.hasNext())
-                .pageNumber(followingsPage.getNumber())
-                .pageSize(followingsPage.getSize())
-                .build();
+        return PageResponse.from(followingsPage, content);
     }
 
     // 특정 회원의 팔로워 리스트 페이징 조회
@@ -78,14 +71,7 @@ public class FollowService {
                 .map(MemberSummaryResponse::from)
                 .toList();
 
-        return PageResponse.<MemberSummaryResponse>builder()
-                .content(content)
-                .totalPages(followingsPage.getTotalPages())
-                .totalElements(followingsPage.getTotalElements())
-                .hasNext(followingsPage.hasNext())
-                .pageNumber(followingsPage.getNumber())
-                .pageSize(followingsPage.getSize())
-                .build();
+        return PageResponse.from(followingsPage, content);
     }
 
     private Map<String, Member> isValidMemberFollow(Long followerId, Long followingId) {

@@ -9,6 +9,7 @@ import com.example.mate.domain.member.dto.response.JoinResponse;
 import com.example.mate.domain.member.dto.response.MemberLoginResponse;
 import com.example.mate.domain.member.dto.response.MemberProfileResponse;
 import com.example.mate.domain.member.dto.response.MyProfileResponse;
+import com.example.mate.domain.member.service.LogoutRedisService;
 import com.example.mate.domain.member.service.MemberService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -27,6 +28,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class MemberController {
 
     private final MemberService memberService;
+    private final LogoutRedisService logoutRedisService;
 
     @Operation(summary = "자체 회원가입 기능")
     @PostMapping("/join")
@@ -43,6 +45,15 @@ public class MemberController {
     ) {
         MemberLoginResponse response = memberService.loginByEmail(request);
         return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @Operation(summary = "CATCH Mi 서비스 로그아웃", description = "캐치미 서비스에 로그아웃합니다.")
+    @PostMapping("/logout")
+    public ResponseEntity<Void> catchMiLogout(
+            @Parameter(description = "회원 로그인 토큰 헤더", required = true) @RequestHeader("Authorization") String token
+    ) {
+        logoutRedisService.addTokenToBlacklist(token);
+        return ResponseEntity.noContent().build();
     }
 
     @Operation(summary = "내 프로필 조회")

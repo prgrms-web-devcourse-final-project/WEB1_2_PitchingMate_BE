@@ -95,6 +95,7 @@ class MateServiceTest {
             Match testMatch = createTestMatch();
 
             MatePostCreateRequest request = MatePostCreateRequest.builder()
+                    .memberId(TEST_MEMBER_ID)
                     .teamId(TEST_MATCH_ID)
                     .matchId(1L)
                     .title("테스트 제목")
@@ -119,7 +120,7 @@ class MateServiceTest {
                     .transport(TransportType.PUBLIC)
                     .build();
 
-            given(memberRepository.findById(TEST_MEMBER_ID))
+            given(memberRepository.findById(request.getMemberId()))
                     .willReturn(Optional.of(testMember));
             given(matchRepository.findById(request.getMatchId()))
                     .willReturn(Optional.of(testMatch));
@@ -127,7 +128,7 @@ class MateServiceTest {
                     .willReturn(matePost);
 
             // when
-            MatePostResponse response = mateService.createMatePost(request, null, TEST_MEMBER_ID);
+            MatePostResponse response = mateService.createMatePost(request, null);
 
             // then
             assertThat(response.getStatus()).isEqualTo(Status.OPEN);
@@ -141,6 +142,7 @@ class MateServiceTest {
         void createMatePost_FailWithInvalidMember() {
             // given
             MatePostCreateRequest request = MatePostCreateRequest.builder()
+                    .memberId(TEST_MEMBER_ID)
                     .teamId(TEST_MATCH_ID)
                     .matchId(1L)
                     .title("테스트 제목")
@@ -151,11 +153,11 @@ class MateServiceTest {
                     .transportType(TransportType.PUBLIC)
                     .build();
 
-            given(memberRepository.findById(TEST_MEMBER_ID))
+            given(memberRepository.findById(request.getMemberId()))
                     .willReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> mateService.createMatePost(request, null, TEST_MEMBER_ID))
+            assertThatThrownBy(() -> mateService.createMatePost(request, null))
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", MEMBER_NOT_FOUND_BY_ID);
 
@@ -170,6 +172,7 @@ class MateServiceTest {
             // given
             Member testMember = createTestMember();
             MatePostCreateRequest request = MatePostCreateRequest.builder()
+                    .memberId(TEST_MEMBER_ID)
                     .teamId(TEST_MATCH_ID)
                     .matchId(1L)
                     .title("테스트 제목")
@@ -180,13 +183,13 @@ class MateServiceTest {
                     .transportType(TransportType.PUBLIC)
                     .build();
 
-            given(memberRepository.findById(TEST_MEMBER_ID))
+            given(memberRepository.findById(request.getMemberId()))
                     .willReturn(Optional.of(testMember));
             given(matchRepository.findById(request.getMatchId()))
                     .willReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> mateService.createMatePost(request, null, TEST_MEMBER_ID))
+            assertThatThrownBy(() -> mateService.createMatePost(request, null))
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", MATCH_NOT_FOUND_BY_ID);
 

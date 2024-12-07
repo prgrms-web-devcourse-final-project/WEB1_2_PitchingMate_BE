@@ -1,7 +1,13 @@
 package com.example.mate.domain.mate.controller;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.example.mate.common.security.filter.JwtCheckFilter;
-import com.example.mate.config.WithAuthMember;
 import com.example.mate.domain.constant.Rating;
 import com.example.mate.domain.mate.dto.request.MateReviewCreateRequest;
 import com.example.mate.domain.mate.dto.response.MateReviewCreateResponse;
@@ -18,17 +24,9 @@ import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 @WebMvcTest(MateController.class)
 @MockBean(JpaMetamodelMappingContext.class)
 @AutoConfigureMockMvc(addFilters = false)
-@WithAuthMember
 class MateReviewControllerTest {
 
     @Autowired
@@ -70,6 +68,7 @@ class MateReviewControllerTest {
         @DisplayName("메이트 직관 후기 작성 성공")
         void createMateReview_success() throws Exception {
             // given
+            Long memberId = 1L;
             Long postId = 1L;
             MateReviewCreateRequest request = createMateReviewRequest();
             MateReviewCreateResponse response = createMateReviewResponse();
@@ -78,7 +77,7 @@ class MateReviewControllerTest {
                     .willReturn(response);
 
             // when & then
-            mockMvc.perform(post("/api/mates/{postId}/reviews", postId)
+            mockMvc.perform(post("/api/mates/{memberId}/{postId}/reviews", memberId, postId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
@@ -97,6 +96,7 @@ class MateReviewControllerTest {
         @DisplayName("메이트 직관 후기 작성 실패 - 리뷰 대상자 ID 누락")
         void createMateReview_failWithoutRevieweeId() throws Exception {
             // given
+            Long memberId = 1L;
             Long postId = 1L;
             MateReviewCreateRequest request = MateReviewCreateRequest.builder()
                     .rating(Rating.GOOD)
@@ -104,7 +104,7 @@ class MateReviewControllerTest {
                     .build();
 
             // when & then
-            mockMvc.perform(post("/api/mates/{postId}/reviews", postId)
+            mockMvc.perform(post("/api/mates/{memberId}/{postId}/reviews", memberId, postId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
@@ -128,7 +128,7 @@ class MateReviewControllerTest {
                     .build();
 
             // when & then
-            mockMvc.perform(post("/api/mates/{postId}/reviews", memberId, postId)
+            mockMvc.perform(post("/api/mates/{memberId}/{postId}/reviews", memberId, postId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
