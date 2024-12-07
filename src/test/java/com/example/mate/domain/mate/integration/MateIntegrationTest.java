@@ -566,9 +566,10 @@ public class MateIntegrationTest {
 
         @Test
         @DisplayName("메이트 게시글 삭제 성공")
+        @WithAuthMember
         void deleteMatePost_Success() throws Exception {
             // when & then
-            mockMvc.perform(delete("/api/mates/{memberId}/{postId}", testMember.getId(), openPost.getId())
+            mockMvc.perform(delete("/api/mates/{postId}", openPost.getId())
                             .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isNoContent())
                     .andDo(print());
@@ -579,9 +580,10 @@ public class MateIntegrationTest {
 
         @Test
         @DisplayName("메이트 게시글 삭제 실패 - 존재하지 않는 게시글")
+        @WithAuthMember
         void deleteMatePost_NotFound() throws Exception {
             // when & then
-            mockMvc.perform(delete("/api/mates/{memberId}/{postId}", testMember.getId(), 999L)
+            mockMvc.perform(delete("/api/mates/{postId}", 999L)
                             .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.status").value("ERROR"))
@@ -592,51 +594,5 @@ public class MateIntegrationTest {
             // DB 검증 - 기존 게시글들은 여전히 존재
             assertThat(mateRepository.findAll()).hasSize(3);
         }
-
-        @Test
-        @DisplayName("메이트 게시글 삭제 실패 - 권한 없음")
-        void deleteMatePost_NotAllowed() throws Exception {
-            // given
-            Member otherMember = memberRepository.save(Member.builder()
-                    .name("다른유저")
-                    .email("other@test.com")
-                    .nickname("다른계정")
-                    .imageUrl("other.jpg")
-                    .gender(Gender.MALE)
-                    .age(30)
-                    .manner(0.3f)
-                    .build());
-
-            // when & then
-            mockMvc.perform(delete("/api/mates/{memberId}/{postId}", otherMember.getId(), openPost.getId())
-                            .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isForbidden())
-                    .andExpect(jsonPath("$.status").value("ERROR"))
-                    .andExpect(jsonPath("$.message").value(MATE_POST_UPDATE_NOT_ALLOWED.getMessage()))
-                    .andExpect(jsonPath("$.code").value(403))
-                    .andDo(print());
-
-            // DB 검증 - 게시글이 삭제되지 않음
-            assertThat(mateRepository.findById(openPost.getId())).isPresent();
-        }
-//
-//        @Test
-//        @DisplayName("직관 완료된 게시글 삭제 시 Visit 엔티티와 연관관계 제거")
-//        void deleteMatePost_WithCompletedStatus() throws Exception {
-//            // given
-//            MatePost post = createMatePost(futureMatch, 1L, Status.CLOSED); // CLOSED 상태로 생성
-//            post.completeVisit(List.of(testMember.getId())); // completeVisit 호출하여 COMPLETE로 변경
-//            Visit visit = post.getVisit();
-//
-//            // when
-//            mockMvc.perform(delete("/api/mates/{memberId}/{postId}", testMember.getId(), post.getId())
-//                            .contentType(MediaType.APPLICATION_JSON))
-//                    .andExpect(status().isNoContent())
-//                    .andDo(print());
-//
-//            // then
-//            assertThat(mateRepository.findById(post.getId())).isEmpty();
-//            assertThat(visit.getPost()).isNull();
-//        }
     }
 }

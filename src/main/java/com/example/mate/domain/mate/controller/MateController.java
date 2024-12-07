@@ -92,46 +92,41 @@ public class MateController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    @PatchMapping("/{memberId}/{postId}")
+    @PutMapping("/{postId}")
     @Operation(summary = "메이트 구인글 수정", description = "메이트 구인글 상세 페이지에서 수정합니다.")
-    public ResponseEntity<ApiResponse<MatePostResponse>> updateMatePost(@Parameter(description = "작성자 ID (삭제 예정)", required = true)
-                                                                        @PathVariable Long memberId,
+    public ResponseEntity<ApiResponse<MatePostResponse>> updateMatePost(  @AuthenticationPrincipal AuthMember member,
                                                                         @Parameter(description = "구인글 ID", required = true)
-                                                                        @PathVariable Long postId,
+                                                                          @PathVariable Long postId,
                                                                         @Parameter(description = "수정할 구인글 데이터", required = true)
-                                                                        @Valid @RequestPart(value = "data") MatePostUpdateRequest request,
+                                                                          @Valid @RequestPart(value = "data") MatePostUpdateRequest request,
                                                                         @Parameter(description = "수정할 대표사진 파일 ", required = true)
-                                                                        @RequestPart(value = "file", required = false) MultipartFile file) {
+                                                                          @RequestPart(value = "file", required = false) MultipartFile file) {
 
-        MatePostResponse response = mateService.updateMatePost(memberId, postId, request, file);
+        MatePostResponse response = mateService.updateMatePost(member.getMemberId(), postId, request, file);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
 
-    // TODO: @PathVariable Long memberId -> @AuthenticationPrincipal 로 변경
     // 메이트 게시글 모집 상태 변경
-    @PatchMapping("/{memberId}/{postId}/status")
+    @PatchMapping("/{postId}/status")
     @Operation(summary = "메이트 구인글 모집상태 변경", description = "메이트 구인글 채팅방에서 모집상태를 변경합니다.")
-    public ResponseEntity<ApiResponse<MatePostResponse>> updateMatePostStatus(@Parameter(description = "작성자 ID (삭제 예정)", required = true)
-                                                                              @PathVariable(value = "memberId") Long memberId,
+    public ResponseEntity<ApiResponse<MatePostResponse>> updateMatePostStatus(  @AuthenticationPrincipal AuthMember member,
                                                                               @Parameter(description = "구인글 ID", required = true)
-                                                                              @PathVariable(value = "postId") Long postId,
+                                                                                @PathVariable(value = "postId") Long postId,
                                                                               @Parameter(description = "변경할 모집상태와 현재 참여자 리스트 ID", required = true)
-                                                                              @Valid @RequestBody MatePostStatusRequest request) {
+                                                                                @Valid @RequestBody MatePostStatusRequest request) {
 
-        MatePostResponse response = mateService.updateMatePostStatus(memberId, postId, request);
+        MatePostResponse response = mateService.updateMatePostStatus(member.getMemberId(), postId, request);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    // TODO: @PathVariable Long memberId -> @AuthenticationPrincipal 로 변경
-    @DeleteMapping("/{memberId}/{postId}")
+    @DeleteMapping("/{postId}")
     @Operation(summary = "메이트 구인글 삭제", description = "메이트 구인글 상세 페이지에서 삭제합니다.")
-    public ResponseEntity<Void> deleteMatePost(@Parameter(description = "작성자 ID (삭제 예정)", required = true)
-                                               @PathVariable Long memberId,
+    public ResponseEntity<Void> deleteMatePost(  @AuthenticationPrincipal AuthMember member,
                                                @Parameter(description = "삭제할 구인글 ID", required = true)
-                                               @PathVariable Long postId) {
+                                                 @PathVariable Long postId) {
 
-        mateService.deleteMatePost(memberId, postId);
+        mateService.deleteMatePost(member.getMemberId(), postId);
         return ResponseEntity.noContent().build();
     }
 

@@ -114,7 +114,6 @@ class MateControllerTest {
         @DisplayName("메이트 게시글 작성 성공")
         void createMatePost_success() throws Exception {
             // given
-            Long memberId = 1L;
             MatePostCreateRequest request = createMatePostRequest();
             MatePostResponse response = createMatePostResponse();
 
@@ -474,7 +473,6 @@ class MateControllerTest {
         @DisplayName("메이트 게시글 수정 성공")
         void updateMatePost_Success() throws Exception {
             // given
-            Long memberId = 1L;
             Long postId = 1L;
             MatePostUpdateRequest request = createMatePostUpdateRequest();
             MatePostResponse response = createMatePostResponse();
@@ -493,12 +491,12 @@ class MateControllerTest {
                     "test image content".getBytes()
             );
 
-            given(mateService.updateMatePost(eq(memberId), eq(postId), any(MatePostUpdateRequest.class), any()))
+            given(mateService.updateMatePost(any(), eq(postId), any(MatePostUpdateRequest.class), any()))
                     .willReturn(response);
 
             // when & then
             mockMvc.perform(MockMvcRequestBuilders
-                            .multipart(HttpMethod.PATCH, "/api/mates/{memberId}/{postId}", memberId, postId)
+                            .multipart(HttpMethod.PUT, "/api/mates/{postId}", postId)
                             .file(file)
                             .file(data))
                     .andDo(print())
@@ -508,14 +506,13 @@ class MateControllerTest {
                     .andExpect(jsonPath("$.data.status").value("모집중"))
                     .andExpect(jsonPath("$.code").value(200));
 
-            verify(mateService).updateMatePost(eq(memberId), eq(postId), any(MatePostUpdateRequest.class), any());
+            verify(mateService).updateMatePost(any(), eq(postId), any(MatePostUpdateRequest.class), any());
         }
 
         @Test
         @DisplayName("메이트 게시글 수정 성공 - 이미지 없음")
         void updateMatePost_SuccessWithoutImage() throws Exception {
             // given
-            Long memberId = 1L;
             Long postId = 1L;
             MatePostUpdateRequest request = createMatePostUpdateRequest();
             MatePostResponse response = createMatePostResponse();
@@ -527,12 +524,12 @@ class MateControllerTest {
                     objectMapper.writeValueAsBytes(request)
             );
 
-            given(mateService.updateMatePost(eq(memberId), eq(postId), any(MatePostUpdateRequest.class), isNull()))
+            given(mateService.updateMatePost(any(), eq(postId), any(MatePostUpdateRequest.class), isNull()))
                     .willReturn(response);
 
             // when & then
             mockMvc.perform(MockMvcRequestBuilders
-                            .multipart(HttpMethod.PATCH, "/api/mates/{memberId}/{postId}", memberId, postId)
+                            .multipart(HttpMethod.PUT, "/api/mates/{postId}", postId)
                             .file(data))
                     .andDo(print())
                     .andExpect(status().isOk())
@@ -541,14 +538,13 @@ class MateControllerTest {
                     .andExpect(jsonPath("$.data.status").value("모집중"))
                     .andExpect(jsonPath("$.code").value(200));
 
-            verify(mateService).updateMatePost(eq(memberId), eq(postId), any(MatePostUpdateRequest.class), isNull());
+            verify(mateService).updateMatePost(any(), eq(postId), any(MatePostUpdateRequest.class), isNull());
         }
 
         @Test
         @DisplayName("메이트 게시글 수정 실패 - 유효하지 않은 요청 데이터")
         void updateMatePost_FailWithInvalidRequest() throws Exception {
             // given
-            Long memberId = 1L;
             Long postId = 1L;
             MatePostUpdateRequest request = MatePostUpdateRequest.builder()
                     .teamId(null)  // 필수 값 누락
@@ -570,7 +566,7 @@ class MateControllerTest {
 
             // when & then
             mockMvc.perform(MockMvcRequestBuilders
-                            .multipart(HttpMethod.PATCH, "/api/mates/{memberId}/{postId}", memberId, postId)
+                            .multipart(HttpMethod.PUT, "/api/mates/{postId}", postId)
                             .file(data))
                     .andDo(print())
                     .andExpect(status().isBadRequest());
@@ -582,7 +578,6 @@ class MateControllerTest {
         @DisplayName("메이트 게시글 수정 실패 - 존재하지 않는 게시글")
         void updateMatePost_FailWithPostNotFound() throws Exception {
             // given
-            Long memberId = 1L;
             Long postId = 999L;
             MatePostUpdateRequest request = createMatePostUpdateRequest();
 
@@ -598,7 +593,7 @@ class MateControllerTest {
 
             // when & then
             mockMvc.perform(MockMvcRequestBuilders
-                            .multipart(HttpMethod.PATCH, "/api/mates/{memberId}/{postId}", memberId, postId)
+                            .multipart(HttpMethod.PUT, "/api/mates/{postId}", postId)
                             .file(data))
                     .andDo(print())
                     .andExpect(status().isNotFound())
@@ -610,7 +605,6 @@ class MateControllerTest {
         @DisplayName("메이트 게시글 수정 실패 - 권한 없음")
         void updateMatePost_FailWithUnauthorized() throws Exception {
             // given
-            Long memberId = 999L;
             Long postId = 1L;
             MatePostUpdateRequest request = createMatePostUpdateRequest();
 
@@ -626,7 +620,7 @@ class MateControllerTest {
 
             // when & then
             mockMvc.perform(MockMvcRequestBuilders
-                            .multipart(HttpMethod.PATCH, "/api/mates/{memberId}/{postId}", memberId, postId)
+                            .multipart(HttpMethod.PUT, "/api/mates/{postId}", postId)
                             .file(data))
                     .andDo(print())
                     .andExpect(status().isForbidden())
@@ -638,7 +632,6 @@ class MateControllerTest {
         @DisplayName("메이트 게시글 수정 실패 - 이미 완료된 게시글")
         void updateMatePost_FailWithCompletedPost() throws Exception {
             // given
-            Long memberId = 1L;
             Long postId = 1L;
             MatePostUpdateRequest request = createMatePostUpdateRequest();
 
@@ -654,7 +647,7 @@ class MateControllerTest {
 
             // when & then
             mockMvc.perform(MockMvcRequestBuilders
-                            .multipart(HttpMethod.PATCH, "/api/mates/{memberId}/{postId}", memberId, postId)
+                            .multipart(HttpMethod.PUT, "/api/mates/{postId}", postId)
                             .file(data))
                     .andDo(print())
                     .andExpect(status().isForbidden())
@@ -675,7 +668,7 @@ class MateControllerTest {
             Long postId = 1L;
 
             // when & then
-            mockMvc.perform(delete("/api/mates/{memberId}/{postId}", memberId, postId)
+            mockMvc.perform(delete("/api/mates/{postId}", postId)
                             .contentType(MediaType.APPLICATION_JSON))
                     .andDo(print())
                     .andExpect(status().isNoContent());
@@ -695,7 +688,7 @@ class MateControllerTest {
                     .deleteMatePost(memberId, nonExistentPostId);
 
             // when & then
-            mockMvc.perform(delete("/api/mates/{memberId}/{postId}", memberId, nonExistentPostId)
+            mockMvc.perform(delete("/api/mates/{postId}", nonExistentPostId)
                             .contentType(MediaType.APPLICATION_JSON))
                     .andDo(print())
                     .andExpect(status().isNotFound())
@@ -706,6 +699,7 @@ class MateControllerTest {
 
         @Test
         @DisplayName("메이트 게시글 삭제 실패 - 삭제 권한 없음")
+        @WithAuthMember(memberId = 2L)
         void deleteMatePost_failNotAllowed() throws Exception {
             // given
             Long memberId = 2L;  // 작성자가 아닌 다른 사용자
@@ -716,7 +710,7 @@ class MateControllerTest {
                     .deleteMatePost(memberId, postId);
 
             // when & then
-            mockMvc.perform(delete("/api/mates/{memberId}/{postId}", memberId, postId)
+            mockMvc.perform(delete("/api/mates/{postId}", postId)
                             .contentType(MediaType.APPLICATION_JSON))
                     .andDo(print())
                     .andExpect(status().isForbidden())
