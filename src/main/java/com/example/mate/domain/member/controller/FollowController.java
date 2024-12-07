@@ -5,6 +5,7 @@ import static com.example.mate.common.response.PageResponse.validatePageable;
 import com.example.mate.common.response.ApiResponse;
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.common.security.auth.AuthMember;
+import com.example.mate.common.validator.ValidPageable;
 import com.example.mate.domain.member.dto.response.MemberSummaryResponse;
 import com.example.mate.domain.member.service.FollowService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,7 +13,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -52,7 +52,7 @@ public class FollowController {
     @GetMapping("{memberId}/followings")
     public ResponseEntity<ApiResponse<PageResponse<MemberSummaryResponse>>> getFollowings(
             @Parameter(description = "특정 회원 ID") @PathVariable Long memberId,
-            @Parameter(description = "페이지 요청 정보") @PageableDefault Pageable pageable
+            @Parameter(description = "페이지 요청 정보") @ValidPageable Pageable pageable
     ) {
         pageable = validatePageable(pageable);
         PageResponse<MemberSummaryResponse> response = followService.getFollowingsPage(memberId, pageable);
@@ -63,7 +63,7 @@ public class FollowController {
     @GetMapping("{memberId}/followers")
     public ResponseEntity<ApiResponse<PageResponse<MemberSummaryResponse>>> getFollowers(
             @Parameter(description = "특정 회원 ID") @PathVariable Long memberId,
-            @Parameter(description = "페이지 요청 정보") @PageableDefault Pageable pageable
+            @Parameter(description = "페이지 요청 정보") @ValidPageable Pageable pageable
     ) {
         pageable = validatePageable(pageable);
         PageResponse<MemberSummaryResponse> response = followService.getFollowersPage(memberId, pageable);
