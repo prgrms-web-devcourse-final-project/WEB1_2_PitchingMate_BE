@@ -11,6 +11,7 @@ import com.example.mate.domain.member.dto.response.JoinResponse;
 import com.example.mate.domain.member.dto.response.MemberLoginResponse;
 import com.example.mate.domain.member.dto.response.MemberProfileResponse;
 import com.example.mate.domain.member.dto.response.MyProfileResponse;
+import com.example.mate.domain.member.service.LogoutRedisService;
 import com.example.mate.domain.member.service.MemberService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
@@ -21,6 +22,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -51,6 +53,9 @@ class MemberControllerTest {
 
     @MockBean
     private JwtCheckFilter jwtCheckFilter;
+
+    @MockBean
+    private LogoutRedisService logoutRedisService;
 
     private MyProfileResponse createMyProfileResponse() {
         return MyProfileResponse.builder()
@@ -417,6 +422,43 @@ class MemberControllerTest {
                     .andExpect(jsonPath("$.data.gender").value("남자"))
                     .andExpect(jsonPath("$.data.age").value("20"))
                     .andDo(print());
+        }
+    }
+
+    @Nested
+    @DisplayName("회원 로그아웃")
+    class LogoutMember {
+
+        @Test
+        @DisplayName("회원 로그아웃 성공")
+        void logout_member_success() throws Exception {
+            // given
+            String token = "Bearer accessToken";
+
+            doNothing().when(logoutRedisService).addTokenToBlacklist(anyString());
+
+            // when & then
+            mockMvc.perform(post("/api/members/logout")
+                            .header(HttpHeaders.AUTHORIZATION, token))
+                    .andExpect(status().isNoContent());
+
+            verify(logoutRedisService).addTokenToBlacklist(token);
+        }
+
+        @Test
+        @DisplayName("로그아웃 실패 - 잘못된 토큰 형식")
+        void catchMiLogout_invalid_token_format() throws Exception {
+            // given
+            String invalidToken = "InvalidToken";
+
+            willThrow(new CustomException(ErrorCode.INVALID_AUTH_TOKEN))
+                    .given(logoutRedisService).addTokenToBlacklist(invalidToken);
+
+
+            // when & then
+            mockMvc.perform(post("/api/members/logout")
+                            .header(HttpHeaders.AUTHORIZATION, invalidToken))
+                    .andExpect(status().isBadRequest());
         }
     }
 }
