@@ -19,6 +19,7 @@ import com.example.mate.domain.mateChat.entity.MateChatRoomMember;
 import com.example.mate.domain.mateChat.repository.MateChatMessageRepository;
 import com.example.mate.domain.mateChat.repository.MateChatRoomMemberRepository;
 import com.example.mate.domain.mateChat.repository.MateChatRoomRepository;
+import com.example.mate.domain.member.dto.response.MemberSummaryResponse;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -43,6 +45,7 @@ public class MateChatRoomService {
     private final MemberRepository memberRepository;
     private final MateChatMessageService mateChatMessageService;
     private final VisitPartRepository visitPartRepository;
+    private final MateChatRoomMemberRepository mateChatRoomMemberRepository;
 
     // 메이트 게시글에서 채팅방 생성/입장
     public MateChatRoomResponse createOrJoinChatRoomFromPost(Long postId, Long memberId) {
@@ -183,6 +186,23 @@ public class MateChatRoomService {
         chatRoom.incrementCurrentMembers();
 
         return chatRoomMemberRepository.save(chatRoomMember);
+    }
+
+    // 채팅방 현재 명단 조회
+    @Transactional(readOnly = true)
+    public List<MemberSummaryResponse> getChatRoomMembers(Long roomId, Long memberId) {
+
+        // 1. 채팅방 접근 권한 검증
+        validateChatRoomAccess(roomId, memberId);
+
+        // 2. 활성화된 채팅방 멤버 조회
+        List<MateChatRoomMember> activeMembers = mateChatRoomMemberRepository.findActiveMembers(roomId);
+
+
+        // 3. MemberSummaryResponse로 변환하여 반환
+        return activeMembers.stream()
+                .map(member -> MemberSummaryResponse.from(member.getMember()))
+                .collect(Collectors.toList());
     }
 
     // 채팅방 퇴장
