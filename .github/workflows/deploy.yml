@@ -13,6 +13,9 @@ jobs:
       NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
       JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
       OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
+      S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
+      IAM_ACCESS_KEY: ${{ secrets.IAM_ACCESS_KEY }}
+      IAM_SECRET_KEY: ${{ secrets.IAM_SECRET_KEY }}
     steps:
       - name: Github Repository 파일 불러오기
         uses: actions/checkout@v4
