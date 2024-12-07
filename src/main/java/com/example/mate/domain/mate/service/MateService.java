@@ -108,14 +108,7 @@ public class MateService {
                 .map(MatePostSummaryResponse::from)
                 .toList();
 
-        return PageResponse.<MatePostSummaryResponse>builder()
-                .content(content)
-                .totalPages(matePostPage.getTotalPages())
-                .totalElements(matePostPage.getTotalElements())
-                .hasNext(matePostPage.hasNext())
-                .pageNumber(matePostPage.getNumber())
-                .pageSize(matePostPage.getSize())
-                .build();
+        return PageResponse.from(matePostPage, content);
     }
 
     @Transactional(readOnly = true)
