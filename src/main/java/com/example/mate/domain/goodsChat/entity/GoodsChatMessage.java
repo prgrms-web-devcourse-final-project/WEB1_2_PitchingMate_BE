@@ -20,6 +20,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
 @Table(name = "goods_chat_message")
@@ -38,6 +40,7 @@ public class GoodsChatMessage {
             @JoinColumn(name = "member_id", referencedColumnName = "member_id"),
             @JoinColumn(name = "chat_room_id", referencedColumnName = "chat_room_id")
     })
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private GoodsChatPart goodsChatPart;
 
     @Column(name = "content", nullable = false, columnDefinition = "TEXT")

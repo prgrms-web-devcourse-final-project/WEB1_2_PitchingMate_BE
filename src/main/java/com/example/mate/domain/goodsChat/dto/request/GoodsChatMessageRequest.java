@@ -3,9 +3,11 @@ package com.example.mate.domain.goodsChat.dto.request;
 import com.example.mate.domain.constant.MessageType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @Getter
+@AllArgsConstructor
 public class GoodsChatMessageRequest {
 
     @NotNull(message = "채팅방 ID는 필수 입력 값입니다.")
