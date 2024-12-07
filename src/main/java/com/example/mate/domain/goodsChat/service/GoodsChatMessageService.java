@@ -41,7 +41,7 @@ public class GoodsChatMessageService {
 
         // DB에 메시지 저장
         GoodsChatMessage chatMessage
-                = messageRepository.save(createChatMessage(message.getMessage(), chatPart, MessageType.TALK));
+                = messageRepository.save(createChatMessage(message.getMessage(), chatPart, message.getType()));
         chatRoom.updateLastChat(chatMessage.getContent(), chatMessage.getSentAt());
 
         GoodsChatMessageResponse response = GoodsChatMessageResponse.of(chatMessage);

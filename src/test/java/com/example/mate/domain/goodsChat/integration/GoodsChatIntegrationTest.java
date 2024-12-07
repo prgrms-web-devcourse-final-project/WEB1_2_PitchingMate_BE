@@ -1,12 +1,15 @@
 package com.example.mate.domain.goodsChat.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.mate.common.response.ApiResponse;
+import com.example.mate.common.response.PageResponse;
 import com.example.mate.common.security.util.JwtUtil;
 import com.example.mate.config.WithAuthMember;
 import com.example.mate.domain.constant.Gender;
@@ -18,12 +21,16 @@ import com.example.mate.domain.goods.entity.GoodsPostImage;
 import com.example.mate.domain.goods.entity.Role;
 import com.example.mate.domain.goods.entity.Status;
 import com.example.mate.domain.goods.repository.GoodsPostRepository;
+import com.example.mate.domain.goodsChat.dto.response.GoodsChatMessageResponse;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatRoomResponse;
 import com.example.mate.domain.goodsChat.entity.GoodsChatMessage;
 import com.example.mate.domain.goodsChat.entity.GoodsChatPart;
+import com.example.mate.domain.goodsChat.entity.GoodsChatPartId;
 import com.example.mate.domain.goodsChat.entity.GoodsChatRoom;
 import com.example.mate.domain.goodsChat.repository.GoodsChatMessageRepository;
+import com.example.mate.domain.goodsChat.repository.GoodsChatPartRepository;
 import com.example.mate.domain.goodsChat.repository.GoodsChatRoomRepository;
+import com.example.mate.domain.member.dto.response.MemberSummaryResponse;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -31,6 +38,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -38,6 +46,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -54,6 +63,7 @@ public class GoodsChatIntegrationTest {
     @Autowired private MemberRepository memberRepository;
     @Autowired private GoodsPostRepository goodsPostRepository;
     @Autowired private GoodsChatRoomRepository chatRoomRepository;
+    @Autowired private GoodsChatPartRepository chatPartRepository;
     @Autowired private GoodsChatMessageRepository messageRepository;
     @Autowired private ObjectMapper objectMapper;
     @Autowired private JdbcTemplate jdbcTemplate;
@@ -148,6 +158,197 @@ public class GoodsChatIntegrationTest {
                 .andExpect(jsonPath("$.data.content[1].message").value("test message"))
                 .andReturn()
                 .getResponse();
+    }
+
+    @Test
+    @DisplayName("굿즈거래 채팅방 상세 조회 테스트")
+    @WithAuthMember(memberId = 2L)
+    void get_goods_chat_room_info() throws Exception {
+        // given
+        Long chatRoomId = chatRoom.getId();
+        Long memberId = buyer.getId();
+
+        // when
+        MockHttpServletResponse result = mockMvc.perform(get("/api/goods/chat/{chatRoomId}", chatRoomId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("SUCCESS"))
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.initialMessages.content").isArray())
+                .andExpect(jsonPath("$.data.initialMessages.content[0].message").value("test message"))
+                .andExpect(jsonPath("$.data.initialMessages.content[1].message").value("test message"))
+                .andReturn()
+                .getResponse();
+
+        result.setCharacterEncoding("UTF-8");
+        ApiResponse<GoodsChatRoomResponse> apiResponse = objectMapper.readValue(result.getContentAsString(), new TypeReference<>() {});
+        GoodsChatRoomResponse response = apiResponse.getData();
+
+        // then
+        GoodsChatRoom actualChatRoom = chatRoomRepository.findById(chatRoomId).orElse(null);
+        GoodsPost actualPost = actualChatRoom.getGoodsPost();
+
+        assertThat(response.getChatRoomId()).isEqualTo(chatRoomId);
+        assertThat(response.getGoodsPostId()).isEqualTo(actualPost.getId());
+        assertThat(response.getTitle()).isEqualTo(actualPost.getTitle());
+        assertThat(response.getPrice()).isEqualTo(actualPost.getPrice());
+        assertThat(response.getPostStatus()).isEqualTo(actualPost.getStatus().getValue());
+
+        GoodsPostImage image = actualPost.getGoodsPostImages().get(0);
+        assertThat(image.getImageUrl()).isEqualTo("upload/test_img_url");
+    }
+
+    @Test
+    @DisplayName("굿즈거래 채팅방 목록 조회 성공 통합 테스트")
+    @WithAuthMember(memberId = 2L)
+    void getGoodsChatRooms_should_return_chat_room_list_integration_test() throws Exception {
+        // given
+        Long memberId = buyer.getId();
+        Pageable pageable = PageRequest.of(0, 10);
+
+        // when & then
+        mockMvc.perform(get("/api/goods/chat")
+                        .param("page", String.valueOf(pageable.getPageNumber()))
+                        .param("size", String.valueOf(pageable.getPageSize())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("SUCCESS"))
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.content").isArray())
+                .andExpect(jsonPath("$.data.content[0].chatRoomId").value(chatRoom.getId()))
+                .andExpect(jsonPath("$.data.content[0].opponentNickname").value(seller.getNickname()))
+                .andExpect(jsonPath("$.data.content[0].lastChatContent").value(chatRoom.getLastChatContent()))
+                .andExpect(jsonPath("$.data.content[0].placeName").value(goodsPost.getLocation().getPlaceName()))
+                .andExpect(jsonPath("$.data.content[0].goodsMainImageUrl").value(goodsPost.getMainImageUrl()))
+                .andExpect(jsonPath("$.data.content[0].opponentImageUrl").value(seller.getImageUrl()))
+                .andReturn()
+                .getResponse();
+    }
+
+    @Test
+    @DisplayName("굿즈거래 채팅방 메시지 조회 성공 통합 테스트")
+    @WithAuthMember(memberId = 2L)
+    void getGoodsChatRoomMessages_integration_test() throws Exception {
+        // given
+        Long chatRoomId = chatRoom.getId();
+        Long buyerId = buyer.getId();
+        Pageable pageable = PageRequest.of(0, 20);
+
+        // when & then
+        MockHttpServletResponse response = mockMvc.perform(get("/api/goods/chat/{chatRoomId}/message", chatRoomId)
+                        .param("page", String.valueOf(pageable.getPageNumber()))
+                        .param("size", String.valueOf(pageable.getPageSize())))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("SUCCESS"))
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.content").isArray())
+                .andReturn()
+                .getResponse();
+
+        response.setCharacterEncoding("UTF-8");
+        ApiResponse<PageResponse<GoodsChatMessageResponse>> apiResponse = objectMapper.readValue(response.getContentAsString(), new TypeReference<>() {});
+        List<GoodsChatMessageResponse> expectMessages = apiResponse.getData().getContent();
+
+        // 실제 데이터 조회
+        Page<GoodsChatMessage> chatMessages = messageRepository.getChatMessages(chatRoomId, pageable);
+        List<GoodsChatMessage> actualMessages = chatMessages.getContent();
+
+        assertThat(expectMessages.size()).isEqualTo(actualMessages.size());
+
+        for (int i = 0; i < expectMessages.size(); i++) {
+            GoodsChatMessageResponse expectedMessage = expectMessages.get(i);
+            GoodsChatMessage actualMessage = actualMessages.get(i);
+
+            assertThat(expectedMessage.getChatMessageId()).isEqualTo(actualMessage.getId());
+            assertThat(expectedMessage.getRoomId()).isEqualTo(actualMessage.getGoodsChatPart().getGoodsChatRoom().getId());
+            assertThat(expectedMessage.getSenderId()).isEqualTo(actualMessage.getGoodsChatPart().getMember().getId());
+            assertThat(expectedMessage.getSenderNickname()).isEqualTo(actualMessage.getGoodsChatPart().getMember().getNickname());
+            assertThat(expectedMessage.getMessage()).isEqualTo(actualMessage.getContent());
+            assertThat(expectedMessage.getMessageType()).isEqualTo(actualMessage.getMessageType().getValue());
+            assertThat(expectedMessage.getSenderImageUrl()).isEqualTo(actualMessage.getGoodsChatPart().getMember().getImageUrl());
+            assertThat(expectedMessage.getSentAt()).isEqualToIgnoringNanos(actualMessage.getSentAt()); // 시간 비교, 나노초는 무시
+        }
+    }
+
+    @Test
+    @DisplayName("굿즈거래 채팅방 나가기 통합 테스트 - 채팅방에 한명이 남을 경우 채팅방과 당사자는 비활성화 된다.")
+    @WithAuthMember(memberId = 2L)
+    void leaveGoodsChatRoom_integration_test_single_member_left() throws Exception {
+        // given
+        Long chatRoomId = chatRoom.getId();
+        Long memberId = buyer.getId();
+
+        // when
+        mockMvc.perform(delete("/api/goods/chat/{chatRoomId}", chatRoomId)).andExpect(status().isNoContent());
+
+        // then
+        GoodsChatRoom goodsChatRoom = chatRoomRepository.findById(chatRoomId).orElseThrow();
+        assertThat(goodsChatRoom.isRoomActive()).isFalse();
+
+        GoodsChatPart goodsChatPart = chatPartRepository.findById(new GoodsChatPartId(memberId, chatRoomId)).orElseThrow();
+        assertThat(goodsChatPart.getIsActive()).isFalse();
+    }
+
+    @Test
+    @DisplayName("굿즈거래 채팅방 나가기 통합 테스트 - 채팅방에 아무도 남지 않을 경우 채팅방과 채팅참여, 채팅은 모두 삭제된다.")
+    @WithAuthMember(memberId = 2L)
+    void leaveGoodsChatRoom_integration_test_no_participants_left() throws Exception {
+        // given
+        Long chatRoomId = chatRoom.getId();
+        Long memberId = buyer.getId();
+
+        GoodsChatPart goodsChatPart = chatRoom.getChatParts().get(1);
+        goodsChatPart.leaveAndCheckRoomStatus();
+
+        chatRoomRepository.saveAndFlush(chatRoom);
+
+        // when
+        mockMvc.perform(delete("/api/goods/chat/{chatRoomId}", chatRoomId)).andExpect(status().isNoContent());
+
+        // then
+        Optional<GoodsChatRoom> goodsChatRoom = chatRoomRepository.findById(chatRoomId);
+        assertThat(goodsChatRoom).isEmpty();
+
+        List<GoodsChatPart> existingMember = chatPartRepository.findAllWithMemberByChatRoomId(chatRoomId);
+        assertThat(existingMember).isEmpty();
+    }
+
+    @Test
+    @DisplayName("굿즈거래 채팅방 참여자 목록 조회 성공 통합 테스트")
+    @WithAuthMember(memberId = 2L)
+    void getGoodsChatRoomMembers_integration_test() throws Exception {
+        // given
+        Long chatRoomId = chatRoom.getId();
+        Long memberId = buyer.getId();
+
+        // when
+        MockHttpServletResponse response = mockMvc.perform(get("/api/goods/chat/{chatRoomId}/members", chatRoomId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("SUCCESS"))
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data").isArray())
+                .andReturn()
+                .getResponse();
+
+        response.setCharacterEncoding("UTF-8");
+
+        // then
+        ApiResponse<List<MemberSummaryResponse>> apiResponse = objectMapper.readValue(response.getContentAsString(), new TypeReference<>() {});
+        List<MemberSummaryResponse> actualMembers = apiResponse.getData();
+
+        // 실제 데이터 조회
+        List<GoodsChatPart> chatParts = chatPartRepository.findAllWithMemberByChatRoomId(chatRoomId);
+        List<Member> expectedMembers = chatParts.stream().map(GoodsChatPart::getMember).toList();
+
+        assertThat(actualMembers.size()).isEqualTo(expectedMembers.size());
+
+        for (int i = 0; i < actualMembers.size(); i++) {
+            MemberSummaryResponse actualMember = actualMembers.get(i);
+            Member expectedMember = expectedMembers.get(i);
+
+            assertThat(actualMember.getMemberId()).isEqualTo(expectedMember.getId());
+            assertThat(actualMember.getNickname()).isEqualTo(expectedMember.getNickname());
+            assertThat(actualMember.getImageUrl()).isEqualTo(expectedMember.getImageUrl());
+        }
     }
 
     private Member createMember(String name, String nickname, String email) {
