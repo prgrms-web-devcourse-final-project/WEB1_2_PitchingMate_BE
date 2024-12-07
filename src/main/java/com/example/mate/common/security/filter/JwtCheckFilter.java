@@ -2,13 +2,10 @@ package com.example.mate.common.security.filter;
 
 import com.example.mate.common.security.auth.AuthMember;
 import com.example.mate.common.security.util.JwtUtil;
+import com.example.mate.domain.member.service.LogoutRedisService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -16,11 +13,17 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 @Component
 @RequiredArgsConstructor
 public class JwtCheckFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
+    private final LogoutRedisService logoutRedisService;
 
     // 필터링 적용하지 않을 URI 체크
     @Override
@@ -44,8 +47,15 @@ public class JwtCheckFilter extends OncePerRequestFilter {
             return;
         }
 
-        // 토큰 유효성 검증 후 SecurityContext 설정
         String accessToken = headerAuth.substring(7); // "Bearer " 제외한 토큰 저장
+
+        // 액세스 토큰이 블랙리스트에 있는지 확인
+        if (logoutRedisService.isTokenBlacklisted(accessToken)) {
+            handleException(response, new Exception("ACCESS TOKEN IS BLACKLISTED"));
+            return;
+        }
+
+        // 액세스 토큰의 모든 유효성 검증 후 SecurityContext 설정
         try {
             Map<String, Object> claims = jwtUtil.validateToken(accessToken);
             setAuthentication(claims);  // 인증 정보 설정

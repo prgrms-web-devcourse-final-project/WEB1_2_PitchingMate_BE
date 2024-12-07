@@ -25,6 +25,7 @@ import com.example.mate.domain.member.entity.Follow;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.FollowRepository;
 import com.example.mate.domain.member.repository.MemberRepository;
+import com.example.mate.domain.member.service.LogoutRedisService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,6 +36,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -44,9 +48,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static com.example.mate.domain.match.entity.MatchStatus.SCHEDULED;
 import static com.example.mate.domain.mate.entity.Status.CLOSED;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -95,6 +103,15 @@ class MemberIntegrationTest {
 
     @Autowired
     private EntityManager entityManager;
+
+    @Autowired
+    private LogoutRedisService logoutRedisService;
+
+    @MockBean
+    private RedisTemplate<String, String> redisTemplate;
+
+    @MockBean
+    private ValueOperations<String, String> valueOperations;
 
     @MockBean
     private JwtUtil jwtUtil;
@@ -475,6 +492,43 @@ class MemberIntegrationTest {
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.status").value("ERROR"))
                     .andExpect(jsonPath("$.message").value("해당 이메일의 회원 정보를 찾을 수 없습니다."));
+        }
+    }
+
+    @Nested
+    @DisplayName("회원 로그아웃")
+    class LogoutMember {
+
+        @Test
+        @DisplayName("회원 로그아웃 성공")
+        @WithAuthMember(userId = "customUser", memberId = 1L)
+        void logout_member_success_with_my_info_denied() throws Exception {
+            // given
+            String token = "Bearer accessToken";
+
+            // when & then
+            when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+            doNothing().when(valueOperations).set(
+                    eq("blacklist:" + token.substring(7)),
+                    eq("blacklisted"),
+                    eq(1L),
+                    eq(TimeUnit.MINUTES));
+
+            mockMvc.perform(post("/api/members/logout")
+                            .header(HttpHeaders.AUTHORIZATION, token))
+                    .andExpect(status().isNoContent());
+        }
+
+        @Test
+        @DisplayName("회원 로그아웃 실패 - 잘못된 토큰 형식")
+        void catchMiLogout_invalid_token_format() throws Exception {
+            // given
+            String invalidToken = "InvalidToken";
+
+            // when & then
+            mockMvc.perform(post("/api/members/logout")
+                            .header(HttpHeaders.AUTHORIZATION, invalidToken))
+                    .andExpect(status().isBadRequest());
         }
     }
 }
