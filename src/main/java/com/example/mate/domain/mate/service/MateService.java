@@ -41,8 +41,8 @@ public class MateService {
     private final MateReviewRepository mateReviewRepository;
     private final FileService fileService;
 
-    public MatePostResponse createMatePost(MatePostCreateRequest request, MultipartFile file) {
-        Member author = findMemberById(request.getMemberId());
+    public MatePostResponse createMatePost(MatePostCreateRequest request, MultipartFile file, Long memberId) {
+        Member author = findMemberById(memberId);
 
         Match match = findMatchById(request.getMatchId());
 

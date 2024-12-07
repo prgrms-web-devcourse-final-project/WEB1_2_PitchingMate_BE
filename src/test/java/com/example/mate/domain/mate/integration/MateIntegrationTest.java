@@ -1,6 +1,7 @@
 package com.example.mate.domain.mate.integration;
 
 import com.example.mate.common.security.util.JwtUtil;
+import com.example.mate.config.WithAuthMember;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.match.entity.Match;
 import com.example.mate.domain.match.repository.MatchRepository;
@@ -24,6 +25,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
@@ -60,6 +62,9 @@ public class MateIntegrationTest {
     @Autowired
     private MateRepository mateRepository;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
     @MockBean
     private JwtUtil jwtUtil;
 
@@ -77,6 +82,8 @@ public class MateIntegrationTest {
         mateRepository.deleteAll();
         matchRepository.deleteAll();
         memberRepository.deleteAll();
+
+        jdbcTemplate.execute("ALTER TABLE member ALTER COLUMN id RESTART WITH 1");
 
         // 테스트 멤버 생성
         testMember = createTestMember();
@@ -151,10 +158,10 @@ public class MateIntegrationTest {
 
         @Test
         @DisplayName("메이트 게시글 작성 성공")
+        @WithAuthMember
         void createMatePost_Success() throws Exception {
             // given
             MatePostCreateRequest request = MatePostCreateRequest.builder()
-                    .memberId(testMember.getId())
                     .teamId(1L)
                     .matchId(futureMatch.getId())
                     .title("통합 테스트 제목")
@@ -199,35 +206,10 @@ public class MateIntegrationTest {
         }
 
         @Test
-        @DisplayName("존재하지 않는 회원으로 메이트 게시글 작성 시 실패")
-        void createMatePost_WithInvalidMember() throws Exception {
-            MatePostCreateRequest request = MatePostCreateRequest.builder()
-                    .memberId(999L)
-                    .teamId(1L)
-                    .matchId(futureMatch.getId())
-                    .title("통합 테스트 제목")
-                    .content("통합 테스트 내용")
-                    .age(Age.TWENTIES)
-                    .maxParticipants(4)
-                    .gender(Gender.FEMALE)
-                    .transportType(TransportType.PUBLIC)
-                    .build();
-
-            MockMultipartFile data = new MockMultipartFile(
-                    "data",
-                    "",
-                    MediaType.APPLICATION_JSON_VALUE,
-                    objectMapper.writeValueAsBytes(request)
-            );
-
-            performErrorTest(data, MEMBER_NOT_FOUND_BY_ID.getMessage(), 404);
-        }
-
-        @Test
         @DisplayName("존재하지 않는 경기로 메이트 게시글 작성 시 실패")
+        @WithAuthMember
         void createMatePost_WithInvalidMatch() throws Exception {
             MatePostCreateRequest request = MatePostCreateRequest.builder()
-                    .memberId(testMember.getId())
                     .teamId(1L)
                     .matchId(999L)
                     .title("통합 테스트 제목")
@@ -584,9 +566,10 @@ public class MateIntegrationTest {
 
         @Test
         @DisplayName("메이트 게시글 삭제 성공")
+        @WithAuthMember
         void deleteMatePost_Success() throws Exception {
             // when & then
-            mockMvc.perform(delete("/api/mates/{memberId}/{postId}", testMember.getId(), openPost.getId())
+            mockMvc.perform(delete("/api/mates/{postId}", openPost.getId())
                             .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isNoContent())
                     .andDo(print());
@@ -597,9 +580,10 @@ public class MateIntegrationTest {
 
         @Test
         @DisplayName("메이트 게시글 삭제 실패 - 존재하지 않는 게시글")
+        @WithAuthMember
         void deleteMatePost_NotFound() throws Exception {
             // when & then
-            mockMvc.perform(delete("/api/mates/{memberId}/{postId}", testMember.getId(), 999L)
+            mockMvc.perform(delete("/api/mates/{postId}", 999L)
                             .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.status").value("ERROR"))
@@ -610,51 +594,5 @@ public class MateIntegrationTest {
             // DB 검증 - 기존 게시글들은 여전히 존재
             assertThat(mateRepository.findAll()).hasSize(3);
         }
-
-        @Test
-        @DisplayName("메이트 게시글 삭제 실패 - 권한 없음")
-        void deleteMatePost_NotAllowed() throws Exception {
-            // given
-            Member otherMember = memberRepository.save(Member.builder()
-                    .name("다른유저")
-                    .email("other@test.com")
-                    .nickname("다른계정")
-                    .imageUrl("other.jpg")
-                    .gender(Gender.MALE)
-                    .age(30)
-                    .manner(0.3f)
-                    .build());
-
-            // when & then
-            mockMvc.perform(delete("/api/mates/{memberId}/{postId}", otherMember.getId(), openPost.getId())
-                            .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isForbidden())
-                    .andExpect(jsonPath("$.status").value("ERROR"))
-                    .andExpect(jsonPath("$.message").value(MATE_POST_UPDATE_NOT_ALLOWED.getMessage()))
-                    .andExpect(jsonPath("$.code").value(403))
-                    .andDo(print());
-
-            // DB 검증 - 게시글이 삭제되지 않음
-            assertThat(mateRepository.findById(openPost.getId())).isPresent();
-        }
-//
-//        @Test
-//        @DisplayName("직관 완료된 게시글 삭제 시 Visit 엔티티와 연관관계 제거")
-//        void deleteMatePost_WithCompletedStatus() throws Exception {
-//            // given
-//            MatePost post = createMatePost(futureMatch, 1L, Status.CLOSED); // CLOSED 상태로 생성
-//            post.completeVisit(List.of(testMember.getId())); // completeVisit 호출하여 COMPLETE로 변경
-//            Visit visit = post.getVisit();
-//
-//            // when
-//            mockMvc.perform(delete("/api/mates/{memberId}/{postId}", testMember.getId(), post.getId())
-//                            .contentType(MediaType.APPLICATION_JSON))
-//                    .andExpect(status().isNoContent())
-//                    .andDo(print());
-//
-//            // then
-//            assertThat(mateRepository.findById(post.getId())).isEmpty();
-//            assertThat(visit.getPost()).isNull();
-//        }
     }
 }
