@@ -13,6 +13,8 @@ import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.common.security.util.JwtUtil;
+import com.example.mate.common.security.filter.JwtCheckFilter;
+import com.example.mate.common.security.util.JwtUtil;
 import com.example.mate.config.WithAuthMember;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatMessageResponse;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatRoomResponse;
@@ -47,6 +49,9 @@ class GoodsChatRoomControllerTest {
 
     @MockBean
     private JwtUtil jwtUtil;
+
+    @MockBean
+    private JwtCheckFilter jwtCheckFilter;
 
     @Test
     @DisplayName("굿즈거래 채팅방 생성 성공 - 기존 채팅방이 있을 경우 해당 채팅방을 반환한다.")
