@@ -187,6 +187,32 @@ public class GoodsChatIntegrationTest {
         assertThat(image.getImageUrl()).isEqualTo("upload/test_img_url");
     }
 
+    @Test
+    @DisplayName("굿즈거래 채팅방 목록 조회 성공 통합 테스트")
+    @WithAuthMember(memberId = 2L)
+    void getGoodsChatRooms_should_return_chat_room_list_integration_test() throws Exception {
+        // given
+        Long memberId = buyer.getId();
+        Pageable pageable = PageRequest.of(0, 10);
+
+        // when & then
+        mockMvc.perform(get("/api/goods/chat")
+                        .param("page", String.valueOf(pageable.getPageNumber()))
+                        .param("size", String.valueOf(pageable.getPageSize())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("SUCCESS"))
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.content").isArray())
+                .andExpect(jsonPath("$.data.content[0].chatRoomId").value(chatRoom.getId()))
+                .andExpect(jsonPath("$.data.content[0].opponentNickname").value(seller.getNickname()))
+                .andExpect(jsonPath("$.data.content[0].lastChatContent").value(chatRoom.getLastChatContent()))
+                .andExpect(jsonPath("$.data.content[0].placeName").value(goodsPost.getLocation().getPlaceName()))
+                .andExpect(jsonPath("$.data.content[0].goodsMainImageUrl").value(goodsPost.getMainImageUrl()))
+                .andExpect(jsonPath("$.data.content[0].opponentImageUrl").value(seller.getImageUrl()))
+                .andReturn()
+                .getResponse();
+    }
+
 
     private Member createMember(String name, String nickname, String email) {
         return memberRepository.save(Member.builder()

@@ -15,11 +15,13 @@ import com.example.mate.domain.constant.MessageType;
 import com.example.mate.domain.goods.entity.Category;
 import com.example.mate.domain.goods.entity.GoodsPost;
 import com.example.mate.domain.goods.entity.GoodsPostImage;
+import com.example.mate.domain.goods.entity.Location;
 import com.example.mate.domain.goods.entity.Role;
 import com.example.mate.domain.goods.entity.Status;
 import com.example.mate.domain.goods.repository.GoodsPostRepository;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatMessageResponse;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatRoomResponse;
+import com.example.mate.domain.goodsChat.dto.response.GoodsChatRoomSummaryResponse;
 import com.example.mate.domain.goodsChat.entity.GoodsChatMessage;
 import com.example.mate.domain.goodsChat.entity.GoodsChatPartId;
 import com.example.mate.domain.goodsChat.entity.GoodsChatRoom;
@@ -87,6 +89,15 @@ class GoodsChatServiceTest {
                 .price(10_000)
                 .status(status)
                 .category(Category.ACCESSORY)
+                .location(createLocation())
+                .build();
+    }
+
+    private Location createLocation() {
+        return Location.builder()
+                .placeName("test place name")
+                .longitude("test longitude")
+                .latitude("test latitude")
                 .build();
     }
 
@@ -406,6 +417,75 @@ class GoodsChatServiceTest {
             verify(partRepository).existsById(goodsChatPartId);
             verify(chatRoomRepository).findByChatRoomId(chatRoomId);
             verify(messageRepository, never()).getChatMessages(chatRoomId, PageRequest.of(0, 20));
+        }
+    }
+
+    @Nested
+    @DisplayName("채팅방 목록 조회 테스트")
+    class GoodsChatRoomListTest {
+
+        @Test
+        @DisplayName("채팅방 목록 조회 성공")
+        void getGoodsChatRooms_should_return_paginated_chatRoom_summaries() {
+            // given
+            Long memberId = 1L;
+            Member member = createMember(memberId, "Test Member", "test_member");
+            Member opponentMember = createMember(2L, "Opponent Member", "opponent_member");
+
+            // 첫번째 채팅방
+            GoodsPost goodsPost = createGoodsPost(1L, member, null, Status.OPEN);
+            GoodsChatRoom chatRoom = createGoodsChatRoom(1L, goodsPost);
+            chatRoom.addChatParticipant(member, Role.BUYER);
+            chatRoom.addChatParticipant(opponentMember, Role.SELLER);
+
+            // 두번째 채팅방
+            GoodsPost goodsPost2 = createGoodsPost(2L, member, null, Status.OPEN);
+            GoodsChatRoom chatRoom2 = createGoodsChatRoom(2L, goodsPost2);
+            chatRoom2.addChatParticipant(member, Role.BUYER);
+            chatRoom2.addChatParticipant(opponentMember, Role.SELLER);
+
+            Pageable pageable = PageRequest.of(0, 10);
+            Page<GoodsChatRoom> chatRoomPage = new PageImpl<>(List.of(chatRoom, chatRoom2), pageable, 2);
+
+            when(memberRepository.findById(memberId)).thenReturn(Optional.of(member));
+            when(chatRoomRepository.findChatRoomPageByMemberId(memberId, pageable)).thenReturn(chatRoomPage);
+
+            // when
+            PageResponse<GoodsChatRoomSummaryResponse> result = goodsChatService.getGoodsChatRooms(memberId, pageable);
+
+            // then
+            assertThat(result.getContent()).hasSize(2);
+            assertThat(result.getTotalElements()).isEqualTo(2);
+            assertThat(result.getTotalPages()).isEqualTo(1);
+            assertThat(result.getPageNumber()).isEqualTo(0);
+
+            List<GoodsChatRoomSummaryResponse> resultContent = result.getContent();
+            assertThat(resultContent.get(0).getChatRoomId()).isEqualTo(chatRoom.getId());
+            assertThat(resultContent.get(0).getOpponentNickname()).isEqualTo(opponentMember.getNickname());
+            assertThat(resultContent.get(1).getChatRoomId()).isEqualTo(chatRoom2.getId());
+            assertThat(resultContent.get(1).getOpponentNickname()).isEqualTo(opponentMember.getNickname());
+
+            verify(memberRepository).findById(memberId);
+            verify(chatRoomRepository).findChatRoomPageByMemberId(memberId, pageable);
+        }
+
+        @Test
+        @DisplayName("채팅방 목록 조회 실패 - 존재하지 않는 회원")
+        void getGoodsChatRooms_should_throw_CustomException_for_invalid_member() {
+            // given
+            Long memberId = 1L;
+            Pageable pageable = PageRequest.of(0, 10);
+
+            when(memberRepository.findById(memberId)).thenReturn(Optional.empty());
+
+            // when
+            assertThatThrownBy(() -> goodsChatService.getGoodsChatRooms(memberId, pageable))
+                    .isInstanceOf(CustomException.class)
+                    .hasMessage(ErrorCode.MEMBER_NOT_FOUND_BY_ID.getMessage());
+
+            // then
+            verify(memberRepository).findById(memberId);
+            verify(chatRoomRepository, never()).findChatRoomPageByMemberId(anyLong(), any(Pageable.class));
         }
     }
 }

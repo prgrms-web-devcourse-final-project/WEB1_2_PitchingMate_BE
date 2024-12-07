@@ -8,10 +8,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.mate.common.response.PageResponse;
+import com.example.mate.common.security.util.JwtUtil;
 import com.example.mate.config.WithAuthMember;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatMessageResponse;
-import com.example.mate.common.security.util.JwtUtil;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatRoomResponse;
+import com.example.mate.domain.goodsChat.dto.response.GoodsChatRoomSummaryResponse;
 import com.example.mate.domain.goodsChat.service.GoodsChatService;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -23,6 +24,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -213,5 +215,46 @@ class GoodsChatRoomControllerTest {
                 .andExpect(jsonPath("$.data.initialMessages.content[0].message").value(secondMessage.getMessage()))
                 .andExpect(jsonPath("$.data.initialMessages.content[1].chatMessageId").value(firstMessage.getChatMessageId()))
                 .andExpect(jsonPath("$.data.initialMessages.content[1].message").value(firstMessage.getMessage()));
+    }
+
+    @Test
+    @DisplayName("굿즈거래 채팅방 목록 조회 성공")
+    void getGoodsChatRooms_should_return_chat_room_list() throws Exception {
+        // given
+        Long memberId = 1L;
+        Pageable pageable = PageRequest.of(0, 10);
+
+        GoodsChatRoomSummaryResponse chatRoom = GoodsChatRoomSummaryResponse.builder()
+                .chatRoomId(1L)
+                .opponentNickname("Opponent1")
+                .lastChatContent("First message")
+                .lastChatSentAt(LocalDateTime.now().minusMinutes(10))
+                .placeName("Test Place")
+                .goodsMainImageUrl("/images/goods1.jpg")
+                .opponentImageUrl("/images/opponent1.jpg")
+                .build();
+
+        PageResponse<GoodsChatRoomSummaryResponse> pageResponse = PageResponse.from(
+                new PageImpl<>(List.of(chatRoom), pageable, 1), List.of(chatRoom));
+
+        when(goodsChatService.getGoodsChatRooms(memberId, pageable)).thenReturn(pageResponse);
+
+        // when & then
+        mockMvc.perform(get("/api/goods/chat")
+                        .param("page", "0")
+                        .param("size", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("SUCCESS"))
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.content").isArray())
+                .andExpect(jsonPath("$.data.content[0].chatRoomId").value(chatRoom.getChatRoomId()))
+                .andExpect(jsonPath("$.data.content[0].opponentNickname").value(chatRoom.getOpponentNickname()))
+                .andExpect(jsonPath("$.data.content[0].lastChatContent").value(chatRoom.getLastChatContent()))
+                .andExpect(jsonPath("$.data.content[0].lastChatSentAt").isNotEmpty())
+                .andExpect(jsonPath("$.data.content[0].placeName").value(chatRoom.getPlaceName()))
+                .andExpect(jsonPath("$.data.content[0].goodsMainImageUrl").value(chatRoom.getGoodsMainImageUrl()))
+                .andExpect(jsonPath("$.data.content[0].opponentImageUrl").value(chatRoom.getOpponentImageUrl()));
+
+        verify(goodsChatService).getGoodsChatRooms(memberId, pageable);
     }
 }
