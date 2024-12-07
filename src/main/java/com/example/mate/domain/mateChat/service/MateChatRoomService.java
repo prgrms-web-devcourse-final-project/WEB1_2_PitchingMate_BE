@@ -268,6 +268,9 @@ public class MateChatRoomService {
     // 내 채팅방 목록 조회
     @Transactional(readOnly = true)
     public PageResponse<MateChatRoomListResponse> getMyChatRooms(Long memberId, Pageable pageable) {
+        memberRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND_BY_ID));
+
         Page<MateChatRoom> chatRooms = chatRoomRepository.findActiveChatRoomsByMemberId(memberId, pageable);
 
         List<MateChatRoomListResponse> responses = chatRooms.getContent().stream()
@@ -299,6 +302,9 @@ public class MateChatRoomService {
     }
 
     private void validateChatRoomAccess(Long roomId, Long memberId) {
+        memberRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND_BY_ID));
+
         MateChatRoomMember member = chatRoomMemberRepository.findByChatRoomIdAndMemberId(roomId, memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.CHAT_ROOM_MEMBER_NOT_FOUND));
 

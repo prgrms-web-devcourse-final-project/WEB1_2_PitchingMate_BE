@@ -1,5 +1,7 @@
 package com.example.mate.domain.mateChat.controller;
 
+import com.example.mate.common.error.CustomException;
+import com.example.mate.common.error.ErrorCode;
 import com.example.mate.common.response.ApiResponse;
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.common.security.auth.AuthMember;
@@ -41,6 +43,10 @@ public class MateChatRoomController {
                                                     @AuthenticationPrincipal AuthMember member
 
             ) {
+
+        if (member == null) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED_USER);
+        }
         PageResponse<MateChatRoomListResponse> response = chatRoomService.getMyChatRooms(member.getMemberId(), pageable);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
