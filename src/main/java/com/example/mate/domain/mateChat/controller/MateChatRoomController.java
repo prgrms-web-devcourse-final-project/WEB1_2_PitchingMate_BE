@@ -1,7 +1,5 @@
 package com.example.mate.domain.mateChat.controller;
 
-import com.example.mate.common.error.CustomException;
-import com.example.mate.common.error.ErrorCode;
 import com.example.mate.common.response.ApiResponse;
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.common.security.auth.AuthMember;
@@ -10,6 +8,7 @@ import com.example.mate.domain.mateChat.dto.response.MateChatMessageResponse;
 import com.example.mate.domain.mateChat.dto.response.MateChatRoomListResponse;
 import com.example.mate.domain.mateChat.dto.response.MateChatRoomResponse;
 import com.example.mate.domain.mateChat.service.MateChatRoomService;
+import com.example.mate.domain.member.dto.response.MemberSummaryResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -18,6 +17,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -42,9 +43,6 @@ public class MateChatRoomController {
             @Parameter(description = "페이지 정보") @ValidPageable Pageable pageable,
             @AuthenticationPrincipal AuthMember member
     ) {
-        if (member == null) {
-            throw new CustomException(ErrorCode.UNAUTHORIZED_USER);
-        }
         PageResponse<MateChatRoomListResponse> response = chatRoomService.getMyChatRooms(member.getMemberId(), pageable);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
@@ -78,5 +76,13 @@ public class MateChatRoomController {
     ) {
         chatRoomService.leaveChatRoom(chatroomId, member.getMemberId());
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{chatRoomId}/members")
+    @Operation(summary = "채팅방 멤버 조회", description = "채팅방에 현재 참여 중인 멤버 목록을 조회합니다.")
+    public ResponseEntity<ApiResponse<List<MemberSummaryResponse>>> getMateChatRoomMembers(@Parameter(description = "채팅방 ID") @PathVariable Long chatRoomId,
+                                                                                             @AuthenticationPrincipal AuthMember member) {
+        List<MemberSummaryResponse> responses = chatRoomService.getChatRoomMembers(chatRoomId, member.getMemberId());
+        return ResponseEntity.ok(ApiResponse.success(responses));
     }
 }
