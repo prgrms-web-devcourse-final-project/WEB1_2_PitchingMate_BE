@@ -72,6 +72,7 @@ public class JwtCheckFilter extends OncePerRequestFilter {
                 requestURI.startsWith("/api/auth") ||
                 requestURI.startsWith("/api/members/join") ||
                 requestURI.startsWith("/swagger-ui") ||
+                requestURI.startsWith("/v3/api-docs") ||
                 requestURI.startsWith("/api/members/login");
     }
 
