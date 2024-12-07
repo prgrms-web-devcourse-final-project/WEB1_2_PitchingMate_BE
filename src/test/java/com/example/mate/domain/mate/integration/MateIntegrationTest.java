@@ -1,6 +1,7 @@
 package com.example.mate.domain.mate.integration;
 
 import com.example.mate.common.security.util.JwtUtil;
+import com.example.mate.config.WithAuthMember;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.match.entity.Match;
 import com.example.mate.domain.match.repository.MatchRepository;
@@ -24,6 +25,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
@@ -60,6 +62,9 @@ public class MateIntegrationTest {
     @Autowired
     private MateRepository mateRepository;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
     @MockBean
     private JwtUtil jwtUtil;
 
@@ -77,6 +82,8 @@ public class MateIntegrationTest {
         mateRepository.deleteAll();
         matchRepository.deleteAll();
         memberRepository.deleteAll();
+
+        jdbcTemplate.execute("ALTER TABLE member ALTER COLUMN id RESTART WITH 1");
 
         // 테스트 멤버 생성
         testMember = createTestMember();
@@ -151,10 +158,10 @@ public class MateIntegrationTest {
 
         @Test
         @DisplayName("메이트 게시글 작성 성공")
+        @WithAuthMember
         void createMatePost_Success() throws Exception {
             // given
             MatePostCreateRequest request = MatePostCreateRequest.builder()
-                    .memberId(testMember.getId())
                     .teamId(1L)
                     .matchId(futureMatch.getId())
                     .title("통합 테스트 제목")
@@ -199,35 +206,10 @@ public class MateIntegrationTest {
         }
 
         @Test
-        @DisplayName("존재하지 않는 회원으로 메이트 게시글 작성 시 실패")
-        void createMatePost_WithInvalidMember() throws Exception {
-            MatePostCreateRequest request = MatePostCreateRequest.builder()
-                    .memberId(999L)
-                    .teamId(1L)
-                    .matchId(futureMatch.getId())
-                    .title("통합 테스트 제목")
-                    .content("통합 테스트 내용")
-                    .age(Age.TWENTIES)
-                    .maxParticipants(4)
-                    .gender(Gender.FEMALE)
-                    .transportType(TransportType.PUBLIC)
-                    .build();
-
-            MockMultipartFile data = new MockMultipartFile(
-                    "data",
-                    "",
-                    MediaType.APPLICATION_JSON_VALUE,
-                    objectMapper.writeValueAsBytes(request)
-            );
-
-            performErrorTest(data, MEMBER_NOT_FOUND_BY_ID.getMessage(), 404);
-        }
-
-        @Test
         @DisplayName("존재하지 않는 경기로 메이트 게시글 작성 시 실패")
+        @WithAuthMember
         void createMatePost_WithInvalidMatch() throws Exception {
             MatePostCreateRequest request = MatePostCreateRequest.builder()
-                    .memberId(testMember.getId())
                     .teamId(1L)
                     .matchId(999L)
                     .title("통합 테스트 제목")

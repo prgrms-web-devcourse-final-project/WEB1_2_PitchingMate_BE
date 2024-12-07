@@ -20,7 +20,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
 import com.example.mate.common.response.PageResponse;
+import com.example.mate.common.security.auth.AuthMember;
 import com.example.mate.common.security.util.JwtUtil;
+import com.example.mate.config.WithAuthMember;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.mate.dto.request.MatePostCreateRequest;
 import com.example.mate.domain.mate.dto.request.MatePostUpdateRequest;
@@ -31,6 +33,7 @@ import com.example.mate.domain.mate.entity.Age;
 import com.example.mate.domain.mate.entity.Status;
 import com.example.mate.domain.mate.entity.TransportType;
 import com.example.mate.domain.mate.service.MateService;
+import com.example.mate.domain.member.entity.Role;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -39,19 +42,21 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-//@WebMvcTest(MateController.class)
-@SpringBootTest
+@WebMvcTest(MateController.class)
 @MockBean(JpaMetamodelMappingContext.class)
 @AutoConfigureMockMvc(addFilters = false)
+@WithAuthMember
 class MateControllerTest {
 
     @Autowired
@@ -87,7 +92,6 @@ class MateControllerTest {
 
         private MatePostCreateRequest createMatePostRequest() {
             return MatePostCreateRequest.builder()
-                    .memberId(1L)
                     .teamId(1L)
                     .matchId(1L)
                     .title("테스트 제목")
@@ -110,6 +114,7 @@ class MateControllerTest {
         @DisplayName("메이트 게시글 작성 성공")
         void createMatePost_success() throws Exception {
             // given
+            Long memberId = 1L;
             MatePostCreateRequest request = createMatePostRequest();
             MatePostResponse response = createMatePostResponse();
 
@@ -127,7 +132,7 @@ class MateControllerTest {
                     "test image content".getBytes()
             );
 
-            given(mateService.createMatePost(any(MatePostCreateRequest.class), any()))
+            given(mateService.createMatePost(any(MatePostCreateRequest.class), any(), any()))
                     .willReturn(response);
 
             // when & then
@@ -146,6 +151,7 @@ class MateControllerTest {
         @DisplayName("메이트 게시글 작성 성공 - 이미지 없음")
         void createMatePost_successWithoutImage() throws Exception {
             // given
+            Long memberId = 1L;
             MatePostCreateRequest request = createMatePostRequest();
             MatePostResponse response = createMatePostResponse();
 
@@ -156,7 +162,7 @@ class MateControllerTest {
                     objectMapper.writeValueAsBytes(request)
             );
 
-            given(mateService.createMatePost(any(MatePostCreateRequest.class), any()))
+            given(mateService.createMatePost(any(MatePostCreateRequest.class), any(), any()))
                     .willReturn(response);
 
             // when & then

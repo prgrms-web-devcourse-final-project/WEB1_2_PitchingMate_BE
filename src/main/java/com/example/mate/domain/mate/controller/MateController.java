@@ -2,6 +2,7 @@ package com.example.mate.domain.mate.controller;
 
 import com.example.mate.common.response.ApiResponse;
 import com.example.mate.common.response.PageResponse;
+import com.example.mate.common.security.auth.AuthMember;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.mate.dto.request.*;
 import com.example.mate.domain.mate.dto.response.*;
@@ -18,6 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -36,9 +38,9 @@ public class MateController {
     public ResponseEntity<ApiResponse<MatePostResponse>> createMatePost(@Parameter(description = "구인글 등록 데이터", required = true)
                                                                         @Valid @RequestPart(value = "data") MatePostCreateRequest request,
                                                                         @Parameter(description = "구인글 대표사진", required = true)
-                                                                        @RequestPart(value = "file", required = false) MultipartFile file) {
-        //TODO - member 정보를 request가 아니라  @AuthenticationPrincipal Long memberId로 받도록 변경
-        MatePostResponse response = mateService.createMatePost(request, file);
+                                                                        @RequestPart(value = "file", required = false) MultipartFile file,
+                                                                        @AuthenticationPrincipal AuthMember member) {
+        MatePostResponse response = mateService.createMatePost(request, file, member.getMemberId());
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
