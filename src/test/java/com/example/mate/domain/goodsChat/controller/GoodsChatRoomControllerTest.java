@@ -257,4 +257,49 @@ class GoodsChatRoomControllerTest {
 
         verify(goodsChatService).getGoodsChatRooms(memberId, pageable);
     }
+
+    @Test
+    @DisplayName("굿즈거래 채팅방 메시지 조회 성공")
+    void getGoodsChatRoomMessages_should_return_messages() throws Exception {
+        // given
+        Long chatRoomId = 1L;
+        Long memberId = 1L;
+        PageRequest pageable = PageRequest.of(0, 20);
+
+        GoodsChatMessageResponse firstMessage = GoodsChatMessageResponse.builder()
+                .chatMessageId(1L)
+                .message("First message")
+                .senderId(memberId)
+                .sentAt(LocalDateTime.now().minusMinutes(10))
+                .build();
+
+        GoodsChatMessageResponse secondMessage = GoodsChatMessageResponse.builder()
+                .chatMessageId(2L)
+                .message("Second message")
+                .senderId(memberId)
+                .sentAt(LocalDateTime.now())
+                .build();
+
+        PageResponse<GoodsChatMessageResponse> pageResponse = PageResponse.from(
+                new PageImpl<>(List.of(secondMessage, firstMessage), pageable, 2),
+                List.of(secondMessage, firstMessage)
+        );
+
+        when(goodsChatService.getMessagesForChatRoom(chatRoomId, memberId, pageable)).thenReturn(pageResponse);
+
+        // when & then
+        mockMvc.perform(get("/api/goods/chat/{chatRoomId}/message", chatRoomId)
+                        .param("page", "0")
+                        .param("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("SUCCESS"))
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.content").isArray())
+                .andExpect(jsonPath("$.data.content[0].chatMessageId").value(secondMessage.getChatMessageId()))
+                .andExpect(jsonPath("$.data.content[0].message").value(secondMessage.getMessage()))
+                .andExpect(jsonPath("$.data.content[1].chatMessageId").value(firstMessage.getChatMessageId()))
+                .andExpect(jsonPath("$.data.content[1].message").value(firstMessage.getMessage()));
+
+        verify(goodsChatService).getMessagesForChatRoom(chatRoomId, memberId, pageable);
+    }
 }

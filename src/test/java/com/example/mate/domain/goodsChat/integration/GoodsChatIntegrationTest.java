@@ -3,10 +3,12 @@ package com.example.mate.domain.goodsChat.integration;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.mate.common.response.ApiResponse;
+import com.example.mate.common.response.PageResponse;
 import com.example.mate.common.security.util.JwtUtil;
 import com.example.mate.config.WithAuthMember;
 import com.example.mate.domain.constant.Gender;
@@ -18,6 +20,7 @@ import com.example.mate.domain.goods.entity.GoodsPostImage;
 import com.example.mate.domain.goods.entity.Role;
 import com.example.mate.domain.goods.entity.Status;
 import com.example.mate.domain.goods.repository.GoodsPostRepository;
+import com.example.mate.domain.goodsChat.dto.response.GoodsChatMessageResponse;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatRoomResponse;
 import com.example.mate.domain.goodsChat.entity.GoodsChatMessage;
 import com.example.mate.domain.goodsChat.entity.GoodsChatPart;
@@ -38,6 +41,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -211,6 +215,52 @@ public class GoodsChatIntegrationTest {
                 .andExpect(jsonPath("$.data.content[0].opponentImageUrl").value(seller.getImageUrl()))
                 .andReturn()
                 .getResponse();
+    }
+
+    @Test
+    @DisplayName("굿즈거래 채팅방 메시지 조회 성공 통합 테스트")
+    @WithAuthMember(memberId = 2L)
+    void getGoodsChatRoomMessages_integration_test() throws Exception {
+        // given
+        Long chatRoomId = chatRoom.getId();
+        Long buyerId = buyer.getId();
+        Pageable pageable = PageRequest.of(0, 20);
+
+        // when & then
+        MockHttpServletResponse response = mockMvc.perform(get("/api/goods/chat/{chatRoomId}/message", chatRoomId)
+                        .param("page", String.valueOf(pageable.getPageNumber()))
+                        .param("size", String.valueOf(pageable.getPageSize())))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("SUCCESS"))
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.content").isArray())
+                .andReturn()
+                .getResponse();
+
+        response.setCharacterEncoding("UTF-8");
+        ApiResponse<PageResponse<GoodsChatMessageResponse>> apiResponse = objectMapper.readValue(response.getContentAsString(), new TypeReference<>() {});
+        List<GoodsChatMessageResponse> expectMessages = apiResponse.getData().getContent();
+
+        // 실제 데이터 조회
+        Page<GoodsChatMessage> chatMessages = messageRepository.getChatMessages(chatRoomId, pageable);
+        List<GoodsChatMessage> actualMessages = chatMessages.getContent();
+
+        assertThat(expectMessages.size()).isEqualTo(actualMessages.size());
+
+        for (int i = 0; i < expectMessages.size(); i++) {
+            GoodsChatMessageResponse expectedMessage = expectMessages.get(i);
+            GoodsChatMessage actualMessage = actualMessages.get(i);
+
+            assertThat(expectedMessage.getChatMessageId()).isEqualTo(actualMessage.getId());
+            assertThat(expectedMessage.getRoomId()).isEqualTo(actualMessage.getGoodsChatPart().getGoodsChatRoom().getId());
+            assertThat(expectedMessage.getSenderId()).isEqualTo(actualMessage.getGoodsChatPart().getMember().getId());
+            assertThat(expectedMessage.getSenderNickname()).isEqualTo(actualMessage.getGoodsChatPart().getMember().getNickname());
+            assertThat(expectedMessage.getMessage()).isEqualTo(actualMessage.getContent());
+            assertThat(expectedMessage.getMessageType()).isEqualTo(actualMessage.getMessageType().getValue());
+            assertThat(expectedMessage.getSenderImageUrl()).isEqualTo(actualMessage.getGoodsChatPart().getMember().getImageUrl());
+            assertThat(expectedMessage.getSentAt()).isEqualToIgnoringNanos(actualMessage.getSentAt()); // 시간 비교, 나노초는 무시
+        }
     }
 
 
