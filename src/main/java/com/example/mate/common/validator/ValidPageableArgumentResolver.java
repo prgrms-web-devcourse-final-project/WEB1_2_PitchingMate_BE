@@ -27,7 +27,16 @@ public class ValidPageableArgumentResolver extends PageableHandlerMethodArgument
         // @ValidPageable 어노테이션 확인
         ValidPageable validPageable = methodParameter.getParameterAnnotation(ValidPageable.class);
 
-        int pageNumber = Math.max(pageable.getPageNumber(), validPageable != null ? validPageable.page() : 0);
+        // 클라이언트가 page 파라미터를 제공했는지 확인
+        String pageParam = webRequest.getParameter("page");
+
+        // pageParam이 존재하면 pageable.getPageNumber() 사용
+        // pageParam이 없고 validPageable이 존재하면 validPageable.page() 사용
+        // 둘 다 없으면 0을 사용
+        int pageNumber = pageParam != null ?
+                pageable.getPageNumber() :
+                (validPageable != null ? validPageable.page() : 0);
+
         int pageSize = pageable.getPageSize() > 0
                 ? pageable.getPageSize()
                 : validPageable != null ? validPageable.size() : 10;

@@ -62,7 +62,7 @@ public class MateChatRoomController {
     public ResponseEntity<ApiResponse<PageResponse<MateChatMessageResponse>>> getChatMessages(
             @Parameter(description = "채팅방 ID") @PathVariable Long chatroomId,
             @AuthenticationPrincipal AuthMember member,
-            @Parameter(description = "페이지 정보") @ValidPageable(page = 1, size = 20) Pageable pageable
+            @Parameter(description = "페이지 정보") @ValidPageable(page = 1) Pageable pageable
     ) {
         PageResponse<MateChatMessageResponse> messages = chatRoomService.getChatMessages(chatroomId, member.getMemberId(), pageable);
         return ResponseEntity.ok(ApiResponse.success(messages));
