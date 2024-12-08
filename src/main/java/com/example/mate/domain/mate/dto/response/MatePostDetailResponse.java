@@ -33,8 +33,9 @@ public class MatePostDetailResponse {
     private Long postId;
     private Long matchId;
     private Long authorId;
+    private Integer currentChatMembers;
 
-    public static MatePostDetailResponse from(MatePost post) {
+    public static MatePostDetailResponse from(MatePost post, Integer currentChatMembers) {
         String myTeamName = TeamInfo.getById(post.getTeamId()).shortName;
         String rivalTeamName = getRivalTeamName(post);
 
@@ -57,6 +58,7 @@ public class MatePostDetailResponse {
                 .postId(post.getId())
                 .matchId(post.getMatch().getId())
                 .authorId(post.getAuthor().getId())
+                .currentChatMembers(currentChatMembers)
                 .build();
     }
 

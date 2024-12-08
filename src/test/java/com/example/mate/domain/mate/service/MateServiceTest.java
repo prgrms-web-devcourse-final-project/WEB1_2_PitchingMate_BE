@@ -15,6 +15,8 @@ import com.example.mate.domain.mate.dto.response.MatePostResponse;
 import com.example.mate.domain.mate.dto.response.MatePostSummaryResponse;
 import com.example.mate.domain.mate.entity.*;
 import com.example.mate.domain.mate.repository.MateRepository;
+import com.example.mate.domain.mateChat.repository.MateChatRoomMemberRepository;
+import com.example.mate.domain.mateChat.repository.MateChatRoomRepository;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -60,6 +62,12 @@ class MateServiceTest {
 
     @Mock
     private FileService fileService;
+
+    @Mock
+    private MateChatRoomRepository chatRoomRepository;
+
+    @Mock
+    private MateChatRoomMemberRepository chatRoomMemberRepository;
 
     private static final Long TEST_MEMBER_ID = 1L;
     private static final Long TEST_MATCH_ID = 1L;
