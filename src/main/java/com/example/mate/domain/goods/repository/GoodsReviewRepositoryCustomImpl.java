@@ -1,5 +1,7 @@
 package com.example.mate.domain.goods.repository;
 
+import static com.example.mate.domain.goods.entity.QGoodsReview.*;
+
 import com.example.mate.domain.goods.entity.QGoodsPost;
 import com.example.mate.domain.goods.entity.QGoodsReview;
 import com.example.mate.domain.member.dto.response.MyReviewResponse;

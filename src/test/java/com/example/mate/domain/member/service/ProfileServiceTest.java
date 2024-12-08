@@ -11,7 +11,7 @@ import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.constant.Rating;
 import com.example.mate.domain.constant.TeamInfo;
-import com.example.mate.domain.goods.dto.LocationInfo;
+import com.example.mate.domain.goods.dto.response.LocationInfo;
 import com.example.mate.domain.goods.entity.Category;
 import com.example.mate.domain.goods.entity.GoodsPost;
 import com.example.mate.domain.goods.entity.GoodsPostImage;
@@ -151,7 +151,6 @@ class ProfileServiceTest {
                 .post(post)
                 .build();
 
-        goodsPostImage.setAsMainImage();
         goodsPost.changeImages(List.of(goodsPostImage));
     }
 

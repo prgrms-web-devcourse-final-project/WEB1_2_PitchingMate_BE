@@ -15,32 +15,44 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 @Component
 public class ValidPageableArgumentResolver extends PageableHandlerMethodArgumentResolver {
 
+    // @ValidPageable 이 있을 때만 실행
     @Override
-    public Pageable resolveArgument(MethodParameter methodParameter,
-                                    ModelAndViewContainer mavContainer,
-                                    NativeWebRequest webRequest,
-                                    WebDataBinderFactory binderFactory) {
+    public boolean supportsParameter(MethodParameter parameter) {
+        return parameter.hasParameterAnnotation(ValidPageable.class);
+    }
 
-        // 기본 Pageable 생성
-        Pageable pageable = super.resolveArgument(methodParameter, mavContainer, webRequest, binderFactory);
+    @Override
+    public Pageable resolveArgument(MethodParameter methodParameter, ModelAndViewContainer mavContainer,
+                                    NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
+        // 클라이언트 요청값 생성
+        String pageRequest = webRequest.getParameter(this.getParameterNameToUse(this.getPageParameterName(), methodParameter));
+        String sizeRequest = webRequest.getParameter(this.getParameterNameToUse(this.getSizeParameterName(), methodParameter));
 
         // @ValidPageable 어노테이션 확인
         ValidPageable validPageable = methodParameter.getParameterAnnotation(ValidPageable.class);
+        assert validPageable != null;
 
-        // 클라이언트가 page 파라미터를 제공했는지 확인
-        String pageParam = webRequest.getParameter("page");
+        int page = extractPageValue(pageRequest, validPageable);
+        int size = extractSizeValue(sizeRequest, validPageable);
 
-        // pageParam이 존재하면 pageable.getPageNumber() 사용
-        // pageParam이 없고 validPageable이 존재하면 validPageable.page() 사용
-        // 둘 다 없으면 0을 사용
-        int pageNumber = pageParam != null ?
-                pageable.getPageNumber() :
-                (validPageable != null ? validPageable.page() : 0);
+        return PageRequest.of(page, size);
+    }
 
-        int pageSize = pageable.getPageSize() > 0
-                ? pageable.getPageSize()
-                : validPageable != null ? validPageable.size() : 10;
+    // parameter 에 page 값이 있을 경우, 유효성 검증
+    private int extractPageValue(String pageRequest, ValidPageable validPageable) {
+        try {
+            return pageRequest != null ? Math.max(0, Integer.parseInt(pageRequest)) : validPageable.page();
+        } catch (NumberFormatException e) {
+            return validPageable.page();
+        }
+    }
 
-        return PageRequest.of(pageNumber, pageSize, pageable.getSort());
+    // parameter 에 size 값이 있을 경우, 유효성 검증
+    private int extractSizeValue(String sizeRequest, ValidPageable validPageable) {
+        try {
+            return sizeRequest != null ? Math.max(1, Integer.parseInt(sizeRequest)) : validPageable.size();
+        } catch (NumberFormatException e) {
+            return validPageable.size();
+        }
     }
 }

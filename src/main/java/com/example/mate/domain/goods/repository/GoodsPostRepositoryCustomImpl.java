@@ -1,7 +1,6 @@
 package com.example.mate.domain.goods.repository;
 
 import static com.example.mate.domain.goods.entity.QGoodsPost.goodsPost;
-import static com.example.mate.domain.goods.entity.QGoodsPostImage.goodsPostImage;
 
 import com.example.mate.domain.goods.entity.Category;
 import com.example.mate.domain.goods.entity.GoodsPost;
@@ -22,13 +21,11 @@ public class GoodsPostRepositoryCustomImpl implements GoodsPostRepositoryCustom 
 
     @Override
     public Page<GoodsPost> findPageGoodsPosts(Long teamId, Status status, Category category, Pageable pageable) {
-        BooleanBuilder conditions = createConditions(teamId, status, category);
+        BooleanBuilder conditions = buildConditions(teamId, status, category);
 
         List<GoodsPost> fetch = queryFactory
                 .selectFrom(goodsPost)
-                .join(goodsPost.goodsPostImages, goodsPostImage).fetchJoin()
                 .where(conditions)
-                .where(goodsPostImage.isMainImage.eq(true))
                 .orderBy(goodsPost.createdAt.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
@@ -42,7 +39,7 @@ public class GoodsPostRepositoryCustomImpl implements GoodsPostRepositoryCustom 
         return PageableExecutionUtils.getPage(fetch, pageable, total::fetchOne);
     }
 
-    private BooleanBuilder createConditions(Long teamId, Status status, Category category) {
+    private BooleanBuilder buildConditions(Long teamId, Status status, Category category) {
         BooleanBuilder builder = new BooleanBuilder();
 
         builder.and(goodsPost.status.eq(status));

@@ -1,4 +1,4 @@
-package com.example.mate.domain.goods.dto;
+package com.example.mate.domain.goods.dto.response;
 
 import com.example.mate.domain.goods.entity.Role;
 import com.example.mate.domain.member.entity.Member;

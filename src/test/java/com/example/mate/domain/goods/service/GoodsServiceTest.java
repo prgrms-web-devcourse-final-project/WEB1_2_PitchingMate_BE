@@ -1,22 +1,36 @@
 package com.example.mate.domain.goods.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.constant.Rating;
 import com.example.mate.domain.file.FileService;
-import com.example.mate.domain.goods.dto.LocationInfo;
 import com.example.mate.domain.goods.dto.request.GoodsPostRequest;
 import com.example.mate.domain.goods.dto.request.GoodsReviewRequest;
 import com.example.mate.domain.goods.dto.response.GoodsPostResponse;
 import com.example.mate.domain.goods.dto.response.GoodsPostSummaryResponse;
 import com.example.mate.domain.goods.dto.response.GoodsReviewResponse;
-import com.example.mate.domain.goods.entity.*;
+import com.example.mate.domain.goods.dto.response.LocationInfo;
+import com.example.mate.domain.goods.entity.Category;
+import com.example.mate.domain.goods.entity.GoodsPost;
+import com.example.mate.domain.goods.entity.GoodsPostImage;
+import com.example.mate.domain.goods.entity.GoodsReview;
+import com.example.mate.domain.goods.entity.Status;
 import com.example.mate.domain.goods.repository.GoodsPostImageRepository;
 import com.example.mate.domain.goods.repository.GoodsPostRepository;
 import com.example.mate.domain.goods.repository.GoodsReviewRepository;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
+import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -30,15 +44,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.List;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class GoodsServiceTest {
@@ -109,7 +114,6 @@ class GoodsServiceTest {
                 .post(post)
                 .build();
 
-        goodsPostImage.setAsMainImage();
         goodsPost.changeImages(List.of(goodsPostImage));
     }
 
@@ -423,43 +427,6 @@ class GoodsServiceTest {
             assertThat(goodsPostSummaryResponse.getTitle()).isEqualTo(goodsPost.getTitle());
             assertThat(goodsPostSummaryResponse.getPrice()).isEqualTo(goodsPost.getPrice());
             assertThat(goodsPostSummaryResponse.getImageUrl()).isEqualTo(goodsPostImage.getImageUrl());
-
-            verify(goodsPostRepository).findMainGoodsPosts(1L, Status.OPEN, PageRequest.of(0, 4));
-        }
-
-        @Test
-        @DisplayName("메인페이지 굿즈거래 판매글 조회 성공 - 대표 이미지가 없는 경우 기본 이미지를 반환")
-        void get_main_goods_posts_success_with_no_main_image() {
-            // given
-            Long teamId = 1L;
-            List<GoodsPostImage> imagesWithoutMain = List.of(
-                    GoodsPostImage.builder().imageUrl("upload/test_img_url_1").post(goodsPost).build(),
-                    GoodsPostImage.builder().imageUrl("upload/test_img_url_2").post(goodsPost).build()
-            );
-            // 직접 엔티티에 추가하여, 대표 사진 마설정
-            GoodsPost post = GoodsPost.builder()
-                    .id(1L)
-                    .teamId(1L)
-                    .title("test title")
-                    .category(Category.ACCESSORY)
-                    .price(10_000)
-                    .goodsPostImages(imagesWithoutMain).build();
-
-            List<GoodsPost> goodsPosts = List.of(post);
-            given(goodsPostRepository.findMainGoodsPosts(teamId, Status.OPEN, PageRequest.of(0, 4))).willReturn(
-                    goodsPosts);
-
-            // when
-            List<GoodsPostSummaryResponse> responses = goodsService.getMainGoodsPosts(teamId);
-
-            // then
-            assertThat(responses).isNotEmpty();
-            assertThat(responses.size()).isEqualTo(goodsPosts.size());
-
-            GoodsPostSummaryResponse goodsPostSummaryResponse = responses.get(0);
-            assertThat(goodsPostSummaryResponse.getTitle()).isEqualTo(goodsPost.getTitle());
-            assertThat(goodsPostSummaryResponse.getPrice()).isEqualTo(goodsPost.getPrice());
-            assertThat(goodsPostSummaryResponse.getImageUrl()).isEqualTo("upload/default.jpg");
 
             verify(goodsPostRepository).findMainGoodsPosts(1L, Status.OPEN, PageRequest.of(0, 4));
         }

@@ -1,4 +1,4 @@
-package com.example.mate.domain.goods.dto;
+package com.example.mate.domain.goods.dto.response;
 
 import com.example.mate.domain.goods.entity.Location;
 import jakarta.validation.constraints.NotEmpty;
