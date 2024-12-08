@@ -1,8 +1,6 @@
 package com.example.mate.domain.goods.dto.response;
 
 import com.example.mate.domain.constant.TeamInfo;
-import com.example.mate.domain.goods.dto.LocationInfo;
-import com.example.mate.domain.goods.dto.MemberInfo;
 import com.example.mate.domain.goods.entity.GoodsPost;
 import com.example.mate.domain.goods.entity.GoodsPostImage;
 import com.example.mate.domain.goods.entity.Role;
