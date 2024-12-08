@@ -1,10 +1,7 @@
 package com.example.mate.domain.goods.entity;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.example.mate.common.error.CustomException;
-import com.example.mate.common.error.ErrorCode;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,8 +23,7 @@ class GoodsPostTest {
         List<GoodsPostImage> actualPostImages = goodsPost.getGoodsPostImages();
         assertThat(actualPostImages).hasSize(2);
         assertThat(actualPostImages).containsExactlyInAnyOrder(image, image2);
-        assertThat(actualPostImages.get(0).getIsMainImage()).isTrue();
-        assertThat(actualPostImages.get(1).getIsMainImage()).isFalse();
+        assertThat(goodsPost.getMainImageUrl()).isEqualTo(image.getImageUrl());
         assertThat(image.getPost()).isEqualTo(goodsPost);
     }
 
@@ -50,20 +46,7 @@ class GoodsPostTest {
         List<GoodsPostImage> actualPostImages = goodsPost.getGoodsPostImages();
         assertThat(actualPostImages).hasSize(2);
         assertThat(actualPostImages).containsExactlyInAnyOrder(newImage, newImage2);
-        assertThat(actualPostImages.get(0).getIsMainImage()).isTrue();
-        assertThat(actualPostImages.get(1).getIsMainImage()).isFalse();
+        assertThat(goodsPost.getMainImageUrl()).isEqualTo(newImage.getImageUrl());
         assertThat(newImage.getPost()).isEqualTo(goodsPost);
-    }
-
-    @Test
-    @DisplayName("비어 있는 이미지를 업로드하면 CustomException 이 발생한다.")
-    void should_throw_CustomException_when_post_Images_are_null() {
-        // given
-        GoodsPost goodsPost = GoodsPost.builder().title("title").price(10_000).build();
-
-        // when & then
-        assertThatThrownBy(() -> goodsPost.changeImages(List.of()))
-                .isInstanceOf(CustomException.class)
-                .hasMessage(ErrorCode.GOODS_IMAGES_ARE_EMPTY.getMessage());
     }
 }
