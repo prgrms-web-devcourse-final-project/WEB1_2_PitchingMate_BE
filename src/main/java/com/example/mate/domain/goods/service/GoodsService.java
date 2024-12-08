@@ -11,12 +11,18 @@ import com.example.mate.domain.goods.dto.request.GoodsReviewRequest;
 import com.example.mate.domain.goods.dto.response.GoodsPostResponse;
 import com.example.mate.domain.goods.dto.response.GoodsPostSummaryResponse;
 import com.example.mate.domain.goods.dto.response.GoodsReviewResponse;
-import com.example.mate.domain.goods.entity.*;
+import com.example.mate.domain.goods.entity.Category;
+import com.example.mate.domain.goods.entity.GoodsPost;
+import com.example.mate.domain.goods.entity.GoodsPostImage;
+import com.example.mate.domain.goods.entity.GoodsReview;
+import com.example.mate.domain.goods.entity.Status;
 import com.example.mate.domain.goods.repository.GoodsPostImageRepository;
 import com.example.mate.domain.goods.repository.GoodsPostRepository;
 import com.example.mate.domain.goods.repository.GoodsReviewRepository;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -24,9 +30,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Service
 @Transactional
@@ -52,8 +55,7 @@ public class GoodsService {
         return GoodsPostResponse.of(savedPost);
     }
 
-    public GoodsPostResponse updateGoodsPost(Long memberId, Long goodsPostId, GoodsPostRequest request,
-                                             List<MultipartFile> files) {
+    public GoodsPostResponse updateGoodsPost(Long memberId, Long goodsPostId, GoodsPostRequest request, List<MultipartFile> files) {
         Member seller = findMemberById(memberId);
         GoodsPost goodsPost = findGoodsPostById(goodsPostId);
 
@@ -87,25 +89,17 @@ public class GoodsService {
     @Transactional(readOnly = true)
     public List<GoodsPostSummaryResponse> getMainGoodsPosts(Long teamId) {
         validateTeamInfo(teamId);
-
-        return goodsPostRepository.findMainGoodsPosts(teamId, Status.OPEN, PageRequest.of(0, 4))
-                .stream()
-                .map(this::convertToSummaryResponse)
-                .toList();
+        return mapToGoodsPostSummaryResponses(
+                goodsPostRepository.findMainGoodsPosts(teamId, Status.OPEN, PageRequest.of(0, 4))
+        );
     }
 
     @Transactional(readOnly = true)
-    public PageResponse<GoodsPostSummaryResponse> getPageGoodsPosts(Long teamId, String categoryVal,
-                                                                    Pageable pageable) {
+    public PageResponse<GoodsPostSummaryResponse> getPageGoodsPosts(Long teamId, String categoryVal, Pageable pageable) {
         validateTeamInfo(teamId);
         Category category = Category.from(categoryVal);
-
-        Page<GoodsPost> pageGoodsPosts = goodsPostRepository.findPageGoodsPosts(teamId, Status.OPEN, category,
-                pageable);
-        List<GoodsPostSummaryResponse> responses = pageGoodsPosts.getContent().stream()
-                .map(this::convertToSummaryResponse).toList();
-
-        return PageResponse.from(pageGoodsPosts, responses);
+        Page<GoodsPost> pageGoodsPosts = goodsPostRepository.findPageGoodsPosts(teamId, Status.OPEN, category, pageable);
+        return PageResponse.from(pageGoodsPosts, mapToGoodsPostSummaryResponses(pageGoodsPosts.getContent()));
     }
 
     public void completeTransaction(Long sellerId, Long goodsPostId, Long buyerId) {
@@ -151,9 +145,10 @@ public class GoodsService {
         imageRepository.deleteAllByPostId(goodsPostId);
     }
 
-    private GoodsPostSummaryResponse convertToSummaryResponse(GoodsPost goodsPost) {
-        String mainImageUrl = goodsPost.getMainImageUrl();
-        return GoodsPostSummaryResponse.of(goodsPost, mainImageUrl);
+    private List<GoodsPostSummaryResponse> mapToGoodsPostSummaryResponses(List<GoodsPost> goodsPosts) {
+        return goodsPosts.stream()
+                .map(goodsPost -> GoodsPostSummaryResponse.of(goodsPost, goodsPost.getMainImageUrl()))
+                .toList();
     }
 
     private GoodsPost findGoodsPostById(Long goodsPostId) {
