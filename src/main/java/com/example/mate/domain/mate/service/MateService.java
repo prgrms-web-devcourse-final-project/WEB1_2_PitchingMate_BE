@@ -15,6 +15,8 @@ import com.example.mate.domain.mate.entity.Status;
 import com.example.mate.domain.mate.entity.Visit;
 import com.example.mate.domain.mate.repository.MateRepository;
 import com.example.mate.domain.mate.repository.MateReviewRepository;
+import com.example.mate.domain.mateChat.repository.MateChatRoomMemberRepository;
+import com.example.mate.domain.mateChat.repository.MateChatRoomRepository;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +41,8 @@ public class MateService {
     private final MatchRepository matchRepository;
     private final MemberRepository memberRepository;
     private final MateReviewRepository mateReviewRepository;
+    private final MateChatRoomRepository mateChatRoomRepository;
+    private final MateChatRoomMemberRepository mateChatRoomMemberRepository;
     private final FileService fileService;
 
     public MatePostResponse createMatePost(MatePostCreateRequest request, MultipartFile file, Long memberId) {
@@ -115,7 +119,15 @@ public class MateService {
     public MatePostDetailResponse getMatePostDetail(Long postId) {
         MatePost matePost = findMatePostById(postId);
 
-        return MatePostDetailResponse.from(matePost);
+        Integer currentChatMembers = getCurrentChatMembers(postId);
+
+        return MatePostDetailResponse.from(matePost, currentChatMembers);
+    }
+
+    private Integer getCurrentChatMembers(Long postId) {
+        return mateChatRoomRepository.findByMatePostId(postId)
+                .map(chatRoom -> mateChatRoomMemberRepository.countByChatRoomIdAndIsActiveTrue(chatRoom.getId()))
+                .orElse(0);
     }
 
     public MatePostResponse updateMatePost(Long memberId, Long postId, MatePostUpdateRequest request,
