@@ -1,11 +1,5 @@
 package com.example.mate.domain.member.service;
 
-import static com.example.mate.common.error.ErrorCode.MEMBER_NOT_FOUND_BY_ID;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.verify;
-
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.constant.Gender;
@@ -20,10 +14,11 @@ import com.example.mate.domain.goods.repository.GoodsPostRepository;
 import com.example.mate.domain.goods.repository.GoodsReviewRepositoryCustom;
 import com.example.mate.domain.match.entity.Match;
 import com.example.mate.domain.mate.entity.MateReview;
-import com.example.mate.domain.mate.repository.MateRepository;
+import com.example.mate.domain.mate.entity.Visit;
 import com.example.mate.domain.mate.repository.MateReviewRepository;
 import com.example.mate.domain.mate.repository.MateReviewRepositoryCustom;
 import com.example.mate.domain.mate.repository.VisitPartRepository;
+import com.example.mate.domain.mate.repository.VisitRepository;
 import com.example.mate.domain.member.dto.response.MyGoodsRecordResponse;
 import com.example.mate.domain.member.dto.response.MyReviewResponse;
 import com.example.mate.domain.member.dto.response.MyTimelineResponse;
@@ -31,10 +26,6 @@ import com.example.mate.domain.member.dto.response.MyVisitResponse;
 import com.example.mate.domain.member.dto.response.MyVisitResponse.MateReviewResponse;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
-import com.example.mate.domain.member.repository.TimelineRepositoryCustom;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -47,6 +38,16 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
+import static com.example.mate.common.error.ErrorCode.MEMBER_NOT_FOUND_BY_ID;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class ProfileServiceTest {
@@ -67,16 +68,13 @@ class ProfileServiceTest {
     private GoodsReviewRepositoryCustom goodsReviewRepositoryCustom;
 
     @Mock
-    private TimelineRepositoryCustom timelineRepositoryCustom;
-
-    @Mock
-    private MateRepository mateRepository;
-
-    @Mock
     private VisitPartRepository visitPartRepository;
 
     @Mock
     private MateReviewRepository mateReviewRepository;
+
+    @Mock
+    private VisitRepository visitRepository;
 
     private Member member1;
     private Member member2;
@@ -403,13 +401,41 @@ class ProfileServiceTest {
             List<MyTimelineResponse> myTimelineResponseList = List.of(
                     new MyTimelineResponse(1L, 1L, 1L)
             );
-            Page<MyTimelineResponse> visitsByIdPage = new PageImpl<>(myTimelineResponseList, pageable,
-                    myTimelineResponseList.size());
-            given(timelineRepositoryCustom.findVisitsById(memberId, pageable)).willReturn(visitsByIdPage);
+            Page<MyTimelineResponse> visitsByIdPage = new PageImpl<>(
+                    myTimelineResponseList, pageable, myTimelineResponseList.size());
+            given(visitRepository.findVisitsByMemberId(memberId, pageable)).willReturn(visitsByIdPage);
+
+            // match mock 설정
+            List<Match> matchesByMatePostId = List.of(Match.builder()
+                    .id(1L)
+                    .homeTeamId(1L)
+                    .awayTeamId(2L)
+                    .stadiumId(1L)
+                    .build());
+            given(visitRepository.findMatchesByMemberId(memberId)).willReturn(matchesByMatePostId);
 
             // mateRepository의 mock 설정
             Match match = Match.builder().homeTeamId(1L).awayTeamId(2L).stadiumId(1L).build();
-            given(mateRepository.findMatchByMatePostId(1L)).willReturn(match);
+
+            Visit visit = Visit.builder().id(1L).build();
+
+            List<MateReview> existReviews = List.of(
+                    MateReview.builder()
+                            .id(1L)
+                            .visit(visit)
+                            .reviewer(member1)
+                            .reviewee(member2)
+                            .rating(Rating.GOOD)
+                            .build(),
+                    MateReview.builder()
+                            .id(2L)
+                            .visit(visit)
+                            .reviewer(member1)
+                            .reviewee(member3)
+                            .rating(Rating.GOOD)
+                            .build());
+            given(mateReviewRepository.findMateReviewsByVisitIdAndReviewerId(1L, 1L))
+                    .willReturn(existReviews);
 
             // visitPartRepository의 mock 설정
             given(visitPartRepository.findMembersByVisitIdExcludeMember(1L, memberId)).willReturn(
