@@ -18,6 +18,7 @@ public interface VisitPartRepository extends JpaRepository<VisitPart, VisitPartI
             FROM VisitPart vp
             WHERE vp.visit.id = :visitId
             AND vp.member.id != :memberId
+            ORDER BY vp.member.id ASC
             """)
     List<Member> findMembersByVisitIdExcludeMember(@Param("visitId") Long visitId, @Param("memberId") Long memberId);
 
