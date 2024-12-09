@@ -22,6 +22,7 @@ public class GoodsChatRoomResponse {
     private final String postStatus;
     private final String chatRoomStatus;
     private final String imageUrl;
+    private final Long goodsSellerId;
 
     private final PageResponse<GoodsChatMessageResponse> initialMessages;
 
@@ -41,6 +42,7 @@ public class GoodsChatRoomResponse {
                 .postStatus(goodsPost.getStatus().getValue())
                 .chatRoomStatus(chatRoom.getIsActive().toString())
                 .initialMessages(initialMessages)
+                .goodsSellerId(goodsPost.getSeller().getId())
                 .build();
     }
 
