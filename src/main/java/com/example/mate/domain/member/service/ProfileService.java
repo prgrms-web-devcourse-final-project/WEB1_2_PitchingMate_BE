@@ -9,10 +9,10 @@ import com.example.mate.domain.goods.repository.GoodsPostRepository;
 import com.example.mate.domain.goods.repository.GoodsReviewRepositoryCustom;
 import com.example.mate.domain.match.entity.Match;
 import com.example.mate.domain.mate.entity.MateReview;
-import com.example.mate.domain.mate.repository.MateRepository;
 import com.example.mate.domain.mate.repository.MateReviewRepository;
 import com.example.mate.domain.mate.repository.MateReviewRepositoryCustom;
 import com.example.mate.domain.mate.repository.VisitPartRepository;
+import com.example.mate.domain.mate.repository.VisitRepository;
 import com.example.mate.domain.member.dto.response.MyGoodsRecordResponse;
 import com.example.mate.domain.member.dto.response.MyReviewResponse;
 import com.example.mate.domain.member.dto.response.MyTimelineResponse;
@@ -20,15 +20,16 @@ import com.example.mate.domain.member.dto.response.MyVisitResponse;
 import com.example.mate.domain.member.dto.response.MyVisitResponse.MateReviewResponse;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
-import com.example.mate.domain.member.repository.TimelineRepositoryCustom;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -39,10 +40,9 @@ public class ProfileService {
     private final GoodsPostRepository goodsPostRepository;
     private final MateReviewRepositoryCustom mateReviewRepositoryCustom;
     private final GoodsReviewRepositoryCustom goodsReviewRepositoryCustom;
-    private final TimelineRepositoryCustom timelineRepositoryCustom;
-    private final MateRepository mateRepository;
     private final VisitPartRepository visitPartRepository;
     private final MateReviewRepository mateReviewRepository;
+    private final VisitRepository visitRepository;
 
     // 굿즈 판매기록 페이징 조회
     @Transactional(readOnly = true)
@@ -104,42 +104,52 @@ public class ProfileService {
         return PageResponse.from(goodsReviewPage);
     }
 
-    // TODO : 쿼리가 너무 많이 나오는 문제 -> 멘토링 및 리팩토링 필요
     // 직관 타임라인 페이징 조회
     @Transactional(readOnly = true)
     public PageResponse<MyVisitResponse> getMyVisitPage(Long memberId, Pageable pageable) {
         validateMemberId(memberId);
 
-        // 회원이 참여한 직관을 페이징하여 가져오기
-        Page<MyTimelineResponse> visitsByIdPage = timelineRepositoryCustom.findVisitsById(memberId, pageable);
+        // 회원이 참여한 직관 목록을 페이지네이션
+        Page<MyTimelineResponse> visitsByMemberIdPage = visitRepository.findVisitsByMemberId(memberId, pageable);
 
-        // 응답 객체 생성
-        List<MyVisitResponse> responses = visitsByIdPage.getContent().stream()
-                .map(response -> createVisitResponse(response, memberId))
-                .collect(Collectors.toList());
+        // 회원이 참여한 경기 정보 리스트
+        List<Match> matchesByMatePostId = visitRepository.findMatchesByMemberId(memberId);
 
-        // 페이징 정보 처리
-        return createPageResponse(visitsByIdPage, responses, pageable);
+        // 각각의 직관 목록과 경기 정보에 따른 응답 객체 생성 및 주입
+        List<MyVisitResponse> responses = new ArrayList<>();
+        for (int i = 0; i < visitsByMemberIdPage.getContent().size(); i++) {
+            MyTimelineResponse response = visitsByMemberIdPage.getContent().get(i);
+            Match match = matchesByMatePostId.get(i);
+            responses.add(createVisitResponse(response, memberId, match));
+        }
+
+        // 페이지네이션
+        return createPageResponse(visitsByMemberIdPage, responses, pageable);
     }
 
-    private MyVisitResponse createVisitResponse(MyTimelineResponse response, Long memberId) {
-        // 경기 정보 가져오기
-        Match match = mateRepository.findMatchByMatePostId(response.getMatePostId());
+    private MyVisitResponse createVisitResponse(MyTimelineResponse response, Long memberId, Match match) {
+        // 회원이 참여한 직관에서 메이트에 남긴 모든 리뷰 리스트
+        List<MateReview> existReviews = mateReviewRepository
+                .findMateReviewsByVisitIdAndReviewerId(response.getVisitId(), memberId);
 
-        // 회원 본인을 제외한 직관 참여 리스트 가져오기
+        // 회원 본인을 제외한 직관 참여 메이트 리스트
         List<Member> mates = visitPartRepository.findMembersByVisitIdExcludeMember(response.getVisitId(), memberId);
 
-        // 각 메이트에 대한 리뷰 생성
-        List<MateReviewResponse> reviews = createMateReviews(response, mates, memberId);
+        // 각 메이트에 대한 리뷰 여부에 따른 응답 리뷰 리스트
+        List<MateReviewResponse> reviews = createMateReviews(response, mates, memberId, existReviews);
 
         return MyVisitResponse.of(match, reviews, response.getMatePostId());
     }
 
-    private List<MateReviewResponse> createMateReviews(MyTimelineResponse response, List<Member> mates, Long memberId) {
+    private List<MateReviewResponse> createMateReviews(MyTimelineResponse response, List<Member> mates,
+                                                       Long memberId, List<MateReview> existReviews) {
         return mates.stream()
                 .map(mate -> {
-                    Optional<MateReview> mateReview = mateReviewRepository.findMateReviewByVisitIdAndReviewerIdAndRevieweeId(
-                            response.getVisitId(), memberId, mate.getId());
+                    Optional<MateReview> mateReview = existReviews.stream()
+                            .filter(review -> review.getVisit().getId().equals(response.getVisitId()) &&
+                                    review.getReviewer().getId().equals(memberId) &&
+                                    review.getReviewee().getId().equals(mate.getId()))
+                            .findFirst(); // 해당 조건에 맞는 리뷰를 찾기
                     return mateReview.map(MateReviewResponse::from) // 해당 mate에 대한 리뷰가 있으면 리뷰 채워서 반환
                             .orElseGet(() -> MateReviewResponse.from(mate)); // 리뷰가 없으면 rating, content = null
                 })
