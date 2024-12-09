@@ -83,7 +83,7 @@ public class JwtCheckFilter extends OncePerRequestFilter {
                 requestURI.startsWith("/api/mates/main") ||
                 requestURI.startsWith("/api/goods/main") ||
                 requestURI.startsWith("/api/teams/rankings") ||
-                requestURI.startsWith("/api/matches/team/") && requestURI.endsWith("/completed");
+                requestURI.startsWith("/api/matches/team/") && !requestURI.endsWith("/weekly");
     }
 
     // 액세스 토큰 유효성 검사
