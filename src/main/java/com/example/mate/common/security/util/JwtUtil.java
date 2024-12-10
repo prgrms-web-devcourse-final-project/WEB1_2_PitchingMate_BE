@@ -1,20 +1,22 @@
 package com.example.mate.common.security.util;
 
+import com.example.mate.common.jwt.JwtToken;
+import com.example.mate.domain.member.entity.Member;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Date;
 import java.util.Map;
-import javax.crypto.SecretKey;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
 @Component
 public class JwtUtil {
 
-    // 서명에 사용할 비밀 키 - application-local.yml 참조
     @Value("${jwt.secret_key}")
     private String key;
 
@@ -23,17 +25,45 @@ public class JwtUtil {
         return Keys.hmacShaKeyFor(key.getBytes(StandardCharsets.UTF_8));
     }
 
-    // JWT 문자열 생성. valueMap: JWT에 저장할 클레임 (payload), min: 만료 시간 (분 단위)
-    public String createToken(Map<String, Object> valueMap, int min) {
+    // JWT 토큰 생성
+    public JwtToken createTokens(Member member) {
+        Map<String, Object> payloadMap = member.getPayload();
+        Date now = new Date();
+        payloadMap.put("iat", System.currentTimeMillis());
+
+        String accessToken = createAccessToken(payloadMap, now);
+        String refreshToken = createRefreshToken(member.getId(), now);
+        return JwtToken.builder()
+                .grantType("Bearer")
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .build();
+    }
+
+    // JWT Access Token 생성. 2분 유효시간
+    public String createAccessToken(Map<String, Object> valueMap, Date issuedAt) {
         SecretKey key = getSigningKey();
-        Date now = new Date(); // 토큰 발행 시간
 
         return Jwts.builder()
                 .setHeaderParam("alg", "HS256")
                 .setHeaderParam("typ", "JWT")
-                .setIssuedAt(now)
-                .setExpiration(new Date(now.getTime() + Duration.ofMinutes(min).toMillis()))
+                .setIssuedAt(issuedAt)
+                .setExpiration(new Date(issuedAt.getTime() + Duration.ofMinutes(2).toMillis()))
                 .setClaims(valueMap)
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    // JWT Access Token 생성. 3일 유효시간
+    public String createRefreshToken(Long memberId, Date issuedAt) {
+        SecretKey key = getSigningKey();
+
+        return Jwts.builder()
+                .setHeaderParam("alg", "HS256")
+                .setHeaderParam("typ", "JWT")
+                .setIssuedAt(issuedAt)
+                .setExpiration(new Date(issuedAt.getTime() + Duration.ofMinutes(60 * 24 * 3).toMillis())) // 3일 유효
+                .setClaims(Map.of("memberId", memberId))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
