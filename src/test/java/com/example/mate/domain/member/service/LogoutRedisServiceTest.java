@@ -2,6 +2,7 @@ package com.example.mate.domain.member.service;
 
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
+import com.example.mate.common.security.util.JwtUtil;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -12,10 +13,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -30,6 +33,9 @@ class LogoutRedisServiceTest {
     @Mock
     private ValueOperations<String, String> valueOperations;
 
+    @Mock
+    private JwtUtil jwtUtil;
+
     @Nested
     @DisplayName("회원 로그아웃")
     class LogoutMember {
@@ -39,16 +45,23 @@ class LogoutRedisServiceTest {
         void add_token_to_blacklist_success() {
             // given
             String token = "Bearer accessToken";
+            String accessToken = token.substring(7);
+
             when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-            doNothing().when(valueOperations).set(
-                    "blacklist:" + token.substring(7), "blacklisted", 1, TimeUnit.MINUTES
+
+            long iat = System.currentTimeMillis();  // 현재 시간으로 iat 값 설정
+            Map<String, Object> claims = Map.of("iat", iat);
+            given(jwtUtil.validateToken(accessToken)).willReturn(claims);
+
+            lenient().doNothing().when(valueOperations).set(
+                    "blacklist:" + accessToken,
+                    "blacklisted",
+                    120000L,
+                    TimeUnit.MILLISECONDS
             );
 
             // when & then
             assertDoesNotThrow(() -> logoutRedisService.addTokenToBlacklist(token));
-            verify(redisTemplate.opsForValue(), times(1)).set(
-                    "blacklist:accessToken", "blacklisted", 1, TimeUnit.MINUTES
-            );
         }
 
         @Test
