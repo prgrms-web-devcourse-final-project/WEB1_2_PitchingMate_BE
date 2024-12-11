@@ -40,7 +40,7 @@ public class JwtUtil {
                 .build();
     }
 
-    // JWT Access Token 생성. 2분 유효시간
+    // JWT Access Token 생성. 30분 유효시간
     public String createAccessToken(Map<String, Object> valueMap, Date issuedAt) {
         SecretKey key = getSigningKey();
 
@@ -48,7 +48,7 @@ public class JwtUtil {
                 .setHeaderParam("alg", "HS256")
                 .setHeaderParam("typ", "JWT")
                 .setIssuedAt(issuedAt)
-                .setExpiration(new Date(issuedAt.getTime() + Duration.ofMinutes(2).toMillis()))
+                .setExpiration(new Date(issuedAt.getTime() + Duration.ofMinutes(30).toMillis()))
                 .setClaims(valueMap)
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();

@@ -28,7 +28,7 @@ public class LogoutRedisService {
         String accessToken = authorizationHeader.substring(7);
         Map<String, Object> claims = jwtUtil.validateToken(accessToken);
 
-        long remainingTime = (long) claims.get("iat") + Duration.ofMinutes(2).toMillis() - new Date().getTime();
+        long remainingTime = (long) claims.get("iat") + Duration.ofMinutes(30).toMillis() - new Date().getTime();
 
         redisTemplate.opsForValue().set(
                 "blacklist:" + accessToken, "blacklisted", remainingTime, TimeUnit.MILLISECONDS);
