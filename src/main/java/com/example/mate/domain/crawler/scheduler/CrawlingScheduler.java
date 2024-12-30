@@ -13,7 +13,8 @@ import org.springframework.stereotype.Component;
 public class CrawlingScheduler {
     private final CrawlingService crawlingService;
 
-    @Scheduled(cron = "0 0 9 * * *", zone = "Asia/Seoul")
+    // 매시 30분
+    @Scheduled(cron = "0 30 * * * *", zone = "Asia/Seoul")
     public void morningUpdate() {
         log.info("Starting morning schedule update");
         try {
@@ -43,7 +44,7 @@ public class CrawlingScheduler {
         }
     }
 
-    // 매 분 실행 자동화 테스트 (현재 off-season )
+//    // 매 분 실행 자동화 테스트 (현재 off-season )
 //    @Scheduled(cron = "0 * * * * *", zone = "Asia/Seoul")
 //    public void testScheduler() {
 //        log.info("Test Scheduler is running!");

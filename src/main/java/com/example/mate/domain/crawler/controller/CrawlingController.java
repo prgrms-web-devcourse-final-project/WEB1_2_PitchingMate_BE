@@ -95,8 +95,8 @@ public class CrawlingController {
     //테스트
     @PostMapping("/matches/custom")
     public ResponseEntity<CrawlingStatusResponse> crawlCustomDateMatches() {
-        // 9월로 가정하고 크롤링
-        LocalDate customDate = LocalDate.of(2024, 9, 1);
+        // 3월로 가정하고 크롤링
+        LocalDate customDate = LocalDate.of(2025, 3, 1);
         return ResponseEntity.ok(crawlingService.crawlMatchesFromCustomDate(customDate));
     }
 
