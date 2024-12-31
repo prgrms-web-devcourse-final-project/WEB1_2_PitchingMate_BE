@@ -36,9 +36,6 @@ class TeamRecordIntegrationTest {
         teamRecordRepository.deleteAll();
     }
 
-    @MockBean
-    private JwtUtil jwtUtil;
-
     @Nested
     @DisplayName("팀 순위 조회")
     class GetTeamRankings {

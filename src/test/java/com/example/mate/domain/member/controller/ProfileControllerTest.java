@@ -6,7 +6,7 @@ import com.example.mate.common.response.PageResponse;
 import com.example.mate.common.security.filter.JwtCheckFilter;
 import com.example.mate.config.WithAuthMember;
 import com.example.mate.domain.constant.Gender;
-import com.example.mate.domain.goods.dto.response.GoodsPostSummaryResponse;
+import com.example.mate.domain.goodsPost.dto.response.GoodsPostSummaryResponse;
 import com.example.mate.domain.mate.dto.response.MatePostSummaryResponse;
 import com.example.mate.domain.mate.entity.Age;
 import com.example.mate.domain.mate.entity.Status;
