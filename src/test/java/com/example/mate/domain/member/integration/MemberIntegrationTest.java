@@ -1,5 +1,6 @@
 package com.example.mate.domain.member.integration;
 
+import com.example.mate.common.jwt.JwtToken;
 import com.example.mate.common.security.util.JwtUtil;
 import com.example.mate.config.WithAuthMember;
 import com.example.mate.domain.constant.Gender;
@@ -47,12 +48,14 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static com.example.mate.domain.match.entity.MatchStatus.SCHEDULED;
 import static com.example.mate.domain.mate.entity.Status.CLOSED;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -274,7 +277,7 @@ class MemberIntegrationTest {
                 .memberId(member.getId())
                 .build();
     }
-
+    
     @Nested
     @DisplayName("자체 회원 가입")
     class Join {
@@ -459,6 +462,16 @@ class MemberIntegrationTest {
                     .email("tester@example.com")
                     .build();
 
+            // mockJwtToken 객체 생성
+            JwtToken mockJwtToken = JwtToken.builder()
+                    .grantType("Bearer")
+                    .accessToken("mockAccessToken")
+                    .refreshToken("mockRefreshToken")
+                    .build();
+
+            // JwtUtil의 createTokens 메서드 mock 처리
+            when(jwtUtil.createTokens(any(Member.class))).thenReturn(mockJwtToken);
+
             // when & then
             mockMvc.perform(post("/api/members/login")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -502,6 +515,11 @@ class MemberIntegrationTest {
         void logout_member_success_with_my_info_denied() throws Exception {
             // given
             String token = "Bearer accessToken";
+
+            // mockJwtToken 객체 생성
+            Map<String, Object> mockClaims = Map.of("iat", new Date().getTime()); // 'iat' 필드를 mock 처리
+            when(jwtUtil.validateToken(anyString())).thenReturn(mockClaims);
+
 
             // when & then
             when(redisTemplate.opsForValue()).thenReturn(valueOperations);

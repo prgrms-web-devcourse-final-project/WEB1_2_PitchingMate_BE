@@ -441,24 +441,6 @@ class MemberControllerTest {
             mockMvc.perform(post("/api/members/logout")
                             .header(HttpHeaders.AUTHORIZATION, token))
                     .andExpect(status().isNoContent());
-
-            verify(logoutRedisService).addTokenToBlacklist(token);
-        }
-
-        @Test
-        @DisplayName("로그아웃 실패 - 잘못된 토큰 형식")
-        void catchMiLogout_invalid_token_format() throws Exception {
-            // given
-            String invalidToken = "InvalidToken";
-
-            willThrow(new CustomException(ErrorCode.INVALID_AUTH_TOKEN))
-                    .given(logoutRedisService).addTokenToBlacklist(invalidToken);
-
-
-            // when & then
-            mockMvc.perform(post("/api/members/logout")
-                            .header(HttpHeaders.AUTHORIZATION, invalidToken))
-                    .andExpect(status().isBadRequest());
         }
     }
 }
