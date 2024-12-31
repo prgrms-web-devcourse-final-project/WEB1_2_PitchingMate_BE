@@ -2,7 +2,6 @@ package com.example.mate.domain.member.service;
 
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
-import com.example.mate.common.jwt.JwtToken;
 import com.example.mate.common.security.util.JwtUtil;
 import com.example.mate.domain.constant.TeamInfo;
 import com.example.mate.domain.file.FileService;
@@ -23,11 +22,11 @@ import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.FollowRepository;
 import com.example.mate.domain.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.Map;
 
 @Service
 @Transactional
@@ -42,35 +41,35 @@ public class MemberService {
     private final VisitPartRepository visitPartRepository;
     private final JwtUtil jwtUtil;
     private final FileService fileService;
+    private final LogoutRedisService logoutRedisService;
 
-    // 자체 회원가입 기능
+    // CATCH Mi 회원가입 기능
     public JoinResponse join(JoinRequest request) {
         Member savedMember = memberRepository.save(Member.of(request, getDefaultMemberImageUrl()));
         return JoinResponse.from(savedMember);
     }
 
-    // 자체 로그인 기능
+    // CATCH Mi 로그인 기능
     @Transactional(readOnly = true)
     public MemberLoginResponse loginByEmail(MemberLoginRequest request) {
         Member member = findByEmail(request.getEmail());
-        return MemberLoginResponse.from(member, makeToken(member));
-    }
-
-    // JWT 토큰 생성
-    private JwtToken makeToken(Member member) {
-        Map<String, Object> payloadMap = member.getPayload();
-        String accessToken = jwtUtil.createToken(payloadMap, 60 * 24 * 3); // 3일 유효
-        String refreshToken = jwtUtil.createToken(Map.of("memberId", member.getId()), 60 * 24 * 7); // 7일 유효
-        return JwtToken.builder()
-                .grantType("Bearer")
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .build();
+        return MemberLoginResponse.from(member, jwtUtil.createTokens(member));
     }
 
     private Member findByEmail(String email) {
         return memberRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND_BY_EMAIL));
+    }
+
+    // CATCH Mi 로그아웃 기능
+    public void logout(String authorizationHeader) {
+        logoutRedisService.addTokenToBlacklist(authorizationHeader);
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            throw new CustomException(ErrorCode.MEMBER_AUTHENTICATION_REQUIRED);
+        }
+        SecurityContextHolder.clearContext();
     }
 
     // 내 프로필 조회
@@ -102,7 +101,7 @@ public class MemberService {
         return MyProfileResponse.from(memberRepository.save(member));
     }
 
-    // 회원 탈퇴
+    // CATCH Mi 회원 탈퇴
     public void deleteMember(Long memberId) {
         Member member = findByMemberId(memberId);
         deleteNonDefaultImage(member.getImageUrl());

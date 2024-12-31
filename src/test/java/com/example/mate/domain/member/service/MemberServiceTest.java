@@ -2,6 +2,7 @@ package com.example.mate.domain.member.service;
 
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
+import com.example.mate.common.jwt.JwtToken;
 import com.example.mate.common.security.util.JwtUtil;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.constant.Rating;
@@ -492,8 +493,14 @@ class MemberServiceTest {
             MemberLoginRequest request = MemberLoginRequest.builder()
                     .email("test@example.com")
                     .build();
+            JwtToken jwtToken = JwtToken.builder()
+                    .grantType("Bearer")
+                    .accessToken("accessToken")
+                    .refreshToken("refreshToken")
+                    .build();
 
             given(memberRepository.findByEmail(email)).willReturn(Optional.of(member));
+            given(jwtUtil.createTokens(any(Member.class))).willReturn(jwtToken);
 
             // when
             MemberLoginResponse response = memberService.loginByEmail(request);

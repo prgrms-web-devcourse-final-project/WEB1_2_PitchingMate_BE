@@ -16,6 +16,7 @@ public enum ErrorCode {
     AUTH_FORBIDDEN(HttpStatus.FORBIDDEN, "A003", "접근 권한이 없습니다. 권한을 확인해주세요."),
     UNAUTHORIZED_USER(HttpStatus.UNAUTHORIZED, "A004", "인증되지 않은 사용자입니다"),
     INVALID_AUTH_TOKEN(HttpStatus.BAD_REQUEST, "A005", "잘못된 토큰 형식입니다."),
+    EXPIRED_AUTH_TOKEN(HttpStatus.BAD_REQUEST, "A006", "이미 만료된 토큰입니다."),
 
     // Team
     TEAM_NOT_FOUND(HttpStatus.NOT_FOUND, "T001", "팀을 찾을 수 없습니다"),
@@ -34,6 +35,7 @@ public enum ErrorCode {
     ALREADY_USED_NICKNAME(HttpStatus.BAD_REQUEST, "M003", "이미 사용 중인 닉네임입니다."),
     MEMBER_NOT_FOUND_BY_EMAIL(HttpStatus.NOT_FOUND, "M004", "해당 이메일의 회원 정보를 찾을 수 없습니다."),
     MEMBER_UNAUTHORIZED_ACCESS(HttpStatus.FORBIDDEN, "M005", "해당 회원의 접근 권한이 없습니다."),
+    MEMBER_AUTHENTICATION_REQUIRED(HttpStatus.BAD_REQUEST, "M006", "미리 인증된 회원의 정보가 필요합니다."),
 
     // Follow
     ALREADY_FOLLOWED_MEMBER(HttpStatus.BAD_REQUEST, "F001", "이미 팔로우한 회원입니다."),
