@@ -39,8 +39,6 @@ public class NaverAuthIntegrationTest {
     @Autowired
     private RestTemplate restTemplate;
 
-    @MockBean
-    private JwtUtil jwtUtil;
 
     @BeforeEach
     void setUp() {

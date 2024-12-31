@@ -68,8 +68,6 @@ public class GoodsChatIntegrationTest {
     @Autowired private ObjectMapper objectMapper;
     @Autowired private JdbcTemplate jdbcTemplate;
 
-    @MockBean
-    private JwtUtil jwtUtil;
 
     private Member seller;
     private Member buyer;

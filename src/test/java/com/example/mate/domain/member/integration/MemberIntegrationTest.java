@@ -113,9 +113,6 @@ class MemberIntegrationTest {
     @MockBean
     private ValueOperations<String, String> valueOperations;
 
-    @MockBean
-    private JwtUtil jwtUtil;
-
     private Member member;
     private Member member2;
     private GoodsPost goodsPost;

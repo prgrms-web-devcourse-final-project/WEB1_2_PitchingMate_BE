@@ -65,9 +65,6 @@ public class MateIntegrationTest {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    @MockBean
-    private JwtUtil jwtUtil;
-
     // 테스트에서 공통으로 사용할 객체들
     private Member testMember;
     private Match futureMatch;
