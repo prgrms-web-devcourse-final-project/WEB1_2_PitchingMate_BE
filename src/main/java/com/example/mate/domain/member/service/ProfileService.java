@@ -3,6 +3,7 @@ package com.example.mate.domain.member.service;
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
 import com.example.mate.common.response.PageResponse;
+import com.example.mate.domain.goods.dto.response.GoodsPostSummaryResponse;
 import com.example.mate.domain.goods.entity.GoodsPost;
 import com.example.mate.domain.goods.entity.Status;
 import com.example.mate.domain.goods.repository.GoodsPostRepository;
@@ -173,5 +174,21 @@ public class ProfileService {
                 .pageNumber(pageNumber)
                 .pageSize(pageSize)
                 .build();
+    }
+
+    // 작성한 굿즈 거래글 페이징 조회
+    @Transactional(readOnly = true)
+    public PageResponse<GoodsPostSummaryResponse> getGoodsPostsPage(Long memberId, Pageable pageable) {
+        Page<GoodsPost> goodsPostsPage = goodsPostRepository.findMyGoodsPosts(memberId, pageable);
+        List<GoodsPostSummaryResponse> content = goodsPostsPage.getContent().stream()
+                .map(this::convertToGoodsPostResponse)
+                .toList();
+
+        return PageResponse.from(goodsPostsPage, content);
+    }
+
+    private GoodsPostSummaryResponse convertToGoodsPostResponse(GoodsPost goodsPost) {
+        String mainImageUrl = goodsPost.getMainImageUrl();
+        return GoodsPostSummaryResponse.of(goodsPost, mainImageUrl);
     }
 }
