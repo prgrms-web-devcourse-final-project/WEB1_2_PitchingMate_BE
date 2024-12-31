@@ -60,8 +60,6 @@ public class GoodsPostIntegrationTest {
     private Member member;
     private GoodsPost goodsPost;
 
-    @MockBean
-    private JwtUtil jwtUtil;
 
     @BeforeEach
     void setUp() {

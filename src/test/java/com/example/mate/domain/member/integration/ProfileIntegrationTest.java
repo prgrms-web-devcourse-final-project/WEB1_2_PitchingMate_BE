@@ -92,9 +92,6 @@ public class ProfileIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @MockBean
-    private JwtUtil jwtUtil;
-
     private Member member1;
     private Member member2;
     private Member member3;

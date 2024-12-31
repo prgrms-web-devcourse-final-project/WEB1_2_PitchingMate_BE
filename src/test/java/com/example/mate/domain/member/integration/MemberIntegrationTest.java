@@ -280,7 +280,7 @@ class MemberIntegrationTest {
                 .memberId(member.getId())
                 .build();
     }
-    
+
     @Nested
     @DisplayName("자체 회원 가입")
     class Join {

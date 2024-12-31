@@ -83,9 +83,6 @@ public class MateStatusIntegrationTest {
     private MatePost completedPost;
     private MatePost closedPost;
 
-    @MockBean
-    private JwtUtil jwtUtil;
-
     @BeforeEach
     void setUp() {
         // 기존 데이터 정리
