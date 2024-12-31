@@ -1,4 +1,4 @@
-package com.example.mate.domain.goods.entity;
+package com.example.mate.domain.goodsPost.entity;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

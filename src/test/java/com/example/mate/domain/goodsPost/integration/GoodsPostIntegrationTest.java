@@ -1,4 +1,4 @@
-package com.example.mate.domain.goods.integration;
+package com.example.mate.domain.goodsPost.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -14,21 +14,21 @@ import com.example.mate.config.WithAuthMember;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.constant.Rating;
 import com.example.mate.domain.constant.TeamInfo;
-import com.example.mate.domain.goods.dto.response.LocationInfo;
-import com.example.mate.domain.goods.dto.response.MemberInfo;
-import com.example.mate.domain.goods.dto.request.GoodsPostRequest;
-import com.example.mate.domain.goods.dto.request.GoodsReviewRequest;
-import com.example.mate.domain.goods.dto.response.GoodsPostResponse;
-import com.example.mate.domain.goods.dto.response.GoodsPostSummaryResponse;
-import com.example.mate.domain.goods.dto.response.GoodsReviewResponse;
-import com.example.mate.domain.goods.entity.Category;
-import com.example.mate.domain.goods.entity.GoodsPost;
-import com.example.mate.domain.goods.entity.GoodsPostImage;
-import com.example.mate.domain.goods.entity.GoodsReview;
-import com.example.mate.domain.goods.entity.Status;
-import com.example.mate.domain.goods.repository.GoodsPostImageRepository;
-import com.example.mate.domain.goods.repository.GoodsPostRepository;
-import com.example.mate.domain.goods.repository.GoodsReviewRepository;
+import com.example.mate.domain.goodsPost.dto.response.LocationInfo;
+import com.example.mate.domain.goodsPost.dto.response.MemberInfo;
+import com.example.mate.domain.goodsPost.dto.request.GoodsPostRequest;
+import com.example.mate.domain.goodsReview.dto.request.GoodsReviewRequest;
+import com.example.mate.domain.goodsPost.dto.response.GoodsPostResponse;
+import com.example.mate.domain.goodsPost.dto.response.GoodsPostSummaryResponse;
+import com.example.mate.domain.goodsReview.dto.response.GoodsReviewResponse;
+import com.example.mate.domain.goodsPost.entity.Category;
+import com.example.mate.domain.goodsPost.entity.GoodsPost;
+import com.example.mate.domain.goodsPost.entity.GoodsPostImage;
+import com.example.mate.domain.goodsReview.entity.GoodsReview;
+import com.example.mate.domain.goodsPost.entity.Status;
+import com.example.mate.domain.goodsPost.repository.GoodsPostImageRepository;
+import com.example.mate.domain.goodsPost.repository.GoodsPostRepository;
+import com.example.mate.domain.goodsReview.repository.GoodsReviewRepository;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -53,7 +53,7 @@ import org.springframework.transaction.annotation.Transactional;
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
 @Transactional
-public class GoodsIntegrationTest {
+public class GoodsPostIntegrationTest {
 
     @Autowired private MockMvc mockMvc;
     @Autowired private MemberRepository memberRepository;

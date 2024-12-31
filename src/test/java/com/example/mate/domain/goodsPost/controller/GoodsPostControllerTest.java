@@ -1,4 +1,4 @@
-package com.example.mate.domain.goods.controller;
+package com.example.mate.domain.goodsPost.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -18,15 +18,15 @@ import com.example.mate.common.response.PageResponse;
 import com.example.mate.common.security.filter.JwtCheckFilter;
 import com.example.mate.config.WithAuthMember;
 import com.example.mate.domain.constant.Rating;
-import com.example.mate.domain.goods.dto.response.LocationInfo;
-import com.example.mate.domain.goods.dto.request.GoodsPostRequest;
-import com.example.mate.domain.goods.dto.request.GoodsReviewRequest;
-import com.example.mate.domain.goods.dto.response.GoodsPostResponse;
-import com.example.mate.domain.goods.dto.response.GoodsPostSummaryResponse;
-import com.example.mate.domain.goods.dto.response.GoodsReviewResponse;
-import com.example.mate.domain.goods.entity.Category;
-import com.example.mate.domain.goods.entity.Status;
-import com.example.mate.domain.goods.service.GoodsService;
+import com.example.mate.domain.goodsPost.dto.response.LocationInfo;
+import com.example.mate.domain.goodsPost.dto.request.GoodsPostRequest;
+import com.example.mate.domain.goodsReview.dto.request.GoodsReviewRequest;
+import com.example.mate.domain.goodsPost.dto.response.GoodsPostResponse;
+import com.example.mate.domain.goodsPost.dto.response.GoodsPostSummaryResponse;
+import com.example.mate.domain.goodsReview.dto.response.GoodsReviewResponse;
+import com.example.mate.domain.goodsPost.entity.Category;
+import com.example.mate.domain.goodsPost.entity.Status;
+import com.example.mate.domain.goodsPost.service.GoodsPostService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -43,11 +43,11 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 
-@WebMvcTest(GoodsController.class)
+@WebMvcTest(GoodsPostController.class)
 @MockBean(JpaMetamodelMappingContext.class)
 @AutoConfigureMockMvc(addFilters = false)
 @WithAuthMember
-class GoodsControllerTest {
+class GoodsPostControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -56,7 +56,7 @@ class GoodsControllerTest {
     private ObjectMapper objectMapper;
 
     @MockBean
-    private GoodsService goodsService;
+    private GoodsPostService goodsPostService;
 
     @MockBean
     private JwtCheckFilter jwtCheckFilter;
@@ -114,7 +114,7 @@ class GoodsControllerTest {
                 objectMapper.writeValueAsBytes(postRequest)
         );
 
-        given(goodsService.registerGoodsPost(eq(memberId), any(GoodsPostRequest.class), anyList())).willReturn(
+        given(goodsPostService.registerGoodsPost(eq(memberId), any(GoodsPostRequest.class), anyList())).willReturn(
                 response);
 
         // when
@@ -130,7 +130,7 @@ class GoodsControllerTest {
                 .andExpect(jsonPath("$.data.status").value(response.getStatus()))
                 .andExpect(jsonPath("$.code").value(200));
 
-        verify(goodsService).registerGoodsPost(eq(memberId), any(GoodsPostRequest.class), anyList());
+        verify(goodsPostService).registerGoodsPost(eq(memberId), any(GoodsPostRequest.class), anyList());
     }
 
     @Test
@@ -150,7 +150,7 @@ class GoodsControllerTest {
                 objectMapper.writeValueAsBytes(postRequest)
         );
 
-        given(goodsService.updateGoodsPost(eq(memberId), eq(goodsPostId), any(GoodsPostRequest.class), anyList()))
+        given(goodsPostService.updateGoodsPost(eq(memberId), eq(goodsPostId), any(GoodsPostRequest.class), anyList()))
                 .willReturn(response);
 
         // when
@@ -170,7 +170,7 @@ class GoodsControllerTest {
                 .andExpect(jsonPath("$.data.status").value(response.getStatus()))
                 .andExpect(jsonPath("$.code").value(200));
 
-        verify(goodsService).updateGoodsPost(eq(memberId), eq(goodsPostId), any(GoodsPostRequest.class), anyList());
+        verify(goodsPostService).updateGoodsPost(eq(memberId), eq(goodsPostId), any(GoodsPostRequest.class), anyList());
     }
 
     @Test
@@ -180,12 +180,12 @@ class GoodsControllerTest {
         Long memberId = 1L;
         Long goodsPostId = 1L;
 
-        willDoNothing().given(goodsService).deleteGoodsPost(memberId, goodsPostId);
+        willDoNothing().given(goodsPostService).deleteGoodsPost(memberId, goodsPostId);
 
         // when & then
         mockMvc.perform(delete("/api/goods/{goodsPostId}", goodsPostId)).andDo(print()).andExpect(status().isNoContent());
 
-        verify(goodsService).deleteGoodsPost(memberId, goodsPostId);
+        verify(goodsPostService).deleteGoodsPost(memberId, goodsPostId);
     }
 
     @Test
@@ -195,7 +195,7 @@ class GoodsControllerTest {
         Long goodsPostId = 1L;
         GoodsPostResponse response = createGoodsPostResponse();
 
-        given(goodsService.getGoodsPost(goodsPostId)).willReturn(response);
+        given(goodsPostService.getGoodsPost(goodsPostId)).willReturn(response);
 
         // when & then
         mockMvc.perform(get("/api/goods/{goodsPostId}", goodsPostId))
@@ -204,7 +204,7 @@ class GoodsControllerTest {
                 .andExpect(jsonPath("$.data.id").value(response.getId()))
                 .andExpect(jsonPath("$.data.status").value(response.getStatus()));
 
-        verify(goodsService).getGoodsPost(goodsPostId);
+        verify(goodsPostService).getGoodsPost(goodsPostId);
     }
 
     @Test
@@ -215,7 +215,7 @@ class GoodsControllerTest {
         GoodsPostSummaryResponse response = createGoodsPostSummaryResponse();
         List<GoodsPostSummaryResponse> goodsPosts = List.of(response);
 
-        given(goodsService.getMainGoodsPosts(teamId)).willReturn(goodsPosts);
+        given(goodsPostService.getMainGoodsPosts(teamId)).willReturn(goodsPosts);
 
         // when & then
         mockMvc.perform(get("/api/goods/main")
@@ -228,7 +228,7 @@ class GoodsControllerTest {
                 .andExpect(jsonPath("$.data[0].price").value(response.getPrice()))
                 .andExpect(jsonPath("$.code").value(200));
 
-        verify(goodsService).getMainGoodsPosts(teamId);
+        verify(goodsPostService).getMainGoodsPosts(teamId);
     }
 
     @Test
@@ -252,7 +252,7 @@ class GoodsControllerTest {
                 .pageSize(pageGoodsPosts.getSize())
                 .build();
 
-        given(goodsService.getPageGoodsPosts(teamId, categoryVal, pageRequest)).willReturn(pageResponse);
+        given(goodsPostService.getPageGoodsPosts(teamId, categoryVal, pageRequest)).willReturn(pageResponse);
 
         // when & then
         mockMvc.perform(get("/api/goods")
@@ -272,7 +272,7 @@ class GoodsControllerTest {
                 .andExpect(jsonPath("$.data.pageSize").value(pageResponse.getPageSize()))
                 .andExpect(jsonPath("$.code").value(200));
 
-        verify(goodsService).getPageGoodsPosts(teamId, categoryVal, pageRequest);
+        verify(goodsPostService).getPageGoodsPosts(teamId, categoryVal, pageRequest);
     }
 
     @Test
@@ -283,7 +283,7 @@ class GoodsControllerTest {
         Long goodsPostId = 1L;
         Long buyerId = 2L;
 
-        willDoNothing().given(goodsService).completeTransaction(memberId, goodsPostId, buyerId);
+        willDoNothing().given(goodsPostService).completeTransaction(memberId, goodsPostId, buyerId);
 
         // when & then
         mockMvc.perform(post("/api/goods/{goodsPostId}/complete", goodsPostId).param("buyerId", String.valueOf(buyerId)))
@@ -292,7 +292,7 @@ class GoodsControllerTest {
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
                 .andExpect(jsonPath("$.code").value(200));
 
-        verify(goodsService).completeTransaction(memberId, goodsPostId, buyerId);
+        verify(goodsPostService).completeTransaction(memberId, goodsPostId, buyerId);
     }
 
     @Test
@@ -312,7 +312,7 @@ class GoodsControllerTest {
                 .goodsPostTitle("Sample Goods")
                 .build();
 
-        given(goodsService.registerGoodsReview(eq(reviewerId), eq(goodsPostId),
+        given(goodsPostService.registerGoodsReview(eq(reviewerId), eq(goodsPostId),
                 any(GoodsReviewRequest.class))).willReturn(response);
 
         // when & then
@@ -329,6 +329,6 @@ class GoodsControllerTest {
                 .andExpect(jsonPath("$.data.goodsPostTitle").value(response.getGoodsPostTitle()))
                 .andExpect(jsonPath("$.code").value(200));
 
-        verify(goodsService).registerGoodsReview(eq(reviewerId), eq(goodsPostId), any(GoodsReviewRequest.class));
+        verify(goodsPostService).registerGoodsReview(eq(reviewerId), eq(goodsPostId), any(GoodsReviewRequest.class));
     }
 }

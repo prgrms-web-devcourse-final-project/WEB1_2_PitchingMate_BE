@@ -1,4 +1,4 @@
-package com.example.mate.domain.goods.service;
+package com.example.mate.domain.goodsPost.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -13,20 +13,20 @@ import com.example.mate.common.error.ErrorCode;
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.constant.Rating;
 import com.example.mate.domain.file.FileService;
-import com.example.mate.domain.goods.dto.request.GoodsPostRequest;
-import com.example.mate.domain.goods.dto.request.GoodsReviewRequest;
-import com.example.mate.domain.goods.dto.response.GoodsPostResponse;
-import com.example.mate.domain.goods.dto.response.GoodsPostSummaryResponse;
-import com.example.mate.domain.goods.dto.response.GoodsReviewResponse;
-import com.example.mate.domain.goods.dto.response.LocationInfo;
-import com.example.mate.domain.goods.entity.Category;
-import com.example.mate.domain.goods.entity.GoodsPost;
-import com.example.mate.domain.goods.entity.GoodsPostImage;
-import com.example.mate.domain.goods.entity.GoodsReview;
-import com.example.mate.domain.goods.entity.Status;
-import com.example.mate.domain.goods.repository.GoodsPostImageRepository;
-import com.example.mate.domain.goods.repository.GoodsPostRepository;
-import com.example.mate.domain.goods.repository.GoodsReviewRepository;
+import com.example.mate.domain.goodsPost.dto.request.GoodsPostRequest;
+import com.example.mate.domain.goodsReview.dto.request.GoodsReviewRequest;
+import com.example.mate.domain.goodsPost.dto.response.GoodsPostResponse;
+import com.example.mate.domain.goodsPost.dto.response.GoodsPostSummaryResponse;
+import com.example.mate.domain.goodsReview.dto.response.GoodsReviewResponse;
+import com.example.mate.domain.goodsPost.dto.response.LocationInfo;
+import com.example.mate.domain.goodsPost.entity.Category;
+import com.example.mate.domain.goodsPost.entity.GoodsPost;
+import com.example.mate.domain.goodsPost.entity.GoodsPostImage;
+import com.example.mate.domain.goodsReview.entity.GoodsReview;
+import com.example.mate.domain.goodsPost.entity.Status;
+import com.example.mate.domain.goodsPost.repository.GoodsPostImageRepository;
+import com.example.mate.domain.goodsPost.repository.GoodsPostRepository;
+import com.example.mate.domain.goodsReview.repository.GoodsReviewRepository;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
 import java.util.List;
@@ -46,10 +46,10 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
 @ExtendWith(MockitoExtension.class)
-class GoodsServiceTest {
+class GoodsPostServiceTest {
 
     @InjectMocks
-    private GoodsService goodsService;
+    private GoodsPostService goodsPostService;
 
     @Mock
     private GoodsPostRepository goodsPostRepository;
@@ -128,7 +128,7 @@ class GoodsServiceTest {
 
     @Nested
     @DisplayName("굿즈거래 판매글 작성 테스트")
-    class GoodsServiceRegisterTest {
+    class GoodsPostServiceRegisterTest {
         @Test
         @DisplayName("굿즈거래 판매글 작성 성공")
         void register_goods_post_success() {
@@ -142,7 +142,7 @@ class GoodsServiceTest {
             given(goodsPostRepository.save(any(GoodsPost.class))).willReturn(post);
 
             // when
-            GoodsPostResponse response = goodsService.registerGoodsPost(member.getId(), request, files);
+            GoodsPostResponse response = goodsPostService.registerGoodsPost(member.getId(), request, files);
 
             // then
             assertThat(response).isNotNull();
@@ -162,7 +162,7 @@ class GoodsServiceTest {
             given(memberRepository.findById(invalidMemberId)).willReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> goodsService.registerGoodsPost(invalidMemberId, request, files))
+            assertThatThrownBy(() -> goodsPostService.registerGoodsPost(invalidMemberId, request, files))
                     .isInstanceOf(CustomException.class)
                     .hasMessage(ErrorCode.MEMBER_NOT_FOUND_BY_ID.getMessage());
 
@@ -180,7 +180,7 @@ class GoodsServiceTest {
             given(memberRepository.findById(member.getId())).willReturn(Optional.of(member));
 
             // when & then
-            assertThatThrownBy(() -> goodsService.registerGoodsPost(member.getId(), request, files))
+            assertThatThrownBy(() -> goodsPostService.registerGoodsPost(member.getId(), request, files))
                     .isInstanceOf(CustomException.class)
                     .hasMessage(ErrorCode.FILE_UNSUPPORTED_TYPE.getMessage());
 
@@ -192,7 +192,7 @@ class GoodsServiceTest {
 
     @Nested
     @DisplayName("굿즈거래 판매글 수정 테스트")
-    class GoodsServiceUpdateTest {
+    class GoodsPostServiceUpdateTest {
 
         @Test
         @DisplayName("굿즈거래 판매글 수정 성공")
@@ -207,7 +207,7 @@ class GoodsServiceTest {
             given(imageRepository.getImageUrlsByPostId(goodsPostId)).willReturn(List.of("test.png"));
 
             // when
-            GoodsPostResponse actual = goodsService.updateGoodsPost(member.getId(), goodsPostId, request, files);
+            GoodsPostResponse actual = goodsPostService.updateGoodsPost(member.getId(), goodsPostId, request, files);
 
             // then
             assertThat(actual).isNotNull();
@@ -234,7 +234,7 @@ class GoodsServiceTest {
             given(goodsPostRepository.findById(goodsPostId)).willReturn(Optional.of(goodsPost));
 
             // when
-            assertThatThrownBy(() -> goodsService.updateGoodsPost(member.getId(), goodsPostId, request, files))
+            assertThatThrownBy(() -> goodsPostService.updateGoodsPost(member.getId(), goodsPostId, request, files))
                     .isInstanceOf(CustomException.class)
                     .hasMessage(ErrorCode.GOODS_MODIFICATION_NOT_ALLOWED.getMessage());
 
@@ -257,7 +257,7 @@ class GoodsServiceTest {
             given(goodsPostRepository.findById(goodsPostId)).willReturn(Optional.empty());
 
             // when
-            assertThatThrownBy(() -> goodsService.updateGoodsPost(member.getId(), goodsPostId, request, files))
+            assertThatThrownBy(() -> goodsPostService.updateGoodsPost(member.getId(), goodsPostId, request, files))
                     .isInstanceOf(CustomException.class)
                     .hasMessage(ErrorCode.GOODS_NOT_FOUND_BY_ID.getMessage());
 
@@ -271,7 +271,7 @@ class GoodsServiceTest {
 
     @Nested
     @DisplayName("굿즈거래 판매글 수정 테스트")
-    class GoodsServiceDeleteTest {
+    class GoodsPostServiceDeleteTest {
 
         @Test
         @DisplayName("굿즈거래 판매글 삭제 성공")
@@ -285,7 +285,7 @@ class GoodsServiceTest {
             given(imageRepository.getImageUrlsByPostId(goodsPostId)).willReturn(List.of());
 
             // when
-            goodsService.deleteGoodsPost(memberId, goodsPostId);
+            goodsPostService.deleteGoodsPost(memberId, goodsPostId);
 
             // then
             verify(memberRepository).findById(memberId);
@@ -306,7 +306,7 @@ class GoodsServiceTest {
             given(goodsPostRepository.findById(goodsPostId)).willReturn(Optional.empty());
 
             // when
-            assertThatThrownBy(() -> goodsService.deleteGoodsPost(memberId, goodsPostId))
+            assertThatThrownBy(() -> goodsPostService.deleteGoodsPost(memberId, goodsPostId))
                     .isInstanceOf(CustomException.class)
                     .hasMessage(ErrorCode.GOODS_NOT_FOUND_BY_ID.getMessage());
 
@@ -328,7 +328,7 @@ class GoodsServiceTest {
             given(memberRepository.findById(memberId)).willReturn(Optional.empty());
 
             // when
-            assertThatThrownBy(() -> goodsService.deleteGoodsPost(memberId, goodsPostId))
+            assertThatThrownBy(() -> goodsPostService.deleteGoodsPost(memberId, goodsPostId))
                     .isInstanceOf(CustomException.class)
                     .hasMessage(ErrorCode.MEMBER_NOT_FOUND_BY_ID.getMessage());
 
@@ -351,7 +351,7 @@ class GoodsServiceTest {
             given(goodsPostRepository.findById(post.getId())).willReturn(Optional.of(post));
 
             // when & then
-            assertThatThrownBy(() -> goodsService.deleteGoodsPost(memberId, post.getId()))
+            assertThatThrownBy(() -> goodsPostService.deleteGoodsPost(memberId, post.getId()))
                     .isInstanceOf(CustomException.class)
                     .hasMessage(ErrorCode.GOODS_DELETE_NOT_ALLOWED.getMessage());
 
@@ -364,7 +364,7 @@ class GoodsServiceTest {
 
     @Nested
     @DisplayName("굿즈거래 판매글 상세 조회 테스트")
-    class GoodsServiceSearchTest {
+    class GoodsPostServiceSearchTest {
 
         @Test
         @DisplayName("굿즈거래 판매글 상세 조회 성공")
@@ -374,7 +374,7 @@ class GoodsServiceTest {
             given(goodsPostRepository.findById(goodsPostId)).willReturn(Optional.of(goodsPost));
 
             // when
-            GoodsPostResponse response = goodsService.getGoodsPost(goodsPostId);
+            GoodsPostResponse response = goodsPostService.getGoodsPost(goodsPostId);
 
             // then
             assertThat(response).isNotNull();
@@ -396,7 +396,7 @@ class GoodsServiceTest {
             given(goodsPostRepository.findById(goodsPostId)).willReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> goodsService.getGoodsPost(goodsPostId))
+            assertThatThrownBy(() -> goodsPostService.getGoodsPost(goodsPostId))
                     .isInstanceOf(CustomException.class)
                     .hasMessage(ErrorCode.GOODS_NOT_FOUND_BY_ID.getMessage());
 
@@ -406,7 +406,7 @@ class GoodsServiceTest {
 
     @Nested
     @DisplayName("메인페이지 굿즈거래 판매글 조회 테스트")
-    class GoodsServiceMainPageTest {
+    class GoodsPostServiceMainPageTest {
 
         @Test
         @DisplayName("메인페이지 굿즈거래 판매글 조회 성공")
@@ -417,7 +417,7 @@ class GoodsServiceTest {
             given(goodsPostRepository.findMainGoodsPosts(1L, Status.OPEN, PageRequest.of(0, 4))).willReturn(goodsPosts);
 
             // when
-            List<GoodsPostSummaryResponse> responses = goodsService.getMainGoodsPosts(teamId);
+            List<GoodsPostSummaryResponse> responses = goodsPostService.getMainGoodsPosts(teamId);
 
             // then
             assertThat(responses).isNotEmpty();
@@ -434,7 +434,7 @@ class GoodsServiceTest {
 
     @Nested
     @DisplayName("메인페이지 굿즈거래 판매글 페이징 조회 테스트")
-    class GoodsServiceGoodsPageTest {
+    class GoodsServiceGoodsPostPageTest {
 
         private GoodsPost createGoodsPostWithoutFilters() {
             return GoodsPost.builder()
@@ -479,7 +479,7 @@ class GoodsServiceTest {
             given(goodsPostRepository.findPageGoodsPosts(teamId, Status.OPEN, category, pageRequest)).willReturn(goodsPostPage);
 
             // when
-            PageResponse<GoodsPostSummaryResponse> pageGoodsPosts = goodsService.getPageGoodsPosts(teamId, null, pageRequest);
+            PageResponse<GoodsPostSummaryResponse> pageGoodsPosts = goodsPostService.getPageGoodsPosts(teamId, null, pageRequest);
 
             // then
             assertThat(pageGoodsPosts).isNotNull();
@@ -515,7 +515,7 @@ class GoodsServiceTest {
 
             // when
             PageResponse<GoodsPostSummaryResponse> pageGoodsPosts
-                    = goodsService.getPageGoodsPosts(teamId, category.getValue(), pageRequest);
+                    = goodsPostService.getPageGoodsPosts(teamId, category.getValue(), pageRequest);
 
             // then
             assertThat(pageGoodsPosts).isNotNull();
@@ -540,7 +540,7 @@ class GoodsServiceTest {
             PageRequest pageRequest = PageRequest.of(0, 10);
 
             // when & then
-            assertThatThrownBy(() -> goodsService.getPageGoodsPosts(teamId, category.getValue(), pageRequest))
+            assertThatThrownBy(() -> goodsPostService.getPageGoodsPosts(teamId, category.getValue(), pageRequest))
                     .isExactlyInstanceOf(CustomException.class)
                     .hasMessage(ErrorCode.TEAM_NOT_FOUND.getMessage());
         }
@@ -548,7 +548,7 @@ class GoodsServiceTest {
 
     @Nested
     @DisplayName("굿즈거래 판매글 거래완료 테스트")
-    class GoodsServiceCompleteTransactionTest {
+    class GoodsPostServiceCompleteTransactionTest {
 
         @Test
         @DisplayName("굿즈거래 판매글 거래완료 성공")
@@ -564,7 +564,7 @@ class GoodsServiceTest {
             given(memberRepository.findById(buyerId)).willReturn(Optional.of(buyer));
 
             // when
-            goodsService.completeTransaction(sellerId, goodsPostId, buyerId);
+            goodsPostService.completeTransaction(sellerId, goodsPostId, buyerId);
 
             // then
             assertThat(goodsPost.getStatus()).isEqualTo(Status.CLOSED);
@@ -590,7 +590,7 @@ class GoodsServiceTest {
             given(memberRepository.findById(buyerId)).willReturn(Optional.of(buyer));
 
             // when & then
-            assertThatThrownBy(() -> goodsService.completeTransaction(sellerId, goodsPostId, buyerId))
+            assertThatThrownBy(() -> goodsPostService.completeTransaction(sellerId, goodsPostId, buyerId))
                     .isInstanceOf(CustomException.class)
                     .hasMessage(ErrorCode.GOODS_ALREADY_COMPLETED.getMessage());
 
@@ -612,7 +612,7 @@ class GoodsServiceTest {
             given(memberRepository.findById(buyerId)).willReturn(Optional.of(member));
 
             // when & then
-            assertThatThrownBy(() -> goodsService.completeTransaction(sellerId, goodsPostId, buyerId))
+            assertThatThrownBy(() -> goodsPostService.completeTransaction(sellerId, goodsPostId, buyerId))
                     .isInstanceOf(CustomException.class)
                     .hasMessage(ErrorCode.SELLER_CANNOT_BE_BUYER.getMessage());
 
@@ -623,7 +623,7 @@ class GoodsServiceTest {
 
     @Nested
     @DisplayName("굿즈거래 후기 등록 테스트")
-    class GoodsServiceReviewTest {
+    class GoodsPostServiceReviewTest {
 
         private GoodsPost createGoodsPost(Long id, Status status) {
             return GoodsPost.builder()
@@ -663,7 +663,7 @@ class GoodsServiceTest {
             given(reviewRepository.save(any(GoodsReview.class))).willReturn(goodsReview);
 
             // when
-            GoodsReviewResponse response = goodsService.registerGoodsReview(reviewerId, goodsPostId, request);
+            GoodsReviewResponse response = goodsPostService.registerGoodsReview(reviewerId, goodsPostId, request);
 
             // then
             assertThat(response).isNotNull();
@@ -691,7 +691,7 @@ class GoodsServiceTest {
             given(reviewRepository.existsByGoodsPostIdAndReviewerId(goodsPostId, reviewerId)).willReturn(true);
 
             // when & then
-            assertThatThrownBy(() -> goodsService.registerGoodsReview(reviewerId, goodsPostId, request))
+            assertThatThrownBy(() -> goodsPostService.registerGoodsReview(reviewerId, goodsPostId, request))
                     .isInstanceOf(CustomException.class)
                     .hasMessage(ErrorCode.GOODS_REVIEW_ALREADY_EXISTS.getMessage());
 
@@ -715,7 +715,7 @@ class GoodsServiceTest {
             given(goodsPostRepository.findById(goodsPostId)).willReturn(Optional.of(completePost));
 
             // when & then
-            assertThatThrownBy(() -> goodsService.registerGoodsReview(reviewerId, goodsPostId, request))
+            assertThatThrownBy(() -> goodsPostService.registerGoodsReview(reviewerId, goodsPostId, request))
                     .isInstanceOf(CustomException.class)
                     .hasMessage(ErrorCode.GOODS_REVIEW_NOT_ALLOWED_FOR_NON_BUYER.getMessage());
 
@@ -738,7 +738,7 @@ class GoodsServiceTest {
             given(goodsPostRepository.findById(goodsPostId)).willReturn(Optional.of(incompletePost));
 
             // when & then
-            assertThatThrownBy(() -> goodsService.registerGoodsReview(reviewerId, goodsPostId, request))
+            assertThatThrownBy(() -> goodsPostService.registerGoodsReview(reviewerId, goodsPostId, request))
                     .isInstanceOf(CustomException.class)
                     .hasMessage(ErrorCode.GOODS_REVIEW_STATUS_NOT_CLOSED.getMessage());
 
