@@ -14,12 +14,9 @@ import com.example.mate.domain.goods.entity.Status;
 import com.example.mate.domain.goods.repository.GoodsPostRepository;
 import com.example.mate.domain.goods.repository.GoodsReviewRepositoryCustom;
 import com.example.mate.domain.match.entity.Match;
-import com.example.mate.domain.mate.entity.MateReview;
-import com.example.mate.domain.mate.entity.Visit;
-import com.example.mate.domain.mate.repository.MateReviewRepository;
-import com.example.mate.domain.mate.repository.MateReviewRepositoryCustom;
-import com.example.mate.domain.mate.repository.VisitPartRepository;
-import com.example.mate.domain.mate.repository.VisitRepository;
+import com.example.mate.domain.mate.dto.response.MatePostSummaryResponse;
+import com.example.mate.domain.mate.entity.*;
+import com.example.mate.domain.mate.repository.*;
 import com.example.mate.domain.member.dto.response.MyGoodsRecordResponse;
 import com.example.mate.domain.member.dto.response.MyReviewResponse;
 import com.example.mate.domain.member.dto.response.MyTimelineResponse;
@@ -63,6 +60,9 @@ class ProfileServiceTest {
     private GoodsPostRepository goodsPostRepository;
 
     @Mock
+    private MateRepository mateRepository;
+
+    @Mock
     private MateReviewRepositoryCustom mateReviewRepositoryCustom;
 
     @Mock
@@ -81,6 +81,7 @@ class ProfileServiceTest {
     private Member member2;
     private Member member3;
     private GoodsPost goodsPost;
+    private MatePost matePost;
     private GoodsPostImage goodsPostImage;
     private MateReview mateReview;
 
@@ -89,6 +90,7 @@ class ProfileServiceTest {
         createTestMember();
         createGoodsPost();
         createGoodsPostImage(goodsPost);
+        createMatePost();
         createMateReview();
     }
 
@@ -133,6 +135,28 @@ class ProfileServiceTest {
                 .price(10_000)
                 .category(Category.ACCESSORY)
                 .location(LocationInfo.toEntity(createLocationInfo()))
+                .build();
+    }
+
+    private void createMatePost() {
+        matePost = MatePost.builder()
+                .id(1L)
+                .author(member1)
+                .teamId(1L)
+                .match(Match.builder()
+                        .homeTeamId(1L)
+                        .awayTeamId(2L)
+                        .stadiumId(1L)
+                        .matchTime(LocalDateTime.now().plusDays(1))
+                        .build())
+                .title("test title")
+                .content("test content")
+                .imageUrl(goodsPostImage.getImageUrl())
+                .status(com.example.mate.domain.mate.entity.Status.OPEN)
+                .maxParticipants(4)
+                .age(Age.TWENTIES)
+                .gender(Gender.FEMALE)
+                .transport(TransportType.PUBLIC)
                 .build();
     }
 
@@ -513,6 +537,38 @@ class ProfileServiceTest {
             assertThat(postResponse.getImageUrl()).isEqualTo(goodsPostImage.getImageUrl());
 
             verify(goodsPostRepository).findMyGoodsPosts(memberId, pageable);
+        }
+    }
+
+    @Nested
+    @DisplayName("작성한 메이트 구인글 페이징 조회")
+    class ProfileMatePostsPage {
+
+        @Test
+        @DisplayName("작성한 메이트 구인글 페이징 조회 성공")
+        void get_my_mate_posts_page_success() {
+            // given
+            Long memberId = 1L;
+            PageImpl<MatePost> matePostsPage = new PageImpl<>(List.of(matePost));
+            Pageable pageable = PageRequest.of(0, 10);
+
+            given(mateRepository.findMyMatePosts(memberId, pageable))
+                    .willReturn(matePostsPage);
+
+            // when
+            PageResponse<MatePostSummaryResponse> response = profileService.getMatePostsPage(memberId, pageable);
+
+            // then
+            assertThat(response).isNotNull();
+            assertThat(response.getContent()).isNotEmpty();
+            assertThat(response.getTotalElements()).isEqualTo(matePostsPage.getTotalElements());
+            assertThat(response.getContent().size()).isEqualTo(matePostsPage.getContent().size());
+
+            MatePostSummaryResponse postResponse = response.getContent().get(0);
+            assertThat(postResponse.getTitle()).isEqualTo(matePost.getTitle());
+            assertThat(postResponse.getImageUrl()).isEqualTo(goodsPostImage.getImageUrl());
+
+            verify(mateRepository).findMyMatePosts(memberId, pageable);
         }
     }
 }

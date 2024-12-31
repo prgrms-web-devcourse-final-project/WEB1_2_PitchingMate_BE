@@ -5,7 +5,12 @@ import com.example.mate.common.error.ErrorCode;
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.common.security.filter.JwtCheckFilter;
 import com.example.mate.config.WithAuthMember;
+import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.goods.dto.response.GoodsPostSummaryResponse;
+import com.example.mate.domain.mate.dto.response.MatePostSummaryResponse;
+import com.example.mate.domain.mate.entity.Age;
+import com.example.mate.domain.mate.entity.Status;
+import com.example.mate.domain.mate.entity.TransportType;
 import com.example.mate.domain.member.dto.response.MyGoodsRecordResponse;
 import com.example.mate.domain.member.dto.response.MyReviewResponse;
 import com.example.mate.domain.member.dto.response.MyVisitResponse;
@@ -450,6 +455,64 @@ class ProfileControllerTest {
                     .andExpect(jsonPath("$.data.content.size()").value(content.size()))
                     .andExpect(jsonPath("$.data.content[0].title").value(responseDTO.getTitle()))
                     .andExpect(jsonPath("$.data.content[0].price").value(responseDTO.getPrice()))
+                    .andExpect(jsonPath("$.data.totalPages").value(response.getTotalPages()))
+                    .andExpect(jsonPath("$.data.totalElements").value(response.getTotalElements()))
+                    .andExpect(jsonPath("$.data.pageNumber").value(response.getPageNumber()))
+                    .andExpect(jsonPath("$.data.pageSize").value(response.getPageSize()))
+                    .andExpect(jsonPath("$.code").value(200));
+        }
+    }
+
+    @Nested
+    @DisplayName("작성한 메이트 구인글 페이징 조회")
+    class ProfileMatePostsPage {
+
+        @Test
+        @DisplayName("작성한 메이트 구인글 페이징 조회 성공")
+        void get_my_mate_posts_page_success() throws Exception {
+            // given
+            Long memberId = 1L;
+            Pageable pageable = PageRequest.of(0, 10);
+
+            MatePostSummaryResponse responseDTO = MatePostSummaryResponse.builder()
+                    .imageUrl("test.png")
+                    .title("test title")
+                    .status(Status.CLOSED)
+                    .myTeamName("KIA")
+                    .rivalTeamName("LG")
+                    .matchTime(LocalDateTime.now().minusDays(7))
+                    .location("광주-기아 챔피언스 필드")
+                    .maxParticipants(10)
+                    .age(Age.ALL)
+                    .gender(Gender.ANY)
+                    .transportType(TransportType.ANY)
+                    .postId(1L)
+                    .build();
+
+            List<MatePostSummaryResponse> content = List.of(responseDTO);
+            PageImpl<MatePostSummaryResponse> matePostPage = new PageImpl<>(content);
+
+            PageResponse<MatePostSummaryResponse> response = PageResponse.<MatePostSummaryResponse>builder()
+                    .content(content)
+                    .totalPages(matePostPage.getTotalPages())
+                    .totalElements(matePostPage.getTotalElements())
+                    .hasNext(matePostPage.hasNext())
+                    .pageNumber(matePostPage.getNumber())
+                    .pageSize(matePostPage.getSize())
+                    .build();
+
+            given(profileService.getMatePostsPage(memberId, pageable)).willReturn(response);
+
+            // when & then
+            mockMvc.perform(get("/api/profile/posts/mate")
+                            .param("page", String.valueOf(pageable.getPageNumber()))
+                            .param("size", String.valueOf(pageable.getPageSize())))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value("SUCCESS"))
+                    .andExpect(jsonPath("$.data.content.size()").value(content.size()))
+                    .andExpect(jsonPath("$.data.content[0].title").value(responseDTO.getTitle()))
+                    .andExpect(jsonPath("$.data.content[0].location").value(responseDTO.getLocation()))
                     .andExpect(jsonPath("$.data.totalPages").value(response.getTotalPages()))
                     .andExpect(jsonPath("$.data.totalElements").value(response.getTotalElements()))
                     .andExpect(jsonPath("$.data.pageNumber").value(response.getPageNumber()))

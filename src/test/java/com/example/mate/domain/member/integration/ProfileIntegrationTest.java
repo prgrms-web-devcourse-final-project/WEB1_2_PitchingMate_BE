@@ -538,4 +538,50 @@ public class ProfileIntegrationTest {
                     .andExpect(jsonPath("$.code").value(200));
         }
     }
+
+    @Nested
+    @DisplayName("작성한 메이트 구인글 페이징 조회")
+    class ProfileMatePostsPage {
+
+        @Test
+        @DisplayName("작성한 메이트 구인글 페이징 조회 성공")
+        @WithAuthMember(userId = "customUser", memberId = 1L)
+        void get_my_mate_posts_page_success() throws Exception {
+            // given
+            int page = 0;
+            int size = 10;
+
+            MatePost post = MatePost.builder()
+                    .author(member1)
+                    .teamId(1L)
+                    .match(matchRepository.save(Match.builder()
+                            .homeTeamId(1L)
+                            .awayTeamId(2L)
+                            .stadiumId(1L)
+                            .status(SCHEDULED)
+                            .matchTime(LocalDateTime.now().plusDays(7))
+                            .build()))
+                    .title("new title")
+                    .content("new content")
+                    .status(com.example.mate.domain.mate.entity.Status.OPEN)
+                    .maxParticipants(10)
+                    .age(Age.ALL)
+                    .gender(Gender.ANY)
+                    .transport(TransportType.ANY)
+                    .build();
+
+            mateRepository.save(post);
+
+            // when & then
+            mockMvc.perform(get("/api/profile/posts/mate")
+                            .param("page", String.valueOf(page))
+                            .param("size", String.valueOf(size)))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value("SUCCESS"))
+                    .andExpect(jsonPath("$.data.content").isArray())
+                    .andExpect(jsonPath("$.data.content.length()").value(2))
+                    .andExpect(jsonPath("$.code").value(200));
+        }
+    }
 }
