@@ -116,6 +116,9 @@ class MemberIntegrationTest {
     @MockBean
     private ValueOperations<String, String> valueOperations;
 
+    @MockBean
+    private JwtUtil jwtUtil;
+
     private Member member;
     private Member member2;
     private GoodsPost goodsPost;
@@ -277,7 +280,7 @@ class MemberIntegrationTest {
                 .memberId(member.getId())
                 .build();
     }
-    
+
     @Nested
     @DisplayName("자체 회원 가입")
     class Join {
