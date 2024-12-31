@@ -9,11 +9,10 @@ import com.example.mate.domain.goods.entity.Status;
 import com.example.mate.domain.goods.repository.GoodsPostRepository;
 import com.example.mate.domain.goods.repository.GoodsReviewRepositoryCustom;
 import com.example.mate.domain.match.entity.Match;
+import com.example.mate.domain.mate.dto.response.MatePostSummaryResponse;
+import com.example.mate.domain.mate.entity.MatePost;
 import com.example.mate.domain.mate.entity.MateReview;
-import com.example.mate.domain.mate.repository.MateReviewRepository;
-import com.example.mate.domain.mate.repository.MateReviewRepositoryCustom;
-import com.example.mate.domain.mate.repository.VisitPartRepository;
-import com.example.mate.domain.mate.repository.VisitRepository;
+import com.example.mate.domain.mate.repository.*;
 import com.example.mate.domain.member.dto.response.MyGoodsRecordResponse;
 import com.example.mate.domain.member.dto.response.MyReviewResponse;
 import com.example.mate.domain.member.dto.response.MyTimelineResponse;
@@ -39,6 +38,7 @@ public class ProfileService {
 
     private final MemberRepository memberRepository;
     private final GoodsPostRepository goodsPostRepository;
+    private final MateRepository mateRepository;
     private final MateReviewRepositoryCustom mateReviewRepositoryCustom;
     private final GoodsReviewRepositoryCustom goodsReviewRepositoryCustom;
     private final VisitPartRepository visitPartRepository;
@@ -190,5 +190,16 @@ public class ProfileService {
     private GoodsPostSummaryResponse convertToGoodsPostResponse(GoodsPost goodsPost) {
         String mainImageUrl = goodsPost.getMainImageUrl();
         return GoodsPostSummaryResponse.of(goodsPost, mainImageUrl);
+    }
+
+    // 작성한 메이트 구인글 페이징 조회
+    @Transactional(readOnly = true)
+    public PageResponse<MatePostSummaryResponse> getMatePostsPage(Long memberId, Pageable pageable) {
+        Page<MatePost> matePostsPage = mateRepository.findMyMatePosts(memberId, pageable);
+        List<MatePostSummaryResponse> content = matePostsPage.getContent().stream()
+                .map(MatePostSummaryResponse::from)
+                .toList();
+
+        return PageResponse.from(matePostsPage, content);
     }
 }
