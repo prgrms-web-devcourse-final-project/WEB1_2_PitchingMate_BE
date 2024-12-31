@@ -17,13 +17,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.common.security.filter.JwtCheckFilter;
 import com.example.mate.config.WithAuthMember;
-import com.example.mate.domain.constant.Rating;
-import com.example.mate.domain.goodsPost.dto.response.LocationInfo;
 import com.example.mate.domain.goodsPost.dto.request.GoodsPostRequest;
-import com.example.mate.domain.goodsReview.dto.request.GoodsReviewRequest;
 import com.example.mate.domain.goodsPost.dto.response.GoodsPostResponse;
 import com.example.mate.domain.goodsPost.dto.response.GoodsPostSummaryResponse;
-import com.example.mate.domain.goodsReview.dto.response.GoodsReviewResponse;
+import com.example.mate.domain.goodsPost.dto.response.LocationInfo;
 import com.example.mate.domain.goodsPost.entity.Category;
 import com.example.mate.domain.goodsPost.entity.Status;
 import com.example.mate.domain.goodsPost.service.GoodsPostService;
@@ -293,42 +290,5 @@ class GoodsPostControllerTest {
                 .andExpect(jsonPath("$.code").value(200));
 
         verify(goodsPostService).completeTransaction(memberId, goodsPostId, buyerId);
-    }
-
-    @Test
-    @DisplayName("굿즈 거래 후기 등록 - API 테스트")
-    void register_goods_review_success() throws Exception {
-        // given
-        Long reviewerId = 1L;
-        Long goodsPostId = 1L;
-
-        GoodsReviewRequest request = new GoodsReviewRequest(Rating.GREAT, "Great seller!");
-        GoodsReviewResponse response = GoodsReviewResponse.builder()
-                .reviewId(1L)
-                .reviewerNickname("Reviewer")
-                .rating(Rating.GREAT)
-                .reviewContent("Great seller!")
-                .goodsPostId(goodsPostId)
-                .goodsPostTitle("Sample Goods")
-                .build();
-
-        given(goodsPostService.registerGoodsReview(eq(reviewerId), eq(goodsPostId),
-                any(GoodsReviewRequest.class))).willReturn(response);
-
-        // when & then
-        mockMvc.perform(post("/api/goods/{goodsPostId}/review", goodsPostId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("SUCCESS"))
-                .andExpect(jsonPath("$.data.reviewId").value(response.getReviewId()))
-                .andExpect(jsonPath("$.data.reviewerNickname").value(response.getReviewerNickname()))
-                .andExpect(jsonPath("$.data.rating").value(response.getRating().getValue()))
-                .andExpect(jsonPath("$.data.reviewContent").value(response.getReviewContent()))
-                .andExpect(jsonPath("$.data.goodsPostTitle").value(response.getGoodsPostTitle()))
-                .andExpect(jsonPath("$.code").value(200));
-
-        verify(goodsPostService).registerGoodsReview(eq(reviewerId), eq(goodsPostId), any(GoodsReviewRequest.class));
     }
 }

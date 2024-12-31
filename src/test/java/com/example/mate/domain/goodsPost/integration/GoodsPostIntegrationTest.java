@@ -12,23 +12,18 @@ import com.example.mate.common.response.ApiResponse;
 import com.example.mate.common.security.util.JwtUtil;
 import com.example.mate.config.WithAuthMember;
 import com.example.mate.domain.constant.Gender;
-import com.example.mate.domain.constant.Rating;
 import com.example.mate.domain.constant.TeamInfo;
-import com.example.mate.domain.goodsPost.dto.response.LocationInfo;
-import com.example.mate.domain.goodsPost.dto.response.MemberInfo;
 import com.example.mate.domain.goodsPost.dto.request.GoodsPostRequest;
-import com.example.mate.domain.goodsReview.dto.request.GoodsReviewRequest;
 import com.example.mate.domain.goodsPost.dto.response.GoodsPostResponse;
 import com.example.mate.domain.goodsPost.dto.response.GoodsPostSummaryResponse;
-import com.example.mate.domain.goodsReview.dto.response.GoodsReviewResponse;
+import com.example.mate.domain.goodsPost.dto.response.LocationInfo;
+import com.example.mate.domain.goodsPost.dto.response.MemberInfo;
 import com.example.mate.domain.goodsPost.entity.Category;
 import com.example.mate.domain.goodsPost.entity.GoodsPost;
 import com.example.mate.domain.goodsPost.entity.GoodsPostImage;
-import com.example.mate.domain.goodsReview.entity.GoodsReview;
 import com.example.mate.domain.goodsPost.entity.Status;
 import com.example.mate.domain.goodsPost.repository.GoodsPostImageRepository;
 import com.example.mate.domain.goodsPost.repository.GoodsPostRepository;
-import com.example.mate.domain.goodsReview.repository.GoodsReviewRepository;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -59,7 +54,6 @@ public class GoodsPostIntegrationTest {
     @Autowired private MemberRepository memberRepository;
     @Autowired private GoodsPostRepository goodsPostRepository;
     @Autowired private GoodsPostImageRepository imageRepository;
-    @Autowired private GoodsReviewRepository reviewRepository;
     @Autowired private JdbcTemplate jdbcTemplate;
     @Autowired private ObjectMapper objectMapper;
 
@@ -382,50 +376,6 @@ public class GoodsPostIntegrationTest {
         assertThat(resultBuyer.getName()).isEqualTo(buyer.getName());
         assertThat(resultBuyer.getEmail()).isEqualTo(buyer.getEmail());
         assertThat(resultBuyer.getNickname()).isEqualTo(buyer.getNickname());
-    }
-
-    @Test
-    @DisplayName("굿즈 거래 후기 등록 통합 테스트 - 성공")
-    @WithAuthMember
-    void register_goods_review_integration_test_success() throws Exception {
-        // given
-        Member buyer = member;
-        GoodsPost completePost = createGoodsPost(Status.CLOSED, buyer);
-
-        GoodsReviewRequest request = new GoodsReviewRequest(Rating.GREAT, "Great seller!");
-
-        // when
-        MockHttpServletResponse result = mockMvc.perform(post("/api/goods/{goodsPostId}/review", completePost.getId())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andReturn()
-                .getResponse();
-        result.setCharacterEncoding("UTF-8");
-
-        ApiResponse<GoodsReviewResponse> apiResponse = objectMapper.readValue(result.getContentAsString(), new TypeReference<>() {});
-
-        // then
-        assertThat(apiResponse.getCode()).isEqualTo(200);
-        assertThat(apiResponse.getStatus()).isEqualTo("SUCCESS");
-
-        GoodsReviewResponse response = apiResponse.getData();
-        assertThat(response).isNotNull();
-        assertThat(response.getReviewId()).isNotNull();
-        assertThat(response.getReviewerNickname()).isEqualTo(buyer.getNickname());
-        assertThat(response.getRating()).isEqualTo(request.getRating());
-        assertThat(response.getReviewContent()).isEqualTo(request.getReviewContent());
-        assertThat(response.getCreatedAt()).isNotNull();
-        assertThat(response.getGoodsPostId()).isEqualTo(completePost.getId());
-        assertThat(response.getGoodsPostTitle()).isEqualTo(completePost.getTitle());
-
-        GoodsReview savedReview = reviewRepository.findById(response.getReviewId()).orElseThrow();
-        assertThat(savedReview.getReviewer().getId()).isEqualTo(buyer.getId());
-        assertThat(savedReview.getGoodsPost().getId()).isEqualTo(completePost.getId());
-        assertThat(savedReview.getRating()).isEqualTo(Rating.GREAT);
-        assertThat(savedReview.getReviewContent()).isEqualTo("Great seller!");
-        assertThat(savedReview.getCreatedAt()).isNotNull();
     }
 
     private Member createMember() {

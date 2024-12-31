@@ -1,7 +1,7 @@
 package com.example.mate.domain.goodsReview.repository;
 
 import com.example.mate.domain.goodsPost.entity.QGoodsPost;
-import com.example.mate.domain.goodsPost.entity.QGoodsReview;
+import com.example.mate.domain.goodsReview.entity.QGoodsReview;
 import com.example.mate.domain.member.dto.response.MyReviewResponse;
 import com.example.mate.domain.member.entity.QMember;
 import com.querydsl.core.types.OrderSpecifier;
