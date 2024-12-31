@@ -1,6 +1,6 @@
 package com.example.mate.domain.goodsChat.repository;
 
-import com.example.mate.domain.goods.entity.Role;
+import com.example.mate.domain.goodsPost.entity.Role;
 import com.example.mate.domain.goodsChat.entity.GoodsChatRoom;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
