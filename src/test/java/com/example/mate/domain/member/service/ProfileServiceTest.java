@@ -5,6 +5,7 @@ import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.constant.Rating;
 import com.example.mate.domain.constant.TeamInfo;
+import com.example.mate.domain.goods.dto.response.GoodsPostSummaryResponse;
 import com.example.mate.domain.goods.dto.response.LocationInfo;
 import com.example.mate.domain.goods.entity.Category;
 import com.example.mate.domain.goods.entity.GoodsPost;
@@ -479,6 +480,39 @@ class ProfileServiceTest {
                             MEMBER_NOT_FOUND_BY_ID); // MEMBER_NOT_FOUND_BY_ID는 예외 처리 시 사용된 errorCode로, 실제 코드에 맞게 설정해주세요.
 
             verify(memberRepository).findById(invalidMemberId);
+        }
+    }
+
+    @Nested
+    @DisplayName("작성한 굿즈 거래글 페이징 조회")
+    class ProfileGoodsPostsPage {
+
+        @Test
+        @DisplayName("작성한 굿즈 거래글 페이징 조회 성공")
+        void get_my_goods_posts_page_success() {
+            // given
+            Long memberId = 1L;
+            PageImpl<GoodsPost> goodsPostsPage = new PageImpl<>(List.of(goodsPost));
+            Pageable pageable = PageRequest.of(0, 10);
+
+            given(goodsPostRepository.findMyGoodsPosts(memberId, pageable))
+                    .willReturn(goodsPostsPage);
+
+            // when
+            PageResponse<GoodsPostSummaryResponse> response = profileService.getGoodsPostsPage(memberId, pageable);
+
+            // then
+            assertThat(response).isNotNull();
+            assertThat(response.getContent()).isNotEmpty();
+            assertThat(response.getTotalElements()).isEqualTo(goodsPostsPage.getTotalElements());
+            assertThat(response.getContent().size()).isEqualTo(goodsPostsPage.getContent().size());
+
+            GoodsPostSummaryResponse postResponse = response.getContent().get(0);
+            assertThat(postResponse.getTitle()).isEqualTo(goodsPost.getTitle());
+            assertThat(postResponse.getPrice()).isEqualTo(goodsPost.getPrice());
+            assertThat(postResponse.getImageUrl()).isEqualTo(goodsPostImage.getImageUrl());
+
+            verify(goodsPostRepository).findMyGoodsPosts(memberId, pageable);
         }
     }
 }

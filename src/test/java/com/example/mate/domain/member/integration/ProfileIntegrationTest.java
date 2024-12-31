@@ -1,32 +1,18 @@
 package com.example.mate.domain.member.integration;
 
-import static com.example.mate.domain.match.entity.MatchStatus.SCHEDULED;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import com.example.mate.config.WithAuthMember;
 import com.example.mate.common.security.util.JwtUtil;
+import com.example.mate.config.WithAuthMember;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.constant.Rating;
 import com.example.mate.domain.goods.dto.response.LocationInfo;
-import com.example.mate.domain.goods.entity.Category;
-import com.example.mate.domain.goods.entity.GoodsPost;
-import com.example.mate.domain.goods.entity.GoodsPostImage;
-import com.example.mate.domain.goods.entity.GoodsReview;
 import com.example.mate.domain.goods.entity.Status;
+import com.example.mate.domain.goods.entity.*;
 import com.example.mate.domain.goods.repository.GoodsPostImageRepository;
 import com.example.mate.domain.goods.repository.GoodsPostRepository;
 import com.example.mate.domain.goods.repository.GoodsReviewRepository;
 import com.example.mate.domain.match.entity.Match;
 import com.example.mate.domain.match.repository.MatchRepository;
-import com.example.mate.domain.mate.entity.Age;
-import com.example.mate.domain.mate.entity.MatePost;
-import com.example.mate.domain.mate.entity.MateReview;
-import com.example.mate.domain.mate.entity.TransportType;
-import com.example.mate.domain.mate.entity.Visit;
-import com.example.mate.domain.mate.entity.VisitPart;
+import com.example.mate.domain.mate.entity.*;
 import com.example.mate.domain.mate.repository.MateRepository;
 import com.example.mate.domain.mate.repository.MateReviewRepository;
 import com.example.mate.domain.mate.repository.VisitPartRepository;
@@ -35,8 +21,6 @@ import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
-import java.time.LocalDateTime;
-import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -49,6 +33,15 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+import static com.example.mate.domain.match.entity.MatchStatus.SCHEDULED;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
@@ -500,6 +493,49 @@ public class ProfileIntegrationTest {
                     .andExpect(jsonPath("$.data.content.length()").value(1))
                     .andExpect(jsonPath("$.code").value(200));
         }
+    }
 
+    @Nested
+    @DisplayName("작성한 굿즈 거래글 페이징 조회")
+    class ProfileGoodsPostsPage {
+
+        @Test
+        @DisplayName("작성한 굿즈 거래글 페이징 조회 성공")
+        @WithAuthMember(userId = "customUser", memberId = 1L)
+        void get_my_goods_posts_page_success() throws Exception {
+            // given
+            int page = 0;
+            int size = 10;
+
+            GoodsPost post = GoodsPost.builder()
+                    .seller(member1)
+                    .teamId(10L)
+                    .title("Test Title ")
+                    .content("Test Content ")
+                    .price(1000)
+                    .category(Category.ACCESSORY)
+                    .location(LocationInfo.toEntity(createLocationInfo()))
+                    .status(Status.CLOSED)
+                    .build();
+
+            GoodsPostImage image = GoodsPostImage.builder()
+                    .imageUrl("upload/test_img_url ")
+                    .post(post)
+                    .build();
+
+            post.changeImages(List.of(image));
+            goodsPostRepository.save(post);
+
+            // when & then
+            mockMvc.perform(get("/api/profile/posts/goods")
+                            .param("page", String.valueOf(page))
+                            .param("size", String.valueOf(size)))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value("SUCCESS"))
+                    .andExpect(jsonPath("$.data.content").isArray())
+                    .andExpect(jsonPath("$.data.content.length()").value(3))
+                    .andExpect(jsonPath("$.code").value(200));
+        }
     }
 }
