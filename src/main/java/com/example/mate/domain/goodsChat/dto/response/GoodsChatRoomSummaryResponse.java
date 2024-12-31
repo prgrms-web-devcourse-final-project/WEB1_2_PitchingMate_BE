@@ -1,6 +1,6 @@
 package com.example.mate.domain.goodsChat.dto.response;
 
-import com.example.mate.domain.goods.entity.GoodsPost;
+import com.example.mate.domain.goodsPost.entity.GoodsPost;
 import com.example.mate.domain.goodsChat.entity.GoodsChatRoom;
 import com.example.mate.domain.member.entity.Member;
 import java.time.LocalDateTime;

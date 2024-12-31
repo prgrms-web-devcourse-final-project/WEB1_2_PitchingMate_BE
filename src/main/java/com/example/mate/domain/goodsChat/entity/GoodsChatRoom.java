@@ -1,7 +1,7 @@
 package com.example.mate.domain.goodsChat.entity;
 
-import com.example.mate.domain.goods.entity.GoodsPost;
-import com.example.mate.domain.goods.entity.Role;
+import com.example.mate.domain.goodsPost.entity.GoodsPost;
+import com.example.mate.domain.goodsPost.entity.Role;
 import com.example.mate.domain.member.entity.Member;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;

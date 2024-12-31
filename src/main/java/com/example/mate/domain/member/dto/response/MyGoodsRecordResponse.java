@@ -1,6 +1,6 @@
 package com.example.mate.domain.member.dto.response;
 
-import com.example.mate.domain.goods.entity.GoodsPost;
+import com.example.mate.domain.goodsPost.entity.GoodsPost;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
