@@ -2,6 +2,7 @@ package com.example.mate.domain.mate.repository;
 
 import com.example.mate.domain.mate.entity.MatePost;
 import com.example.mate.domain.mate.entity.Status;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -21,4 +22,12 @@ public interface MateRepository extends JpaRepository<MatePost, Long>, MateRepos
             """)
     List<MatePost> findMainPagePosts(@Param("teamId") Long teamId, @Param("now") LocalDateTime now,
                                      @Param("statuses") List<Status> statuses, Pageable pageable);
+
+    @Query("""
+            SELECT mp
+            FROM MatePost mp
+            WHERE mp.author.id = :memberId
+            ORDER BY mp.createdAt DESC
+            """)
+    Page<MatePost> findMyMatePosts(@Param("memberId") Long memberId, Pageable pageable);
 }

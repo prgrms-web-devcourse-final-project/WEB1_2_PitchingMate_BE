@@ -58,4 +58,12 @@ public interface GoodsPostRepository extends JpaRepository<GoodsPost, Long>, Goo
             """)
     Page<GoodsPost> findGoodsPostsByBuyerId(@Param("memberId") Long memberId, @Param("status") Status status,
                                             Pageable pageable);
+
+    @Query("""
+            SELECT gp
+            FROM GoodsPost gp
+            WHERE gp.seller.id = :memberId
+            ORDER BY gp.createdAt DESC
+            """)
+    Page<GoodsPost> findMyGoodsPosts(@Param("memberId") Long memberId, Pageable pageable);
 }

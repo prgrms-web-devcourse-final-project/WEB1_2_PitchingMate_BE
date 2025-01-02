@@ -5,6 +5,7 @@ import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.constant.Rating;
 import com.example.mate.domain.constant.TeamInfo;
+import com.example.mate.domain.goodsPost.dto.response.GoodsPostSummaryResponse;
 import com.example.mate.domain.goodsPost.dto.response.LocationInfo;
 import com.example.mate.domain.goodsPost.entity.Category;
 import com.example.mate.domain.goodsPost.entity.GoodsPost;
@@ -13,12 +14,9 @@ import com.example.mate.domain.goodsPost.entity.Status;
 import com.example.mate.domain.goodsPost.repository.GoodsPostRepository;
 import com.example.mate.domain.goodsReview.repository.GoodsReviewRepositoryCustom;
 import com.example.mate.domain.match.entity.Match;
-import com.example.mate.domain.mate.entity.MateReview;
-import com.example.mate.domain.mate.entity.Visit;
-import com.example.mate.domain.mate.repository.MateReviewRepository;
-import com.example.mate.domain.mate.repository.MateReviewRepositoryCustom;
-import com.example.mate.domain.mate.repository.VisitPartRepository;
-import com.example.mate.domain.mate.repository.VisitRepository;
+import com.example.mate.domain.mate.dto.response.MatePostSummaryResponse;
+import com.example.mate.domain.mate.entity.*;
+import com.example.mate.domain.mate.repository.*;
 import com.example.mate.domain.member.dto.response.MyGoodsRecordResponse;
 import com.example.mate.domain.member.dto.response.MyReviewResponse;
 import com.example.mate.domain.member.dto.response.MyTimelineResponse;
@@ -62,6 +60,9 @@ class ProfileServiceTest {
     private GoodsPostRepository goodsPostRepository;
 
     @Mock
+    private MateRepository mateRepository;
+
+    @Mock
     private MateReviewRepositoryCustom mateReviewRepositoryCustom;
 
     @Mock
@@ -80,6 +81,7 @@ class ProfileServiceTest {
     private Member member2;
     private Member member3;
     private GoodsPost goodsPost;
+    private MatePost matePost;
     private GoodsPostImage goodsPostImage;
     private MateReview mateReview;
 
@@ -88,6 +90,7 @@ class ProfileServiceTest {
         createTestMember();
         createGoodsPost();
         createGoodsPostImage(goodsPost);
+        createMatePost();
         createMateReview();
     }
 
@@ -132,6 +135,28 @@ class ProfileServiceTest {
                 .price(10_000)
                 .category(Category.ACCESSORY)
                 .location(LocationInfo.toEntity(createLocationInfo()))
+                .build();
+    }
+
+    private void createMatePost() {
+        matePost = MatePost.builder()
+                .id(1L)
+                .author(member1)
+                .teamId(1L)
+                .match(Match.builder()
+                        .homeTeamId(1L)
+                        .awayTeamId(2L)
+                        .stadiumId(1L)
+                        .matchTime(LocalDateTime.now().plusDays(1))
+                        .build())
+                .title("test title")
+                .content("test content")
+                .imageUrl(goodsPostImage.getImageUrl())
+                .status(com.example.mate.domain.mate.entity.Status.OPEN)
+                .maxParticipants(4)
+                .age(Age.TWENTIES)
+                .gender(Gender.FEMALE)
+                .transport(TransportType.PUBLIC)
                 .build();
     }
 
@@ -479,6 +504,71 @@ class ProfileServiceTest {
                             MEMBER_NOT_FOUND_BY_ID); // MEMBER_NOT_FOUND_BY_ID는 예외 처리 시 사용된 errorCode로, 실제 코드에 맞게 설정해주세요.
 
             verify(memberRepository).findById(invalidMemberId);
+        }
+    }
+
+    @Nested
+    @DisplayName("작성한 굿즈 거래글 페이징 조회")
+    class ProfileGoodsPostsPage {
+
+        @Test
+        @DisplayName("작성한 굿즈 거래글 페이징 조회 성공")
+        void get_my_goods_posts_page_success() {
+            // given
+            Long memberId = 1L;
+            PageImpl<GoodsPost> goodsPostsPage = new PageImpl<>(List.of(goodsPost));
+            Pageable pageable = PageRequest.of(0, 10);
+
+            given(goodsPostRepository.findMyGoodsPosts(memberId, pageable))
+                    .willReturn(goodsPostsPage);
+
+            // when
+            PageResponse<GoodsPostSummaryResponse> response = profileService.getGoodsPostsPage(memberId, pageable);
+
+            // then
+            assertThat(response).isNotNull();
+            assertThat(response.getContent()).isNotEmpty();
+            assertThat(response.getTotalElements()).isEqualTo(goodsPostsPage.getTotalElements());
+            assertThat(response.getContent().size()).isEqualTo(goodsPostsPage.getContent().size());
+
+            GoodsPostSummaryResponse postResponse = response.getContent().get(0);
+            assertThat(postResponse.getTitle()).isEqualTo(goodsPost.getTitle());
+            assertThat(postResponse.getPrice()).isEqualTo(goodsPost.getPrice());
+            assertThat(postResponse.getImageUrl()).isEqualTo(goodsPostImage.getImageUrl());
+
+            verify(goodsPostRepository).findMyGoodsPosts(memberId, pageable);
+        }
+    }
+
+    @Nested
+    @DisplayName("작성한 메이트 구인글 페이징 조회")
+    class ProfileMatePostsPage {
+
+        @Test
+        @DisplayName("작성한 메이트 구인글 페이징 조회 성공")
+        void get_my_mate_posts_page_success() {
+            // given
+            Long memberId = 1L;
+            PageImpl<MatePost> matePostsPage = new PageImpl<>(List.of(matePost));
+            Pageable pageable = PageRequest.of(0, 10);
+
+            given(mateRepository.findMyMatePosts(memberId, pageable))
+                    .willReturn(matePostsPage);
+
+            // when
+            PageResponse<MatePostSummaryResponse> response = profileService.getMatePostsPage(memberId, pageable);
+
+            // then
+            assertThat(response).isNotNull();
+            assertThat(response.getContent()).isNotEmpty();
+            assertThat(response.getTotalElements()).isEqualTo(matePostsPage.getTotalElements());
+            assertThat(response.getContent().size()).isEqualTo(matePostsPage.getContent().size());
+
+            MatePostSummaryResponse postResponse = response.getContent().get(0);
+            assertThat(postResponse.getTitle()).isEqualTo(matePost.getTitle());
+            assertThat(postResponse.getImageUrl()).isEqualTo(goodsPostImage.getImageUrl());
+
+            verify(mateRepository).findMyMatePosts(memberId, pageable);
         }
     }
 }
