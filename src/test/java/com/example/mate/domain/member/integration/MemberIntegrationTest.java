@@ -297,7 +297,7 @@ class MemberIntegrationTest {
                     .andExpect(jsonPath("$.status").value("SUCCESS"))
                     .andExpect(jsonPath("$.data.name").value("이철수"))
                     .andExpect(jsonPath("$.data.email").value("tester3@example.com"))
-                    .andExpect(jsonPath("$.data.age").value(22))
+                    .andExpect(jsonPath("$.data.age").value(LocalDateTime.now().getYear() - 2002))
                     .andExpect(jsonPath("$.data.nickname").value("tester3"))
                     .andDo(print());
         }
