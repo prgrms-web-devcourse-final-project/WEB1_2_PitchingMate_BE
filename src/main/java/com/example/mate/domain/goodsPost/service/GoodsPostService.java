@@ -114,15 +114,30 @@ public class GoodsPostService {
     private List<GoodsPostImage> uploadImageFiles(List<MultipartFile> files, GoodsPost savedPost) {
         List<GoodsPostImage> images = new ArrayList<>();
 
-        for (MultipartFile file : files) {
-            String uploadUrl = fileService.uploadFile(file);
-            GoodsPostImage image = GoodsPostImage.builder()
-                    .imageUrl(uploadUrl)
-                    .post(savedPost)
-                    .build();
-            images.add(image);
+        // 첫 번째 파일은 썸네일 생성과 함께 업로드
+        images.add(handleImageUpload(files.get(0), savedPost, true));
+
+        // 나머지 파일들은 일반 업로드
+        for (int i = 1; i < files.size(); i++) {
+            images.add(handleImageUpload(files.get(i), savedPost, false));
         }
+
         return images;
+    }
+
+    private GoodsPostImage handleImageUpload(MultipartFile file, GoodsPost savedPost, boolean isMainImage) {
+        String uploadUrl;
+
+        if (isMainImage) {
+            uploadUrl = fileService.uploadImageWithThumbnail(file); // 썸네일 업로드
+        } else {
+            uploadUrl = fileService.uploadFile(file); // 일반 업로드
+        }
+
+        return GoodsPostImage.builder()
+                .imageUrl(uploadUrl)
+                .post(savedPost)
+                .build();
     }
 
     private void deleteExistingImageFiles(Long goodsPostId) {
