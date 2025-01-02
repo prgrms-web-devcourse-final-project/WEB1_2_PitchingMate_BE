@@ -14,6 +14,7 @@ import com.example.mate.common.security.util.JwtUtil;
 import com.example.mate.config.WithAuthMember;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.constant.MessageType;
+import com.example.mate.domain.file.FileUtils;
 import com.example.mate.domain.goodsPost.dto.response.LocationInfo;
 import com.example.mate.domain.goodsPost.entity.Category;
 import com.example.mate.domain.goodsPost.entity.GoodsPost;
@@ -114,7 +115,7 @@ public class GoodsChatIntegrationTest {
                 .andExpect(jsonPath("$.data.category").value(goodsPost.getCategory().getValue()))
                 .andExpect(jsonPath("$.data.price").value(goodsPost.getPrice()))
                 .andExpect(jsonPath("$.data.postStatus").value(goodsPost.getStatus().getValue()))
-                .andExpect(jsonPath("$.data.imageUrl").value(goodsPost.getGoodsPostImages().get(0).getImageUrl()))
+                .andExpect(jsonPath("$.data.imageUrl").value(FileUtils.getThumbnailImageUrl(goodsPost.getGoodsPostImages().get(0).getImageUrl())))
                 .andReturn()
                 .getResponse();
 
@@ -215,7 +216,7 @@ public class GoodsChatIntegrationTest {
                 .andExpect(jsonPath("$.data.content[0].opponentNickname").value(seller.getNickname()))
                 .andExpect(jsonPath("$.data.content[0].lastChatContent").value(chatRoom.getLastChatContent()))
                 .andExpect(jsonPath("$.data.content[0].placeName").value(goodsPost.getLocation().getPlaceName()))
-                .andExpect(jsonPath("$.data.content[0].goodsMainImageUrl").value(goodsPost.getMainImageUrl()))
+                .andExpect(jsonPath("$.data.content[0].goodsMainImageUrl").value(FileUtils.getThumbnailImageUrl(goodsPost.getMainImageUrl())))
                 .andExpect(jsonPath("$.data.content[0].opponentImageUrl").value(seller.getImageUrl()))
                 .andReturn()
                 .getResponse();

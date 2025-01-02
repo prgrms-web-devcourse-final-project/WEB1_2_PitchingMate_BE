@@ -12,6 +12,7 @@ import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.constant.MessageType;
+import com.example.mate.domain.file.FileUtils;
 import com.example.mate.domain.goodsPost.entity.Category;
 import com.example.mate.domain.goodsPost.entity.GoodsPost;
 import com.example.mate.domain.goodsPost.entity.GoodsPostImage;
@@ -363,7 +364,7 @@ class GoodsChatServiceTest {
             assertThat(goodsChatRoomInfo.getPrice()).isEqualTo(goodsPost.getPrice());
             assertThat(goodsChatRoomInfo.getPostStatus()).isEqualTo(goodsPost.getStatus().getValue());
             assertThat(goodsChatRoomInfo.getChatRoomStatus()).isEqualTo(chatRoom.getIsActive().toString());
-            assertThat(goodsChatRoomInfo.getImageUrl()).isEqualTo(goodsPost.getMainImageUrl());
+            assertThat(goodsChatRoomInfo.getImageUrl()).isEqualTo(FileUtils.getThumbnailImageUrl(goodsPost.getMainImageUrl()));
 
             assertThat(goodsChatRoomInfo.getInitialMessages().getContent())
                     .hasSize(2)

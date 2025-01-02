@@ -5,6 +5,7 @@ import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.constant.Rating;
 import com.example.mate.domain.constant.TeamInfo;
+import com.example.mate.domain.file.FileUtils;
 import com.example.mate.domain.goodsPost.dto.response.LocationInfo;
 import com.example.mate.domain.goodsPost.entity.Category;
 import com.example.mate.domain.goodsPost.entity.GoodsPost;
@@ -191,7 +192,7 @@ class ProfileServiceTest {
             MyGoodsRecordResponse recordResponse = response.getContent().get(0);
             assertThat(recordResponse.getTitle()).isEqualTo(goodsPost.getTitle());
             assertThat(recordResponse.getPrice()).isEqualTo(goodsPost.getPrice());
-            assertThat(recordResponse.getImageUrl()).isEqualTo(goodsPostImage.getImageUrl());
+            assertThat(recordResponse.getImageUrl()).isEqualTo(FileUtils.getThumbnailImageUrl(goodsPostImage.getImageUrl()));
 
             verify(goodsPostRepository).findGoodsPostsBySellerId(memberId, Status.CLOSED, pageable);
         }
@@ -243,7 +244,7 @@ class ProfileServiceTest {
             MyGoodsRecordResponse recordResponse = response.getContent().get(0);
             assertThat(recordResponse.getTitle()).isEqualTo(goodsPost.getTitle());
             assertThat(recordResponse.getPrice()).isEqualTo(goodsPost.getPrice());
-            assertThat(recordResponse.getImageUrl()).isEqualTo(goodsPostImage.getImageUrl());
+            assertThat(recordResponse.getImageUrl()).isEqualTo(FileUtils.getThumbnailImageUrl(goodsPostImage.getImageUrl()));
 
             verify(goodsPostRepository).findGoodsPostsByBuyerId(memberId, Status.CLOSED, pageable);
         }
