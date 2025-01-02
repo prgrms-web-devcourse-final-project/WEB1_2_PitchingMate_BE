@@ -8,8 +8,13 @@ files:
     # EC2의 어떤 경로에 저장할 지 지정한다.
     destination: /home/ubuntu/WEB1_2_PitchingMate_BE
 
+
 permissions:
   - object: /
+    owner: ubuntu
+    group: ubuntu
+  - object: /home/ubuntu/WEB1_2_PitchingMate_BE/scripts/start-server.sh
+    mode: 755
     owner: ubuntu
     group: ubuntu
 
