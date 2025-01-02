@@ -1,5 +1,6 @@
 package com.example.mate.domain.member.dto.response;
 
+import com.example.mate.domain.file.FileUtils;
 import com.example.mate.domain.goodsPost.entity.GoodsPost;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
@@ -42,11 +43,11 @@ public class MyGoodsRecordResponse {
                 .build();
     }
 
-    public static MyGoodsRecordResponse of(GoodsPost goodsPost, String mainImageUrl) {
+    public static MyGoodsRecordResponse of(GoodsPost goodsPost, String imageFileName) {
         return MyGoodsRecordResponse.builder()
                 .postId(goodsPost.getId())
                 .title(goodsPost.getTitle())
-                .imageUrl(mainImageUrl)
+                .imageUrl(FileUtils.getThumbnailImageUrl(imageFileName))
                 .price(goodsPost.getPrice())
                 .author(goodsPost.getSeller().getNickname())
                 .createdAt(goodsPost.getCreatedAt())

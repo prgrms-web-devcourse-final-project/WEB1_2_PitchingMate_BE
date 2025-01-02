@@ -1,5 +1,6 @@
 package com.example.mate.domain.goodsChat.dto.response;
 
+import com.example.mate.domain.file.FileUtils;
 import com.example.mate.domain.goodsPost.entity.GoodsPost;
 import com.example.mate.domain.goodsChat.entity.GoodsChatRoom;
 import com.example.mate.domain.member.entity.Member;
@@ -30,7 +31,7 @@ public class GoodsChatRoomSummaryResponse {
                 .lastChatContent(chatRoom.getLastChatContent())
                 .lastChatSentAt(chatRoom.getLastChatSentAt())
                 .placeName(goodsPost.getLocation().getPlaceName())
-                .goodsMainImageUrl(goodsPost.getMainImageUrl())
+                .goodsMainImageUrl(FileUtils.getThumbnailImageUrl(goodsPost.getMainImageUrl()))
                 .opponentImageUrl(opponent.getImageUrl())
                 .build();
     }

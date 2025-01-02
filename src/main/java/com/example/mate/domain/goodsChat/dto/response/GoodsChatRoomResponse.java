@@ -2,6 +2,7 @@ package com.example.mate.domain.goodsChat.dto.response;
 
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.constant.TeamInfo;
+import com.example.mate.domain.file.FileUtils;
 import com.example.mate.domain.goodsPost.entity.GoodsPost;
 import com.example.mate.domain.goodsChat.entity.GoodsChatRoom;
 import lombok.Builder;
@@ -38,7 +39,7 @@ public class GoodsChatRoomResponse {
                 .title(goodsPost.getTitle())
                 .category(goodsPost.getCategory().getValue())
                 .price(goodsPost.getPrice())
-                .imageUrl(mainImageUrl)
+                .imageUrl(FileUtils.getThumbnailImageUrl(mainImageUrl))
                 .postStatus(goodsPost.getStatus().getValue())
                 .chatRoomStatus(chatRoom.getIsActive().toString())
                 .initialMessages(initialMessages)
