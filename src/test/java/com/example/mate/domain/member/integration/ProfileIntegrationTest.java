@@ -35,8 +35,6 @@ import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
-import java.time.LocalDateTime;
-import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -44,11 +42,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
@@ -497,6 +497,95 @@ public class ProfileIntegrationTest {
                     .andExpect(jsonPath("$.data.content.length()").value(1))
                     .andExpect(jsonPath("$.code").value(200));
         }
+    }
 
+    @Nested
+    @DisplayName("작성한 굿즈 거래글 페이징 조회")
+    class ProfileGoodsPostsPage {
+
+        @Test
+        @DisplayName("작성한 굿즈 거래글 페이징 조회 성공")
+        @WithAuthMember(userId = "customUser", memberId = 1L)
+        void get_my_goods_posts_page_success() throws Exception {
+            // given
+            int page = 0;
+            int size = 10;
+
+            GoodsPost post = GoodsPost.builder()
+                    .seller(member1)
+                    .teamId(10L)
+                    .title("Test Title ")
+                    .content("Test Content ")
+                    .price(1000)
+                    .category(Category.ACCESSORY)
+                    .location(LocationInfo.toEntity(createLocationInfo()))
+                    .status(Status.CLOSED)
+                    .build();
+
+            GoodsPostImage image = GoodsPostImage.builder()
+                    .imageUrl("upload/test_img_url ")
+                    .post(post)
+                    .build();
+
+            post.changeImages(List.of(image));
+            goodsPostRepository.save(post);
+
+            // when & then
+            mockMvc.perform(get("/api/profile/posts/goods")
+                            .param("page", String.valueOf(page))
+                            .param("size", String.valueOf(size)))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value("SUCCESS"))
+                    .andExpect(jsonPath("$.data.content").isArray())
+                    .andExpect(jsonPath("$.data.content.length()").value(3))
+                    .andExpect(jsonPath("$.code").value(200));
+        }
+    }
+
+    @Nested
+    @DisplayName("작성한 메이트 구인글 페이징 조회")
+    class ProfileMatePostsPage {
+
+        @Test
+        @DisplayName("작성한 메이트 구인글 페이징 조회 성공")
+        @WithAuthMember(userId = "customUser", memberId = 1L)
+        void get_my_mate_posts_page_success() throws Exception {
+            // given
+            int page = 0;
+            int size = 10;
+
+            MatePost post = MatePost.builder()
+                    .author(member1)
+                    .teamId(1L)
+                    .match(matchRepository.save(Match.builder()
+                            .homeTeamId(1L)
+                            .awayTeamId(2L)
+                            .stadiumId(1L)
+                            .status(SCHEDULED)
+                            .matchTime(LocalDateTime.now().plusDays(7))
+                            .build()))
+                    .title("new title")
+                    .content("new content")
+                    .status(com.example.mate.domain.mate.entity.Status.OPEN)
+                    .maxParticipants(10)
+                    .age(Age.ALL)
+                    .gender(Gender.ANY)
+                    .transport(TransportType.ANY)
+                    .build();
+
+            mateRepository.save(post);
+
+            // when & then
+            mockMvc.perform(get("/api/profile/posts/mate")
+                            .param("page", String.valueOf(page))
+                            .param("size", String.valueOf(size)))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value("SUCCESS"))
+                    .andExpect(jsonPath("$.data.content").isArray())
+                    .andExpect(jsonPath("$.data.content.length()").value(2))
+                    .andExpect(jsonPath("$.code").value(200));
+        }
     }
 }
