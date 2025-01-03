@@ -16,6 +16,9 @@ import com.example.mate.domain.mateChat.dto.response.MateChatRoomResponse;
 import com.example.mate.domain.mateChat.entity.MateChatMessage;
 import com.example.mate.domain.mateChat.entity.MateChatRoom;
 import com.example.mate.domain.mateChat.entity.MateChatRoomMember;
+import com.example.mate.domain.mateChat.event.MateChatEvent;
+import com.example.mate.domain.mateChat.event.MateChatEventPublisher;
+import com.example.mate.domain.mateChat.message.MessageType;
 import com.example.mate.domain.mateChat.repository.MateChatMessageRepository;
 import com.example.mate.domain.mateChat.repository.MateChatRoomMemberRepository;
 import com.example.mate.domain.mateChat.repository.MateChatRoomRepository;
@@ -43,9 +46,9 @@ public class MateChatRoomService {
     private final MateChatMessageRepository chatMessageRepository;
     private final MateRepository mateRepository;
     private final MemberRepository memberRepository;
-    private final MateChatMessageService mateChatMessageService;
     private final VisitPartRepository visitPartRepository;
     private final MateChatRoomMemberRepository mateChatRoomMemberRepository;
+    private final MateChatEventPublisher eventPublisher;
 
     // 메이트 게시글에서 채팅방 생성/입장
     public MateChatRoomResponse createOrJoinChatRoomFromPost(Long postId, Long memberId) {
@@ -304,21 +307,25 @@ public class MateChatRoomService {
     }
 
     private void sendEnterMessage(Long roomId, Member member) {
-        MateChatMessageRequest enterMessage = MateChatMessageRequest.createEnterMessage(
-                roomId,
-                member.getId(),
-                member.getNickname()
-        );
-        mateChatMessageService.sendEnterMessage(enterMessage);
+        eventPublisher.publish(MateChatEvent.from(roomId, member, MessageType.ENTER));
+
+//        MateChatMessageRequest enterMessage = MateChatMessageRequest.createEnterMessage(
+//                roomId,
+//                member.getId(),
+//                member.getNickname()
+//        );
+//        mateChatMessageService.sendEnterMessage(enterMessage);
     }
 
     private void sendLeaveMessage(Long roomId, Member member) {
-        MateChatMessageRequest leaveMessage = MateChatMessageRequest.createLeaveMessage(
-                roomId,
-                member.getId(),
-                member.getNickname()
-        );
-        mateChatMessageService.sendLeaveMessage(leaveMessage);
+        eventPublisher.publish(MateChatEvent.from(roomId, member, MessageType.LEAVE));
+
+//        MateChatMessageRequest leaveMessage = MateChatMessageRequest.createLeaveMessage(
+//                roomId,
+//                member.getId(),
+//                member.getNickname()
+//        );
+//        mateChatMessageService.sendLeaveMessage(leaveMessage);
     }
 
     private void validateChatRoomAccess(Long roomId, Long memberId) {
