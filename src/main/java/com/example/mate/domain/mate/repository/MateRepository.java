@@ -18,6 +18,7 @@ public interface MateRepository extends JpaRepository<MatePost, Long>, MateRepos
              SELECT mp FROM MatePost mp JOIN FETCH mp.match mt
              WHERE (:teamId IS NULL OR mp.teamId = :teamId)
              And mt.matchTime > :now AND mp.status IN :statuses
+             AND mp.author.isDeleted = false
              ORDER BY mt.matchTime ASC
             """)
     List<MatePost> findMainPagePosts(@Param("teamId") Long teamId, @Param("now") LocalDateTime now,

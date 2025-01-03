@@ -1,18 +1,19 @@
 package com.example.mate.domain.goodsPost.repository;
 
-import static com.example.mate.domain.goodsPost.entity.QGoodsPost.goodsPost;
-
 import com.example.mate.domain.goodsPost.entity.Category;
 import com.example.mate.domain.goodsPost.entity.GoodsPost;
 import com.example.mate.domain.goodsPost.entity.Status;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
+
+import java.util.List;
+
+import static com.example.mate.domain.goodsPost.entity.QGoodsPost.goodsPost;
 
 @RequiredArgsConstructor
 public class GoodsPostRepositoryCustomImpl implements GoodsPostRepositoryCustom {
@@ -25,7 +26,7 @@ public class GoodsPostRepositoryCustomImpl implements GoodsPostRepositoryCustom 
 
         List<GoodsPost> fetch = queryFactory
                 .selectFrom(goodsPost)
-                .where(conditions)
+                .where(conditions.and(goodsPost.seller.isDeleted.isFalse()))
                 .orderBy(goodsPost.createdAt.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())

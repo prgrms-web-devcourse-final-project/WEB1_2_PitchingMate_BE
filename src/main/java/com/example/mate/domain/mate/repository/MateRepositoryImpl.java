@@ -3,22 +3,26 @@ package com.example.mate.domain.mate.repository;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.match.entity.QMatch;
 import com.example.mate.domain.mate.dto.request.MatePostSearchRequest;
-import com.example.mate.domain.mate.entity.*;
+import com.example.mate.domain.mate.entity.Age;
+import com.example.mate.domain.mate.entity.MatePost;
+import com.example.mate.domain.mate.entity.QMatePost;
+import com.example.mate.domain.mate.entity.SortType;
+import com.example.mate.domain.mate.entity.Status;
+import com.example.mate.domain.mate.entity.TransportType;
 import com.example.mate.domain.member.entity.QMember;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import java.time.LocalDateTime;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
-import java.time.LocalDateTime;
-import java.util.List;
-
 @RequiredArgsConstructor
-public class MateRepositoryImpl implements MateRepositoryCustom{
+public class MateRepositoryImpl implements MateRepositoryCustom {
     private final JPAQueryFactory queryFactory;
 
     @Override
@@ -46,7 +50,7 @@ public class MateRepositoryImpl implements MateRepositoryCustom{
         }
 
         if (request.getMaxParticipants() != null) {
-                builder.and(matePost.maxParticipants.eq(request.getMaxParticipants()));
+            builder.and(matePost.maxParticipants.eq(request.getMaxParticipants()));
         }
 
         if (request.getTransportType() != null && request.getTransportType() != TransportType.ANY) {
@@ -61,7 +65,7 @@ public class MateRepositoryImpl implements MateRepositoryCustom{
                 .selectFrom(matePost)
                 .join(matePost.match, match).fetchJoin()
                 .join(matePost.author, author).fetchJoin()
-                .where(builder)
+                .where(builder.and(matePost.author.isDeleted.isFalse()))
                 .orderBy(orderSpecifier)
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
