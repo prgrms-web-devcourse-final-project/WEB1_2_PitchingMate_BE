@@ -12,13 +12,14 @@ import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.constant.MessageType;
-import com.example.mate.domain.goods.entity.Category;
-import com.example.mate.domain.goods.entity.GoodsPost;
-import com.example.mate.domain.goods.entity.GoodsPostImage;
-import com.example.mate.domain.goods.entity.Location;
-import com.example.mate.domain.goods.entity.Role;
-import com.example.mate.domain.goods.entity.Status;
-import com.example.mate.domain.goods.repository.GoodsPostRepository;
+import com.example.mate.domain.file.FileUtils;
+import com.example.mate.domain.goodsPost.entity.Category;
+import com.example.mate.domain.goodsPost.entity.GoodsPost;
+import com.example.mate.domain.goodsPost.entity.GoodsPostImage;
+import com.example.mate.domain.goodsPost.entity.Location;
+import com.example.mate.domain.goodsPost.entity.Role;
+import com.example.mate.domain.goodsPost.entity.Status;
+import com.example.mate.domain.goodsPost.repository.GoodsPostRepository;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatMessageResponse;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatRoomResponse;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatRoomSummaryResponse;
@@ -363,7 +364,7 @@ class GoodsChatServiceTest {
             assertThat(goodsChatRoomInfo.getPrice()).isEqualTo(goodsPost.getPrice());
             assertThat(goodsChatRoomInfo.getPostStatus()).isEqualTo(goodsPost.getStatus().getValue());
             assertThat(goodsChatRoomInfo.getChatRoomStatus()).isEqualTo(chatRoom.getIsActive().toString());
-            assertThat(goodsChatRoomInfo.getImageUrl()).isEqualTo(goodsPost.getMainImageUrl());
+            assertThat(goodsChatRoomInfo.getImageUrl()).isEqualTo(FileUtils.getThumbnailImageUrl(goodsPost.getMainImageUrl()));
 
             assertThat(goodsChatRoomInfo.getInitialMessages().getContent())
                     .hasSize(2)

@@ -14,13 +14,14 @@ import com.example.mate.common.security.util.JwtUtil;
 import com.example.mate.config.WithAuthMember;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.constant.MessageType;
-import com.example.mate.domain.goods.dto.response.LocationInfo;
-import com.example.mate.domain.goods.entity.Category;
-import com.example.mate.domain.goods.entity.GoodsPost;
-import com.example.mate.domain.goods.entity.GoodsPostImage;
-import com.example.mate.domain.goods.entity.Role;
-import com.example.mate.domain.goods.entity.Status;
-import com.example.mate.domain.goods.repository.GoodsPostRepository;
+import com.example.mate.domain.file.FileUtils;
+import com.example.mate.domain.goodsPost.dto.response.LocationInfo;
+import com.example.mate.domain.goodsPost.entity.Category;
+import com.example.mate.domain.goodsPost.entity.GoodsPost;
+import com.example.mate.domain.goodsPost.entity.GoodsPostImage;
+import com.example.mate.domain.goodsPost.entity.Role;
+import com.example.mate.domain.goodsPost.entity.Status;
+import com.example.mate.domain.goodsPost.repository.GoodsPostRepository;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatMessageResponse;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatRoomResponse;
 import com.example.mate.domain.goodsChat.entity.GoodsChatMessage;
@@ -68,8 +69,6 @@ public class GoodsChatIntegrationTest {
     @Autowired private ObjectMapper objectMapper;
     @Autowired private JdbcTemplate jdbcTemplate;
 
-    @MockBean
-    private JwtUtil jwtUtil;
 
     private Member seller;
     private Member buyer;
@@ -116,7 +115,7 @@ public class GoodsChatIntegrationTest {
                 .andExpect(jsonPath("$.data.category").value(goodsPost.getCategory().getValue()))
                 .andExpect(jsonPath("$.data.price").value(goodsPost.getPrice()))
                 .andExpect(jsonPath("$.data.postStatus").value(goodsPost.getStatus().getValue()))
-                .andExpect(jsonPath("$.data.imageUrl").value(goodsPost.getGoodsPostImages().get(0).getImageUrl()))
+                .andExpect(jsonPath("$.data.imageUrl").value(FileUtils.getThumbnailImageUrl(goodsPost.getGoodsPostImages().get(0).getImageUrl())))
                 .andReturn()
                 .getResponse();
 
@@ -217,8 +216,8 @@ public class GoodsChatIntegrationTest {
                 .andExpect(jsonPath("$.data.content[0].opponentNickname").value(seller.getNickname()))
                 .andExpect(jsonPath("$.data.content[0].lastChatContent").value(chatRoom.getLastChatContent()))
                 .andExpect(jsonPath("$.data.content[0].placeName").value(goodsPost.getLocation().getPlaceName()))
-                .andExpect(jsonPath("$.data.content[0].goodsMainImageUrl").value(goodsPost.getMainImageUrl()))
-                .andExpect(jsonPath("$.data.content[0].opponentImageUrl").value(seller.getImageUrl()))
+                .andExpect(jsonPath("$.data.content[0].goodsMainImageUrl").value(FileUtils.getThumbnailImageUrl(goodsPost.getMainImageUrl())))
+                .andExpect(jsonPath("$.data.content[0].opponentImageUrl").value(FileUtils.getThumbnailImageUrl(seller.getImageUrl())))
                 .andReturn()
                 .getResponse();
     }
@@ -264,7 +263,7 @@ public class GoodsChatIntegrationTest {
             assertThat(expectedMessage.getSenderNickname()).isEqualTo(actualMessage.getGoodsChatPart().getMember().getNickname());
             assertThat(expectedMessage.getMessage()).isEqualTo(actualMessage.getContent());
             assertThat(expectedMessage.getMessageType()).isEqualTo(actualMessage.getMessageType().getValue());
-            assertThat(expectedMessage.getSenderImageUrl()).isEqualTo(actualMessage.getGoodsChatPart().getMember().getImageUrl());
+            assertThat(expectedMessage.getSenderImageUrl()).isEqualTo(FileUtils.getThumbnailImageUrl(actualMessage.getGoodsChatPart().getMember().getImageUrl()));
             assertThat(expectedMessage.getSentAt()).isEqualToIgnoringNanos(actualMessage.getSentAt()); // 시간 비교, 나노초는 무시
         }
     }
@@ -347,7 +346,7 @@ public class GoodsChatIntegrationTest {
 
             assertThat(actualMember.getMemberId()).isEqualTo(expectedMember.getId());
             assertThat(actualMember.getNickname()).isEqualTo(expectedMember.getNickname());
-            assertThat(actualMember.getImageUrl()).isEqualTo(expectedMember.getImageUrl());
+            assertThat(actualMember.getImageUrl()).isEqualTo(FileUtils.getThumbnailImageUrl(expectedMember.getImageUrl()));
         }
     }
 

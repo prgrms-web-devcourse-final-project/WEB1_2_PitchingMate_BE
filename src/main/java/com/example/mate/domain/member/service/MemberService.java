@@ -2,14 +2,13 @@ package com.example.mate.domain.member.service;
 
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
-import com.example.mate.common.jwt.JwtToken;
 import com.example.mate.common.security.util.JwtUtil;
 import com.example.mate.domain.constant.TeamInfo;
 import com.example.mate.domain.file.FileService;
 import com.example.mate.domain.file.FileValidator;
-import com.example.mate.domain.goods.entity.Status;
-import com.example.mate.domain.goods.repository.GoodsPostRepository;
-import com.example.mate.domain.goods.repository.GoodsReviewRepository;
+import com.example.mate.domain.goodsPost.entity.Status;
+import com.example.mate.domain.goodsPost.repository.GoodsPostRepository;
+import com.example.mate.domain.goodsReview.repository.GoodsReviewRepository;
 import com.example.mate.domain.mate.repository.MateReviewRepository;
 import com.example.mate.domain.mate.repository.VisitPartRepository;
 import com.example.mate.domain.member.dto.request.JoinRequest;
@@ -23,16 +22,18 @@ import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.FollowRepository;
 import com.example.mate.domain.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.Map;
 
 @Service
 @Transactional
 @RequiredArgsConstructor
 public class MemberService {
+
+    private static final String DEFAULT_MEMBER_IMAGE = "member_default.svg";
 
     private final MemberRepository memberRepository;
     private final FollowRepository followRepository;
@@ -42,35 +43,35 @@ public class MemberService {
     private final VisitPartRepository visitPartRepository;
     private final JwtUtil jwtUtil;
     private final FileService fileService;
+    private final LogoutRedisService logoutRedisService;
 
-    // 자체 회원가입 기능
+    // CATCH Mi 회원가입 기능
     public JoinResponse join(JoinRequest request) {
-        Member savedMember = memberRepository.save(Member.of(request, getDefaultMemberImageUrl()));
+        Member savedMember = memberRepository.save(Member.of(request, DEFAULT_MEMBER_IMAGE));
         return JoinResponse.from(savedMember);
     }
 
-    // 자체 로그인 기능
+    // CATCH Mi 로그인 기능
     @Transactional(readOnly = true)
     public MemberLoginResponse loginByEmail(MemberLoginRequest request) {
         Member member = findByEmail(request.getEmail());
-        return MemberLoginResponse.from(member, makeToken(member));
-    }
-
-    // JWT 토큰 생성
-    private JwtToken makeToken(Member member) {
-        Map<String, Object> payloadMap = member.getPayload();
-        String accessToken = jwtUtil.createToken(payloadMap, 60 * 24 * 3); // 3일 유효
-        String refreshToken = jwtUtil.createToken(Map.of("memberId", member.getId()), 60 * 24 * 7); // 7일 유효
-        return JwtToken.builder()
-                .grantType("Bearer")
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .build();
+        return MemberLoginResponse.from(member, jwtUtil.createTokens(member));
     }
 
     private Member findByEmail(String email) {
         return memberRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND_BY_EMAIL));
+    }
+
+    // CATCH Mi 로그아웃 기능
+    public void logout(String authorizationHeader) {
+        logoutRedisService.addTokenToBlacklist(authorizationHeader);
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            throw new CustomException(ErrorCode.MEMBER_AUTHENTICATION_REQUIRED);
+        }
+        SecurityContextHolder.clearContext();
     }
 
     // 내 프로필 조회
@@ -87,7 +88,7 @@ public class MemberService {
 
     // 회원 정보 수정
     public MyProfileResponse updateMyProfile(MultipartFile file, MemberInfoUpdateRequest request) {
-        Member member = findByMemberId(request.getMemberId());
+        Member member = findByMemberIdActive(request.getMemberId());
 
         checkNicknameAndChange(member, request.getNickname()); // 닉네임 중복 검증한 뒤 바뀐 경우에만 수정
         member.changeTeam(TeamInfo.getById(request.getTeamId()));
@@ -96,27 +97,23 @@ public class MemberService {
         if (file != null && !file.isEmpty()) {
             FileValidator.validateSingleImage(file);
             deleteNonDefaultImage(member.getImageUrl());
-            member.changeImageUrl(fileService.uploadFile(file));
+            member.changeImageUrl(fileService.uploadImageWithThumbnail(file));
         }
 
         return MyProfileResponse.from(memberRepository.save(member));
     }
 
-    // 회원 탈퇴
+    // CATCH Mi 회원 탈퇴
     public void deleteMember(Long memberId) {
-        Member member = findByMemberId(memberId);
+        Member member = findByMemberIdActive(memberId);
         deleteNonDefaultImage(member.getImageUrl());
         memberRepository.deleteById(memberId);
     }
 
     private void deleteNonDefaultImage(String imageUrl) {
-        if (!imageUrl.equals(getDefaultMemberImageUrl())) {
+        if (!imageUrl.equals(DEFAULT_MEMBER_IMAGE)) {
             fileService.deleteFile(imageUrl);
         }
-    }
-
-    private String getDefaultMemberImageUrl() {
-        return "https://" + fileService.getBucket() + ".s3.ap-northeast-2.amazonaws.com/member_default.svg";
     }
 
     private void checkNicknameAndChange(Member member, String request) {
@@ -131,7 +128,7 @@ public class MemberService {
 
     // 공통 프로필 생성 팩토리 메서드. DTO 클래스 타입에 따라 다른 타입 리턴
     private <T> T getProfile(Long memberId, Class<T> responseType) {
-        Member member = findByMemberId(memberId);
+        Member member = findByMemberIdActive(memberId);
         int followCount = followRepository.countByFollowerId(memberId);
         int followerCount = followRepository.countByFollowingId(memberId);
         int reviewsCount = goodsReviewRepository.countByRevieweeId(memberId) +
@@ -154,8 +151,8 @@ public class MemberService {
         throw new CustomException(ErrorCode.UNSUPPORTED_RESPONSE_TYPE);
     }
 
-    private Member findByMemberId(Long memberId) {
-        return memberRepository.findById(memberId)
+    private Member findByMemberIdActive(Long memberId) {
+        return memberRepository.findByIdAndNotDeleted(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND_BY_ID));
     }
 }

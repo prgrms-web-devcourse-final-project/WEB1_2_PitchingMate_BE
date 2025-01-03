@@ -6,6 +6,8 @@ import com.example.mate.common.response.ApiResponse;
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.common.security.auth.AuthMember;
 import com.example.mate.common.validator.ValidPageable;
+import com.example.mate.domain.goodsPost.dto.response.GoodsPostSummaryResponse;
+import com.example.mate.domain.mate.dto.response.MatePostSummaryResponse;
 import com.example.mate.domain.member.dto.response.MyGoodsRecordResponse;
 import com.example.mate.domain.member.dto.response.MyReviewResponse;
 import com.example.mate.domain.member.dto.response.MyVisitResponse;
@@ -81,6 +83,26 @@ public class ProfileController {
             throw new CustomException(ErrorCode.MEMBER_UNAUTHORIZED_ACCESS);
         }
         PageResponse<MyGoodsRecordResponse> response = profileService.getBoughtGoodsPage(memberId, pageable);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @Operation(summary = "작성한 굿즈 거래글 모아보기 페이징 조회")
+    @GetMapping("/posts/goods")
+    public ResponseEntity<ApiResponse<PageResponse<GoodsPostSummaryResponse>>> getGoodsPosts(
+            @Parameter(description = "회원 로그인 정보") @AuthenticationPrincipal AuthMember authMember,
+            @Parameter(description = "페이지 요청 정보") @ValidPageable Pageable pageable
+    ) {
+        PageResponse<GoodsPostSummaryResponse> response = profileService.getGoodsPostsPage(authMember.getMemberId(), pageable);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @Operation(summary = "작성한 메이트 구인글 모아보기 페이징 조회")
+    @GetMapping("/posts/mate")
+    public ResponseEntity<ApiResponse<PageResponse<MatePostSummaryResponse>>> getMatePosts(
+            @Parameter(description = "회원 로그인 정보") @AuthenticationPrincipal AuthMember authMember,
+            @Parameter(description = "페이지 요청 정보") @ValidPageable Pageable pageable
+    ) {
+        PageResponse<MatePostSummaryResponse> response = profileService.getMatePostsPage(authMember.getMemberId(), pageable);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 }

@@ -1,16 +1,18 @@
 package com.example.mate.domain.member.integration;
 
+import com.example.mate.common.jwt.JwtToken;
 import com.example.mate.common.security.util.JwtUtil;
 import com.example.mate.config.WithAuthMember;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.constant.Rating;
-import com.example.mate.domain.goods.dto.response.LocationInfo;
-import com.example.mate.domain.goods.entity.Category;
-import com.example.mate.domain.goods.entity.GoodsPost;
-import com.example.mate.domain.goods.entity.GoodsReview;
-import com.example.mate.domain.goods.entity.Status;
-import com.example.mate.domain.goods.repository.GoodsPostRepository;
-import com.example.mate.domain.goods.repository.GoodsReviewRepository;
+import com.example.mate.domain.file.FileUtils;
+import com.example.mate.domain.goodsPost.dto.response.LocationInfo;
+import com.example.mate.domain.goodsPost.entity.Category;
+import com.example.mate.domain.goodsPost.entity.GoodsPost;
+import com.example.mate.domain.goodsReview.entity.GoodsReview;
+import com.example.mate.domain.goodsPost.entity.Status;
+import com.example.mate.domain.goodsPost.repository.GoodsPostRepository;
+import com.example.mate.domain.goodsReview.repository.GoodsReviewRepository;
 import com.example.mate.domain.match.entity.Match;
 import com.example.mate.domain.match.repository.MatchRepository;
 import com.example.mate.domain.mate.entity.*;
@@ -47,12 +49,14 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static com.example.mate.domain.match.entity.MatchStatus.SCHEDULED;
 import static com.example.mate.domain.mate.entity.Status.CLOSED;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -294,7 +298,7 @@ class MemberIntegrationTest {
                     .andExpect(jsonPath("$.status").value("SUCCESS"))
                     .andExpect(jsonPath("$.data.name").value("이철수"))
                     .andExpect(jsonPath("$.data.email").value("tester3@example.com"))
-                    .andExpect(jsonPath("$.data.age").value(22))
+                    .andExpect(jsonPath("$.data.age").value(LocalDateTime.now().getYear() - 2002))
                     .andExpect(jsonPath("$.data.nickname").value("tester3"))
                     .andDo(print());
         }
@@ -329,7 +333,7 @@ class MemberIntegrationTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.status").value("SUCCESS"))
                     .andExpect(jsonPath("$.data.nickname").value("tester"))
-                    .andExpect(jsonPath("$.data.imageUrl").value("default.jpg"))
+                    .andExpect(jsonPath("$.data.imageUrl").value(FileUtils.getThumbnailImageUrl("default.jpg")))
                     .andExpect(jsonPath("$.data.manner").value(0.300F))
                     .andExpect(jsonPath("$.data.aboutMe").value("테스트 회원입니다."))
                     .andExpect(jsonPath("$.data.followingCount").value(1))
@@ -362,7 +366,7 @@ class MemberIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
                 .andExpect(jsonPath("$.data.nickname").value("tester"))
-                .andExpect(jsonPath("$.data.imageUrl").value("default.jpg"))
+                .andExpect(jsonPath("$.data.imageUrl").value(FileUtils.getThumbnailImageUrl("default.jpg")))
                 .andExpect(jsonPath("$.data.manner").value(0.300F))
                 .andDo(print());
     }
@@ -462,6 +466,16 @@ class MemberIntegrationTest {
                     .email("tester@example.com")
                     .build();
 
+            // mockJwtToken 객체 생성
+            JwtToken mockJwtToken = JwtToken.builder()
+                    .grantType("Bearer")
+                    .accessToken("mockAccessToken")
+                    .refreshToken("mockRefreshToken")
+                    .build();
+
+            // JwtUtil의 createTokens 메서드 mock 처리
+            when(jwtUtil.createTokens(any(Member.class))).thenReturn(mockJwtToken);
+
             // when & then
             mockMvc.perform(post("/api/members/login")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -505,6 +519,11 @@ class MemberIntegrationTest {
         void logout_member_success_with_my_info_denied() throws Exception {
             // given
             String token = "Bearer accessToken";
+
+            // mockJwtToken 객체 생성
+            Map<String, Object> mockClaims = Map.of("iat", new Date().getTime()); // 'iat' 필드를 mock 처리
+            when(jwtUtil.validateToken(anyString())).thenReturn(mockClaims);
+
 
             // when & then
             when(redisTemplate.opsForValue()).thenReturn(valueOperations);

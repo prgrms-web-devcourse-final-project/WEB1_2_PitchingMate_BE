@@ -1,17 +1,24 @@
 package com.example.mate.domain.member.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
+
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
+import com.example.mate.common.jwt.JwtToken;
 import com.example.mate.common.security.util.JwtUtil;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.constant.Rating;
 import com.example.mate.domain.constant.TeamInfo;
 import com.example.mate.domain.file.FileService;
-import com.example.mate.domain.goods.entity.GoodsPost;
-import com.example.mate.domain.goods.entity.GoodsReview;
-import com.example.mate.domain.goods.entity.Status;
-import com.example.mate.domain.goods.repository.GoodsPostRepository;
-import com.example.mate.domain.goods.repository.GoodsReviewRepository;
+import com.example.mate.domain.goodsPost.entity.GoodsPost;
+import com.example.mate.domain.goodsPost.entity.Status;
+import com.example.mate.domain.goodsPost.repository.GoodsPostRepository;
+import com.example.mate.domain.goodsReview.entity.GoodsReview;
+import com.example.mate.domain.goodsReview.repository.GoodsReviewRepository;
 import com.example.mate.domain.mate.entity.MateReview;
 import com.example.mate.domain.mate.entity.VisitPart;
 import com.example.mate.domain.mate.repository.MateReviewRepository;
@@ -27,6 +34,7 @@ import com.example.mate.domain.member.entity.Follow;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.FollowRepository;
 import com.example.mate.domain.member.repository.MemberRepository;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -38,14 +46,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class MemberServiceTest {
@@ -241,7 +241,7 @@ class MemberServiceTest {
             int goodsBoughtCount = 0;
             int visitsCount = 1;
 
-            given(memberRepository.findById(memberId)).willReturn(java.util.Optional.of(member));
+            given(memberRepository.findByIdAndNotDeleted(memberId)).willReturn(java.util.Optional.of(member));
             given(followRepository.countByFollowerId(memberId)).willReturn(followCount);
             given(followRepository.countByFollowingId(memberId)).willReturn(followerCount);
             given(goodsReviewRepository.countByRevieweeId(memberId)).willReturn(goodsReviewsCount);
@@ -275,7 +275,7 @@ class MemberServiceTest {
             // given
             Long memberId = 999L;  // 존재하지 않는 회원 ID
 
-            given(memberRepository.findById(memberId)).willReturn(Optional.empty());
+            given(memberRepository.findByIdAndNotDeleted(memberId)).willReturn(Optional.empty());
 
             // when & then
             assertThatThrownBy(() -> memberService.getMyProfile(memberId))
@@ -300,7 +300,7 @@ class MemberServiceTest {
             int reviewsCount = goodsReviewsCount + mateReviewsCount;
             int goodsSoldCount = 1;
 
-            given(memberRepository.findById(memberId)).willReturn(java.util.Optional.of(member));
+            given(memberRepository.findByIdAndNotDeleted(memberId)).willReturn(java.util.Optional.of(member));
             given(followRepository.countByFollowerId(memberId)).willReturn(followCount);
             given(followRepository.countByFollowingId(memberId)).willReturn(followerCount);
             given(goodsReviewRepository.countByRevieweeId(memberId)).willReturn(goodsReviewsCount);
@@ -326,7 +326,7 @@ class MemberServiceTest {
             // given
             Long memberId = 1L;
 
-            given(memberRepository.findById(memberId)).willReturn(Optional.empty());
+            given(memberRepository.findByIdAndNotDeleted(memberId)).willReturn(Optional.empty());
 
             // when & then
             assertThatThrownBy(() -> memberService.getMemberProfile(memberId))
@@ -352,7 +352,7 @@ class MemberServiceTest {
                     .build();
             MultipartFile image = createFile(MediaType.IMAGE_JPEG_VALUE);
 
-            given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
+            given(memberRepository.findByIdAndNotDeleted(memberId)).willReturn(Optional.of(member));
             given(memberRepository.existsByNickname(request.getNickname()))
                     .willReturn(false);
             given(memberRepository.save(any(Member.class))).willReturn(member);
@@ -366,7 +366,7 @@ class MemberServiceTest {
             assertThat(response.getAboutMe()).isEqualTo("hello");
             assertThat(response.getTeamName()).isEqualTo(TeamInfo.getById(1L).shortName);
 
-            verify(memberRepository).findById(member.getId());
+            verify(memberRepository).findByIdAndNotDeleted(member.getId());
             verify(memberRepository).existsByNickname(request.getNickname());
             verify(memberRepository).save(any(Member.class));
         }
@@ -384,14 +384,14 @@ class MemberServiceTest {
                     .build();
             MultipartFile image = createFile(MediaType.IMAGE_JPEG_VALUE);
 
-            given(memberRepository.findById(memberId)).willReturn(Optional.empty());
+            given(memberRepository.findByIdAndNotDeleted(memberId)).willReturn(Optional.empty());
 
             // when & then
             assertThatThrownBy(() -> memberService.updateMyProfile(image, request))
                     .isInstanceOf(CustomException.class)
                     .hasMessage(ErrorCode.MEMBER_NOT_FOUND_BY_ID.getMessage());
 
-            verify(memberRepository).findById(memberId);
+            verify(memberRepository).findByIdAndNotDeleted(memberId);
         }
 
         @Test
@@ -407,7 +407,7 @@ class MemberServiceTest {
                     .build();
             MultipartFile image = createFile(MediaType.IMAGE_JPEG_VALUE);
 
-            given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
+            given(memberRepository.findByIdAndNotDeleted(memberId)).willReturn(Optional.of(member));
             given(memberRepository.existsByNickname(request.getNickname())).willReturn(true);
 
             // when & then
@@ -415,7 +415,7 @@ class MemberServiceTest {
                     .isInstanceOf(CustomException.class)
                     .hasMessage(ErrorCode.ALREADY_USED_NICKNAME.getMessage());
 
-            verify(memberRepository).findById(memberId);
+            verify(memberRepository).findByIdAndNotDeleted(memberId);
             verify(memberRepository).existsByNickname(request.getNickname());
         }
 
@@ -432,14 +432,14 @@ class MemberServiceTest {
                     .build();
             MultipartFile image = createFile(MediaType.IMAGE_JPEG_VALUE);
 
-            given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
+            given(memberRepository.findByIdAndNotDeleted(memberId)).willReturn(Optional.of(member));
 
             // when & then
             assertThatThrownBy(() -> memberService.updateMyProfile(image, request))
                     .isInstanceOf(CustomException.class)
                     .hasMessage(ErrorCode.TEAM_NOT_FOUND.getMessage());
 
-            verify(memberRepository).findById(memberId);
+            verify(memberRepository).findByIdAndNotDeleted(memberId);
         }
     }
 
@@ -453,13 +453,13 @@ class MemberServiceTest {
             // given
             Long memberId = 1L;
 
-            given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
+            given(memberRepository.findByIdAndNotDeleted(memberId)).willReturn(Optional.of(member));
 
             // when
             memberService.deleteMember(memberId);
 
             // then
-            verify(memberRepository).findById(memberId);
+            verify(memberRepository).findByIdAndNotDeleted(memberId);
             verify(memberRepository).deleteById(memberId);
         }
 
@@ -469,14 +469,14 @@ class MemberServiceTest {
             // given
             Long memberId = 999L;
 
-            given(memberRepository.findById(memberId)).willReturn(Optional.empty());
+            given(memberRepository.findByIdAndNotDeleted(memberId)).willReturn(Optional.empty());
 
             // when & then
             assertThatThrownBy(() -> memberService.deleteMember(memberId))
                     .isInstanceOf(CustomException.class)
                     .hasMessage(ErrorCode.MEMBER_NOT_FOUND_BY_ID.getMessage());
 
-            verify(memberRepository).findById(memberId);
+            verify(memberRepository).findByIdAndNotDeleted(memberId);
         }
     }
 
@@ -492,8 +492,14 @@ class MemberServiceTest {
             MemberLoginRequest request = MemberLoginRequest.builder()
                     .email("test@example.com")
                     .build();
+            JwtToken jwtToken = JwtToken.builder()
+                    .grantType("Bearer")
+                    .accessToken("accessToken")
+                    .refreshToken("refreshToken")
+                    .build();
 
             given(memberRepository.findByEmail(email)).willReturn(Optional.of(member));
+            given(jwtUtil.createTokens(any(Member.class))).willReturn(jwtToken);
 
             // when
             MemberLoginResponse response = memberService.loginByEmail(request);

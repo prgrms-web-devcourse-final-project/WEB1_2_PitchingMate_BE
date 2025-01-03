@@ -48,7 +48,7 @@ public class CrawlingService {
 
         try {
             webDriver = webDriverFactory.getObject();
-            LocalDate now = LocalDate.now();
+            LocalDate now = LocalDate.now().withYear(2025).withMonth(3); // 2025년 3월로 설정
 
             // 현재 월과 다음 달의 데이터 크롤링
             for (int monthOffset = 0; monthOffset < 2; monthOffset++) {

@@ -66,8 +66,6 @@ class MatchIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @MockBean
-    private JwtUtil jwtUtil;
 
     @BeforeEach
     void setUp() {

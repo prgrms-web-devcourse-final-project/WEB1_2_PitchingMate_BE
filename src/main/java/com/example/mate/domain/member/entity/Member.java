@@ -3,19 +3,38 @@ package com.example.mate.domain.member.entity;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.constant.TeamInfo;
 import com.example.mate.domain.member.dto.request.JoinRequest;
-import jakarta.persistence.*;
-import lombok.*;
-
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLDelete;
 
 @Entity
-@Table(name = "member")
+@Table(
+        name = "member",
+        indexes = @Index(name = "idx_is_deleted", columnList = "is_deleted")
+)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
+@SQLDelete(sql = "UPDATE member SET email = CONCAT(email, '.deleted.', CURRENT_TIMESTAMP), " +
+        "nickname = CONCAT(nickname, '.deleted.', CURRENT_TIMESTAMP), is_deleted = true, " +
+        "image_url = 'member_default.svg', deleted_at = CURRENT_TIMESTAMP WHERE id = ?")
 public class Member {
 
     @Id
@@ -26,10 +45,10 @@ public class Member {
     @Column(name = "name", length = 10, nullable = false)
     private String name;
 
-    @Column(name = "nickname", length = 20, nullable = false, unique = true)
+    @Column(name = "nickname", length = 50, nullable = false, unique = true)
     private String nickname;
 
-    @Column(name = "email", length = 40, nullable = false, unique = true)
+    @Column(name = "email", length = 100, nullable = false, unique = true)
     private String email;
 
     @Column(name = "image_url", nullable = false)
@@ -56,6 +75,13 @@ public class Member {
     @Column(name = "role", nullable = false)
     @Builder.Default
     private Role role = Role.USER;
+
+    @Column(name = "is_deleted", nullable = false)
+    @Builder.Default
+    private Boolean isDeleted = false;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 
     public void changeNickname(String nickname) {
         this.nickname = nickname;

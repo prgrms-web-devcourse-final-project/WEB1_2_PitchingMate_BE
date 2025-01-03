@@ -3,6 +3,7 @@ package com.example.mate.domain.mate.integration;
 import com.example.mate.common.security.util.JwtUtil;
 import com.example.mate.config.WithAuthMember;
 import com.example.mate.domain.constant.Gender;
+import com.example.mate.domain.file.FileUtils;
 import com.example.mate.domain.match.entity.Match;
 import com.example.mate.domain.match.repository.MatchRepository;
 import com.example.mate.domain.mate.dto.request.MatePostCreateRequest;
@@ -64,9 +65,6 @@ public class MateIntegrationTest {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
-
-    @MockBean
-    private JwtUtil jwtUtil;
 
     // 테스트에서 공통으로 사용할 객체들
     private Member testMember;
@@ -518,7 +516,7 @@ public class MateIntegrationTest {
                     .andExpect(jsonPath("$.data.transportType").value("대중교통"))
                     .andExpect(jsonPath("$.data.rivalTeamName").value("LG"))
                     .andExpect(jsonPath("$.data.location").value("광주-기아 챔피언스 필드"))
-                    .andExpect(jsonPath("$.data.userImageUrl").value("test.jpg"))
+                    .andExpect(jsonPath("$.data.userImageUrl").value(FileUtils.getThumbnailImageUrl("test.jpg")))
                     .andExpect(jsonPath("$.data.nickname").value("테스트계정"))
                     .andExpect(jsonPath("$.data.manner").value(0.3))
                     .andDo(print());
