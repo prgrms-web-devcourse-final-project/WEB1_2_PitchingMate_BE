@@ -32,7 +32,7 @@ public class GoodsChatRoomSummaryResponse {
                 .lastChatSentAt(chatRoom.getLastChatSentAt())
                 .placeName(goodsPost.getLocation().getPlaceName())
                 .goodsMainImageUrl(FileUtils.getThumbnailImageUrl(goodsPost.getMainImageUrl()))
-                .opponentImageUrl(opponent.getImageUrl())
+                .opponentImageUrl(FileUtils.getThumbnailImageUrl(opponent.getImageUrl()))
                 .build();
     }
 }

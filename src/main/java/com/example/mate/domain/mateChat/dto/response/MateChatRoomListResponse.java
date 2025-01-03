@@ -1,5 +1,6 @@
 package com.example.mate.domain.mateChat.dto.response;
 
+import com.example.mate.domain.file.FileUtils;
 import com.example.mate.domain.mateChat.entity.MateChatRoom;
 import lombok.Builder;
 import lombok.Getter;
@@ -25,7 +26,7 @@ public class MateChatRoomListResponse {
         return MateChatRoomListResponse.builder()
                 .roomId(chatRoom.getId())
                 .postId(chatRoom.getMatePost().getId())
-                .postImageUrl(chatRoom.getMatePost().getImageUrl())
+                .postImageUrl(FileUtils.getThumbnailImageUrl(chatRoom.getMatePost().getImageUrl()))
                 .postTitle(chatRoom.getMatePost().getTitle())
                 .lastMessageContent(chatRoom.getLastChatContent())
                 .lastMessageTime(chatRoom.getLastChatSentAt())

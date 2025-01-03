@@ -1,5 +1,6 @@
 package com.example.mate.domain.goodsChat.dto.response;
 
+import com.example.mate.domain.file.FileUtils;
 import com.example.mate.domain.goodsChat.entity.GoodsChatMessage;
 import com.example.mate.domain.goodsChat.entity.GoodsChatPart;
 import com.example.mate.domain.member.entity.Member;
@@ -31,7 +32,7 @@ public class GoodsChatMessageResponse {
                 .roomId(goodsChatPart.getGoodsChatRoom().getId())
                 .senderId(sender.getId())
                 .senderNickname(sender.getNickname())
-                .senderImageUrl(sender.getImageUrl())
+                .senderImageUrl(FileUtils.getThumbnailImageUrl(sender.getImageUrl()))
                 .message(chatMessage.getContent())
                 .messageType(chatMessage.getMessageType().getValue())
                 .sentAt(chatMessage.getSentAt())

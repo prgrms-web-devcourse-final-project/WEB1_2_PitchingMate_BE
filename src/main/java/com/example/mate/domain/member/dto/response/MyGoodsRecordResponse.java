@@ -32,17 +32,6 @@ public class MyGoodsRecordResponse {
     @Schema(description = "굿즈 게시글 작성 시간", example = "2024-12-01T20:39:41.746367")
     private LocalDateTime createdAt;
 
-    public static MyGoodsRecordResponse from() {
-        return MyGoodsRecordResponse.builder()
-                .postId(3L)
-                .title("이대호 레전드 피규어 팝니다!")
-                .imageUrl("/images/legend-lee.png")
-                .price(50000)
-                .author("이대호가 좋아서")
-                .createdAt(LocalDateTime.now().minusDays(7))
-                .build();
-    }
-
     public static MyGoodsRecordResponse of(GoodsPost goodsPost, String imageFileName) {
         return MyGoodsRecordResponse.builder()
                 .postId(goodsPost.getId())

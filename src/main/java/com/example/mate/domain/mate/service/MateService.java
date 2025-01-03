@@ -75,7 +75,7 @@ public class MateService {
     private void handleFileUpload(MultipartFile file, MatePost matePost) {
         if (file != null && !file.isEmpty()) {
             FileValidator.validateSingleImage(file);
-            String imageUrl = fileService.uploadFile(file);
+            String imageUrl = fileService.uploadImageWithThumbnail(file);
             matePost.changeImageUrl(imageUrl);
         }
     }
@@ -164,7 +164,7 @@ public class MateService {
         FileValidator.validateSingleImage(newFile);
         deleteNonDefaultImage(currentImageUrl);
 
-        return fileService.uploadFile(newFile);
+        return fileService.uploadImageWithThumbnail(newFile);
     }
 
     private void deleteNonDefaultImage(String imageUrl) {

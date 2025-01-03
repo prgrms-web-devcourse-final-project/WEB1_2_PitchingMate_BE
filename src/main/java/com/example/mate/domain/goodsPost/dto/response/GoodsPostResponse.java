@@ -3,7 +3,6 @@ package com.example.mate.domain.goodsPost.dto.response;
 import com.example.mate.domain.constant.TeamInfo;
 import com.example.mate.domain.file.FileUtils;
 import com.example.mate.domain.goodsPost.entity.GoodsPost;
-import com.example.mate.domain.goodsPost.entity.GoodsPostImage;
 import com.example.mate.domain.goodsPost.entity.Role;
 import java.util.List;
 import lombok.Builder;
