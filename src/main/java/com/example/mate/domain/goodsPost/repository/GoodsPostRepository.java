@@ -2,13 +2,14 @@ package com.example.mate.domain.goodsPost.repository;
 
 import com.example.mate.domain.goodsPost.entity.GoodsPost;
 import com.example.mate.domain.goodsPost.entity.Status;
-import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
+import java.util.List;
 
 public interface GoodsPostRepository extends JpaRepository<GoodsPost, Long>, GoodsPostRepositoryCustom {
 
@@ -17,6 +18,7 @@ public interface GoodsPostRepository extends JpaRepository<GoodsPost, Long>, Goo
             FROM GoodsPost gp
             WHERE (:teamId IS NULL OR gp.teamId = :teamId)
             AND gp.status = :status
+            AND gp.seller.isDeleted = false
             ORDER BY gp.createdAt DESC
             """)
     List<GoodsPost> findMainGoodsPosts(@Param("teamId") Long teamId, @Param("status") Status status, Pageable pageable);

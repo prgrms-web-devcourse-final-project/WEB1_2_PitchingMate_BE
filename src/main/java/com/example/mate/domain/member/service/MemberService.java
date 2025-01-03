@@ -88,7 +88,7 @@ public class MemberService {
 
     // 회원 정보 수정
     public MyProfileResponse updateMyProfile(MultipartFile file, MemberInfoUpdateRequest request) {
-        Member member = findByMemberId(request.getMemberId());
+        Member member = findByMemberIdActive(request.getMemberId());
 
         checkNicknameAndChange(member, request.getNickname()); // 닉네임 중복 검증한 뒤 바뀐 경우에만 수정
         member.changeTeam(TeamInfo.getById(request.getTeamId()));
@@ -105,7 +105,7 @@ public class MemberService {
 
     // CATCH Mi 회원 탈퇴
     public void deleteMember(Long memberId) {
-        Member member = findByMemberId(memberId);
+        Member member = findByMemberIdActive(memberId);
         deleteNonDefaultImage(member.getImageUrl());
         memberRepository.deleteById(memberId);
     }
@@ -128,7 +128,7 @@ public class MemberService {
 
     // 공통 프로필 생성 팩토리 메서드. DTO 클래스 타입에 따라 다른 타입 리턴
     private <T> T getProfile(Long memberId, Class<T> responseType) {
-        Member member = findByMemberId(memberId);
+        Member member = findByMemberIdActive(memberId);
         int followCount = followRepository.countByFollowerId(memberId);
         int followerCount = followRepository.countByFollowingId(memberId);
         int reviewsCount = goodsReviewRepository.countByRevieweeId(memberId) +
@@ -151,8 +151,8 @@ public class MemberService {
         throw new CustomException(ErrorCode.UNSUPPORTED_RESPONSE_TYPE);
     }
 
-    private Member findByMemberId(Long memberId) {
-        return memberRepository.findById(memberId)
+    private Member findByMemberIdActive(Long memberId) {
+        return memberRepository.findByIdAndNotDeleted(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND_BY_ID));
     }
 }
