@@ -3,14 +3,25 @@ package com.example.mate.domain.member.entity;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.constant.TeamInfo;
 import com.example.mate.domain.member.dto.request.JoinRequest;
-import jakarta.persistence.*;
-import lombok.*;
-import org.hibernate.annotations.SQLDelete;
-
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLDelete;
 
 @Entity
 @Table(
@@ -22,7 +33,8 @@ import java.util.Map;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
 @SQLDelete(sql = "UPDATE member SET email = CONCAT(email, '.deleted.', CURRENT_TIMESTAMP), " +
-        "nickname = CONCAT(nickname, '.deleted.', CURRENT_TIMESTAMP), is_deleted = true, deleted_at = CURRENT_TIMESTAMP WHERE id = ?")
+        "nickname = CONCAT(nickname, '.deleted.', CURRENT_TIMESTAMP), is_deleted = true, " +
+        "image_url = 'member_default.svg', deleted_at = CURRENT_TIMESTAMP WHERE id = ?")
 public class Member {
 
     @Id
