@@ -9,5 +9,8 @@ RUN apk add --no-cache \
     freetype \
     harfbuzz
 
+# Chrome 환경변수 설정
+ENV CHROME_BIN=/usr/bin/chromium-browser
+
 COPY ./build/libs/*SNAPSHOT.jar project.jar
 ENTRYPOINT redis-server & java -jar project.jar

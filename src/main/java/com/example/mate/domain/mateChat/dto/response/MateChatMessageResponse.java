@@ -1,5 +1,6 @@
 package com.example.mate.domain.mateChat.dto.response;
 
+import com.example.mate.domain.file.FileUtils;
 import com.example.mate.domain.mateChat.entity.MateChatMessage;
 import lombok.Builder;
 import lombok.Getter;
@@ -26,7 +27,7 @@ public class MateChatMessageResponse {
                 .senderNickname(message.getSender().getNickname())
                 .message(message.getContent())
                 .messageType(message.getType().getValue())
-                .senderImageUrl(message.getSender().getImageUrl())
+                .senderImageUrl(FileUtils.getThumbnailImageUrl(message.getSender().getImageUrl()))
                 .sendTime(message.getSendTime())
                 .build();
     }

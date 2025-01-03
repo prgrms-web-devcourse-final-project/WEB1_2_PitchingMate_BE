@@ -37,6 +37,8 @@ import static com.example.mate.common.error.ErrorCode.*;
 @RequiredArgsConstructor
 public class MateService {
 
+    private static final String DEFAULT_MATE_POST_IMAGE = "mate_default.svg";
+
     private final MateRepository mateRepository;
     private final MatchRepository matchRepository;
     private final MemberRepository memberRepository;
@@ -56,7 +58,7 @@ public class MateService {
                 .author(author)
                 .teamId(request.getTeamId())
                 .match(match)
-                .imageUrl(getDefaultMateImageUrl())
+                .imageUrl(DEFAULT_MATE_POST_IMAGE)
                 .title(request.getTitle())
                 .content(request.getContent())
                 .status(Status.OPEN)
@@ -75,7 +77,7 @@ public class MateService {
     private void handleFileUpload(MultipartFile file, MatePost matePost) {
         if (file != null && !file.isEmpty()) {
             FileValidator.validateSingleImage(file);
-            String imageUrl = fileService.uploadFile(file);
+            String imageUrl = fileService.uploadImageWithThumbnail(file);
             matePost.changeImageUrl(imageUrl);
         }
     }
@@ -164,17 +166,13 @@ public class MateService {
         FileValidator.validateSingleImage(newFile);
         deleteNonDefaultImage(currentImageUrl);
 
-        return fileService.uploadFile(newFile);
+        return fileService.uploadImageWithThumbnail(newFile);
     }
 
     private void deleteNonDefaultImage(String imageUrl) {
-        if (!imageUrl.equals(getDefaultMateImageUrl())) {
+        if (!imageUrl.equals(DEFAULT_MATE_POST_IMAGE)) {
             fileService.deleteFile(imageUrl);
         }
-    }
-
-    private String getDefaultMateImageUrl() {
-        return "https://" + fileService.getBucket() + ".s3.ap-northeast-2.amazonaws.com/mate_default.svg";
     }
 
     public MatePostResponse updateMatePostStatus(Long memberId, Long postId, MatePostStatusRequest request) {

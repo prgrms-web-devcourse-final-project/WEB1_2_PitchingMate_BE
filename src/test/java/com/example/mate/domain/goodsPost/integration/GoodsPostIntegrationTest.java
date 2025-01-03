@@ -9,10 +9,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.mate.common.response.ApiResponse;
-import com.example.mate.common.security.util.JwtUtil;
 import com.example.mate.config.WithAuthMember;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.constant.TeamInfo;
+import com.example.mate.domain.file.FileUtils;
 import com.example.mate.domain.goodsPost.dto.request.GoodsPostRequest;
 import com.example.mate.domain.goodsPost.dto.response.GoodsPostResponse;
 import com.example.mate.domain.goodsPost.dto.response.GoodsPostSummaryResponse;
@@ -28,6 +28,8 @@ import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,7 +38,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -271,7 +273,7 @@ public class GoodsPostIntegrationTest {
         assertThat(response.getTeamName()).isEqualTo(TeamInfo.getById(goodsPost.getTeamId()).shortName);
         assertThat(response.getPrice()).isEqualTo(goodsPost.getPrice());
         assertThat(response.getCategory()).isEqualTo(goodsPost.getCategory().getValue());
-        assertThat(response.getImageUrl()).isEqualTo(goodsPost.getGoodsPostImages().get(0).getImageUrl());
+        assertThat(response.getImageUrl()).isEqualTo(FileUtils.getThumbnailImageUrl(goodsPost.getGoodsPostImages().get(0).getImageUrl()));
     }
 
     @Test
@@ -330,7 +332,7 @@ public class GoodsPostIntegrationTest {
         assertThat(firstResponse.getTitle()).isEqualTo("Test Title 3");
         assertThat(firstResponse.getPrice()).isEqualTo(3_000);
         assertThat(firstResponse.getCategory()).isEqualTo(Category.ACCESSORY.getValue());
-        assertThat(firstResponse.getImageUrl()).isEqualTo("upload/test_img_url 3");
+        assertThat(firstResponse.getImageUrl()).isEqualTo(FileUtils.getThumbnailImageUrl("upload/test_img_url 3"));
     }
 
     @Test
@@ -411,12 +413,14 @@ public class GoodsPostIntegrationTest {
         goodsPostRepository.save(goodsPost);
     }
 
-    private MockMultipartFile createFile() {
+    private MockMultipartFile createFile() throws IOException {
+        ClassPathResource resource = new ClassPathResource("test_photo.png");
+
         return new MockMultipartFile(
                 "files",
                 "test_photo.jpg",
                 MediaType.IMAGE_JPEG_VALUE,
-                "content".getBytes()
+                Files.readAllBytes(resource.getFile().toPath())
         );
     }
 

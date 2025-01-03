@@ -5,6 +5,7 @@ import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.constant.Rating;
 import com.example.mate.domain.constant.TeamInfo;
+import com.example.mate.domain.file.FileUtils;
 import com.example.mate.domain.goodsPost.dto.response.GoodsPostSummaryResponse;
 import com.example.mate.domain.goodsPost.dto.response.LocationInfo;
 import com.example.mate.domain.goodsPost.entity.Category;
@@ -216,7 +217,7 @@ class ProfileServiceTest {
             MyGoodsRecordResponse recordResponse = response.getContent().get(0);
             assertThat(recordResponse.getTitle()).isEqualTo(goodsPost.getTitle());
             assertThat(recordResponse.getPrice()).isEqualTo(goodsPost.getPrice());
-            assertThat(recordResponse.getImageUrl()).isEqualTo(goodsPostImage.getImageUrl());
+            assertThat(recordResponse.getImageUrl()).isEqualTo(FileUtils.getThumbnailImageUrl(goodsPostImage.getImageUrl()));
 
             verify(goodsPostRepository).findGoodsPostsBySellerId(memberId, Status.CLOSED, pageable);
         }
@@ -268,7 +269,7 @@ class ProfileServiceTest {
             MyGoodsRecordResponse recordResponse = response.getContent().get(0);
             assertThat(recordResponse.getTitle()).isEqualTo(goodsPost.getTitle());
             assertThat(recordResponse.getPrice()).isEqualTo(goodsPost.getPrice());
-            assertThat(recordResponse.getImageUrl()).isEqualTo(goodsPostImage.getImageUrl());
+            assertThat(recordResponse.getImageUrl()).isEqualTo(FileUtils.getThumbnailImageUrl(goodsPostImage.getImageUrl()));
 
             verify(goodsPostRepository).findGoodsPostsByBuyerId(memberId, Status.CLOSED, pageable);
         }
@@ -534,7 +535,7 @@ class ProfileServiceTest {
             GoodsPostSummaryResponse postResponse = response.getContent().get(0);
             assertThat(postResponse.getTitle()).isEqualTo(goodsPost.getTitle());
             assertThat(postResponse.getPrice()).isEqualTo(goodsPost.getPrice());
-            assertThat(postResponse.getImageUrl()).isEqualTo(goodsPostImage.getImageUrl());
+            assertThat(postResponse.getImageUrl()).isEqualTo(FileUtils.getThumbnailImageUrl(goodsPostImage.getImageUrl()));
 
             verify(goodsPostRepository).findMyGoodsPosts(memberId, pageable);
         }
@@ -552,8 +553,7 @@ class ProfileServiceTest {
             PageImpl<MatePost> matePostsPage = new PageImpl<>(List.of(matePost));
             Pageable pageable = PageRequest.of(0, 10);
 
-            given(mateRepository.findMyMatePosts(memberId, pageable))
-                    .willReturn(matePostsPage);
+            given(mateRepository.findMyMatePosts(memberId, pageable)).willReturn(matePostsPage);
 
             // when
             PageResponse<MatePostSummaryResponse> response = profileService.getMatePostsPage(memberId, pageable);
@@ -566,7 +566,7 @@ class ProfileServiceTest {
 
             MatePostSummaryResponse postResponse = response.getContent().get(0);
             assertThat(postResponse.getTitle()).isEqualTo(matePost.getTitle());
-            assertThat(postResponse.getImageUrl()).isEqualTo(goodsPostImage.getImageUrl());
+            assertThat(postResponse.getImageUrl()).isEqualTo(FileUtils.getThumbnailImageUrl(goodsPostImage.getImageUrl()));
 
             verify(mateRepository).findMyMatePosts(memberId, pageable);
         }

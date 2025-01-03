@@ -1,6 +1,7 @@
 package com.example.mate.domain.member.dto.response;
 
 import com.example.mate.domain.constant.TeamInfo;
+import com.example.mate.domain.file.FileUtils;
 import com.example.mate.domain.member.entity.Member;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -27,7 +28,7 @@ public class MemberProfileResponse {
                                            int reviewsCount, int goodsSoldCount) {
         return MemberProfileResponse.builder()
                 .nickname(member.getNickname())
-                .imageUrl(member.getImageUrl())
+                .imageUrl(FileUtils.getThumbnailImageUrl(member.getImageUrl()))
                 .teamName(TeamInfo.getById(member.getTeamId()).shortName)
                 .manner(member.getManner())
                 .aboutMe(member.getAboutMe())

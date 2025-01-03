@@ -12,6 +12,7 @@ import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.file.FileService;
+import com.example.mate.domain.file.FileUtils;
 import com.example.mate.domain.goodsPost.dto.request.GoodsPostRequest;
 import com.example.mate.domain.goodsPost.dto.response.GoodsPostResponse;
 import com.example.mate.domain.goodsPost.dto.response.GoodsPostSummaryResponse;
@@ -418,7 +419,7 @@ class GoodsPostServiceTest {
             GoodsPostSummaryResponse goodsPostSummaryResponse = responses.get(0);
             assertThat(goodsPostSummaryResponse.getTitle()).isEqualTo(goodsPost.getTitle());
             assertThat(goodsPostSummaryResponse.getPrice()).isEqualTo(goodsPost.getPrice());
-            assertThat(goodsPostSummaryResponse.getImageUrl()).isEqualTo(goodsPostImage.getImageUrl());
+            assertThat(goodsPostSummaryResponse.getImageUrl()).isEqualTo(FileUtils.getThumbnailImageUrl(goodsPostImage.getImageUrl()));
 
             verify(goodsPostRepository).findMainGoodsPosts(1L, Status.OPEN, PageRequest.of(0, 4));
         }
@@ -482,7 +483,7 @@ class GoodsPostServiceTest {
             GoodsPostSummaryResponse summary = pageGoodsPosts.getContent().get(0);
             assertThat(summary.getTitle()).isEqualTo(postWithoutFilters.getTitle());
             assertThat(summary.getPrice()).isEqualTo(postWithoutFilters.getPrice());
-            assertThat(summary.getImageUrl()).isEqualTo(image.getImageUrl());
+            assertThat(summary.getImageUrl()).isEqualTo(FileUtils.getThumbnailImageUrl(image.getImageUrl()));
 
             verify(goodsPostRepository).findPageGoodsPosts(teamId, Status.OPEN, category, pageRequest);
         }
@@ -518,7 +519,7 @@ class GoodsPostServiceTest {
             GoodsPostSummaryResponse summary = pageGoodsPosts.getContent().get(0);
             assertThat(summary.getTitle()).isEqualTo(postWithFilters.getTitle());
             assertThat(summary.getPrice()).isEqualTo(postWithFilters.getPrice());
-            assertThat(summary.getImageUrl()).isEqualTo(image.getImageUrl());
+            assertThat(summary.getImageUrl()).isEqualTo(FileUtils.getThumbnailImageUrl(image.getImageUrl()));
 
             verify(goodsPostRepository).findPageGoodsPosts(teamId, Status.OPEN, category, pageRequest);
         }
