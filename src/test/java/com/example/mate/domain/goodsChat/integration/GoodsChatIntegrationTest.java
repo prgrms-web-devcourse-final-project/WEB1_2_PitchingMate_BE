@@ -217,7 +217,7 @@ public class GoodsChatIntegrationTest {
                 .andExpect(jsonPath("$.data.content[0].lastChatContent").value(chatRoom.getLastChatContent()))
                 .andExpect(jsonPath("$.data.content[0].placeName").value(goodsPost.getLocation().getPlaceName()))
                 .andExpect(jsonPath("$.data.content[0].goodsMainImageUrl").value(FileUtils.getThumbnailImageUrl(goodsPost.getMainImageUrl())))
-                .andExpect(jsonPath("$.data.content[0].opponentImageUrl").value(seller.getImageUrl()))
+                .andExpect(jsonPath("$.data.content[0].opponentImageUrl").value(FileUtils.getThumbnailImageUrl(seller.getImageUrl())))
                 .andReturn()
                 .getResponse();
     }
@@ -263,7 +263,7 @@ public class GoodsChatIntegrationTest {
             assertThat(expectedMessage.getSenderNickname()).isEqualTo(actualMessage.getGoodsChatPart().getMember().getNickname());
             assertThat(expectedMessage.getMessage()).isEqualTo(actualMessage.getContent());
             assertThat(expectedMessage.getMessageType()).isEqualTo(actualMessage.getMessageType().getValue());
-            assertThat(expectedMessage.getSenderImageUrl()).isEqualTo(actualMessage.getGoodsChatPart().getMember().getImageUrl());
+            assertThat(expectedMessage.getSenderImageUrl()).isEqualTo(FileUtils.getThumbnailImageUrl(actualMessage.getGoodsChatPart().getMember().getImageUrl()));
             assertThat(expectedMessage.getSentAt()).isEqualToIgnoringNanos(actualMessage.getSentAt()); // 시간 비교, 나노초는 무시
         }
     }
@@ -346,7 +346,7 @@ public class GoodsChatIntegrationTest {
 
             assertThat(actualMember.getMemberId()).isEqualTo(expectedMember.getId());
             assertThat(actualMember.getNickname()).isEqualTo(expectedMember.getNickname());
-            assertThat(actualMember.getImageUrl()).isEqualTo(expectedMember.getImageUrl());
+            assertThat(actualMember.getImageUrl()).isEqualTo(FileUtils.getThumbnailImageUrl(expectedMember.getImageUrl()));
         }
     }
 
