@@ -1,6 +1,7 @@
 package com.example.mate.domain.goodsPost.dto.response;
 
 import com.example.mate.domain.constant.TeamInfo;
+import com.example.mate.domain.file.FileUtils;
 import com.example.mate.domain.goodsPost.entity.GoodsPost;
 import lombok.Builder;
 import lombok.Getter;
@@ -18,7 +19,7 @@ public class GoodsPostSummaryResponse {
     private final Integer price;
     private final String imageUrl;
 
-    public static GoodsPostSummaryResponse of(GoodsPost goodsPost, String mainImageUrl) {
+    public static GoodsPostSummaryResponse of(GoodsPost goodsPost, String imageFileName) {
         String teamName = goodsPost.getTeamId() == null ? null : TeamInfo.getById(goodsPost.getTeamId()).shortName;
 
         return GoodsPostSummaryResponse.builder()
@@ -27,7 +28,7 @@ public class GoodsPostSummaryResponse {
                 .title(goodsPost.getTitle())
                 .category(goodsPost.getCategory().getValue())
                 .price(goodsPost.getPrice())
-                .imageUrl(mainImageUrl)
+                .imageUrl(FileUtils.getThumbnailImageUrl(imageFileName))
                 .build();
     }
 }

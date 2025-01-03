@@ -1,8 +1,8 @@
 package com.example.mate.domain.goodsPost.dto.response;
 
 import com.example.mate.domain.constant.TeamInfo;
+import com.example.mate.domain.file.FileUtils;
 import com.example.mate.domain.goodsPost.entity.GoodsPost;
-import com.example.mate.domain.goodsPost.entity.GoodsPostImage;
 import com.example.mate.domain.goodsPost.entity.Role;
 import java.util.List;
 import lombok.Builder;
@@ -29,6 +29,11 @@ public class GoodsPostResponse {
     public static GoodsPostResponse of(GoodsPost goodsPost) {
         String teamName = goodsPost.getTeamId() == null ? null : TeamInfo.getById(goodsPost.getTeamId()).shortName;
 
+        List<String> imageUrls = goodsPost.getGoodsPostImages()
+                .stream()
+                .map(image -> FileUtils.getImageUrl(image.getImageUrl()))
+                .toList();
+
         return GoodsPostResponse.builder()
                 .id(goodsPost.getId())
                 .seller(MemberInfo.from(goodsPost.getSeller(), Role.SELLER))
@@ -38,7 +43,7 @@ public class GoodsPostResponse {
                 .price(goodsPost.getPrice())
                 .content(goodsPost.getContent())
                 .location(LocationInfo.from(goodsPost.getLocation()))
-                .imageUrls(goodsPost.getGoodsPostImages().stream().map(GoodsPostImage::getImageUrl).toList())
+                .imageUrls(imageUrls)
                 .status(goodsPost.getStatus().getValue())
                 .build();
     }

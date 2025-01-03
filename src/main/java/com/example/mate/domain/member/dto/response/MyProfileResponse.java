@@ -1,6 +1,7 @@
 package com.example.mate.domain.member.dto.response;
 
 import com.example.mate.domain.constant.TeamInfo;
+import com.example.mate.domain.file.FileUtils;
 import com.example.mate.domain.member.entity.Member;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AccessLevel;
@@ -50,7 +51,7 @@ public class MyProfileResponse {
                                        int goodsSoldCount, int goodsBoughtCount, int visitsCount) {
         return MyProfileResponse.builder()
                 .nickname(member.getNickname())
-                .imageUrl(member.getImageUrl())
+                .imageUrl(FileUtils.getThumbnailImageUrl(member.getImageUrl()))
                 .teamName(TeamInfo.getById(member.getTeamId()).shortName)
                 .manner(member.getManner())
                 .aboutMe(member.getAboutMe())
@@ -66,7 +67,7 @@ public class MyProfileResponse {
     public static MyProfileResponse from(Member member) {
         return MyProfileResponse.builder()
                 .nickname(member.getNickname())
-                .imageUrl(member.getImageUrl())
+                .imageUrl(FileUtils.getThumbnailImageUrl(member.getImageUrl()))
                 .teamName(TeamInfo.getById(member.getTeamId()).shortName)
                 .aboutMe(member.getAboutMe())
                 .build();

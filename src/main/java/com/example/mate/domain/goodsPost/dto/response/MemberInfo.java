@@ -1,5 +1,6 @@
 package com.example.mate.domain.goodsPost.dto.response;
 
+import com.example.mate.domain.file.FileUtils;
 import com.example.mate.domain.goodsPost.entity.Role;
 import com.example.mate.domain.member.entity.Member;
 import lombok.AccessLevel;
@@ -33,7 +34,7 @@ public class MemberInfo {
                 .memberId(member.getId())
                 .nickname(member.getNickname())
                 .manner(member.getManner())
-                .imageUrl(member.getImageUrl())
+                .imageUrl(FileUtils.getThumbnailImageUrl(member.getImageUrl()))
                 .role(role)
                 .build();
     }

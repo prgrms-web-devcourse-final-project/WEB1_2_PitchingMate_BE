@@ -2,6 +2,7 @@ package com.example.mate.domain.mate.dto.response;
 
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.constant.TeamInfo;
+import com.example.mate.domain.file.FileUtils;
 import com.example.mate.domain.match.entity.Match;
 import com.example.mate.domain.mate.entity.Age;
 import com.example.mate.domain.mate.entity.MatePost;
@@ -35,7 +36,7 @@ public class MatePostSummaryResponse {
         String rivalTeamName = getRivalTeamName(post);
 
         return MatePostSummaryResponse.builder()
-                .imageUrl(post.getImageUrl())
+                .imageUrl(FileUtils.getThumbnailImageUrl(post.getImageUrl()))
                 .title(post.getTitle())
                 .status(post.getStatus())
                 .myTeamName(myTeamName)

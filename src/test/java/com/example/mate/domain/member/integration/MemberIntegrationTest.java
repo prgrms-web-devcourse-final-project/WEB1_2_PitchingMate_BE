@@ -5,6 +5,7 @@ import com.example.mate.common.security.util.JwtUtil;
 import com.example.mate.config.WithAuthMember;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.constant.Rating;
+import com.example.mate.domain.file.FileUtils;
 import com.example.mate.domain.goodsPost.dto.response.LocationInfo;
 import com.example.mate.domain.goodsPost.entity.Category;
 import com.example.mate.domain.goodsPost.entity.GoodsPost;
@@ -332,7 +333,7 @@ class MemberIntegrationTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.status").value("SUCCESS"))
                     .andExpect(jsonPath("$.data.nickname").value("tester"))
-                    .andExpect(jsonPath("$.data.imageUrl").value("default.jpg"))
+                    .andExpect(jsonPath("$.data.imageUrl").value(FileUtils.getThumbnailImageUrl("default.jpg")))
                     .andExpect(jsonPath("$.data.manner").value(0.300F))
                     .andExpect(jsonPath("$.data.aboutMe").value("테스트 회원입니다."))
                     .andExpect(jsonPath("$.data.followingCount").value(1))
@@ -365,7 +366,7 @@ class MemberIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
                 .andExpect(jsonPath("$.data.nickname").value("tester"))
-                .andExpect(jsonPath("$.data.imageUrl").value("default.jpg"))
+                .andExpect(jsonPath("$.data.imageUrl").value(FileUtils.getThumbnailImageUrl("default.jpg")))
                 .andExpect(jsonPath("$.data.manner").value(0.300F))
                 .andDo(print());
     }

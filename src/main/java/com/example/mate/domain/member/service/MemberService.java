@@ -33,6 +33,8 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 public class MemberService {
 
+    private static final String DEFAULT_MEMBER_IMAGE = "member_default.svg";
+
     private final MemberRepository memberRepository;
     private final FollowRepository followRepository;
     private final GoodsPostRepository goodsPostRepository;
@@ -45,7 +47,7 @@ public class MemberService {
 
     // CATCH Mi 회원가입 기능
     public JoinResponse join(JoinRequest request) {
-        Member savedMember = memberRepository.save(Member.of(request, getDefaultMemberImageUrl()));
+        Member savedMember = memberRepository.save(Member.of(request, DEFAULT_MEMBER_IMAGE));
         return JoinResponse.from(savedMember);
     }
 
@@ -95,7 +97,7 @@ public class MemberService {
         if (file != null && !file.isEmpty()) {
             FileValidator.validateSingleImage(file);
             deleteNonDefaultImage(member.getImageUrl());
-            member.changeImageUrl(fileService.uploadFile(file));
+            member.changeImageUrl(fileService.uploadImageWithThumbnail(file));
         }
 
         return MyProfileResponse.from(memberRepository.save(member));
@@ -109,13 +111,9 @@ public class MemberService {
     }
 
     private void deleteNonDefaultImage(String imageUrl) {
-        if (!imageUrl.equals(getDefaultMemberImageUrl())) {
+        if (!imageUrl.equals(DEFAULT_MEMBER_IMAGE)) {
             fileService.deleteFile(imageUrl);
         }
-    }
-
-    private String getDefaultMemberImageUrl() {
-        return "https://" + fileService.getBucket() + ".s3.ap-northeast-2.amazonaws.com/member_default.svg";
     }
 
     private void checkNicknameAndChange(Member member, String request) {
