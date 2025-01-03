@@ -88,10 +88,13 @@ public class MateChatRoomService {
         MateChatRoomMember chatRoomMember = joinAsMember(chatRoom, member);
 
         // 2. 입장 체크 및 메시지 전송
-        // 최초 입장이거나 (hasEntered가 false) 이전에 나갔다가 다시 들어온 경우 (isActive가 false였다가 true가 된 경우)
-        boolean wasInactive = !chatRoomMember.getIsActive();
-        if (!chatRoomMember.getHasEntered() || wasInactive) {
+        // 최초 입장이거나, 이전에 나갔다가 다시 들어온 경우
+        if (!chatRoomMember.getHasEntered() || !chatRoomMember.getIsActive()) {
             chatRoomMember.markAsEntered();
+            if (!chatRoomMember.getIsActive()) {
+                chatRoomMember.activate();
+                chatRoom.incrementCurrentMembers();
+            }
             sendEnterMessage(chatRoom.getId(), member);
         }
 
@@ -168,11 +171,6 @@ public class MateChatRoomService {
         // 이미 존재하는 멤버라면 해당 멤버 정보 반환
         if (existingMember.isPresent()) {
             MateChatRoomMember chatRoomMember = existingMember.get();
-            // 비활성 상태였다면 다시 활성화
-            if (!chatRoomMember.getIsActive()) {
-                chatRoomMember.activate();
-                chatRoom.incrementCurrentMembers();
-            }
             return chatRoomMember;
         }
 
