@@ -306,24 +306,10 @@ public class MateChatRoomService {
 
     private void sendEnterMessage(Long roomId, Member member) {
         eventPublisher.publish(MateChatEvent.from(roomId, member, MessageType.ENTER));
-
-//        MateChatMessageRequest enterMessage = MateChatMessageRequest.createEnterMessage(
-//                roomId,
-//                member.getId(),
-//                member.getNickname()
-//        );
-//        mateChatMessageService.sendEnterMessage(enterMessage);
     }
 
     private void sendLeaveMessage(Long roomId, Member member) {
         eventPublisher.publish(MateChatEvent.from(roomId, member, MessageType.LEAVE));
-
-//        MateChatMessageRequest leaveMessage = MateChatMessageRequest.createLeaveMessage(
-//                roomId,
-//                member.getId(),
-//                member.getNickname()
-//        );
-//        mateChatMessageService.sendLeaveMessage(leaveMessage);
     }
 
     private void validateChatRoomAccess(Long roomId, Long memberId) {
