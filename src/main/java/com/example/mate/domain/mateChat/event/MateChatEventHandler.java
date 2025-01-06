@@ -15,7 +15,6 @@ public class MateChatEventHandler {
 
     @Async
     @TransactionalEventListener
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handle(MateChatEvent event) {
         messageService.sendChatEventMessage(event);
     }
