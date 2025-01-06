@@ -274,16 +274,16 @@ class MateChatServiceTest {
     }
 
     private MateChatRoom createChatRoom(Long id, MatePost matePost, boolean isActive, boolean isMessageable) {
-        MateChatRoom chatRoom = MateChatRoom.builder()
+        // members 리스트 초기화 추가
+        return MateChatRoom.builder()
                 .id(id)
                 .matePost(matePost)
                 .currentMembers(1)
                 .isActive(isActive)
                 .isMessageable(isMessageable)
                 .isAuthorLeft(false)
-                .members(new ArrayList<>())  // members 리스트 초기화 추가
+                .members(new ArrayList<>())
                 .build();
-        return chatRoom;
     }
 
     private MateChatRoomMember createChatRoomMember(Long id, MateChatRoom chatRoom, Member member,
