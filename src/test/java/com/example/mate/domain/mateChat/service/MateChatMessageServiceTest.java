@@ -46,11 +46,11 @@ class MateChatMessageServiceTest {
     @Mock
     private SimpMessageSendingOperations messagingTemplate;
 
-    private Member createMember(Long id, String name, String nickname) {
+    private Member createMember(Long id) {
         return Member.builder()
                 .id(id)
-                .name(name)
-                .nickname(nickname)
+                .name("Test User")
+                .nickname("test_user")
                 .build();
     }
 
@@ -84,7 +84,7 @@ class MateChatMessageServiceTest {
             String message = "Hello World";
             MateChatMessageRequest request = new MateChatMessageRequest(MessageType.TALK.name(), chatRoomId, memberId, message);
 
-            Member sender = createMember(memberId, "Test User", "test_user");
+            Member sender = createMember(memberId);
             MateChatRoom chatRoom = createMateChatRoom(chatRoomId);
             MateChatMessage chatMessage = createMateChatMessage(chatRoom, sender, message, MessageType.TALK);
 
@@ -157,7 +157,7 @@ class MateChatMessageServiceTest {
             // given
             Long memberId = 1L;
             Long chatRoomId = 1L;
-            Member member = createMember(memberId, "Test User", "test_user");
+            Member member = createMember(memberId);
             MateChatRoom chatRoom = createMateChatRoom(chatRoomId);
             MateChatEvent event = MateChatEvent.from(chatRoomId, member, MessageType.ENTER);
 
@@ -186,7 +186,7 @@ class MateChatMessageServiceTest {
             // given
             Long memberId = 1L;
             Long chatRoomId = 1L;
-            Member member = createMember(memberId, "Test User", "test_user");
+            Member member = createMember(memberId);
             MateChatRoom chatRoom = createMateChatRoom(chatRoomId);
             MateChatEvent event = MateChatEvent.from(chatRoomId, member, MessageType.LEAVE);
 
@@ -215,7 +215,7 @@ class MateChatMessageServiceTest {
             // given
             Long memberId = 1L;
             Long chatRoomId = 1L;
-            Member member = createMember(memberId, "Test User", "test_user");
+            Member member = createMember(memberId);
             MateChatEvent event = MateChatEvent.from(chatRoomId, member, MessageType.ENTER);
 
             when(chatRoomRepository.findById(chatRoomId)).thenReturn(Optional.empty());
