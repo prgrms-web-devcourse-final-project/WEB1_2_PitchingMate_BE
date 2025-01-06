@@ -9,7 +9,6 @@ import com.example.mate.domain.mate.entity.MatePost;
 import com.example.mate.domain.mate.entity.Status;
 import com.example.mate.domain.mate.repository.MateRepository;
 import com.example.mate.domain.mate.repository.VisitPartRepository;
-import com.example.mate.domain.mateChat.dto.request.MateChatMessageRequest;
 import com.example.mate.domain.mateChat.dto.response.MateChatMessageResponse;
 import com.example.mate.domain.mateChat.dto.response.MateChatRoomListResponse;
 import com.example.mate.domain.mateChat.dto.response.MateChatRoomResponse;
@@ -170,8 +169,7 @@ public class MateChatRoomService {
 
         // 이미 존재하는 멤버라면 해당 멤버 정보 반환
         if (existingMember.isPresent()) {
-            MateChatRoomMember chatRoomMember = existingMember.get();
-            return chatRoomMember;
+            return existingMember.get();
         }
 
         // 신규 멤버인 경우 인원 검증 및 멤버 등록 (기존 코드)
