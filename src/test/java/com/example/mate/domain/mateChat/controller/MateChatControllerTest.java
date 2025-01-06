@@ -52,8 +52,7 @@ public class MateChatControllerTest {
     private JwtCheckFilter jwtCheckFilter;
 
     @Test
-    @DisplayName("메이트 게시글에서 채팅방 생성/입장 테스트")
-    @WithAuthMember
+    @DisplayName("메이트 게시글 채팅방 입장/생성 성공 - 최초로 입장하는 멤버라면 채팅방을 생성한다.")
     void createOrJoinChatRoomFromPost() throws Exception {
         // given
         MateChatRoomResponse response = createMockChatRoomResponse();
@@ -73,8 +72,7 @@ public class MateChatControllerTest {
     }
 
     @Test
-    @DisplayName("채팅방 목록 조회 테스트")
-    @WithAuthMember
+    @DisplayName("메이트 채팅방 목록 조회 성공")
     void getMyChatRooms() throws Exception {
         // given
         PageResponse<MateChatRoomListResponse> pageResponse = createMockChatRoomListResponse();
@@ -97,8 +95,7 @@ public class MateChatControllerTest {
     }
 
     @Test
-    @DisplayName("채팅방 입장 테스트")
-    @WithAuthMember
+    @DisplayName("메이트 채팅 목록 페이지에서 채팅방 입장 성공")
     void joinExistingChatRoom() throws Exception {
         // given
         MateChatRoomResponse response = createMockChatRoomResponse();
@@ -118,8 +115,7 @@ public class MateChatControllerTest {
     }
 
     @Test
-    @DisplayName("채팅 메시지 조회 테스트")
-    @WithAuthMember
+    @DisplayName("메이트 채팅방 메시지 조회 성공")
     void getChatMessages() throws Exception {
         // given
         PageResponse<MateChatMessageResponse> pageResponse = createMockChatMessagesResponse();
@@ -142,8 +138,7 @@ public class MateChatControllerTest {
     }
 
     @Test
-    @DisplayName("채팅방 멤버 조회 테스트")
-    @WithAuthMember
+    @DisplayName("메이트 채팅방 멤버 조회 성공")
     void getMateChatRoomMembers() throws Exception {
         // given
         List<MemberSummaryResponse> members = createMockMemberResponses();
