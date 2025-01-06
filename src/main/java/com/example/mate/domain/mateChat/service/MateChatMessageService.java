@@ -6,6 +6,7 @@ import com.example.mate.domain.mateChat.dto.request.MateChatMessageRequest;
 import com.example.mate.domain.mateChat.dto.response.MateChatMessageResponse;
 import com.example.mate.domain.mateChat.entity.MateChatMessage;
 import com.example.mate.domain.mateChat.entity.MateChatRoom;
+import com.example.mate.domain.mateChat.event.MateChatEvent;
 import com.example.mate.domain.mateChat.repository.MateChatMessageRepository;
 import com.example.mate.domain.mateChat.repository.MateChatRoomRepository;
 import com.example.mate.domain.member.entity.Member;
@@ -46,35 +47,18 @@ public class MateChatMessageService {
     }
 
     @Transactional
-    public void sendEnterMessage(MateChatMessageRequest request) {
-        MateChatRoom chatRoom = findChatRoomById(request.getRoomId());
-        Member sender = findMemberById(request.getSenderId());
+    public void sendChatEventMessage(MateChatEvent event) {
+        MateChatRoom chatRoom = findChatRoomById(event.chatRoomId());
+        MateChatMessageRequest request = event.toMessageRequest();
 
         MateChatMessage chatMessage = chatMessageRepository.save(
-                MateChatMessageRequest.toEntity(chatRoom, request, sender)
+                MateChatMessageRequest.toEntity(chatRoom, request, event.member())
         );
 
         chatRoom.updateLastChat(chatMessage.getContent());
 
         messagingTemplate.convertAndSend(
-                "/sub/chat/mate/" + request.getRoomId(),
-                MateChatMessageResponse.of(chatMessage)
-        );
-    }
-
-    @Transactional
-    public void sendLeaveMessage(MateChatMessageRequest request) {
-        MateChatRoom chatRoom = findChatRoomById(request.getRoomId());
-        Member sender = findMemberById(request.getSenderId());
-
-        MateChatMessage chatMessage = chatMessageRepository.save(
-                MateChatMessageRequest.toEntity(chatRoom, request, sender)
-        );
-
-        chatRoom.updateLastChat(chatMessage.getContent());
-
-        messagingTemplate.convertAndSend(
-                "/sub/chat/mate/" + request.getRoomId(),
+                "/sub/chat/mate/" + event.chatRoomId(),
                 MateChatMessageResponse.of(chatMessage)
         );
     }

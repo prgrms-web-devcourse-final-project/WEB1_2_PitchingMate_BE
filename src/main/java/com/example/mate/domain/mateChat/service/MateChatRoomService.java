@@ -9,13 +9,15 @@ import com.example.mate.domain.mate.entity.MatePost;
 import com.example.mate.domain.mate.entity.Status;
 import com.example.mate.domain.mate.repository.MateRepository;
 import com.example.mate.domain.mate.repository.VisitPartRepository;
-import com.example.mate.domain.mateChat.dto.request.MateChatMessageRequest;
 import com.example.mate.domain.mateChat.dto.response.MateChatMessageResponse;
 import com.example.mate.domain.mateChat.dto.response.MateChatRoomListResponse;
 import com.example.mate.domain.mateChat.dto.response.MateChatRoomResponse;
 import com.example.mate.domain.mateChat.entity.MateChatMessage;
 import com.example.mate.domain.mateChat.entity.MateChatRoom;
 import com.example.mate.domain.mateChat.entity.MateChatRoomMember;
+import com.example.mate.domain.mateChat.event.MateChatEvent;
+import com.example.mate.domain.mateChat.event.MateChatEventPublisher;
+import com.example.mate.domain.mateChat.message.MessageType;
 import com.example.mate.domain.mateChat.repository.MateChatMessageRepository;
 import com.example.mate.domain.mateChat.repository.MateChatRoomMemberRepository;
 import com.example.mate.domain.mateChat.repository.MateChatRoomRepository;
@@ -43,9 +45,9 @@ public class MateChatRoomService {
     private final MateChatMessageRepository chatMessageRepository;
     private final MateRepository mateRepository;
     private final MemberRepository memberRepository;
-    private final MateChatMessageService mateChatMessageService;
     private final VisitPartRepository visitPartRepository;
     private final MateChatRoomMemberRepository mateChatRoomMemberRepository;
+    private final MateChatEventPublisher eventPublisher;
 
     // 메이트 게시글에서 채팅방 생성/입장
     public MateChatRoomResponse createOrJoinChatRoomFromPost(Long postId, Long memberId) {
@@ -85,10 +87,13 @@ public class MateChatRoomService {
         MateChatRoomMember chatRoomMember = joinAsMember(chatRoom, member);
 
         // 2. 입장 체크 및 메시지 전송
-        // 최초 입장이거나 (hasEntered가 false) 이전에 나갔다가 다시 들어온 경우 (isActive가 false였다가 true가 된 경우)
-        boolean wasInactive = !chatRoomMember.getIsActive();
-        if (!chatRoomMember.getHasEntered() || wasInactive) {
+        // 최초 입장이거나, 이전에 나갔다가 다시 들어온 경우
+        if (!chatRoomMember.getHasEntered() || !chatRoomMember.getIsActive()) {
             chatRoomMember.markAsEntered();
+            if (!chatRoomMember.getIsActive()) {
+                chatRoomMember.activate();
+                chatRoom.incrementCurrentMembers();
+            }
             sendEnterMessage(chatRoom.getId(), member);
         }
 
@@ -164,13 +169,7 @@ public class MateChatRoomService {
 
         // 이미 존재하는 멤버라면 해당 멤버 정보 반환
         if (existingMember.isPresent()) {
-            MateChatRoomMember chatRoomMember = existingMember.get();
-            // 비활성 상태였다면 다시 활성화
-            if (!chatRoomMember.getIsActive()) {
-                chatRoomMember.activate();
-                chatRoom.incrementCurrentMembers();
-            }
-            return chatRoomMember;
+            return existingMember.get();
         }
 
         // 신규 멤버인 경우 인원 검증 및 멤버 등록 (기존 코드)
@@ -304,21 +303,11 @@ public class MateChatRoomService {
     }
 
     private void sendEnterMessage(Long roomId, Member member) {
-        MateChatMessageRequest enterMessage = MateChatMessageRequest.createEnterMessage(
-                roomId,
-                member.getId(),
-                member.getNickname()
-        );
-        mateChatMessageService.sendEnterMessage(enterMessage);
+        eventPublisher.publish(MateChatEvent.from(roomId, member, MessageType.ENTER));
     }
 
     private void sendLeaveMessage(Long roomId, Member member) {
-        MateChatMessageRequest leaveMessage = MateChatMessageRequest.createLeaveMessage(
-                roomId,
-                member.getId(),
-                member.getNickname()
-        );
-        mateChatMessageService.sendLeaveMessage(leaveMessage);
+        eventPublisher.publish(MateChatEvent.from(roomId, member, MessageType.LEAVE));
     }
 
     private void validateChatRoomAccess(Long roomId, Long memberId) {
