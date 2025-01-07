@@ -114,6 +114,9 @@ public class GoodsPostService {
 
         validateTransactionEligibility(seller, buyer, goodsPost);
         goodsPost.completeTransaction(buyer);
+
+        seller.updateManner(ActivityType.GOODS);
+        buyer.updateManner(ActivityType.GOODS);
     }
 
     private void attachImagesToGoodsPost(GoodsPost goodsPost, List<MultipartFile> files) {
