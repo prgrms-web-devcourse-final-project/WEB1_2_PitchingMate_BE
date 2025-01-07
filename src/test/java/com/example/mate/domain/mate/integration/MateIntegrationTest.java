@@ -1,6 +1,18 @@
 package com.example.mate.domain.mate.integration;
 
-import com.example.mate.common.security.util.JwtUtil;
+import static com.example.mate.common.error.ErrorCode.MATCH_NOT_FOUND_BY_ID;
+import static com.example.mate.common.error.ErrorCode.MATE_POST_NOT_FOUND_BY_ID;
+import static com.example.mate.common.error.ErrorCode.TEAM_NOT_FOUND;
+import static com.example.mate.domain.match.entity.MatchStatus.SCHEDULED;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.example.mate.config.WithAuthMember;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.file.FileUtils;
@@ -16,6 +28,8 @@ import com.example.mate.domain.mate.repository.MateRepository;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.LocalDateTime;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -23,24 +37,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.List;
-
-import static com.example.mate.common.error.ErrorCode.*;
-import static com.example.mate.domain.match.entity.MatchStatus.SCHEDULED;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
@@ -201,6 +203,7 @@ public class MateIntegrationTest {
             assertThat(savedPost.getAge()).isEqualTo(request.getAge());
             assertThat(savedPost.getGender()).isEqualTo(request.getGender());
             assertThat(savedPost.getTransport()).isEqualTo(request.getTransportType());
+            assertThat(savedPost.getAuthor().getManner()).isCloseTo(0.301f, within(0.0001f));
         }
 
         @Test
@@ -574,6 +577,7 @@ public class MateIntegrationTest {
 
             // DB 검증
             assertThat(mateRepository.findById(openPost.getId())).isEmpty();
+            assertThat(openPost.getAuthor().getManner()).isCloseTo(0.299f, within(0.0001f));
         }
 
         @Test

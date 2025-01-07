@@ -8,6 +8,7 @@ import static com.example.mate.common.error.ErrorCode.MEMBER_NOT_FOUND_BY_ID;
 import static com.example.mate.common.error.ErrorCode.TEAM_NOT_FOUND;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.within;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
@@ -143,15 +144,18 @@ class MateServiceTest {
                     .willReturn(Optional.of(testMatch));
             given(mateRepository.save(any(MatePost.class)))
                     .willReturn(matePost);
+            given(memberRepository.save(any(Member.class))).willReturn(testMember);
 
             // when
             MatePostResponse response = mateService.createMatePost(request, null, TEST_MEMBER_ID);
 
             // then
             assertThat(response.getStatus()).isEqualTo(Status.OPEN);
+            assertThat(testMember.getManner()).isCloseTo(0.301f, within(0.0001f));
             verify(memberRepository).findById(TEST_MEMBER_ID);
             verify(matchRepository).findById(TEST_MATCH_ID);
             verify(mateRepository).save(any(MatePost.class));
+            verify(memberRepository).save(any(Member.class));
         }
 
         @Test
@@ -909,13 +913,20 @@ class MateServiceTest {
 
             given(mateRepository.findById(POST_ID))
                     .willReturn(Optional.of(matePost));
+            given(memberRepository.findByIdAndNotDeleted(TEST_MEMBER_ID))
+                    .willReturn(Optional.of(testMember));
+            given(memberRepository.save(any(Member.class)))
+                    .willReturn(testMember);
 
             // when
             mateService.deleteMatePost(TEST_MEMBER_ID, POST_ID);
 
             // then
+            assertThat(testMember.getManner()).isCloseTo(0.299f, within(0.0001f));
+
             verify(mateRepository).findById(POST_ID);
             verify(mateRepository).delete(matePost);
+            verify(memberRepository).save(any(Member.class));
         }
 
         @Test
@@ -944,6 +955,10 @@ class MateServiceTest {
 
             given(mateRepository.findById(POST_ID))
                     .willReturn(Optional.of(matePost));
+            given(memberRepository.findByIdAndNotDeleted(TEST_MEMBER_ID))
+                    .willReturn(Optional.of(testMember));
+            given(memberRepository.save(any(Member.class)))
+                    .willReturn(testMember);
 
             // when
             mateService.deleteMatePost(TEST_MEMBER_ID, POST_ID);
@@ -951,7 +966,10 @@ class MateServiceTest {
             // then
             verify(mateRepository).findById(POST_ID);
             verify(mateRepository).delete(matePost);
+            verify(memberRepository).save(any(Member.class));
+
             assertThat(visit.getPost()).isNull();
+            assertThat(testMember.getManner()).isCloseTo(0.299f, within(0.0001f));
         }
 
         @Test
