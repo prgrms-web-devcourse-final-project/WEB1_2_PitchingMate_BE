@@ -2,12 +2,12 @@ package com.example.mate.domain.goodsReview.service;
 
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
-import com.example.mate.domain.goodsReview.dto.request.GoodsReviewRequest;
-import com.example.mate.domain.goodsReview.dto.response.GoodsReviewResponse;
 import com.example.mate.domain.goodsPost.entity.GoodsPost;
-import com.example.mate.domain.goodsReview.entity.GoodsReview;
 import com.example.mate.domain.goodsPost.entity.Status;
 import com.example.mate.domain.goodsPost.repository.GoodsPostRepository;
+import com.example.mate.domain.goodsReview.dto.request.GoodsReviewRequest;
+import com.example.mate.domain.goodsReview.dto.response.GoodsReviewResponse;
+import com.example.mate.domain.goodsReview.entity.GoodsReview;
 import com.example.mate.domain.goodsReview.repository.GoodsReviewRepository;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
@@ -29,8 +29,13 @@ public class GoodsReviewService {
         GoodsPost goodsPost = findGoodsPostById(goodsPostId);
         validateReviewEligibility(goodsPost, reviewer);
 
-        GoodsReview review = request.toEntity(goodsPost, reviewer, goodsPost.getSeller());
-        return GoodsReviewResponse.of(reviewRepository.save(review));
+        Member seller = goodsPost.getSeller();
+        GoodsReview review = request.toEntity(goodsPost, reviewer, seller);
+        GoodsReview savedReview = reviewRepository.save(review);
+        seller.updateManner(request.getRating());
+        memberRepository.save(seller);
+
+        return GoodsReviewResponse.of(savedReview);
     }
 
     private GoodsPost findGoodsPostById(Long goodsPostId) {
