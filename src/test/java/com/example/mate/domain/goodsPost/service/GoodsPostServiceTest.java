@@ -580,6 +580,8 @@ class GoodsPostServiceTest {
             // then
             assertThat(goodsPost.getStatus()).isEqualTo(Status.CLOSED);
             assertThat(goodsPost.getBuyer()).isEqualTo(buyer);
+            assertThat(member.getManner()).isCloseTo(0.302f, within(0.0001f));
+            assertThat(buyer.getManner()).isCloseTo(0.302f, within(0.0001f));
 
             verify(memberRepository).findById(sellerId);
             verify(goodsPostRepository).findById(goodsPostId);

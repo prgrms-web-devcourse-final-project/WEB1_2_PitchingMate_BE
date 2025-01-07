@@ -385,12 +385,14 @@ public class GoodsPostIntegrationTest {
         GoodsPost completedPost = goodsPostRepository.findById(goodsPostId).orElseThrow();
         assertThat(completedPost.getStatus()).isEqualTo(Status.CLOSED);
         assertThat(completedPost.getBuyer()).isNotNull();
+        assertThat(completedPost.getSeller().getManner()).isCloseTo(0.302f, within(0.0001f));
 
         Member resultBuyer = completedPost.getBuyer();
         assertThat(resultBuyer.getId()).isEqualTo(buyer.getId());
         assertThat(resultBuyer.getName()).isEqualTo(buyer.getName());
         assertThat(resultBuyer.getEmail()).isEqualTo(buyer.getEmail());
         assertThat(resultBuyer.getNickname()).isEqualTo(buyer.getNickname());
+        assertThat(resultBuyer.getManner()).isCloseTo(0.502f, within(0.0001f));
     }
 
     private Member createMember() {
