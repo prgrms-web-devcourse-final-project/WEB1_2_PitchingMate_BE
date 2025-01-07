@@ -2,6 +2,7 @@ package com.example.mate.domain.goodsReview.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.within;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
@@ -46,6 +47,7 @@ class GoodsReviewServiceTest {
     private GoodsReviewRepository reviewRepository;
 
     private Member member;
+    private Member seller;
 
     @BeforeEach
     void setUp() {
@@ -54,6 +56,13 @@ class GoodsReviewServiceTest {
                 .name("홍길동")
                 .email("test@gmail.com")
                 .nickname("테스터")
+                .build();
+        seller = Member.builder()
+                .id(2L)
+                .name("김철수")
+                .email("seller@gmail.com")
+                .nickname("셀러")
+                .manner(0.300F)
                 .build();
     }
 
@@ -66,6 +75,7 @@ class GoodsReviewServiceTest {
                     .id(id)
                     .status(status)
                     .buyer(member)
+                    .seller(seller)
                     .title("Test Post")
                     .content("Test Content")
                     .price(10_000)
@@ -97,6 +107,7 @@ class GoodsReviewServiceTest {
             given(goodsPostRepository.findById(goodsPostId)).willReturn(Optional.of(completePost));
             given(reviewRepository.existsByGoodsPostIdAndReviewerId(goodsPostId, reviewerId)).willReturn(false);
             given(reviewRepository.save(any(GoodsReview.class))).willReturn(goodsReview);
+            given(memberRepository.save(any(Member.class))).willReturn(seller);
 
             // when
             GoodsReviewResponse response = goodsReviewService.registerGoodsReview(reviewerId, goodsPostId, request);
@@ -106,11 +117,13 @@ class GoodsReviewServiceTest {
             assertThat(response.getReviewerNickname()).isEqualTo(member.getNickname());
             assertThat(response.getRating()).isEqualTo(request.getRating());
             assertThat(response.getReviewContent()).isEqualTo(request.getReviewContent());
+            assertThat(seller.getManner()).isCloseTo(0.32f, within(0.0001f));
 
             verify(memberRepository).findById(reviewerId);
             verify(goodsPostRepository).findById(goodsPostId);
             verify(reviewRepository).existsByGoodsPostIdAndReviewerId(goodsPostId, reviewerId);
             verify(reviewRepository).save(any(GoodsReview.class));
+            verify(memberRepository).save(any(Member.class));
         }
 
         @DisplayName("굿즈거래 후기 등록 실패 - 이미 작성된 후기")
