@@ -1,11 +1,10 @@
 package com.example.mate.domain.mate.repository;
 
 import com.example.mate.domain.mate.entity.MateReview;
+import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
-import java.util.List;
 
 public interface MateReviewRepository extends JpaRepository<MateReview, Long> {
 
@@ -20,4 +19,8 @@ public interface MateReviewRepository extends JpaRepository<MateReview, Long> {
             """)
     List<MateReview> findMateReviewsByVisitIdAndReviewerId(@Param("visitId") Long visitId,
                                                            @Param("reviewerId") Long reviewerId);
+
+    boolean existsByVisitIdAndReviewerIdAndRevieweeId(@Param("visitId") Long visitId,
+                                                      @Param("reviewerId") Long reviewerId,
+                                                      @Param("revieweeId") Long revieweeId);
 }
