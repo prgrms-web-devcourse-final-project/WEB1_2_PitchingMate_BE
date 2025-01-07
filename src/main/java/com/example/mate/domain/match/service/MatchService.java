@@ -27,8 +27,8 @@ public class MatchService {
     private static final int WEEKS_TO_FETCH = 4;
 
     public List<MatchResponse> getMainBannerMatches() {
-        return matchRepository.findTop5ByOrderByMatchTimeDesc().stream()
-                .filter(match -> match.getMatchTime().isAfter(LocalDateTime.now()))
+        return matchRepository.findMainBannerMatches(LocalDateTime.now())
+                .stream()
                 .map(match -> MatchResponse.from(match, null))
                 .collect(Collectors.toList());
     }
@@ -36,9 +36,8 @@ public class MatchService {
 
     public List<MatchResponse> getTeamMatches(Long teamId) {
         TeamInfo.getById(teamId);
-
-        return matchRepository.findTop3ByHomeTeamIdOrAwayTeamIdOrderByMatchTimeDesc(teamId, teamId).stream()
-                .filter(match -> match.getMatchTime().isAfter(LocalDateTime.now()))
+        return matchRepository.findTop3TeamMatchesAfterNow(teamId, LocalDateTime.now())
+                .stream()
                 .map(match -> MatchResponse.from(match, teamId))
                 .collect(Collectors.toList());
     }

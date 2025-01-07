@@ -91,16 +91,19 @@ class MatchIntegrationTest {
         matchRepository.saveAll(Arrays.asList(pastMatch, futureMatch1, futureMatch2));
 
         // when
-        ResultActions result = mockMvc.perform(get("/api/matches/main")
-                .accept(MediaType.APPLICATION_JSON));
+        MvcResult mvcResult = mockMvc.perform(get("/api/matches/main")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andReturn();
 
         // then
-        result.andExpect(status().isOk())
+        mockMvc.perform(get("/api/matches/main")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
                 .andExpect(jsonPath("$.data").isArray())
                 .andExpect(jsonPath("$.data.length()").value(2))
-                .andExpect(jsonPath("$.data[0].homeTeam.id").value(TeamInfo.SSG.id))
-                .andExpect(jsonPath("$.data[1].homeTeam.id").value(TeamInfo.LG.id));
+                .andExpect(jsonPath("$.data[0].homeTeam.id").value(TeamInfo.LG.id))
+                .andExpect(jsonPath("$.data[1].homeTeam.id").value(TeamInfo.SSG.id));
     }
 
     @Test
@@ -126,8 +129,8 @@ class MatchIntegrationTest {
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
                 .andExpect(jsonPath("$.data").isArray())
                 .andExpect(jsonPath("$.data.length()").value(2))
-                .andExpect(jsonPath("$.data[0].awayTeam.id").value(TeamInfo.NC.id))
-                .andExpect(jsonPath("$.data[1].awayTeam.id").value(TeamInfo.KT.id));
+                .andExpect(jsonPath("$.data[0].awayTeam.id").value(TeamInfo.KT.id))
+                .andExpect(jsonPath("$.data[1].awayTeam.id").value(TeamInfo.NC.id));
     }
 
     @Test

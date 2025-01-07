@@ -13,9 +13,16 @@ import java.util.Optional;
 
 @Repository
 public interface MatchRepository extends JpaRepository<Match, Long> {
-    List<Match> findTop5ByOrderByMatchTimeDesc();
+    @Query(value = "SELECT * FROM \"match\" m " +
+            "WHERE m.match_time > :now " +
+            "ORDER BY m.match_time ASC LIMIT 5", nativeQuery = true)
+    List<Match> findMainBannerMatches(@Param("now") LocalDateTime now);
 
-    List<Match> findTop3ByHomeTeamIdOrAwayTeamIdOrderByMatchTimeDesc(Long homeTeamId, Long awayTeamId);
+    @Query(value = "SELECT * FROM \"match\" m " +
+            "WHERE (m.home_team_id = :teamId OR m.away_team_id = :teamId) " +
+            "AND m.match_time > :now " +
+            "ORDER BY m.match_time ASC LIMIT 3", nativeQuery = true)
+    List<Match> findTop3TeamMatchesAfterNow(@Param("teamId") Long teamId, @Param("now") LocalDateTime now);
 
     @Query("SELECT m FROM Match m " +
             "WHERE (m.status = :status1 AND m.homeTeamId = :homeTeamId) " +
