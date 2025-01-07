@@ -39,6 +39,7 @@ import com.example.mate.domain.mate.repository.MateRepository;
 import com.example.mate.domain.mate.repository.MateReviewRepository;
 import com.example.mate.domain.mateChat.repository.MateChatRoomMemberRepository;
 import com.example.mate.domain.mateChat.repository.MateChatRoomRepository;
+import com.example.mate.domain.member.entity.ActivityType;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
 import java.time.LocalDateTime;
@@ -89,6 +90,9 @@ public class MateService {
         MatePost savedPost = mateRepository.save(matePost);
 
         handleFileUpload(file, matePost);
+
+        author.updateManner(ActivityType.POST);
+        memberRepository.save(author);
 
         return MatePostResponse.from(savedPost);
     }
@@ -216,6 +220,11 @@ public class MateService {
         deleteNonDefaultImage(matePost.getImageUrl());
 
         mateRepository.delete(matePost);
+
+        Member member = memberRepository.findByIdAndNotDeleted(memberId)
+                .orElseThrow(() -> new CustomException(MEMBER_NOT_FOUND_BY_ID));
+        member.updateManner(ActivityType.DELETE);
+        memberRepository.save(member);
     }
 
     private void validatePostStatus(Status status) {
