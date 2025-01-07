@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum ActivityType {
     POST(0.001F),
+    DELETE(-0.001F),
     GOODS(0.002F),
     MATE(0.003F);
 

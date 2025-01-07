@@ -111,7 +111,11 @@ public class Member {
     }
 
     public void updateManner(ActivityType activityType) {
-        this.manner = Math.min(1.0F, this.manner + activityType.getValue());
+        if (activityType == ActivityType.DELETE) {
+            this.manner = Math.max(0.0F, this.manner + activityType.getValue());
+        } else {
+            this.manner = Math.min(1.0F, this.manner + activityType.getValue());
+        }
     }
 
     public static Member of(JoinRequest request, String imageUrl) {
