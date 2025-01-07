@@ -15,6 +15,7 @@ import com.example.mate.domain.goodsPost.entity.GoodsPostImage;
 import com.example.mate.domain.goodsPost.entity.Status;
 import com.example.mate.domain.goodsPost.repository.GoodsPostImageRepository;
 import com.example.mate.domain.goodsPost.repository.GoodsPostRepository;
+import com.example.mate.domain.member.entity.ActivityType;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
 import java.util.ArrayList;
@@ -47,10 +48,14 @@ public class GoodsPostService {
 
         attachImagesToGoodsPost(savedPost, files);
 
+        seller.updateManner(ActivityType.POST);
+        memberRepository.save(seller);
+
         return GoodsPostResponse.of(savedPost);
     }
 
-    public GoodsPostResponse updateGoodsPost(Long memberId, Long goodsPostId, GoodsPostRequest request, List<MultipartFile> files) {
+    public GoodsPostResponse updateGoodsPost(Long memberId, Long goodsPostId, GoodsPostRequest request,
+                                             List<MultipartFile> files) {
         Member seller = findMemberById(memberId);
         GoodsPost goodsPost = findGoodsPostById(goodsPostId);
 
@@ -74,6 +79,9 @@ public class GoodsPostService {
 
         deleteExistingImageFiles(goodsPostId);
         goodsPostRepository.delete(goodsPost);
+
+        seller.updateManner(ActivityType.DELETE);
+        memberRepository.save(seller);
     }
 
     @Transactional(readOnly = true)
@@ -90,10 +98,12 @@ public class GoodsPostService {
     }
 
     @Transactional(readOnly = true)
-    public PageResponse<GoodsPostSummaryResponse> getPageGoodsPosts(Long teamId, String categoryVal, Pageable pageable) {
+    public PageResponse<GoodsPostSummaryResponse> getPageGoodsPosts(Long teamId, String categoryVal,
+                                                                    Pageable pageable) {
         validateTeamInfo(teamId);
         Category category = Category.from(categoryVal);
-        Page<GoodsPost> pageGoodsPosts = goodsPostRepository.findPageGoodsPosts(teamId, Status.OPEN, category, pageable);
+        Page<GoodsPost> pageGoodsPosts = goodsPostRepository.findPageGoodsPosts(teamId, Status.OPEN, category,
+                pageable);
         return PageResponse.from(pageGoodsPosts, mapToGoodsPostSummaryResponses(pageGoodsPosts.getContent()));
     }
 
