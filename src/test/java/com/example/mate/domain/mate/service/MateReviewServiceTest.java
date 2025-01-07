@@ -153,7 +153,7 @@ class MateReviewServiceTest {
             assertThat(response.getReviewerId()).isEqualTo(TEST_REVIEWER_ID);
             assertThat(response.getRevieweeId()).isEqualTo(TEST_REVIEWEE_ID);
             assertThat(response.getRating()).isEqualTo(Rating.GOOD.getValue());
-            assertThat(reviewee.getManner()).isCloseTo(0.32f, within(0.0001f));
+            assertThat(reviewee.getManner()).isCloseTo(0.326f, within(0.0001f));
             verify(mateRepository).findById(TEST_POST_ID);
             verify(memberRepository).findById(TEST_REVIEWER_ID);
             verify(memberRepository).findById(TEST_REVIEWEE_ID);

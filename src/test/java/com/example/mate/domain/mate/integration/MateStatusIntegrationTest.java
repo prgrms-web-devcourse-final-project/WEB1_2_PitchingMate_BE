@@ -10,6 +10,7 @@ import static com.example.mate.common.error.ErrorCode.MATE_POST_UPDATE_NOT_ALLOW
 import static com.example.mate.common.error.ErrorCode.NOT_CLOSED_STATUS_FOR_COMPLETION;
 import static com.example.mate.domain.match.entity.MatchStatus.SCHEDULED;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -17,7 +18,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.example.mate.common.security.util.JwtUtil;
 import com.example.mate.config.WithAuthMember;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.match.entity.Match;
@@ -43,7 +43,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
@@ -339,6 +338,8 @@ public class MateStatusIntegrationTest {
             assertThat(savedPost.getStatus()).isEqualTo(Status.VISIT_COMPLETE);
             assertThat(savedPost.getVisit()).isNotNull();
             assertThat(savedPost.getVisit().getParticipants()).hasSize(2);
+            assertThat(participant1.getManner()).isCloseTo(0.303f, within(0.0001f));
+            assertThat(participant2.getManner()).isCloseTo(0.303f, within(0.0001f));
         }
 
         @Test
@@ -352,7 +353,7 @@ public class MateStatusIntegrationTest {
 
             // when & then
             mockMvc.perform(patch("/api/mates/{postId}/complete"
-                            ,closedPost.getId())
+                            , closedPost.getId())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsBytes(request)))
                     .andExpect(status().isForbidden())
