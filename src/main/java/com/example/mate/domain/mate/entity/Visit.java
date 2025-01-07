@@ -1,12 +1,26 @@
 package com.example.mate.domain.mate.entity;
 
 import com.example.mate.domain.mate.dto.request.MateReviewCreateRequest;
+import com.example.mate.domain.member.entity.ActivityType;
 import com.example.mate.domain.member.entity.Member;
-import jakarta.persistence.*;
-import lombok.*;
-
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "visit")
@@ -44,6 +58,7 @@ public class Visit {
                     .visit(visit)
                     .build();
             visit.participants.add(visitPart);
+            member.updateManner(ActivityType.MATE);
         });
 
         return visit;

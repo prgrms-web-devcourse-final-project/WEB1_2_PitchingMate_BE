@@ -244,6 +244,7 @@ public class MateService {
                 matePost.getMaxParticipants());
 
         matePost.complete(participants);
+        matePost.getAuthor().updateManner(ActivityType.MATE);
         return MatePostCompleteResponse.from(matePost);
     }
 
