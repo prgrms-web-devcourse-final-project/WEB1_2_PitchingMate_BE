@@ -7,7 +7,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.mate.config.WithAuthMember;
-import com.example.mate.common.security.util.JwtUtil;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.constant.Rating;
 import com.example.mate.domain.goodsPost.dto.response.LocationInfo;
@@ -21,16 +20,16 @@ import com.example.mate.domain.goodsPost.repository.GoodsPostRepository;
 import com.example.mate.domain.goodsReview.repository.GoodsReviewRepository;
 import com.example.mate.domain.match.entity.Match;
 import com.example.mate.domain.match.repository.MatchRepository;
-import com.example.mate.domain.mate.entity.Age;
-import com.example.mate.domain.mate.entity.MatePost;
-import com.example.mate.domain.mate.entity.MateReview;
-import com.example.mate.domain.mate.entity.TransportType;
-import com.example.mate.domain.mate.entity.Visit;
-import com.example.mate.domain.mate.entity.VisitPart;
-import com.example.mate.domain.mate.repository.MateRepository;
-import com.example.mate.domain.mate.repository.MateReviewRepository;
-import com.example.mate.domain.mate.repository.VisitPartRepository;
-import com.example.mate.domain.mate.repository.VisitRepository;
+import com.example.mate.domain.matePost.entity.Age;
+import com.example.mate.domain.matePost.entity.MatePost;
+import com.example.mate.domain.matePost.entity.MateReview;
+import com.example.mate.domain.matePost.entity.TransportType;
+import com.example.mate.domain.matePost.entity.Visit;
+import com.example.mate.domain.matePost.entity.VisitPart;
+import com.example.mate.domain.matePost.repository.MateRepository;
+import com.example.mate.domain.matePost.repository.MateReviewRepository;
+import com.example.mate.domain.matePost.repository.VisitPartRepository;
+import com.example.mate.domain.matePost.repository.VisitRepository;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -206,7 +205,7 @@ public class ProfileIntegrationTest {
                 .match(match)
                 .title("테스트 제목")
                 .content("테스트 내용")
-                .status(com.example.mate.domain.mate.entity.Status.CLOSED)
+                .status(com.example.mate.domain.matePost.entity.Status.CLOSED)
                 .maxParticipants(3)
                 .age(Age.TWENTIES)
                 .gender(Gender.FEMALE)
@@ -567,7 +566,7 @@ public class ProfileIntegrationTest {
                             .build()))
                     .title("new title")
                     .content("new content")
-                    .status(com.example.mate.domain.mate.entity.Status.OPEN)
+                    .status(com.example.mate.domain.matePost.entity.Status.OPEN)
                     .maxParticipants(10)
                     .age(Age.ALL)
                     .gender(Gender.ANY)

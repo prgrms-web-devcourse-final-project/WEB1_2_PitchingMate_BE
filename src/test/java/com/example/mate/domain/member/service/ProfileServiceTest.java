@@ -15,9 +15,9 @@ import com.example.mate.domain.goodsPost.entity.Status;
 import com.example.mate.domain.goodsPost.repository.GoodsPostRepository;
 import com.example.mate.domain.goodsReview.repository.GoodsReviewRepositoryCustom;
 import com.example.mate.domain.match.entity.Match;
-import com.example.mate.domain.mate.dto.response.MatePostSummaryResponse;
-import com.example.mate.domain.mate.entity.*;
-import com.example.mate.domain.mate.repository.*;
+import com.example.mate.domain.matePost.dto.response.MatePostSummaryResponse;
+import com.example.mate.domain.matePost.entity.*;
+import com.example.mate.domain.matePost.repository.*;
 import com.example.mate.domain.member.dto.response.MyGoodsRecordResponse;
 import com.example.mate.domain.member.dto.response.MyReviewResponse;
 import com.example.mate.domain.member.dto.response.MyTimelineResponse;
@@ -153,7 +153,7 @@ class ProfileServiceTest {
                 .title("test title")
                 .content("test content")
                 .imageUrl(goodsPostImage.getImageUrl())
-                .status(com.example.mate.domain.mate.entity.Status.OPEN)
+                .status(com.example.mate.domain.matePost.entity.Status.OPEN)
                 .maxParticipants(4)
                 .age(Age.TWENTIES)
                 .gender(Gender.FEMALE)
