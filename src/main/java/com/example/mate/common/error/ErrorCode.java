@@ -82,6 +82,8 @@ public enum ErrorCode {
     // Mate Review
     NOT_PARTICIPANT_OR_AUTHOR(HttpStatus.FORBIDDEN, "R002", "리뷰어와 리뷰 대상자 모두 직관 참여자여야 합니다."),
     REVIEW_NOT_FOUND_BY_ID(HttpStatus.NOT_FOUND, "R005", "해당 ID의 리뷰를 찾을 수 없습니다."),
+    MATE_REVIEW_STATUS_NOT_VISIT_COMPLETE(HttpStatus.BAD_REQUEST, "MR003", "메이트 후기는 직관완료 상태에서만 작성할 수 있습니다."),
+    MATE_REVIEW_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "MR004", "메이트 후기는 한 번만 작성할 수 있습니다."),
 
     // FILE
     FILE_IS_EMPTY(HttpStatus.BAD_REQUEST, "F001", "빈 파일을 업로드할 수 없습니다. 파일 내용을 확인해주세요."),

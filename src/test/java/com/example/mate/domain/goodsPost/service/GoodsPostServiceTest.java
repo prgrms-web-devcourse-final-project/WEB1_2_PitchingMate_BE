@@ -2,6 +2,7 @@ package com.example.mate.domain.goodsPost.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.within;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
@@ -126,13 +127,15 @@ class GoodsPostServiceTest {
         @DisplayName("굿즈거래 판매글 작성 성공")
         void register_goods_post_success() {
             // given
-            GoodsPostRequest request = new GoodsPostRequest(1L, "title", Category.ACCESSORY, 10_000, "content", createLocationInfo());
+            GoodsPostRequest request = new GoodsPostRequest(1L, "title", Category.ACCESSORY, 10_000, "content",
+                    createLocationInfo());
             List<MultipartFile> files = List.of(createFile(MediaType.IMAGE_JPEG_VALUE));
 
             GoodsPost post = GoodsPostRequest.toEntity(member, request);
 
             given(memberRepository.findById(member.getId())).willReturn(Optional.of(member));
             given(goodsPostRepository.save(any(GoodsPost.class))).willReturn(post);
+            given(memberRepository.save(any(Member.class))).willReturn(member);
 
             // when
             GoodsPostResponse response = goodsPostService.registerGoodsPost(member.getId(), request, files);
@@ -140,9 +143,11 @@ class GoodsPostServiceTest {
             // then
             assertThat(response).isNotNull();
             assertThat(response.getStatus()).isEqualTo(Status.OPEN.getValue());
+            assertThat(member.getManner()).isCloseTo(0.301f, within(0.0001f));
 
             verify(memberRepository).findById(member.getId());
             verify(goodsPostRepository).save(any(GoodsPost.class));
+            verify(memberRepository).save(any(Member.class));
         }
 
         @Test
@@ -150,7 +155,8 @@ class GoodsPostServiceTest {
         void register_goods_post_failed_with_invalid_member() {
             // given
             Long invalidMemberId = 100L;
-            GoodsPostRequest request = new GoodsPostRequest(1L, "title", Category.ACCESSORY, 10_000, "content", createLocationInfo());
+            GoodsPostRequest request = new GoodsPostRequest(1L, "title", Category.ACCESSORY, 10_000, "content",
+                    createLocationInfo());
             List<MultipartFile> files = List.of(createFile(MediaType.IMAGE_JPEG_VALUE));
             given(memberRepository.findById(invalidMemberId)).willReturn(Optional.empty());
 
@@ -168,7 +174,8 @@ class GoodsPostServiceTest {
         @DisplayName("굿즈거래 판매글 작성 실패 - 형식이 잘못된 파일")
         void register_goods_post_failed_with_invalid_file() {
             // given
-            GoodsPostRequest request = new GoodsPostRequest(1L, "title", Category.ACCESSORY, 10_000, "content", createLocationInfo());
+            GoodsPostRequest request = new GoodsPostRequest(1L, "title", Category.ACCESSORY, 10_000, "content",
+                    createLocationInfo());
             List<MultipartFile> files = List.of(createFile(MediaType.APPLICATION_PDF_VALUE));
             given(memberRepository.findById(member.getId())).willReturn(Optional.of(member));
 
@@ -192,7 +199,8 @@ class GoodsPostServiceTest {
         void update_goods_post_success() {
             // given
             Long goodsPostId = 1L;
-            GoodsPostRequest request = new GoodsPostRequest(1L, "title", Category.CAP, 100_000, "test....", createLocationInfo());
+            GoodsPostRequest request = new GoodsPostRequest(1L, "title", Category.CAP, 100_000, "test....",
+                    createLocationInfo());
             List<MultipartFile> files = List.of(createFile(MediaType.IMAGE_JPEG_VALUE));
 
             given(memberRepository.findById(member.getId())).willReturn(Optional.of(member));
@@ -219,7 +227,8 @@ class GoodsPostServiceTest {
         void update_goods_post_failed_with_invalid_member() {
             // given
             Long goodsPostId = 1L;
-            GoodsPostRequest request = new GoodsPostRequest(1L, "title", Category.CAP, 100_000, "test....", createLocationInfo());
+            GoodsPostRequest request = new GoodsPostRequest(1L, "title", Category.CAP, 100_000, "test....",
+                    createLocationInfo());
             List<MultipartFile> files = List.of(createFile(MediaType.IMAGE_JPEG_VALUE));
             Member notSeller = Member.builder().id(11L).name("홍길동").build();
 
@@ -243,7 +252,8 @@ class GoodsPostServiceTest {
         void update_goods_post_failed_with_invalid_post() {
             // given
             Long goodsPostId = 1L;
-            GoodsPostRequest request = new GoodsPostRequest(1L, "title", Category.CAP, 100_000, "test....", createLocationInfo());
+            GoodsPostRequest request = new GoodsPostRequest(1L, "title", Category.CAP, 100_000, "test....",
+                    createLocationInfo());
             List<MultipartFile> files = List.of(createFile(MediaType.IMAGE_JPEG_VALUE));
 
             given(memberRepository.findById(member.getId())).willReturn(Optional.of(member));
@@ -276,16 +286,20 @@ class GoodsPostServiceTest {
             given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
             given(goodsPostRepository.findById(goodsPostId)).willReturn(Optional.of(goodsPost));
             given(imageRepository.getImageUrlsByPostId(goodsPostId)).willReturn(List.of());
+            given(memberRepository.save(any(Member.class))).willReturn(member);
 
             // when
             goodsPostService.deleteGoodsPost(memberId, goodsPostId);
 
             // then
+            assertThat(member.getManner()).isCloseTo(0.299f, within(0.0001f));
+
             verify(memberRepository).findById(memberId);
             verify(goodsPostRepository).findById(goodsPostId);
             verify(imageRepository).getImageUrlsByPostId(goodsPostId);
             verify(imageRepository).deleteAllByPostId(goodsPostId);
             verify(goodsPostRepository).delete(goodsPost);
+            verify(memberRepository).save(any(Member.class));
         }
 
         @Test
@@ -419,7 +433,8 @@ class GoodsPostServiceTest {
             GoodsPostSummaryResponse goodsPostSummaryResponse = responses.get(0);
             assertThat(goodsPostSummaryResponse.getTitle()).isEqualTo(goodsPost.getTitle());
             assertThat(goodsPostSummaryResponse.getPrice()).isEqualTo(goodsPost.getPrice());
-            assertThat(goodsPostSummaryResponse.getImageUrl()).isEqualTo(FileUtils.getThumbnailImageUrl(goodsPostImage.getImageUrl()));
+            assertThat(goodsPostSummaryResponse.getImageUrl()).isEqualTo(
+                    FileUtils.getThumbnailImageUrl(goodsPostImage.getImageUrl()));
 
             verify(goodsPostRepository).findMainGoodsPosts(1L, Status.OPEN, PageRequest.of(0, 4));
         }
@@ -469,10 +484,12 @@ class GoodsPostServiceTest {
             PageImpl<GoodsPost> goodsPostPage = new PageImpl<>(List.of(postWithoutFilters));
             PageRequest pageRequest = PageRequest.of(0, 10);
 
-            given(goodsPostRepository.findPageGoodsPosts(teamId, Status.OPEN, category, pageRequest)).willReturn(goodsPostPage);
+            given(goodsPostRepository.findPageGoodsPosts(teamId, Status.OPEN, category, pageRequest)).willReturn(
+                    goodsPostPage);
 
             // when
-            PageResponse<GoodsPostSummaryResponse> pageGoodsPosts = goodsPostService.getPageGoodsPosts(teamId, null, pageRequest);
+            PageResponse<GoodsPostSummaryResponse> pageGoodsPosts = goodsPostService.getPageGoodsPosts(teamId, null,
+                    pageRequest);
 
             // then
             assertThat(pageGoodsPosts).isNotNull();
@@ -504,7 +521,8 @@ class GoodsPostServiceTest {
             PageImpl<GoodsPost> goodsPostPage = new PageImpl<>(List.of(postWithFilters));
             PageRequest pageRequest = PageRequest.of(0, 10);
 
-            given(goodsPostRepository.findPageGoodsPosts(teamId, Status.OPEN, category, pageRequest)).willReturn(goodsPostPage);
+            given(goodsPostRepository.findPageGoodsPosts(teamId, Status.OPEN, category, pageRequest)).willReturn(
+                    goodsPostPage);
 
             // when
             PageResponse<GoodsPostSummaryResponse> pageGoodsPosts
@@ -562,6 +580,8 @@ class GoodsPostServiceTest {
             // then
             assertThat(goodsPost.getStatus()).isEqualTo(Status.CLOSED);
             assertThat(goodsPost.getBuyer()).isEqualTo(buyer);
+            assertThat(member.getManner()).isCloseTo(0.302f, within(0.0001f));
+            assertThat(buyer.getManner()).isCloseTo(0.302f, within(0.0001f));
 
             verify(memberRepository).findById(sellerId);
             verify(goodsPostRepository).findById(goodsPostId);

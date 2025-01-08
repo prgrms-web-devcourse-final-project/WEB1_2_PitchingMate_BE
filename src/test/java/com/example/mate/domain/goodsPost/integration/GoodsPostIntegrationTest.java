@@ -1,6 +1,7 @@
 package com.example.mate.domain.goodsPost.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
@@ -52,12 +53,18 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class GoodsPostIntegrationTest {
 
-    @Autowired private MockMvc mockMvc;
-    @Autowired private MemberRepository memberRepository;
-    @Autowired private GoodsPostRepository goodsPostRepository;
-    @Autowired private GoodsPostImageRepository imageRepository;
-    @Autowired private JdbcTemplate jdbcTemplate;
-    @Autowired private ObjectMapper objectMapper;
+    @Autowired
+    private MockMvc mockMvc;
+    @Autowired
+    private MemberRepository memberRepository;
+    @Autowired
+    private GoodsPostRepository goodsPostRepository;
+    @Autowired
+    private GoodsPostImageRepository imageRepository;
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+    @Autowired
+    private ObjectMapper objectMapper;
 
     private Member member;
     private GoodsPost goodsPost;
@@ -106,6 +113,7 @@ public class GoodsPostIntegrationTest {
         // then
         assertApiResponse(apiResponse, goodsPostRequest, files);
         assertActualData(apiResponse.getData().getId(), goodsPostRequest, files);
+        assertThat(member.getManner()).isCloseTo(0.301f, within(0.0001f));
     }
 
     @Test
@@ -127,7 +135,8 @@ public class GoodsPostIntegrationTest {
         );
 
         // when
-        MockMultipartHttpServletRequestBuilder multipartRequest = multipart("/api/goods/{goodsPostId}", goodsPostId).file(data);
+        MockMultipartHttpServletRequestBuilder multipartRequest = multipart("/api/goods/{goodsPostId}",
+                goodsPostId).file(data);
         files.forEach(multipartRequest::file);
         multipartRequest.with(request -> {
             request.setMethod("PUT"); // PUT 메서드로 변경
@@ -204,6 +213,7 @@ public class GoodsPostIntegrationTest {
         // then
         Optional<GoodsPost> goodsPost = goodsPostRepository.findById(goodsPostId);
         assertThat(goodsPost).isEmpty();
+        assertThat(member.getManner()).isCloseTo(0.299f, within(0.0001f));
     }
 
     @Test
@@ -258,7 +268,9 @@ public class GoodsPostIntegrationTest {
                 .getResponse();
         result.setCharacterEncoding("UTF-8");
 
-        ApiResponse<List<GoodsPostSummaryResponse>> apiResponse = objectMapper.readValue(result.getContentAsString(), new TypeReference<>() {});
+        ApiResponse<List<GoodsPostSummaryResponse>> apiResponse = objectMapper.readValue(result.getContentAsString(),
+                new TypeReference<>() {
+                });
 
         // then
         assertThat(apiResponse.getCode()).isEqualTo(200);
@@ -273,7 +285,8 @@ public class GoodsPostIntegrationTest {
         assertThat(response.getTeamName()).isEqualTo(TeamInfo.getById(goodsPost.getTeamId()).shortName);
         assertThat(response.getPrice()).isEqualTo(goodsPost.getPrice());
         assertThat(response.getCategory()).isEqualTo(goodsPost.getCategory().getValue());
-        assertThat(response.getImageUrl()).isEqualTo(FileUtils.getThumbnailImageUrl(goodsPost.getGoodsPostImages().get(0).getImageUrl()));
+        assertThat(response.getImageUrl()).isEqualTo(
+                FileUtils.getThumbnailImageUrl(goodsPost.getGoodsPostImages().get(0).getImageUrl()));
     }
 
     @Test
@@ -319,7 +332,8 @@ public class GoodsPostIntegrationTest {
         result.setCharacterEncoding("UTF-8");
 
         ApiResponse<List<GoodsPostSummaryResponse>> apiResponse = objectMapper.readValue(result.getContentAsString(),
-                new TypeReference<>() {});
+                new TypeReference<>() {
+                });
 
         // then
         assertThat(apiResponse.getCode()).isEqualTo(200);
@@ -361,7 +375,8 @@ public class GoodsPostIntegrationTest {
                 .getResponse();
         result.setCharacterEncoding("UTF-8");
 
-        ApiResponse<Void> apiResponse = objectMapper.readValue(result.getContentAsString(), new TypeReference<>() {});
+        ApiResponse<Void> apiResponse = objectMapper.readValue(result.getContentAsString(), new TypeReference<>() {
+        });
 
         // then
         assertThat(apiResponse.getCode()).isEqualTo(200);
@@ -370,12 +385,14 @@ public class GoodsPostIntegrationTest {
         GoodsPost completedPost = goodsPostRepository.findById(goodsPostId).orElseThrow();
         assertThat(completedPost.getStatus()).isEqualTo(Status.CLOSED);
         assertThat(completedPost.getBuyer()).isNotNull();
+        assertThat(completedPost.getSeller().getManner()).isCloseTo(0.302f, within(0.0001f));
 
         Member resultBuyer = completedPost.getBuyer();
         assertThat(resultBuyer.getId()).isEqualTo(buyer.getId());
         assertThat(resultBuyer.getName()).isEqualTo(buyer.getName());
         assertThat(resultBuyer.getEmail()).isEqualTo(buyer.getEmail());
         assertThat(resultBuyer.getNickname()).isEqualTo(buyer.getNickname());
+        assertThat(resultBuyer.getManner()).isCloseTo(0.502f, within(0.0001f));
     }
 
     private Member createMember() {

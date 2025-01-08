@@ -1,14 +1,36 @@
 package com.example.mate.domain.mate.service;
 
+import static com.example.mate.common.error.ErrorCode.ALREADY_COMPLETED_POST;
+import static com.example.mate.common.error.ErrorCode.INVALID_MATE_POST_PARTICIPANT_IDS;
+import static com.example.mate.common.error.ErrorCode.MATCH_NOT_FOUND_BY_ID;
+import static com.example.mate.common.error.ErrorCode.MATE_POST_COMPLETE_TIME_NOT_ALLOWED;
+import static com.example.mate.common.error.ErrorCode.MATE_POST_MAX_PARTICIPANTS_EXCEEDED;
+import static com.example.mate.common.error.ErrorCode.MATE_POST_NOT_FOUND_BY_ID;
+import static com.example.mate.common.error.ErrorCode.MATE_POST_UPDATE_NOT_ALLOWED;
+import static com.example.mate.common.error.ErrorCode.MEMBER_NOT_FOUND_BY_ID;
+import static com.example.mate.common.error.ErrorCode.NOT_CLOSED_STATUS_FOR_COMPLETION;
+import static com.example.mate.common.error.ErrorCode.NOT_PARTICIPANT_OR_AUTHOR;
+import static com.example.mate.common.error.ErrorCode.TEAM_NOT_FOUND;
+
 import com.example.mate.common.error.CustomException;
+import com.example.mate.common.error.ErrorCode;
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.constant.TeamInfo;
 import com.example.mate.domain.file.FileService;
 import com.example.mate.domain.file.FileValidator;
 import com.example.mate.domain.match.entity.Match;
 import com.example.mate.domain.match.repository.MatchRepository;
-import com.example.mate.domain.mate.dto.request.*;
-import com.example.mate.domain.mate.dto.response.*;
+import com.example.mate.domain.mate.dto.request.MatePostCompleteRequest;
+import com.example.mate.domain.mate.dto.request.MatePostCreateRequest;
+import com.example.mate.domain.mate.dto.request.MatePostSearchRequest;
+import com.example.mate.domain.mate.dto.request.MatePostStatusRequest;
+import com.example.mate.domain.mate.dto.request.MatePostUpdateRequest;
+import com.example.mate.domain.mate.dto.request.MateReviewCreateRequest;
+import com.example.mate.domain.mate.dto.response.MatePostCompleteResponse;
+import com.example.mate.domain.mate.dto.response.MatePostDetailResponse;
+import com.example.mate.domain.mate.dto.response.MatePostResponse;
+import com.example.mate.domain.mate.dto.response.MatePostSummaryResponse;
+import com.example.mate.domain.mate.dto.response.MateReviewCreateResponse;
 import com.example.mate.domain.mate.entity.MatePost;
 import com.example.mate.domain.mate.entity.MateReview;
 import com.example.mate.domain.mate.entity.Status;
@@ -17,8 +39,11 @@ import com.example.mate.domain.mate.repository.MateRepository;
 import com.example.mate.domain.mate.repository.MateReviewRepository;
 import com.example.mate.domain.mateChat.repository.MateChatRoomMemberRepository;
 import com.example.mate.domain.mateChat.repository.MateChatRoomRepository;
+import com.example.mate.domain.member.entity.ActivityType;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
+import java.time.LocalDateTime;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -26,11 +51,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.time.LocalDateTime;
-import java.util.List;
-
-import static com.example.mate.common.error.ErrorCode.*;
 
 @Service
 @Transactional
@@ -70,6 +90,9 @@ public class MateService {
         MatePost savedPost = mateRepository.save(matePost);
 
         handleFileUpload(file, matePost);
+
+        author.updateManner(ActivityType.POST);
+        memberRepository.save(author);
 
         return MatePostResponse.from(savedPost);
     }
@@ -197,6 +220,11 @@ public class MateService {
         deleteNonDefaultImage(matePost.getImageUrl());
 
         mateRepository.delete(matePost);
+
+        Member member = memberRepository.findByIdAndNotDeleted(memberId)
+                .orElseThrow(() -> new CustomException(MEMBER_NOT_FOUND_BY_ID));
+        member.updateManner(ActivityType.DELETE);
+        memberRepository.save(member);
     }
 
     private void validatePostStatus(Status status) {
@@ -216,6 +244,7 @@ public class MateService {
                 matePost.getMaxParticipants());
 
         matePost.complete(participants);
+        matePost.getAuthor().updateManner(ActivityType.MATE);
         return MatePostCompleteResponse.from(matePost);
     }
 
@@ -266,6 +295,8 @@ public class MateService {
 
         MateReview review = matePost.getVisit().createReview(reviewer, reviewee, request);
         MateReview savedReview = mateReviewRepository.save(review);
+        reviewee.updateManner(request.getRating());
+        memberRepository.save(reviewee);
 
         return MateReviewCreateResponse.from(savedReview);
     }
@@ -274,6 +305,17 @@ public class MateService {
         // 리뷰어와 리뷰 대상자 모두 참여자(또는 방장) 여부 검증
         validateParticipant(matePost, reviewer);
         validateParticipant(matePost, reviewee);
+
+        if (matePost.getStatus() != Status.VISIT_COMPLETE) {
+            throw new CustomException(ErrorCode.MATE_REVIEW_STATUS_NOT_VISIT_COMPLETE);
+        }
+
+        if (mateReviewRepository.existsByVisitIdAndReviewerIdAndRevieweeId(
+                matePost.getVisit().getId(),
+                reviewer.getId(),
+                reviewee.getId())) {
+            throw new CustomException(ErrorCode.MATE_REVIEW_ALREADY_EXISTS);
+        }
     }
 
     private void validateParticipant(MatePost matePost, Member member) {
