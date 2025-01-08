@@ -23,10 +23,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static com.example.mate.common.error.ErrorCode.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -361,10 +358,13 @@ class MateStatusServiceTest {
                     .maxParticipants(3)
                     .build();
 
-            List<Long> participantIds = List.of(1L, 2L);
+            List<Long> participantIds = List.of(2L, 3L);
             List<Member> participants = participantIds.stream()
                     .map(this::createParticipant)
                     .toList();
+
+            List<Long> allParticipantIds = new ArrayList<>(participantIds);
+            allParticipantIds.add(author.getId());
 
             MatePostCompleteRequest request = new MatePostCompleteRequest(participantIds);
 
@@ -377,7 +377,7 @@ class MateStatusServiceTest {
             // then
             assertThat(response.getId()).isEqualTo(POST_ID);
             assertThat(response.getStatus()).isEqualTo(Status.VISIT_COMPLETE);
-            assertThat(response.getParticipantIds()).containsExactlyInAnyOrderElementsOf(participantIds);
+            assertThat(response.getParticipantIds()).containsExactlyInAnyOrderElementsOf(allParticipantIds);
 
             verify(mateRepository).findById(POST_ID);
             verify(memberRepository).findAllById(participantIds);

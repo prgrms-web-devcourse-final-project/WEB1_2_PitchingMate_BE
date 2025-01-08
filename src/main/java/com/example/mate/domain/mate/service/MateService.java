@@ -28,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.example.mate.common.error.ErrorCode.*;
@@ -212,10 +213,11 @@ public class MateService {
         validateCompletionTime(matePost);
         validateCompletionStatus(matePost);
 
-        List<Member> participants = findAndValidateParticipants(request.getParticipantIds(),
-                matePost.getMaxParticipants());
+        List<Member> participants = findAndValidateParticipants(request.getParticipantIds(), matePost.getMaxParticipants());
+        List<Member> allParticipants = new ArrayList<>(participants);
+        allParticipants.add(matePost.getAuthor());
 
-        matePost.complete(participants);
+        matePost.complete(allParticipants);
         return MatePostCompleteResponse.from(matePost);
     }
 

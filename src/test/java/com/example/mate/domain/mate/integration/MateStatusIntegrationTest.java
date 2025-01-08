@@ -1,23 +1,5 @@
 package com.example.mate.domain.mate.integration;
 
-import static com.example.mate.common.error.ErrorCode.ALREADY_COMPLETED_POST;
-import static com.example.mate.common.error.ErrorCode.DIRECT_VISIT_COMPLETE_FORBIDDEN;
-import static com.example.mate.common.error.ErrorCode.INVALID_MATE_POST_PARTICIPANT_IDS;
-import static com.example.mate.common.error.ErrorCode.MATE_POST_COMPLETE_TIME_NOT_ALLOWED;
-import static com.example.mate.common.error.ErrorCode.MATE_POST_MAX_PARTICIPANTS_EXCEEDED;
-import static com.example.mate.common.error.ErrorCode.MATE_POST_NOT_FOUND_BY_ID;
-import static com.example.mate.common.error.ErrorCode.MATE_POST_UPDATE_NOT_ALLOWED;
-import static com.example.mate.common.error.ErrorCode.NOT_CLOSED_STATUS_FOR_COMPLETION;
-import static com.example.mate.domain.match.entity.MatchStatus.SCHEDULED;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.hasSize;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import com.example.mate.common.security.util.JwtUtil;
 import com.example.mate.config.WithAuthMember;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.match.entity.Match;
@@ -32,10 +14,6 @@ import com.example.mate.domain.mate.repository.MateRepository;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -43,11 +21,25 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+import static com.example.mate.common.error.ErrorCode.*;
+import static com.example.mate.domain.match.entity.MatchStatus.SCHEDULED;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.hasSize;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 
 @SpringBootTest
@@ -74,7 +66,7 @@ public class MateStatusIntegrationTest {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    private Member testMember;
+    private Member authMember;
     private Member participant1;
     private Member participant2;
     private Match futureMatch;
@@ -93,7 +85,7 @@ public class MateStatusIntegrationTest {
         jdbcTemplate.execute("ALTER TABLE member ALTER COLUMN id RESTART WITH 1");
 
         // 테스트 멤버와 참여자들 생성
-        testMember = createTestMember("testMember");
+        authMember = createTestMember("testMember");
         participant1 = createTestMember("part1");
         participant2 = createTestMember("part2");
 
@@ -131,7 +123,7 @@ public class MateStatusIntegrationTest {
 
     private MatePost createMatePost(Match match, Long teamId, Status status) {
         return mateRepository.save(MatePost.builder()
-                .author(testMember)
+                .author(authMember)
                 .teamId(teamId)
                 .match(match)
                 .title("테스트 제목")
@@ -328,8 +320,9 @@ public class MateStatusIntegrationTest {
                     .andExpect(jsonPath("$.data.id").value(closedPost.getId()))
                     .andExpect(jsonPath("$.data.status").value("직관완료"))
                     .andExpect(jsonPath("$.data.participantIds").isArray())
-                    .andExpect(jsonPath("$.data.participantIds", hasSize(2)))
+                    .andExpect(jsonPath("$.data.participantIds", hasSize(3)))
                     .andExpect(jsonPath("$.data.participantIds", containsInAnyOrder(
+                            authMember.getId().intValue(),
                             participant1.getId().intValue(),
                             participant2.getId().intValue())))
                     .andDo(print());
@@ -338,7 +331,7 @@ public class MateStatusIntegrationTest {
             MatePost savedPost = mateRepository.findById(closedPost.getId()).orElseThrow();
             assertThat(savedPost.getStatus()).isEqualTo(Status.VISIT_COMPLETE);
             assertThat(savedPost.getVisit()).isNotNull();
-            assertThat(savedPost.getVisit().getParticipants()).hasSize(2);
+            assertThat(savedPost.getVisit().getParticipants()).hasSize(3);
         }
 
         @Test

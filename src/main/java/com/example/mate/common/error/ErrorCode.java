@@ -57,7 +57,7 @@ public enum ErrorCode {
     ALREADY_COMPLETED_POST(HttpStatus.FORBIDDEN, "MP009", "이미 직관완료한 게시글은 수정하거나 삭제할 수 없습니다."),
     MATE_POST_PARTICIPANTS_NOT_FOUND(HttpStatus.BAD_REQUEST, "MP010", "직관 참여자 목록이 비어있습니다."),
     VISIT_COMPLETE_POST_DELETE_FORBIDDEN(HttpStatus.FORBIDDEN, "MP0011", "직관 완료된 게시글은 삭제할 수 없습니다"),
-    MATE_POST_MAX_PARTICIPANTS_EXCEEDED(HttpStatus.BAD_REQUEST, "MP0012", "참여자 수가 최대 모집 인원을 초과했습니다"),
+    MATE_POST_MAX_PARTICIPANTS_EXCEEDED(HttpStatus.BAD_REQUEST, "MP0012", "방장을 포함한 참여자 수가 최대 모집 인원을 초과했습니다"),
     INVALID_MATE_POST_PARTICIPANT_IDS(HttpStatus.BAD_REQUEST, "MP013", "존재하지 않는 회원이 참여자 목록에 포함되어 있습니다"),
 
     // Goods
