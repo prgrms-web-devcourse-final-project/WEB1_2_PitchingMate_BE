@@ -15,7 +15,7 @@ import java.util.Optional;
 @Repository
 public interface MatchRepository extends JpaRepository<Match, Long> {
     @Query("SELECT m FROM Match m WHERE m.matchTime > :now ORDER BY m.matchTime ASC")
-    List<Match> findMainBannerMatches(@Param("now") LocalDateTime now, Pageable pageable);  // Page<Match>가 아닌 List<Match>
+    List<Match> findMainBannerMatches(@Param("now") LocalDateTime now, Pageable pageable);
 
     @Query("SELECT m FROM Match m " +
             "WHERE (m.homeTeamId = :teamId OR m.awayTeamId = :teamId) " +
