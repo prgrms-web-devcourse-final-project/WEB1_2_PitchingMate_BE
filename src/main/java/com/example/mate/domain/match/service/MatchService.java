@@ -8,6 +8,7 @@ import com.example.mate.domain.match.entity.Match;
 import com.example.mate.domain.match.repository.MatchRepository;
 import com.example.mate.domain.match.util.WeekCalculator;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.time.DayOfWeek;
@@ -27,16 +28,15 @@ public class MatchService {
     private static final int WEEKS_TO_FETCH = 4;
 
     public List<MatchResponse> getMainBannerMatches() {
-        return matchRepository.findMainBannerMatches(LocalDateTime.now())
+        return matchRepository.findMainBannerMatches(LocalDateTime.now(), PageRequest.of(0, 5))
                 .stream()
                 .map(match -> MatchResponse.from(match, null))
                 .collect(Collectors.toList());
     }
 
-
     public List<MatchResponse> getTeamMatches(Long teamId) {
         TeamInfo.getById(teamId);
-        return matchRepository.findTop3TeamMatchesAfterNow(teamId, LocalDateTime.now())
+        return matchRepository.findTop3TeamMatchesAfterNow(teamId, LocalDateTime.now(), PageRequest.of(0, 3))
                 .stream()
                 .map(match -> MatchResponse.from(match, teamId))
                 .collect(Collectors.toList());
