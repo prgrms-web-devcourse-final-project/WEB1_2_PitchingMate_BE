@@ -56,10 +56,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 @ExtendWith(MockitoExtension.class)
-class MateServiceTest {
+class MatePostServiceTest {
 
     @InjectMocks
-    private MateService mateService;
+    private MatePostService matePostService;
 
     @Mock
     private MateRepository mateRepository;
@@ -145,7 +145,7 @@ class MateServiceTest {
                     .willReturn(matePost);
 
             // when
-            MatePostResponse response = mateService.createMatePost(request, null, TEST_MEMBER_ID);
+            MatePostResponse response = matePostService.createMatePost(request, null, TEST_MEMBER_ID);
 
             // then
             assertThat(response.getStatus()).isEqualTo(Status.OPEN);
@@ -173,7 +173,7 @@ class MateServiceTest {
                     .willReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> mateService.createMatePost(request, null, TEST_MEMBER_ID))
+            assertThatThrownBy(() -> matePostService.createMatePost(request, null, TEST_MEMBER_ID))
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", MEMBER_NOT_FOUND_BY_ID);
 
@@ -204,7 +204,7 @@ class MateServiceTest {
                     .willReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> mateService.createMatePost(request, null, TEST_MEMBER_ID))
+            assertThatThrownBy(() -> matePostService.createMatePost(request, null, TEST_MEMBER_ID))
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", MATCH_NOT_FOUND_BY_ID);
 
@@ -265,7 +265,7 @@ class MateServiceTest {
                     .willReturn(testPosts);
 
             // when
-            List<MatePostSummaryResponse> result = mateService.getMainPagePosts(null);
+            List<MatePostSummaryResponse> result = matePostService.getMainPagePosts(null);
 
             // then
             assertThat(result.size()).isEqualTo(2);
@@ -293,7 +293,7 @@ class MateServiceTest {
                     .willReturn(testPosts);
 
             // when
-            List<MatePostSummaryResponse> result = mateService.getMainPagePosts(teamId);
+            List<MatePostSummaryResponse> result = matePostService.getMainPagePosts(teamId);
 
             // then
             assertThat(result).hasSize(2);
@@ -321,7 +321,7 @@ class MateServiceTest {
                     .willReturn(Collections.emptyList());
 
             // when
-            List<MatePostSummaryResponse> result = mateService.getMainPagePosts(1L);
+            List<MatePostSummaryResponse> result = matePostService.getMainPagePosts(1L);
 
             // then
             assertThat(result).isEmpty();
@@ -340,7 +340,7 @@ class MateServiceTest {
             Long invalidTeamId = 999L;
 
             // when & then
-            assertThatThrownBy(() -> mateService.getMainPagePosts(invalidTeamId))
+            assertThatThrownBy(() -> matePostService.getMainPagePosts(invalidTeamId))
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", TEAM_NOT_FOUND);
 
@@ -406,7 +406,7 @@ class MateServiceTest {
                     .willReturn(testPage);
 
             // when
-            PageResponse<MatePostSummaryResponse> result = mateService.getMatePagePosts(request, pageable);
+            PageResponse<MatePostSummaryResponse> result = matePostService.getMatePagePosts(request, pageable);
 
             // then
             assertThat(result.getContent()).hasSize(2);
@@ -459,7 +459,7 @@ class MateServiceTest {
                     .willReturn(testPage);
 
             // when
-            PageResponse<MatePostSummaryResponse> result = mateService.getMatePagePosts(request, pageable);
+            PageResponse<MatePostSummaryResponse> result = matePostService.getMatePagePosts(request, pageable);
 
             // then
             assertThat(result.getContent()).hasSize(1);
@@ -482,7 +482,7 @@ class MateServiceTest {
                     .willReturn(emptyPage);
 
             // when
-            PageResponse<MatePostSummaryResponse> result = mateService.getMatePagePosts(request, pageable);
+            PageResponse<MatePostSummaryResponse> result = matePostService.getMatePagePosts(request, pageable);
 
             // then
             assertThat(result.getContent()).isEmpty();
@@ -501,7 +501,7 @@ class MateServiceTest {
                     .build();
 
             // when & then
-            assertThatThrownBy(() -> mateService.getMatePagePosts(request, pageable))
+            assertThatThrownBy(() -> matePostService.getMatePagePosts(request, pageable))
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", TEAM_NOT_FOUND);
 
@@ -540,7 +540,7 @@ class MateServiceTest {
                     .willReturn(Optional.of(testPost));
 
             // when
-            MatePostDetailResponse response = mateService.getMatePostDetail(POST_ID);
+            MatePostDetailResponse response = matePostService.getMatePostDetail(POST_ID);
 
             // then
             assertThat(response.getPostImageUrl()).isEqualTo(FileUtils.getImageUrl("post-image.jpg"));
@@ -589,7 +589,7 @@ class MateServiceTest {
                     .willReturn(Optional.of(testPost));
 
             // when
-            MatePostDetailResponse response = mateService.getMatePostDetail(POST_ID);
+            MatePostDetailResponse response = matePostService.getMatePostDetail(POST_ID);
 
             // then
             assertThat(response.getRivalTeamName()).isEqualTo("KIA");  // LG 팬의 게시글이므로 KIA가 상대팀
@@ -604,7 +604,7 @@ class MateServiceTest {
                     .willReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> mateService.getMatePostDetail(POST_ID))
+            assertThatThrownBy(() -> matePostService.getMatePostDetail(POST_ID))
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", MATE_POST_NOT_FOUND_BY_ID);
 
@@ -654,7 +654,7 @@ class MateServiceTest {
                     .willReturn(Optional.of(testMatch));
 
             // when
-            MatePostResponse response = mateService.updateMatePost(TEST_MEMBER_ID, 1L, request, null);
+            MatePostResponse response = matePostService.updateMatePost(TEST_MEMBER_ID, 1L, request, null);
 
             // then
             assertThat(response.getId()).isEqualTo(1L);
@@ -690,7 +690,7 @@ class MateServiceTest {
                     .willReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> mateService.updateMatePost(TEST_MEMBER_ID, 1L, request, null))
+            assertThatThrownBy(() -> matePostService.updateMatePost(TEST_MEMBER_ID, 1L, request, null))
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", MATE_POST_NOT_FOUND_BY_ID);
 
@@ -736,7 +736,7 @@ class MateServiceTest {
             Long unauthorizedMemberId = 999L;
 
             // when & then
-            assertThatThrownBy(() -> mateService.updateMatePost(unauthorizedMemberId, 1L, request, null))
+            assertThatThrownBy(() -> matePostService.updateMatePost(unauthorizedMemberId, 1L, request, null))
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", MATE_POST_UPDATE_NOT_ALLOWED);
 
@@ -780,7 +780,7 @@ class MateServiceTest {
                     .willReturn(Optional.of(completedPost));
 
             // when & then
-            assertThatThrownBy(() -> mateService.updateMatePost(TEST_MEMBER_ID, 1L, request, null))
+            assertThatThrownBy(() -> matePostService.updateMatePost(TEST_MEMBER_ID, 1L, request, null))
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", ALREADY_COMPLETED_POST);
 
@@ -825,7 +825,7 @@ class MateServiceTest {
                     .willReturn(Optional.of(originalPost));
 
             // when & then
-            assertThatThrownBy(() -> mateService.updateMatePost(TEST_MEMBER_ID, 1L, request, null))
+            assertThatThrownBy(() -> matePostService.updateMatePost(TEST_MEMBER_ID, 1L, request, null))
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", TEAM_NOT_FOUND);
 
@@ -871,7 +871,7 @@ class MateServiceTest {
                     .willReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> mateService.updateMatePost(TEST_MEMBER_ID, 1L, request, null))
+            assertThatThrownBy(() -> matePostService.updateMatePost(TEST_MEMBER_ID, 1L, request, null))
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", MATCH_NOT_FOUND_BY_ID);
 
@@ -911,7 +911,7 @@ class MateServiceTest {
                     .willReturn(Optional.of(matePost));
 
             // when
-            mateService.deleteMatePost(TEST_MEMBER_ID, POST_ID);
+            matePostService.deleteMatePost(TEST_MEMBER_ID, POST_ID);
 
             // then
             verify(mateRepository).findById(POST_ID);
@@ -946,7 +946,7 @@ class MateServiceTest {
                     .willReturn(Optional.of(matePost));
 
             // when
-            mateService.deleteMatePost(TEST_MEMBER_ID, POST_ID);
+            matePostService.deleteMatePost(TEST_MEMBER_ID, POST_ID);
 
             // then
             verify(mateRepository).findById(POST_ID);
@@ -980,7 +980,7 @@ class MateServiceTest {
                     .willReturn(Optional.of(matePost));
 
             // when & then
-            assertThatThrownBy(() -> mateService.deleteMatePost(differentMemberId, POST_ID))
+            assertThatThrownBy(() -> matePostService.deleteMatePost(differentMemberId, POST_ID))
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", MATE_POST_UPDATE_NOT_ALLOWED);
 

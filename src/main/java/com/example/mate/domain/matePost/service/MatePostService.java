@@ -36,7 +36,7 @@ import static com.example.mate.common.error.ErrorCode.*;
 @Service
 @Transactional
 @RequiredArgsConstructor
-public class MateService {
+public class MatePostService {
 
     private static final String DEFAULT_MATE_POST_IMAGE = "mate_default.svg";
 

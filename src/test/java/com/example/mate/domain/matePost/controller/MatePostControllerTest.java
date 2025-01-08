@@ -31,7 +31,7 @@ import com.example.mate.domain.matePost.dto.response.MatePostSummaryResponse;
 import com.example.mate.domain.matePost.entity.Age;
 import com.example.mate.domain.matePost.entity.Status;
 import com.example.mate.domain.matePost.entity.TransportType;
-import com.example.mate.domain.matePost.service.MateService;
+import com.example.mate.domain.matePost.service.MatePostService;
 import com.example.mate.domain.member.service.LogoutRedisService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
@@ -51,11 +51,11 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 
-@WebMvcTest(MateController.class)
+@WebMvcTest(MatePostController.class)
 @MockBean(JpaMetamodelMappingContext.class)
 @AutoConfigureMockMvc(addFilters = false)
 @WithAuthMember
-class MateControllerTest {
+class MatePostControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -64,7 +64,7 @@ class MateControllerTest {
     private ObjectMapper objectMapper;
 
     @MockBean
-    private MateService mateService;
+    private MatePostService matePostService;
 
     @MockBean
     private JwtUtil jwtUtil;
@@ -132,7 +132,7 @@ class MateControllerTest {
                     "test image content".getBytes()
             );
 
-            given(mateService.createMatePost(any(MatePostCreateRequest.class), any(), any()))
+            given(matePostService.createMatePost(any(MatePostCreateRequest.class), any(), any()))
                     .willReturn(response);
 
             // when & then
@@ -162,7 +162,7 @@ class MateControllerTest {
                     objectMapper.writeValueAsBytes(request)
             );
 
-            given(mateService.createMatePost(any(MatePostCreateRequest.class), any(), any()))
+            given(matePostService.createMatePost(any(MatePostCreateRequest.class), any(), any()))
                     .willReturn(response);
 
             // when & then
@@ -191,7 +191,7 @@ class MateControllerTest {
                     createMatePostSummaryResponse()
             );
 
-            given(mateService.getMainPagePosts(eq(teamId)))
+            given(matePostService.getMainPagePosts(eq(teamId)))
                     .willReturn(responses);
 
             // when & then
@@ -216,7 +216,7 @@ class MateControllerTest {
                     createMatePostSummaryResponse()
             );
 
-            given(mateService.getMainPagePosts(any()))
+            given(matePostService.getMainPagePosts(any()))
                     .willReturn(responses);
 
             // when & then
@@ -248,7 +248,7 @@ class MateControllerTest {
                     .pageSize(10)
                     .build();
 
-            given(mateService.getMatePagePosts(any(), any()))
+            given(matePostService.getMatePagePosts(any(), any()))
                     .willReturn(pageResponse);
 
             // when & then
@@ -278,7 +278,7 @@ class MateControllerTest {
                     .pageSize(10)
                     .build();
 
-            given(mateService.getMatePagePosts(any(), any()))
+            given(matePostService.getMatePagePosts(any(), any()))
                     .willReturn(pageResponse);
 
             // when & then
@@ -304,7 +304,7 @@ class MateControllerTest {
         @DisplayName("메이트 페이지 게시글 목록 조회 실패 - 잘못된 팀 ID")
         void getMatePagePosts_failWithInvalidTeamId() throws Exception {
             // given
-            given(mateService.getMatePagePosts(any(), any()))
+            given(matePostService.getMatePagePosts(any(), any()))
                     .willThrow(new CustomException(ErrorCode.TEAM_NOT_FOUND));
 
             // when & then
@@ -350,7 +350,7 @@ class MateControllerTest {
                     .pageSize(10)
                     .build();
 
-            given(mateService.getMatePagePosts(any(), any()))
+            given(matePostService.getMatePagePosts(any(), any()))
                     .willReturn(pageResponse);
 
             // when & then
@@ -402,7 +402,7 @@ class MateControllerTest {
             Long postId = 1L;
             MatePostDetailResponse response = createMatePostDetailResponse();
 
-            given(mateService.getMatePostDetail(postId))
+            given(matePostService.getMatePostDetail(postId))
                     .willReturn(response);
 
             // when & then
@@ -432,7 +432,7 @@ class MateControllerTest {
         void getMatePostDetail_failPostNotFound() throws Exception {
             // given
             Long nonExistentPostId = 999L;
-            given(mateService.getMatePostDetail(nonExistentPostId))
+            given(matePostService.getMatePostDetail(nonExistentPostId))
                     .willThrow(new CustomException(MATE_POST_NOT_FOUND_BY_ID));
 
             // when & then
@@ -492,7 +492,7 @@ class MateControllerTest {
                     "test image content".getBytes()
             );
 
-            given(mateService.updateMatePost(any(), eq(postId), any(MatePostUpdateRequest.class), any()))
+            given(matePostService.updateMatePost(any(), eq(postId), any(MatePostUpdateRequest.class), any()))
                     .willReturn(response);
 
             // when & then
@@ -507,7 +507,7 @@ class MateControllerTest {
                     .andExpect(jsonPath("$.data.status").value("모집중"))
                     .andExpect(jsonPath("$.code").value(200));
 
-            verify(mateService).updateMatePost(any(), eq(postId), any(MatePostUpdateRequest.class), any());
+            verify(matePostService).updateMatePost(any(), eq(postId), any(MatePostUpdateRequest.class), any());
         }
 
         @Test
@@ -525,7 +525,7 @@ class MateControllerTest {
                     objectMapper.writeValueAsBytes(request)
             );
 
-            given(mateService.updateMatePost(any(), eq(postId), any(MatePostUpdateRequest.class), isNull()))
+            given(matePostService.updateMatePost(any(), eq(postId), any(MatePostUpdateRequest.class), isNull()))
                     .willReturn(response);
 
             // when & then
@@ -539,7 +539,7 @@ class MateControllerTest {
                     .andExpect(jsonPath("$.data.status").value("모집중"))
                     .andExpect(jsonPath("$.code").value(200));
 
-            verify(mateService).updateMatePost(any(), eq(postId), any(MatePostUpdateRequest.class), isNull());
+            verify(matePostService).updateMatePost(any(), eq(postId), any(MatePostUpdateRequest.class), isNull());
         }
 
         @Test
@@ -572,7 +572,7 @@ class MateControllerTest {
                     .andDo(print())
                     .andExpect(status().isBadRequest());
 
-            verify(mateService, never()).updateMatePost(any(), any(), any(), any());
+            verify(matePostService, never()).updateMatePost(any(), any(), any(), any());
         }
 
         @Test
@@ -589,7 +589,7 @@ class MateControllerTest {
                     objectMapper.writeValueAsBytes(request)
             );
 
-            given(mateService.updateMatePost(any(), any(), any(), any()))
+            given(matePostService.updateMatePost(any(), any(), any(), any()))
                     .willThrow(new CustomException(MATE_POST_NOT_FOUND_BY_ID));
 
             // when & then
@@ -616,7 +616,7 @@ class MateControllerTest {
                     objectMapper.writeValueAsBytes(request)
             );
 
-            given(mateService.updateMatePost(any(), any(), any(), any()))
+            given(matePostService.updateMatePost(any(), any(), any(), any()))
                     .willThrow(new CustomException(MATE_POST_UPDATE_NOT_ALLOWED));
 
             // when & then
@@ -643,7 +643,7 @@ class MateControllerTest {
                     objectMapper.writeValueAsBytes(request)
             );
 
-            given(mateService.updateMatePost(any(), any(), any(), any()))
+            given(matePostService.updateMatePost(any(), any(), any(), any()))
                     .willThrow(new CustomException(ALREADY_COMPLETED_POST));
 
             // when & then
@@ -674,7 +674,7 @@ class MateControllerTest {
                     .andDo(print())
                     .andExpect(status().isNoContent());
 
-            verify(mateService).deleteMatePost(memberId, postId);
+            verify(matePostService).deleteMatePost(memberId, postId);
         }
 
         @Test
@@ -685,7 +685,7 @@ class MateControllerTest {
             Long nonExistentPostId = 999L;
 
             doThrow(new CustomException(MATE_POST_NOT_FOUND_BY_ID))
-                    .when(mateService)
+                    .when(matePostService)
                     .deleteMatePost(memberId, nonExistentPostId);
 
             // when & then
@@ -707,7 +707,7 @@ class MateControllerTest {
             Long postId = 1L;
 
             doThrow(new CustomException(MATE_POST_UPDATE_NOT_ALLOWED))
-                    .when(mateService)
+                    .when(matePostService)
                     .deleteMatePost(memberId, postId);
 
             // when & then

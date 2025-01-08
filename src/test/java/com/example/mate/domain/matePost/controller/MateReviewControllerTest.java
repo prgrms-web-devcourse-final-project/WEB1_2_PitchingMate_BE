@@ -12,7 +12,7 @@ import com.example.mate.config.WithAuthMember;
 import com.example.mate.domain.constant.Rating;
 import com.example.mate.domain.matePost.dto.request.MateReviewCreateRequest;
 import com.example.mate.domain.matePost.dto.response.MateReviewCreateResponse;
-import com.example.mate.domain.matePost.service.MateService;
+import com.example.mate.domain.matePost.service.MatePostService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -25,7 +25,7 @@ import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-@WebMvcTest(MateController.class)
+@WebMvcTest(MatePostController.class)
 @MockBean(JpaMetamodelMappingContext.class)
 @AutoConfigureMockMvc(addFilters = false)
 @WithAuthMember
@@ -38,7 +38,7 @@ class MateReviewControllerTest {
     private ObjectMapper objectMapper;
 
     @MockBean
-    private MateService mateService;
+    private MatePostService matePostService;
 
     @MockBean
     private JwtCheckFilter jwtCheckFilter;
@@ -74,7 +74,7 @@ class MateReviewControllerTest {
             MateReviewCreateRequest request = createMateReviewRequest();
             MateReviewCreateResponse response = createMateReviewResponse();
 
-            given(mateService.createReview(any(), any(), any()))
+            given(matePostService.createReview(any(), any(), any()))
                     .willReturn(response);
 
             // when & then

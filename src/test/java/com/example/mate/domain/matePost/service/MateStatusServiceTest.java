@@ -37,7 +37,7 @@ import static org.mockito.Mockito.verify;
 class MateStatusServiceTest {
 
     @InjectMocks
-    private MateService mateService;
+    private MatePostService matePostService;
 
     @Mock
     private MateRepository mateRepository;
@@ -105,7 +105,7 @@ class MateStatusServiceTest {
                     .willReturn(participants);
 
             // when
-            MatePostResponse response = mateService.updateMatePostStatus(TEST_MEMBER_ID, POST_ID, request);
+            MatePostResponse response = matePostService.updateMatePostStatus(TEST_MEMBER_ID, POST_ID, request);
 
             // then
             assertThat(response.getId()).isEqualTo(POST_ID);
@@ -124,7 +124,7 @@ class MateStatusServiceTest {
                     .willReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> mateService.updateMatePostStatus(TEST_MEMBER_ID, POST_ID, request))
+            assertThatThrownBy(() -> matePostService.updateMatePostStatus(TEST_MEMBER_ID, POST_ID, request))
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", MATE_POST_NOT_FOUND_BY_ID);
 
@@ -160,7 +160,7 @@ class MateStatusServiceTest {
                     .willReturn(Optional.of(matePost));
 
             // when & then
-            assertThatThrownBy(() -> mateService.updateMatePostStatus(differentMemberId, POST_ID, request))
+            assertThatThrownBy(() -> matePostService.updateMatePostStatus(differentMemberId, POST_ID, request))
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", MATE_POST_UPDATE_NOT_ALLOWED);
 
@@ -195,7 +195,7 @@ class MateStatusServiceTest {
                     .willReturn(Optional.of(matePost));
 
             // when & then
-            assertThatThrownBy(() -> mateService.updateMatePostStatus(TEST_MEMBER_ID, POST_ID, request))
+            assertThatThrownBy(() -> matePostService.updateMatePostStatus(TEST_MEMBER_ID, POST_ID, request))
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", DIRECT_VISIT_COMPLETE_FORBIDDEN);
 
@@ -230,7 +230,7 @@ class MateStatusServiceTest {
                     .willReturn(Optional.of(matePost));
 
             // when & then
-            assertThatThrownBy(() -> mateService.updateMatePostStatus(TEST_MEMBER_ID, POST_ID, request))
+            assertThatThrownBy(() -> matePostService.updateMatePostStatus(TEST_MEMBER_ID, POST_ID, request))
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", ALREADY_COMPLETED_POST);
 
@@ -269,7 +269,7 @@ class MateStatusServiceTest {
                     .willReturn(participants);
 
             // when & then
-            assertThatThrownBy(() -> mateService.updateMatePostStatus(TEST_MEMBER_ID, POST_ID, request))
+            assertThatThrownBy(() -> matePostService.updateMatePostStatus(TEST_MEMBER_ID, POST_ID, request))
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", INVALID_MATE_POST_PARTICIPANT_IDS);
 
@@ -312,7 +312,7 @@ class MateStatusServiceTest {
                     .willReturn(participants);
 
             // when & then
-            assertThatThrownBy(() -> mateService.updateMatePostStatus(TEST_MEMBER_ID, POST_ID, request))
+            assertThatThrownBy(() -> matePostService.updateMatePostStatus(TEST_MEMBER_ID, POST_ID, request))
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", MATE_POST_MAX_PARTICIPANTS_EXCEEDED);
 
@@ -372,7 +372,7 @@ class MateStatusServiceTest {
             given(memberRepository.findAllById(participantIds)).willReturn(participants);
 
             // when
-            MatePostCompleteResponse response = mateService.completeVisit(MEMBER_ID, POST_ID, request);
+            MatePostCompleteResponse response = matePostService.completeVisit(MEMBER_ID, POST_ID, request);
 
             // then
             assertThat(response.getId()).isEqualTo(POST_ID);
@@ -394,7 +394,7 @@ class MateStatusServiceTest {
                     .willReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> mateService.completeVisit(MEMBER_ID, POST_ID, request))
+            assertThatThrownBy(() -> matePostService.completeVisit(MEMBER_ID, POST_ID, request))
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", MATE_POST_NOT_FOUND_BY_ID);
 
@@ -425,7 +425,7 @@ class MateStatusServiceTest {
                     .willReturn(Optional.of(matePost));
 
             // when & then
-            assertThatThrownBy(() -> mateService.completeVisit(differentMemberId, POST_ID, request))
+            assertThatThrownBy(() -> matePostService.completeVisit(differentMemberId, POST_ID, request))
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", MATE_POST_UPDATE_NOT_ALLOWED);
 
@@ -461,7 +461,7 @@ class MateStatusServiceTest {
                     .willReturn(Optional.of(matePost));
 
             // when & then
-            assertThatThrownBy(() -> mateService.completeVisit(MEMBER_ID, POST_ID, request))
+            assertThatThrownBy(() -> matePostService.completeVisit(MEMBER_ID, POST_ID, request))
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", MATE_POST_COMPLETE_TIME_NOT_ALLOWED);
 
@@ -497,7 +497,7 @@ class MateStatusServiceTest {
                     .willReturn(Optional.of(matePost));
 
             // when & then
-            assertThatThrownBy(() -> mateService.completeVisit(MEMBER_ID, POST_ID, request))
+            assertThatThrownBy(() -> matePostService.completeVisit(MEMBER_ID, POST_ID, request))
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", NOT_CLOSED_STATUS_FOR_COMPLETION);
 
@@ -536,7 +536,7 @@ class MateStatusServiceTest {
                     .willReturn(participants);
 
             // when & then
-            assertThatThrownBy(() -> mateService.completeVisit(MEMBER_ID, POST_ID, request))
+            assertThatThrownBy(() -> matePostService.completeVisit(MEMBER_ID, POST_ID, request))
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", INVALID_MATE_POST_PARTICIPANT_IDS);
 
@@ -577,7 +577,7 @@ class MateStatusServiceTest {
                     .willReturn(participants);
 
             // when & then
-            assertThatThrownBy(() -> mateService.completeVisit(MEMBER_ID, POST_ID, request))
+            assertThatThrownBy(() -> matePostService.completeVisit(MEMBER_ID, POST_ID, request))
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", MATE_POST_MAX_PARTICIPANTS_EXCEEDED);
 

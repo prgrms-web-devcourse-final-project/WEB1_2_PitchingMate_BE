@@ -34,7 +34,7 @@ import static org.mockito.Mockito.verify;
 class MateReviewServiceTest {
 
     @InjectMocks
-    private MateService mateService;
+    private MatePostService matePostService;
 
     @Mock
     private MateRepository mateRepository;
@@ -134,7 +134,7 @@ class MateReviewServiceTest {
                     .willReturn(mateReview);
 
             // when
-            MateReviewCreateResponse response = mateService.createReview(
+            MateReviewCreateResponse response = matePostService.createReview(
                     TEST_POST_ID,
                     TEST_REVIEWER_ID,
                     request
@@ -161,7 +161,7 @@ class MateReviewServiceTest {
 
             // when & then
             assertThatThrownBy(
-                    () -> mateService.createReview(TEST_POST_ID, TEST_REVIEWER_ID, request)
+                    () -> matePostService.createReview(TEST_POST_ID, TEST_REVIEWER_ID, request)
             )
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", MATE_POST_NOT_FOUND_BY_ID);
@@ -186,7 +186,7 @@ class MateReviewServiceTest {
 
             // when & then
             assertThatThrownBy(
-                    () -> mateService.createReview(TEST_POST_ID, TEST_REVIEWER_ID, request)
+                    () -> matePostService.createReview(TEST_POST_ID, TEST_REVIEWER_ID, request)
             )
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", MEMBER_NOT_FOUND_BY_ID);
@@ -213,7 +213,7 @@ class MateReviewServiceTest {
 
             // when & then
             assertThatThrownBy(
-                    () -> mateService.createReview(TEST_POST_ID, TEST_REVIEWER_ID, request)
+                    () -> matePostService.createReview(TEST_POST_ID, TEST_REVIEWER_ID, request)
             )
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", MEMBER_NOT_FOUND_BY_ID);
@@ -247,7 +247,7 @@ class MateReviewServiceTest {
 
             // when & then
             assertThatThrownBy(
-                    () -> mateService.createReview(TEST_POST_ID, TEST_REVIEWER_ID, request)
+                    () -> matePostService.createReview(TEST_POST_ID, TEST_REVIEWER_ID, request)
             )
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", NOT_PARTICIPANT_OR_AUTHOR);

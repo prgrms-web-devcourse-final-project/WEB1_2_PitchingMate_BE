@@ -25,7 +25,7 @@ import com.example.mate.domain.matePost.dto.request.MatePostStatusRequest;
 import com.example.mate.domain.matePost.dto.response.MatePostCompleteResponse;
 import com.example.mate.domain.matePost.dto.response.MatePostResponse;
 import com.example.mate.domain.matePost.entity.Status;
-import com.example.mate.domain.matePost.service.MateService;
+import com.example.mate.domain.matePost.service.MatePostService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -39,7 +39,7 @@ import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-@WebMvcTest(MateController.class)
+@WebMvcTest(MatePostController.class)
 @MockBean(JpaMetamodelMappingContext.class)
 @AutoConfigureMockMvc(addFilters = false)
 @WithAuthMember
@@ -52,7 +52,7 @@ class MateStatusControllerTest {
     private ObjectMapper objectMapper;
 
     @MockBean
-    private MateService mateService;
+    private MatePostService matePostService;
 
     @MockBean
     private JwtCheckFilter jwtCheckFilter;
@@ -73,7 +73,7 @@ class MateStatusControllerTest {
                     .status(Status.OPEN)
                     .build();
 
-            given(mateService.updateMatePostStatus(any(), eq(postId), any(MatePostStatusRequest.class)))
+            given(matePostService.updateMatePostStatus(any(), eq(postId), any(MatePostStatusRequest.class)))
                     .willReturn(response);
 
             // when & then
@@ -87,7 +87,7 @@ class MateStatusControllerTest {
                     .andExpect(jsonPath("$.data.status").value("모집중"))
                     .andExpect(jsonPath("$.code").value(200));
 
-            verify(mateService).updateMatePostStatus(any(), eq(postId), any(MatePostStatusRequest.class));
+            verify(matePostService).updateMatePostStatus(any(), eq(postId), any(MatePostStatusRequest.class));
         }
 
         @Test
@@ -102,7 +102,7 @@ class MateStatusControllerTest {
                     .status(Status.CLOSED)
                     .build();
 
-            given(mateService.updateMatePostStatus(any(), eq(postId), any(MatePostStatusRequest.class)))
+            given(matePostService.updateMatePostStatus(any(), eq(postId), any(MatePostStatusRequest.class)))
                     .willReturn(response);
 
             // when & then
@@ -116,7 +116,7 @@ class MateStatusControllerTest {
                     .andExpect(jsonPath("$.data.status").value("모집완료"))
                     .andExpect(jsonPath("$.code").value(200));
 
-            verify(mateService).updateMatePostStatus(any(), eq(postId), any(MatePostStatusRequest.class));
+            verify(matePostService).updateMatePostStatus(any(), eq(postId), any(MatePostStatusRequest.class));
         }
 
         @Test
@@ -127,7 +127,7 @@ class MateStatusControllerTest {
             List<Long> participantIds = List.of(2L, 3L);
             MatePostStatusRequest request = new MatePostStatusRequest(Status.CLOSED, participantIds);
 
-            given(mateService.updateMatePostStatus(any(), eq(nonExistentPostId),
+            given(matePostService.updateMatePostStatus(any(), eq(nonExistentPostId),
                     any(MatePostStatusRequest.class)))
                     .willThrow(new CustomException(MATE_POST_NOT_FOUND_BY_ID));
 
@@ -141,7 +141,7 @@ class MateStatusControllerTest {
                     .andExpect(jsonPath("$.message").exists())
                     .andExpect(jsonPath("$.code").value(404));
 
-            verify(mateService).updateMatePostStatus(any(), eq(nonExistentPostId),
+            verify(matePostService).updateMatePostStatus(any(), eq(nonExistentPostId),
                     any(MatePostStatusRequest.class));
         }
 
@@ -153,7 +153,7 @@ class MateStatusControllerTest {
             List<Long> participantIds = List.of(2L, 3L);
             MatePostStatusRequest request = new MatePostStatusRequest(Status.VISIT_COMPLETE, participantIds);
 
-            given(mateService.updateMatePostStatus(any(), eq(postId), any(MatePostStatusRequest.class)))
+            given(matePostService.updateMatePostStatus(any(), eq(postId), any(MatePostStatusRequest.class)))
                     .willThrow(new CustomException(ALREADY_COMPLETED_POST));
 
             // when & then
@@ -166,7 +166,7 @@ class MateStatusControllerTest {
                     .andExpect(jsonPath("$.message").exists())
                     .andExpect(jsonPath("$.code").value(403));
 
-            verify(mateService).updateMatePostStatus(any(), eq(postId), any(MatePostStatusRequest.class));
+            verify(matePostService).updateMatePostStatus(any(), eq(postId), any(MatePostStatusRequest.class));
         }
 
         @Test
@@ -177,7 +177,7 @@ class MateStatusControllerTest {
             List<Long> participantIds = List.of(2L, 3L);
             MatePostStatusRequest request = new MatePostStatusRequest(Status.CLOSED, participantIds);
 
-            given(mateService.updateMatePostStatus(any(), eq(postId), any(MatePostStatusRequest.class)))
+            given(matePostService.updateMatePostStatus(any(), eq(postId), any(MatePostStatusRequest.class)))
                     .willThrow(new CustomException(ALREADY_COMPLETED_POST));
 
             // when & then
@@ -190,7 +190,7 @@ class MateStatusControllerTest {
                     .andExpect(jsonPath("$.message").exists())
                     .andExpect(jsonPath("$.code").value(403));
 
-            verify(mateService).updateMatePostStatus(any(), eq(postId), any(MatePostStatusRequest.class));
+            verify(matePostService).updateMatePostStatus(any(), eq(postId), any(MatePostStatusRequest.class));
         }
 
         @Test
@@ -202,7 +202,7 @@ class MateStatusControllerTest {
             List<Long> participantIds = List.of(2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L);
             MatePostStatusRequest request = new MatePostStatusRequest(Status.CLOSED, participantIds);
 
-            given(mateService.updateMatePostStatus(any(), eq(postId), any(MatePostStatusRequest.class)))
+            given(matePostService.updateMatePostStatus(any(), eq(postId), any(MatePostStatusRequest.class)))
                     .willThrow(new CustomException(MATE_POST_MAX_PARTICIPANTS_EXCEEDED));
 
             // when & then
@@ -215,7 +215,7 @@ class MateStatusControllerTest {
                     .andExpect(jsonPath("$.message").value(MATE_POST_MAX_PARTICIPANTS_EXCEEDED.getMessage()))
                     .andExpect(jsonPath("$.code").value(400));
 
-            verify(mateService).updateMatePostStatus(any(), eq(postId), any(MatePostStatusRequest.class));
+            verify(matePostService).updateMatePostStatus(any(), eq(postId), any(MatePostStatusRequest.class));
         }
 
         @Test
@@ -238,7 +238,7 @@ class MateStatusControllerTest {
                     .andExpect(jsonPath("$.code").value(400));
 
             // validation 실패로 서비스 호출되지 않음
-            verify(mateService, never()).updateMatePostStatus(any(), any(), any());
+            verify(matePostService, never()).updateMatePostStatus(any(), any(), any());
         }
 
         @Test
@@ -249,7 +249,7 @@ class MateStatusControllerTest {
             List<Long> participantIds = List.of(999L, 998L); // 존재하지 않는 참여자 ID
             MatePostStatusRequest request = new MatePostStatusRequest(Status.CLOSED, participantIds);
 
-            given(mateService.updateMatePostStatus(any(), eq(postId), any(MatePostStatusRequest.class)))
+            given(matePostService.updateMatePostStatus(any(), eq(postId), any(MatePostStatusRequest.class)))
                     .willThrow(new CustomException(INVALID_MATE_POST_PARTICIPANT_IDS));
 
             // when & then
@@ -262,7 +262,7 @@ class MateStatusControllerTest {
                     .andExpect(jsonPath("$.message").exists())
                     .andExpect(jsonPath("$.code").value(400));
 
-            verify(mateService).updateMatePostStatus(any(), eq(postId), any(MatePostStatusRequest.class));
+            verify(matePostService).updateMatePostStatus(any(), eq(postId), any(MatePostStatusRequest.class));
         }
     }
 
@@ -291,7 +291,7 @@ class MateStatusControllerTest {
             MatePostCompleteRequest request = createRequest();
             MatePostCompleteResponse response = createResponse();
 
-            given(mateService.completeVisit(eq(MEMBER_ID), eq(POST_ID), any(MatePostCompleteRequest.class)))
+            given(matePostService.completeVisit(eq(MEMBER_ID), eq(POST_ID), any(MatePostCompleteRequest.class)))
                     .willReturn(response);
 
             // when & then
@@ -307,7 +307,7 @@ class MateStatusControllerTest {
                     .andExpect(jsonPath("$.data.participantIds.length()").value(2))
                     .andExpect(jsonPath("$.code").value(200));
 
-            verify(mateService).completeVisit(eq(MEMBER_ID), eq(POST_ID), any(MatePostCompleteRequest.class));
+            verify(matePostService).completeVisit(eq(MEMBER_ID), eq(POST_ID), any(MatePostCompleteRequest.class));
         }
 
         @Test
@@ -316,7 +316,7 @@ class MateStatusControllerTest {
             // given
             MatePostCompleteRequest request = createRequest();
 
-            given(mateService.completeVisit(eq(MEMBER_ID), eq(POST_ID), any(MatePostCompleteRequest.class)))
+            given(matePostService.completeVisit(eq(MEMBER_ID), eq(POST_ID), any(MatePostCompleteRequest.class)))
                     .willThrow(new CustomException(MATE_POST_NOT_FOUND_BY_ID));
 
             // when & then
@@ -336,7 +336,7 @@ class MateStatusControllerTest {
             // given
             MatePostCompleteRequest request = createRequest();
 
-            given(mateService.completeVisit(eq(MEMBER_ID), eq(POST_ID), any(MatePostCompleteRequest.class)))
+            given(matePostService.completeVisit(eq(MEMBER_ID), eq(POST_ID), any(MatePostCompleteRequest.class)))
                     .willThrow(new CustomException(MATE_POST_UPDATE_NOT_ALLOWED));
 
             // when & then
@@ -356,7 +356,7 @@ class MateStatusControllerTest {
             // given
             MatePostCompleteRequest request = createRequest();
 
-            given(mateService.completeVisit(eq(MEMBER_ID), eq(POST_ID), any(MatePostCompleteRequest.class)))
+            given(matePostService.completeVisit(eq(MEMBER_ID), eq(POST_ID), any(MatePostCompleteRequest.class)))
                     .willThrow(new CustomException(MATE_POST_COMPLETE_TIME_NOT_ALLOWED));
 
             // when & then
@@ -376,7 +376,7 @@ class MateStatusControllerTest {
             // given
             MatePostCompleteRequest request = createRequest();
 
-            given(mateService.completeVisit(eq(MEMBER_ID), eq(POST_ID), any(MatePostCompleteRequest.class)))
+            given(matePostService.completeVisit(eq(MEMBER_ID), eq(POST_ID), any(MatePostCompleteRequest.class)))
                     .willThrow(new CustomException(NOT_CLOSED_STATUS_FOR_COMPLETION));
 
             // when & then
@@ -396,7 +396,7 @@ class MateStatusControllerTest {
             // given
             MatePostCompleteRequest request = createRequest();
 
-            given(mateService.completeVisit(eq(MEMBER_ID), eq(POST_ID), any(MatePostCompleteRequest.class)))
+            given(matePostService.completeVisit(eq(MEMBER_ID), eq(POST_ID), any(MatePostCompleteRequest.class)))
                     .willThrow(new CustomException(MATE_POST_MAX_PARTICIPANTS_EXCEEDED));
 
             // when & then

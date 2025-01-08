@@ -10,7 +10,7 @@ import com.example.mate.domain.matePost.dto.response.*;
 import com.example.mate.domain.matePost.entity.Age;
 import com.example.mate.domain.matePost.entity.SortType;
 import com.example.mate.domain.matePost.entity.TransportType;
-import com.example.mate.domain.matePost.service.MateService;
+import com.example.mate.domain.matePost.service.MatePostService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -29,9 +29,9 @@ import java.util.List;
 @RequiredArgsConstructor
 @RequestMapping("/api/mates")
 @Tag(name = "MateController", description = "메이트 구인글 관련 API")
-public class MateController {
+public class MatePostController {
 
-    private final MateService mateService;
+    private final MatePostService matePostService;
 
     @PostMapping
     @Operation(summary = "메이트 구인글 등록", description = "메이트 구인글 페이지에서 등록합니다.")
@@ -40,7 +40,7 @@ public class MateController {
                                                                         @Parameter(description = "구인글 대표사진", required = true)
                                                                         @RequestPart(value = "file", required = false) MultipartFile file,
                                                                         @AuthenticationPrincipal AuthMember member) {
-        MatePostResponse response = mateService.createMatePost(request, file, member.getMemberId());
+        MatePostResponse response = matePostService.createMatePost(request, file, member.getMemberId());
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
@@ -48,7 +48,7 @@ public class MateController {
     @Operation(summary = "메인페이지 메이트 구인글 조회", description = "메인 페이지에서 메이트 구인글을 요약한 4개의 리스트를 조회합니다.")
     public ResponseEntity<ApiResponse<List<MatePostSummaryResponse>>> getMainPagePosts(@Parameter(description = "팀 ID")
                                                                                        @RequestParam(required = false) Long teamId) {
-        List<MatePostSummaryResponse> matePostMain = mateService.getMainPagePosts(teamId);
+        List<MatePostSummaryResponse> matePostMain = matePostService.getMainPagePosts(teamId);
         return ResponseEntity.ok(ApiResponse.success(matePostMain));
     }
 
@@ -78,7 +78,7 @@ public class MateController {
                 .transportType(transportType != null ? TransportType.from(transportType) : null)
                 .build();
 
-        PageResponse<MatePostSummaryResponse> response = mateService.getMatePagePosts(request, pageable);
+        PageResponse<MatePostSummaryResponse> response = matePostService.getMatePagePosts(request, pageable);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
@@ -87,7 +87,7 @@ public class MateController {
     public ResponseEntity<ApiResponse<MatePostDetailResponse>> getMatePostDetail(@Parameter(description = "조회할 구인글 ID", required = true)
                                                                                  @PathVariable Long postId) {
 
-        MatePostDetailResponse response = mateService.getMatePostDetail(postId);
+        MatePostDetailResponse response = matePostService.getMatePostDetail(postId);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
@@ -101,7 +101,7 @@ public class MateController {
                                                                           @Parameter(description = "수정할 대표사진 파일 ", required = true)
                                                                           @RequestPart(value = "file", required = false) MultipartFile file) {
 
-        MatePostResponse response = mateService.updateMatePost(member.getMemberId(), postId, request, file);
+        MatePostResponse response = matePostService.updateMatePost(member.getMemberId(), postId, request, file);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
@@ -115,7 +115,7 @@ public class MateController {
                                                                                 @Parameter(description = "변경할 모집상태와 현재 참여자 리스트 ID", required = true)
                                                                                 @Valid @RequestBody MatePostStatusRequest request) {
 
-        MatePostResponse response = mateService.updateMatePostStatus(member.getMemberId(), postId, request);
+        MatePostResponse response = matePostService.updateMatePostStatus(member.getMemberId(), postId, request);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
@@ -125,7 +125,7 @@ public class MateController {
                                                  @Parameter(description = "삭제할 구인글 ID", required = true)
                                                  @PathVariable Long postId) {
 
-        mateService.deleteMatePost(member.getMemberId(), postId);
+        matePostService.deleteMatePost(member.getMemberId(), postId);
         return ResponseEntity.noContent().build();
     }
 
@@ -137,20 +137,7 @@ public class MateController {
                                                                                  @Parameter(description = "실제 직관 참여자 리스트 ID", required = true)
                                                                                  @Valid @RequestBody MatePostCompleteRequest request) {
 
-        MatePostCompleteResponse response = mateService.completeVisit(member.getMemberId(), postId, request);
-        return ResponseEntity.ok(ApiResponse.success(response));
-    }
-
-    @PostMapping("/{postId}/reviews")
-    @Operation(summary = "메이트 직관 후기 등록", description = "직관 타임라인 페이지에서 메이트에 대한 후기를 등록합니다.")
-    public ResponseEntity<ApiResponse<MateReviewCreateResponse>> createMateReview(  @AuthenticationPrincipal AuthMember member,
-                                                                                    @Parameter(description = "구인글 ID", required = true)
-                                                                                    @PathVariable Long postId,
-                                                                                    @Parameter(description = "리뷰 대상자 ID와 평점 및 코멘트", required = true)
-                                                                                    @Valid @RequestBody MateReviewCreateRequest request
-    ) {
-
-        MateReviewCreateResponse response = mateService.createReview(postId, member.getMemberId(), request);
+        MatePostCompleteResponse response = matePostService.completeVisit(member.getMemberId(), postId, request);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 }
