@@ -28,6 +28,7 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -42,15 +43,16 @@ class MatchServiceTest {
     @DisplayName("메인 배너에 노출할 상위 5개 경기를 조회")
     void getMainBannerMatches_ShouldReturnTop5Matches() {
         // Given
+        LocalDateTime now = LocalDateTime.now();
         List<Match> matches = createTestMatches();
-        when(matchRepository.findTop5ByOrderByMatchTimeDesc()).thenReturn(matches);
+        when(matchRepository.findMainBannerMatches(any(LocalDateTime.class))).thenReturn(matches);
 
         // When
         List<MatchResponse> result = matchService.getMainBannerMatches();
 
         // Then
         assertThat(result).hasSize(5);
-        verify(matchRepository).findTop5ByOrderByMatchTimeDesc();
+        verify(matchRepository).findMainBannerMatches(any(LocalDateTime.class));
     }
 
     @Test
@@ -59,7 +61,7 @@ class MatchServiceTest {
         // Given
         Long teamId = 1L;
         List<Match> matches = createTestMatches().subList(0, 3);
-        when(matchRepository.findTop3ByHomeTeamIdOrAwayTeamIdOrderByMatchTimeDesc(teamId, teamId))
+        when(matchRepository.findTop3TeamMatchesAfterNow(eq(teamId), any(LocalDateTime.class)))
                 .thenReturn(matches);
 
         // When
@@ -67,7 +69,7 @@ class MatchServiceTest {
 
         // Then
         assertThat(result).hasSize(3);
-        verify(matchRepository).findTop3ByHomeTeamIdOrAwayTeamIdOrderByMatchTimeDesc(teamId, teamId);
+        verify(matchRepository).findTop3TeamMatchesAfterNow(eq(teamId), any(LocalDateTime.class));
     }
 
     @Test
