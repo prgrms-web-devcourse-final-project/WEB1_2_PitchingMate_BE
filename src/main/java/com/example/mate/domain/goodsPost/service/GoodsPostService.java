@@ -15,10 +15,12 @@ import com.example.mate.domain.goodsPost.entity.GoodsPostImage;
 import com.example.mate.domain.goodsPost.entity.Status;
 import com.example.mate.domain.goodsPost.repository.GoodsPostImageRepository;
 import com.example.mate.domain.goodsPost.repository.GoodsPostRepository;
+import com.example.mate.domain.member.entity.ActivityType;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -47,6 +49,9 @@ public class GoodsPostService {
 
         attachImagesToGoodsPost(savedPost, files);
 
+        seller.updateManner(ActivityType.POST);
+        memberRepository.save(seller);
+
         return GoodsPostResponse.of(savedPost);
     }
 
@@ -56,15 +61,20 @@ public class GoodsPostService {
 
         validateTeamInfo(request.getTeamId());
         validateOwnership(seller, goodsPost);
-        FileValidator.validateGoodsPostImages(files);
 
         GoodsPost updateTarget = GoodsPostRequest.toEntity(seller, request);
         goodsPost.updatePostDetails(updateTarget);
-
-        deleteExistingImageFiles(goodsPostId);
-        attachImagesToGoodsPost(goodsPost, files);
+        updateGoodsPostImages(goodsPostId, goodsPost, files);
 
         return GoodsPostResponse.of(goodsPost);
+    }
+
+    private void updateGoodsPostImages(Long goodsPostId, GoodsPost goodsPost, List<MultipartFile> files) {
+        if (files != null && !files.isEmpty()) {
+            FileValidator.validateGoodsPostImages(files);
+            deleteExistingImageFiles(goodsPostId);
+            attachImagesToGoodsPost(goodsPost, files);
+        }
     }
 
     public void deleteGoodsPost(Long memberId, Long goodsPostId) {
@@ -74,6 +84,9 @@ public class GoodsPostService {
 
         deleteExistingImageFiles(goodsPostId);
         goodsPostRepository.delete(goodsPost);
+
+        seller.updateManner(ActivityType.DELETE);
+        memberRepository.save(seller);
     }
 
     @Transactional(readOnly = true)
@@ -84,9 +97,7 @@ public class GoodsPostService {
     @Transactional(readOnly = true)
     public List<GoodsPostSummaryResponse> getMainGoodsPosts(Long teamId) {
         validateTeamInfo(teamId);
-        return mapToGoodsPostSummaryResponses(
-                goodsPostRepository.findMainGoodsPosts(teamId, Status.OPEN, PageRequest.of(0, 4))
-        );
+        return mapToGoodsPostSummaryResponses(goodsPostRepository.findMainGoodsPosts(teamId, Status.OPEN, PageRequest.of(0, 4)));
     }
 
     @Transactional(readOnly = true)
@@ -94,6 +105,7 @@ public class GoodsPostService {
         validateTeamInfo(teamId);
         Category category = Category.from(categoryVal);
         Page<GoodsPost> pageGoodsPosts = goodsPostRepository.findPageGoodsPosts(teamId, Status.OPEN, category, pageable);
+
         return PageResponse.from(pageGoodsPosts, mapToGoodsPostSummaryResponses(pageGoodsPosts.getContent()));
     }
 
@@ -104,6 +116,9 @@ public class GoodsPostService {
 
         validateTransactionEligibility(seller, buyer, goodsPost);
         goodsPost.completeTransaction(buyer);
+
+        seller.updateManner(ActivityType.GOODS);
+        buyer.updateManner(ActivityType.GOODS);
     }
 
     private void attachImagesToGoodsPost(GoodsPost goodsPost, List<MultipartFile> files) {
@@ -112,32 +127,13 @@ public class GoodsPostService {
     }
 
     private List<GoodsPostImage> uploadImageFiles(List<MultipartFile> files, GoodsPost savedPost) {
-        List<GoodsPostImage> images = new ArrayList<>();
-
-        // 첫 번째 파일은 썸네일 생성과 함께 업로드
-        images.add(handleImageUpload(files.get(0), savedPost, true));
-
-        // 나머지 파일들은 일반 업로드
-        for (int i = 1; i < files.size(); i++) {
-            images.add(handleImageUpload(files.get(i), savedPost, false));
-        }
-
-        return images;
-    }
-
-    private GoodsPostImage handleImageUpload(MultipartFile file, GoodsPost savedPost, boolean isMainImage) {
-        String uploadUrl;
-
-        if (isMainImage) {
-            uploadUrl = fileService.uploadImageWithThumbnail(file); // 썸네일 업로드
-        } else {
-            uploadUrl = fileService.uploadFile(file); // 일반 업로드
-        }
-
-        return GoodsPostImage.builder()
-                .imageUrl(uploadUrl)
-                .post(savedPost)
-                .build();
+        return IntStream.range(0, files.size())
+                .mapToObj(i -> GoodsPostImage.builder()
+                        // 첫번째 사진일 경우 썸네일과 함께 저장
+                        .imageUrl(i == 0 ? fileService.uploadImageWithThumbnail(files.get(i)) : fileService.uploadFile(files.get(i)))
+                        .post(savedPost)
+                        .build())
+                .collect(Collectors.toList());
     }
 
     private void deleteExistingImageFiles(Long goodsPostId) {

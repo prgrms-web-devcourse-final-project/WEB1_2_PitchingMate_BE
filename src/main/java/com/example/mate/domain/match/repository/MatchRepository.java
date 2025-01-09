@@ -2,6 +2,7 @@ package com.example.mate.domain.match.repository;
 
 import com.example.mate.domain.match.entity.Match;
 import com.example.mate.domain.match.entity.MatchStatus;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -13,9 +14,18 @@ import java.util.Optional;
 
 @Repository
 public interface MatchRepository extends JpaRepository<Match, Long> {
-    List<Match> findTop5ByOrderByMatchTimeDesc();
+    @Query("SELECT m FROM Match m WHERE m.matchTime > :now ORDER BY m.matchTime ASC")
+    List<Match> findMainBannerMatches(@Param("now") LocalDateTime now, Pageable pageable);
 
-    List<Match> findTop3ByHomeTeamIdOrAwayTeamIdOrderByMatchTimeDesc(Long homeTeamId, Long awayTeamId);
+    @Query("SELECT m FROM Match m " +
+            "WHERE (m.homeTeamId = :teamId OR m.awayTeamId = :teamId) " +
+            "AND m.matchTime > :now " +
+            "ORDER BY m.matchTime ASC")
+    List<Match> findTop3TeamMatchesAfterNow(
+            @Param("teamId") Long teamId,
+            @Param("now") LocalDateTime now,
+            Pageable pageable
+    );
 
     @Query("SELECT m FROM Match m " +
             "WHERE (m.status = :status1 AND m.homeTeamId = :homeTeamId) " +

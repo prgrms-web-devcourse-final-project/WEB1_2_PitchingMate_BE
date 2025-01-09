@@ -1,6 +1,7 @@
 package com.example.mate.domain.member.entity;
 
 import com.example.mate.domain.constant.Gender;
+import com.example.mate.domain.constant.Rating;
 import com.example.mate.domain.constant.TeamInfo;
 import com.example.mate.domain.member.dto.request.JoinRequest;
 import jakarta.persistence.Column;
@@ -97,6 +98,24 @@ public class Member {
 
     public void changeAboutMe(String aboutMe) {
         this.aboutMe = aboutMe;
+    }
+
+    public void updateManner(Rating rating) {
+        if (rating == Rating.BAD) {
+            this.manner = Math.max(0.0F, this.manner - 0.01F);
+        } else if (rating == Rating.GOOD) {
+            this.manner = Math.min(1.0F, this.manner + 0.02F);
+        } else {
+            this.manner = Math.min(1.0F, this.manner + 0.03F);
+        }
+    }
+
+    public void updateManner(ActivityType activityType) {
+        if (activityType == ActivityType.DELETE) {
+            this.manner = Math.max(0.0F, this.manner + activityType.getValue());
+        } else {
+            this.manner = Math.min(1.0F, this.manner + activityType.getValue());
+        }
     }
 
     public static Member of(JoinRequest request, String imageUrl) {

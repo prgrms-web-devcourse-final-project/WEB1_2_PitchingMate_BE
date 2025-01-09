@@ -1,6 +1,7 @@
 package com.example.mate.domain.goodsReview.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -43,14 +44,21 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class GoodsReviewIntegrationTest {
 
-    @Autowired private MockMvc mockMvc;
-    @Autowired private MemberRepository memberRepository;
-    @Autowired private GoodsPostRepository goodsPostRepository;
-    @Autowired private GoodsReviewRepository reviewRepository;
-    @Autowired private JdbcTemplate jdbcTemplate;
-    @Autowired private ObjectMapper objectMapper;
+    @Autowired
+    private MockMvc mockMvc;
+    @Autowired
+    private MemberRepository memberRepository;
+    @Autowired
+    private GoodsPostRepository goodsPostRepository;
+    @Autowired
+    private GoodsReviewRepository reviewRepository;
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+    @Autowired
+    private ObjectMapper objectMapper;
 
     private Member member;
+    private Member seller;
     private GoodsPost goodsPost;
 
     @MockBean
@@ -61,6 +69,7 @@ public class GoodsReviewIntegrationTest {
         jdbcTemplate.execute("ALTER TABLE member ALTER COLUMN id RESTART WITH 1");
 
         member = createMember();
+        seller = createSeller();
         goodsPost = createGoodsPost(Status.OPEN, null);
         createGoodsPostImage();
     }
@@ -85,7 +94,9 @@ public class GoodsReviewIntegrationTest {
                 .getResponse();
         result.setCharacterEncoding("UTF-8");
 
-        ApiResponse<GoodsReviewResponse> apiResponse = objectMapper.readValue(result.getContentAsString(), new TypeReference<>() {});
+        ApiResponse<GoodsReviewResponse> apiResponse = objectMapper.readValue(result.getContentAsString(),
+                new TypeReference<>() {
+                });
 
         // then
         assertThat(apiResponse.getCode()).isEqualTo(200);
@@ -107,6 +118,8 @@ public class GoodsReviewIntegrationTest {
         assertThat(savedReview.getRating()).isEqualTo(Rating.GREAT);
         assertThat(savedReview.getReviewContent()).isEqualTo("Great seller!");
         assertThat(savedReview.getCreatedAt()).isNotNull();
+
+        assertThat(seller.getManner()).isCloseTo(0.33f, within(0.0001f));
     }
 
     private Member createMember() {
@@ -121,11 +134,24 @@ public class GoodsReviewIntegrationTest {
                 .build());
     }
 
+    private Member createSeller() {
+        return memberRepository.save(Member.builder()
+                .name("김철수")
+                .email("seller@gmail.com")
+                .nickname("셀러")
+                .imageUrl("upload/test.jpg")
+                .gender(Gender.FEMALE)
+                .age(25)
+                .manner(0.3f)
+                .build());
+    }
+
     private GoodsPost createGoodsPost(Status status, Member buyer) {
         return goodsPostRepository.save(GoodsPost.builder()
                 .seller(member)
                 .teamId(1L)
                 .buyer(buyer)
+                .seller(seller)
                 .title("test title")
                 .content("test content")
                 .price(10_000)

@@ -685,7 +685,7 @@ public class CrawlingService {
                             teamName, rank, gamesPlayed, wins, losses, draws, gamesBehind);
 
                     TeamRecord record = TeamRecord.builder()
-                            .teamId(team.id)  // teamId로 변경
+                            .teamId(team.id)
                             .rank(rank)
                             .gamesPlayed(gamesPlayed)
                             .totalGames(144)  // KBO 정규시즌 경기 수
