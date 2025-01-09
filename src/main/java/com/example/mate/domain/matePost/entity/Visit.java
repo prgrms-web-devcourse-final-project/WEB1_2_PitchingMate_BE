@@ -1,6 +1,7 @@
 package com.example.mate.domain.matePost.entity;
 
-import com.example.mate.domain.matePost.dto.request.MateReviewCreateRequest;
+import com.example.mate.domain.mateReview.dto.request.MateReviewCreateRequest;
+import com.example.mate.domain.mateReview.entity.MateReview;
 import com.example.mate.domain.member.entity.Member;
 import jakarta.persistence.*;
 import lombok.*;

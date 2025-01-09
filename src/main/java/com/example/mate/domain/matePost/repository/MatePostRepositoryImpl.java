@@ -22,7 +22,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
 @RequiredArgsConstructor
-public class MateRepositoryImpl implements MateRepositoryCustom {
+public class MatePostRepositoryImpl implements MatePostRepositoryCustom {
     private final JPAQueryFactory queryFactory;
 
     @Override

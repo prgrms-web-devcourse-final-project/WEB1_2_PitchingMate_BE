@@ -18,6 +18,9 @@ import com.example.mate.domain.match.entity.Match;
 import com.example.mate.domain.matePost.dto.response.MatePostSummaryResponse;
 import com.example.mate.domain.matePost.entity.*;
 import com.example.mate.domain.matePost.repository.*;
+import com.example.mate.domain.mateReview.entity.MateReview;
+import com.example.mate.domain.mateReview.repository.MateReviewRepository;
+import com.example.mate.domain.mateReview.repository.MateReviewRepositoryCustom;
 import com.example.mate.domain.member.dto.response.MyGoodsRecordResponse;
 import com.example.mate.domain.member.dto.response.MyReviewResponse;
 import com.example.mate.domain.member.dto.response.MyTimelineResponse;
@@ -61,7 +64,7 @@ class ProfileServiceTest {
     private GoodsPostRepository goodsPostRepository;
 
     @Mock
-    private MateRepository mateRepository;
+    private MatePostRepository matePostRepository;
 
     @Mock
     private MateReviewRepositoryCustom mateReviewRepositoryCustom;
@@ -553,7 +556,7 @@ class ProfileServiceTest {
             PageImpl<MatePost> matePostsPage = new PageImpl<>(List.of(matePost));
             Pageable pageable = PageRequest.of(0, 10);
 
-            given(mateRepository.findMyMatePosts(memberId, pageable)).willReturn(matePostsPage);
+            given(matePostRepository.findMyMatePosts(memberId, pageable)).willReturn(matePostsPage);
 
             // when
             PageResponse<MatePostSummaryResponse> response = profileService.getMatePostsPage(memberId, pageable);
@@ -568,7 +571,7 @@ class ProfileServiceTest {
             assertThat(postResponse.getTitle()).isEqualTo(matePost.getTitle());
             assertThat(postResponse.getImageUrl()).isEqualTo(FileUtils.getThumbnailImageUrl(goodsPostImage.getImageUrl()));
 
-            verify(mateRepository).findMyMatePosts(memberId, pageable);
+            verify(matePostRepository).findMyMatePosts(memberId, pageable);
         }
     }
 }

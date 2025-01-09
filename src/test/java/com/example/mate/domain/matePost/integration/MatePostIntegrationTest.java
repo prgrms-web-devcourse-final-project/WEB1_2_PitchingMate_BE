@@ -11,7 +11,7 @@ import com.example.mate.domain.matePost.entity.Age;
 import com.example.mate.domain.matePost.entity.MatePost;
 import com.example.mate.domain.matePost.entity.Status;
 import com.example.mate.domain.matePost.entity.TransportType;
-import com.example.mate.domain.matePost.repository.MateRepository;
+import com.example.mate.domain.matePost.repository.MatePostRepository;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -44,7 +44,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc(addFilters = false)
 @Transactional
 //@WithMockUser(username = "mock-user", roles = "USER")
-public class MateIntegrationTest {
+public class MatePostIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -59,7 +59,7 @@ public class MateIntegrationTest {
     private MatchRepository matchRepository;
 
     @Autowired
-    private MateRepository mateRepository;
+    private MatePostRepository matePostRepository;
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -75,7 +75,7 @@ public class MateIntegrationTest {
     @BeforeEach
     void setUp() {
         // 기존 데이터 정리
-        mateRepository.deleteAll();
+        matePostRepository.deleteAll();
         matchRepository.deleteAll();
         memberRepository.deleteAll();
 
@@ -118,7 +118,7 @@ public class MateIntegrationTest {
     }
 
     private MatePost createMatePost(Match match, Long teamId, Status status) {
-        return mateRepository.save(MatePost.builder()
+        return matePostRepository.save(MatePost.builder()
                 .author(testMember)
                 .teamId(teamId)
                 .match(match)
@@ -134,7 +134,7 @@ public class MateIntegrationTest {
     }
 
     private void performErrorTest(MockMultipartFile data, String errorMessage, int expectedStatus) throws Exception {
-        mateRepository.deleteAll();
+        matePostRepository.deleteAll();
 
         mockMvc.perform(multipart("/api/mates")
                         .file(data))
@@ -145,7 +145,7 @@ public class MateIntegrationTest {
                 .andExpect(jsonPath("$.code").value(expectedStatus))
                 .andDo(print());
 
-        assertThat(mateRepository.findAll()).isEmpty();
+        assertThat(matePostRepository.findAll()).isEmpty();
     }
 
     @Nested
@@ -185,7 +185,7 @@ public class MateIntegrationTest {
                     .andDo(print());
 
             // DB에 저장된 값 검증
-            List<MatePost> savedPosts = mateRepository.findAll();
+            List<MatePost> savedPosts = matePostRepository.findAll();
             MatePost savedPost = savedPosts.get(savedPosts.size() - 1);
 
             assertThat(savedPosts).hasSize(4);
@@ -311,7 +311,7 @@ public class MateIntegrationTest {
                     .andDo(print());
 
             // DB 검증
-            List<MatePost> posts = mateRepository.findMainPagePosts(
+            List<MatePost> posts = matePostRepository.findMainPagePosts(
                     null,
                     LocalDateTime.now(),
                     List.of(Status.OPEN, Status.CLOSED),
@@ -375,7 +375,7 @@ public class MateIntegrationTest {
                     .transportType(TransportType.PUBLIC)
                     .build();
             thirtyPost.updatePost(updateRequest, futureMatch, null);
-            mateRepository.save(thirtyPost);
+            matePostRepository.save(thirtyPost);
 
             // when & then
             mockMvc.perform(get("/api/mates")
@@ -404,7 +404,7 @@ public class MateIntegrationTest {
                     .transportType(TransportType.PUBLIC)
                     .build();
             malePost.updatePost(updateRequest, futureMatch, null);
-            mateRepository.save(malePost);
+            matePostRepository.save(malePost);
 
             // when & then
             mockMvc.perform(get("/api/mates")
@@ -433,7 +433,7 @@ public class MateIntegrationTest {
                     .transportType(TransportType.PUBLIC)
                     .build();
             sixPeoplePost.updatePost(updateRequest, futureMatch, null);
-            mateRepository.save(sixPeoplePost);
+            matePostRepository.save(sixPeoplePost);
 
             // when & then
             mockMvc.perform(get("/api/mates")
@@ -462,7 +462,7 @@ public class MateIntegrationTest {
                     .transportType(TransportType.PUBLIC)
                     .build();
             carpoolPost.updatePost(updateRequest, futureMatch, null);
-            mateRepository.save(carpoolPost);
+            matePostRepository.save(carpoolPost);
 
             // when & then
             mockMvc.perform(get("/api/mates")
@@ -571,7 +571,7 @@ public class MateIntegrationTest {
                     .andDo(print());
 
             // DB 검증
-            assertThat(mateRepository.findById(openPost.getId())).isEmpty();
+            assertThat(matePostRepository.findById(openPost.getId())).isEmpty();
         }
 
         @Test
@@ -588,7 +588,7 @@ public class MateIntegrationTest {
                     .andDo(print());
 
             // DB 검증 - 기존 게시글들은 여전히 존재
-            assertThat(mateRepository.findAll()).hasSize(3);
+            assertThat(matePostRepository.findAll()).hasSize(3);
         }
     }
 }

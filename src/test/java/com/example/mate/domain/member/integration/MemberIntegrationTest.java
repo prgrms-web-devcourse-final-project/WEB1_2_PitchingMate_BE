@@ -16,10 +16,11 @@ import com.example.mate.domain.goodsReview.repository.GoodsReviewRepository;
 import com.example.mate.domain.match.entity.Match;
 import com.example.mate.domain.match.repository.MatchRepository;
 import com.example.mate.domain.matePost.entity.*;
-import com.example.mate.domain.matePost.repository.MateRepository;
-import com.example.mate.domain.matePost.repository.MateReviewRepository;
+import com.example.mate.domain.matePost.repository.MatePostRepository;
+import com.example.mate.domain.mateReview.repository.MateReviewRepository;
 import com.example.mate.domain.matePost.repository.VisitPartRepository;
 import com.example.mate.domain.matePost.repository.VisitRepository;
+import com.example.mate.domain.mateReview.entity.MateReview;
 import com.example.mate.domain.member.dto.request.JoinRequest;
 import com.example.mate.domain.member.dto.request.MemberInfoUpdateRequest;
 import com.example.mate.domain.member.dto.request.MemberLoginRequest;
@@ -91,7 +92,7 @@ class MemberIntegrationTest {
     private MatchRepository matchRepository;
 
     @Autowired
-    private MateRepository mateRepository;
+    private MatePostRepository matePostRepository;
 
     @Autowired
     private VisitRepository visitRepository;
@@ -231,7 +232,7 @@ class MemberIntegrationTest {
     }
 
     private MatePost createMatePost(Member author, Match match) {
-        return mateRepository.save(MatePost.builder()
+        return matePostRepository.save(MatePost.builder()
                 .author(author)
                 .teamId(1L)
                 .match(match)

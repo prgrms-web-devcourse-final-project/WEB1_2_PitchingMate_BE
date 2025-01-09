@@ -1,14 +1,15 @@
-package com.example.mate.domain.matePost.service;
+package com.example.mate.domain.mateReview.service;
 
 import com.example.mate.common.error.CustomException;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.constant.Rating;
 import com.example.mate.domain.match.entity.Match;
-import com.example.mate.domain.matePost.dto.request.MateReviewCreateRequest;
-import com.example.mate.domain.matePost.dto.response.MateReviewCreateResponse;
+import com.example.mate.domain.mateReview.dto.request.MateReviewCreateRequest;
+import com.example.mate.domain.mateReview.dto.response.MateReviewCreateResponse;
 import com.example.mate.domain.matePost.entity.*;
-import com.example.mate.domain.matePost.repository.MateRepository;
-import com.example.mate.domain.matePost.repository.MateReviewRepository;
+import com.example.mate.domain.matePost.repository.MatePostRepository;
+import com.example.mate.domain.mateReview.repository.MateReviewRepository;
+import com.example.mate.domain.mateReview.entity.MateReview;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -34,10 +35,10 @@ import static org.mockito.Mockito.verify;
 class MateReviewServiceTest {
 
     @InjectMocks
-    private MatePostService matePostService;
+    private MateReviewService mateReviewService;
 
     @Mock
-    private MateRepository mateRepository;
+    private MatePostRepository matePostRepository;
 
     @Mock
     private MateReviewRepository mateReviewRepository;
@@ -124,7 +125,7 @@ class MateReviewServiceTest {
                     .rating(request.getRating())
                     .build();
 
-            given(mateRepository.findById(TEST_POST_ID))
+            given(matePostRepository.findById(TEST_POST_ID))
                     .willReturn(Optional.of(matePost));
             given(memberRepository.findById(TEST_REVIEWER_ID))
                     .willReturn(Optional.of(reviewer));
@@ -134,7 +135,7 @@ class MateReviewServiceTest {
                     .willReturn(mateReview);
 
             // when
-            MateReviewCreateResponse response = matePostService.createReview(
+            MateReviewCreateResponse response = mateReviewService.createReview(
                     TEST_POST_ID,
                     TEST_REVIEWER_ID,
                     request
@@ -144,7 +145,7 @@ class MateReviewServiceTest {
             assertThat(response.getReviewerId()).isEqualTo(TEST_REVIEWER_ID);
             assertThat(response.getRevieweeId()).isEqualTo(TEST_REVIEWEE_ID);
             assertThat(response.getRating()).isEqualTo(Rating.GOOD.getValue());
-            verify(mateRepository).findById(TEST_POST_ID);
+            verify(matePostRepository).findById(TEST_POST_ID);
             verify(memberRepository).findById(TEST_REVIEWER_ID);
             verify(memberRepository).findById(TEST_REVIEWEE_ID);
             verify(mateReviewRepository).save(any(MateReview.class));
@@ -156,17 +157,17 @@ class MateReviewServiceTest {
             // given
             MateReviewCreateRequest request = createRequest();
 
-            given(mateRepository.findById(TEST_POST_ID))
+            given(matePostRepository.findById(TEST_POST_ID))
                     .willReturn(Optional.empty());
 
             // when & then
             assertThatThrownBy(
-                    () -> matePostService.createReview(TEST_POST_ID, TEST_REVIEWER_ID, request)
+                    () -> mateReviewService.createReview(TEST_POST_ID, TEST_REVIEWER_ID, request)
             )
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", MATE_POST_NOT_FOUND_BY_ID);
 
-            verify(mateRepository).findById(TEST_POST_ID);
+            verify(matePostRepository).findById(TEST_POST_ID);
             verify(memberRepository, never()).findById(any());
             verify(mateReviewRepository, never()).save(any());
         }
@@ -179,19 +180,19 @@ class MateReviewServiceTest {
             MatePost matePost = createMatePost(reviewee);
             MateReviewCreateRequest request = createRequest();
 
-            given(mateRepository.findById(TEST_POST_ID))
+            given(matePostRepository.findById(TEST_POST_ID))
                     .willReturn(Optional.of(matePost));
             given(memberRepository.findById(TEST_REVIEWER_ID))
                     .willReturn(Optional.empty());
 
             // when & then
             assertThatThrownBy(
-                    () -> matePostService.createReview(TEST_POST_ID, TEST_REVIEWER_ID, request)
+                    () -> mateReviewService.createReview(TEST_POST_ID, TEST_REVIEWER_ID, request)
             )
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", MEMBER_NOT_FOUND_BY_ID);
 
-            verify(mateRepository).findById(TEST_POST_ID);
+            verify(matePostRepository).findById(TEST_POST_ID);
             verify(memberRepository).findById(TEST_REVIEWER_ID);
             verify(mateReviewRepository, never()).save(any());
         }
@@ -204,7 +205,7 @@ class MateReviewServiceTest {
             MatePost matePost = createMatePost(reviewer);
             MateReviewCreateRequest request = createRequest();
 
-            given(mateRepository.findById(TEST_POST_ID))
+            given(matePostRepository.findById(TEST_POST_ID))
                     .willReturn(Optional.of(matePost));
             given(memberRepository.findById(TEST_REVIEWER_ID))
                     .willReturn(Optional.of(reviewer));
@@ -213,12 +214,12 @@ class MateReviewServiceTest {
 
             // when & then
             assertThatThrownBy(
-                    () -> matePostService.createReview(TEST_POST_ID, TEST_REVIEWER_ID, request)
+                    () -> mateReviewService.createReview(TEST_POST_ID, TEST_REVIEWER_ID, request)
             )
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", MEMBER_NOT_FOUND_BY_ID);
 
-            verify(mateRepository).findById(TEST_POST_ID);
+            verify(matePostRepository).findById(TEST_POST_ID);
             verify(memberRepository).findById(TEST_REVIEWER_ID);
             verify(memberRepository).findById(TEST_REVIEWEE_ID);
             verify(mateReviewRepository, never()).save(any());
@@ -238,7 +239,7 @@ class MateReviewServiceTest {
 
             MateReviewCreateRequest request = createRequest();
 
-            given(mateRepository.findById(TEST_POST_ID))
+            given(matePostRepository.findById(TEST_POST_ID))
                     .willReturn(Optional.of(matePost));
             given(memberRepository.findById(TEST_REVIEWER_ID))
                     .willReturn(Optional.of(reviewer));
@@ -247,12 +248,12 @@ class MateReviewServiceTest {
 
             // when & then
             assertThatThrownBy(
-                    () -> matePostService.createReview(TEST_POST_ID, TEST_REVIEWER_ID, request)
+                    () -> mateReviewService.createReview(TEST_POST_ID, TEST_REVIEWER_ID, request)
             )
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", NOT_PARTICIPANT_OR_AUTHOR);
 
-            verify(mateRepository).findById(TEST_POST_ID);
+            verify(matePostRepository).findById(TEST_POST_ID);
             verify(memberRepository).findById(TEST_REVIEWER_ID);
             verify(memberRepository).findById(TEST_REVIEWEE_ID);
             verify(mateReviewRepository, never()).save(any());

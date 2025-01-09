@@ -1,4 +1,4 @@
-package com.example.mate.domain.matePost.controller;
+package com.example.mate.domain.mateReview.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
@@ -10,9 +10,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.example.mate.common.security.filter.JwtCheckFilter;
 import com.example.mate.config.WithAuthMember;
 import com.example.mate.domain.constant.Rating;
-import com.example.mate.domain.matePost.dto.request.MateReviewCreateRequest;
-import com.example.mate.domain.matePost.dto.response.MateReviewCreateResponse;
-import com.example.mate.domain.matePost.service.MatePostService;
+import com.example.mate.domain.matePost.controller.MatePostController;
+import com.example.mate.domain.mateReview.dto.request.MateReviewCreateRequest;
+import com.example.mate.domain.mateReview.dto.response.MateReviewCreateResponse;
+import com.example.mate.domain.mateReview.service.MateReviewService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -25,7 +26,7 @@ import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-@WebMvcTest(MatePostController.class)
+@WebMvcTest(MateReviewController.class)
 @MockBean(JpaMetamodelMappingContext.class)
 @AutoConfigureMockMvc(addFilters = false)
 @WithAuthMember
@@ -38,7 +39,7 @@ class MateReviewControllerTest {
     private ObjectMapper objectMapper;
 
     @MockBean
-    private MatePostService matePostService;
+    private MateReviewService mateReviewService;
 
     @MockBean
     private JwtCheckFilter jwtCheckFilter;
@@ -74,11 +75,11 @@ class MateReviewControllerTest {
             MateReviewCreateRequest request = createMateReviewRequest();
             MateReviewCreateResponse response = createMateReviewResponse();
 
-            given(matePostService.createReview(any(), any(), any()))
+            given(mateReviewService.createReview(any(), any(), any()))
                     .willReturn(response);
 
             // when & then
-            mockMvc.perform(post("/api/mates/{postId}/reviews", postId)
+            mockMvc.perform(post("/api/mates/review/{postId}", postId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
@@ -104,7 +105,7 @@ class MateReviewControllerTest {
                     .build();
 
             // when & then
-            mockMvc.perform(post("/api/mates/{postId}/reviews", postId)
+            mockMvc.perform(post("/api/mates/review/{postId}", postId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
@@ -128,7 +129,7 @@ class MateReviewControllerTest {
                     .build();
 
             // when & then
-            mockMvc.perform(post("/api/mates/{postId}/reviews", memberId, postId)
+            mockMvc.perform(post("/api/mates/review/{postId}", memberId, postId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())

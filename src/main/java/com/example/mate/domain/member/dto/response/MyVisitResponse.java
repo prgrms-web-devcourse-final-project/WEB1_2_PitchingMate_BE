@@ -2,7 +2,7 @@ package com.example.mate.domain.member.dto.response;
 
 import com.example.mate.domain.constant.TeamInfo;
 import com.example.mate.domain.match.entity.Match;
-import com.example.mate.domain.matePost.entity.MateReview;
+import com.example.mate.domain.mateReview.entity.MateReview;
 import com.example.mate.domain.member.entity.Member;
 import java.time.LocalDateTime;
 import java.util.ArrayList;

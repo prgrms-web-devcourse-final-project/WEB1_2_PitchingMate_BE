@@ -34,7 +34,7 @@ import com.example.mate.domain.matePost.entity.SortType;
 import com.example.mate.domain.matePost.entity.Status;
 import com.example.mate.domain.matePost.entity.TransportType;
 import com.example.mate.domain.matePost.entity.Visit;
-import com.example.mate.domain.matePost.repository.MateRepository;
+import com.example.mate.domain.matePost.repository.MatePostRepository;
 import com.example.mate.domain.mateChat.repository.MateChatRoomMemberRepository;
 import com.example.mate.domain.mateChat.repository.MateChatRoomRepository;
 import com.example.mate.domain.member.entity.Member;
@@ -62,7 +62,7 @@ class MatePostServiceTest {
     private MatePostService matePostService;
 
     @Mock
-    private MateRepository mateRepository;
+    private MatePostRepository matePostRepository;
 
     @Mock
     private MatchRepository matchRepository;
@@ -141,7 +141,7 @@ class MatePostServiceTest {
                     .willReturn(Optional.of(testMember));
             given(matchRepository.findById(request.getMatchId()))
                     .willReturn(Optional.of(testMatch));
-            given(mateRepository.save(any(MatePost.class)))
+            given(matePostRepository.save(any(MatePost.class)))
                     .willReturn(matePost);
 
             // when
@@ -151,7 +151,7 @@ class MatePostServiceTest {
             assertThat(response.getStatus()).isEqualTo(Status.OPEN);
             verify(memberRepository).findById(TEST_MEMBER_ID);
             verify(matchRepository).findById(TEST_MATCH_ID);
-            verify(mateRepository).save(any(MatePost.class));
+            verify(matePostRepository).save(any(MatePost.class));
         }
 
         @Test
@@ -179,7 +179,7 @@ class MatePostServiceTest {
 
             verify(memberRepository).findById(TEST_MEMBER_ID);
             verify(matchRepository, never()).findById(any());
-            verify(mateRepository, never()).save(any());
+            verify(matePostRepository, never()).save(any());
         }
 
         @Test
@@ -210,7 +210,7 @@ class MatePostServiceTest {
 
             verify(memberRepository).findById(TEST_MEMBER_ID);
             verify(matchRepository).findById(TEST_MATCH_ID);
-            verify(mateRepository, never()).save(any());
+            verify(matePostRepository, never()).save(any());
         }
     }
 
@@ -257,7 +257,7 @@ class MatePostServiceTest {
         void getMatePostMain_SuccessWithoutTeamId() {
             // given
             List<MatePost> testPosts = createTestMatePostList();
-            given(mateRepository.findMainPagePosts(
+            given(matePostRepository.findMainPagePosts(
                     eq(null),
                     any(LocalDateTime.class),
                     eq(List.of(Status.OPEN, Status.CLOSED)),
@@ -272,7 +272,7 @@ class MatePostServiceTest {
             assertThat(result.get(0).getTitle()).isEqualTo("테스트 제목1");
             assertThat(result.get(1).getTitle()).isEqualTo("테스트 제목2");
 
-            verify(mateRepository).findMainPagePosts(
+            verify(matePostRepository).findMainPagePosts(
                     eq(null),
                     any(LocalDateTime.class),
                     eq(List.of(Status.OPEN, Status.CLOSED)),
@@ -285,7 +285,7 @@ class MatePostServiceTest {
             // given
             Long teamId = 1L;
             List<MatePost> testPosts = createTestMatePostList();
-            given(mateRepository.findMainPagePosts(
+            given(matePostRepository.findMainPagePosts(
                     eq(teamId),
                     any(LocalDateTime.class),
                     eq(List.of(Status.OPEN, Status.CLOSED)),
@@ -302,7 +302,7 @@ class MatePostServiceTest {
             assertThat(result).extracting("maxParticipants")
                     .containsExactly(4, 3);
 
-            verify(mateRepository).findMainPagePosts(
+            verify(matePostRepository).findMainPagePosts(
                     eq(teamId),
                     any(LocalDateTime.class),
                     eq(List.of(Status.OPEN, Status.CLOSED)),
@@ -313,7 +313,7 @@ class MatePostServiceTest {
         @DisplayName("메이트 게시글 목록 조회 - 결과 없음")
         void getMatePostMain_EmptyResult() {
             // given
-            given(mateRepository.findMainPagePosts(
+            given(matePostRepository.findMainPagePosts(
                     any(),
                     any(LocalDateTime.class),
                     any(),
@@ -326,7 +326,7 @@ class MatePostServiceTest {
             // then
             assertThat(result).isEmpty();
 
-            verify(mateRepository).findMainPagePosts(
+            verify(matePostRepository).findMainPagePosts(
                     any(),
                     any(LocalDateTime.class),
                     any(),
@@ -344,7 +344,7 @@ class MatePostServiceTest {
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", TEAM_NOT_FOUND);
 
-            verify(mateRepository, never()).findMainPagePosts(
+            verify(matePostRepository, never()).findMainPagePosts(
                     any(),
                     any(LocalDateTime.class),
                     any(),
@@ -402,7 +402,7 @@ class MatePostServiceTest {
             Pageable pageable = PageRequest.of(0, 10);
             MatePostSearchRequest request = MatePostSearchRequest.builder().build();
 
-            given(mateRepository.findMatePostsByFilter(request, pageable))
+            given(matePostRepository.findMatePostsByFilter(request, pageable))
                     .willReturn(testPage);
 
             // when
@@ -415,7 +415,7 @@ class MatePostServiceTest {
             assertThat(result.getTotalElements()).isEqualTo(2);
             assertThat(result.getPageNumber()).isZero();
 
-            verify(mateRepository).findMatePostsByFilter(request, pageable);
+            verify(matePostRepository).findMatePostsByFilter(request, pageable);
         }
 
         @Test
@@ -455,7 +455,7 @@ class MatePostServiceTest {
                     .transportType(TransportType.PUBLIC)
                     .build();
 
-            given(mateRepository.findMatePostsByFilter(request, pageable))
+            given(matePostRepository.findMatePostsByFilter(request, pageable))
                     .willReturn(testPage);
 
             // when
@@ -467,7 +467,7 @@ class MatePostServiceTest {
             assertThat(result.getPageNumber()).isZero();
             assertThat(result.getContent().get(0).getTransportType()).isEqualTo(TransportType.PUBLIC);
 
-            verify(mateRepository).findMatePostsByFilter(request, pageable);
+            verify(matePostRepository).findMatePostsByFilter(request, pageable);
         }
 
         @Test
@@ -478,7 +478,7 @@ class MatePostServiceTest {
             Pageable pageable = PageRequest.of(0, 10);
             MatePostSearchRequest request = MatePostSearchRequest.builder().build();
 
-            given(mateRepository.findMatePostsByFilter(request, pageable))
+            given(matePostRepository.findMatePostsByFilter(request, pageable))
                     .willReturn(emptyPage);
 
             // when
@@ -488,7 +488,7 @@ class MatePostServiceTest {
             assertThat(result.getContent()).isEmpty();
             assertThat(result.getTotalElements()).isZero();
 
-            verify(mateRepository).findMatePostsByFilter(request, pageable);
+            verify(matePostRepository).findMatePostsByFilter(request, pageable);
         }
 
         @Test
@@ -505,7 +505,7 @@ class MatePostServiceTest {
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", TEAM_NOT_FOUND);
 
-            verify(mateRepository, never()).findMatePostsByFilter(any(), any());
+            verify(matePostRepository, never()).findMatePostsByFilter(any(), any());
         }
     }
 
@@ -536,7 +536,7 @@ class MatePostServiceTest {
                     .transport(TransportType.PUBLIC)
                     .build();
 
-            given(mateRepository.findById(POST_ID))
+            given(matePostRepository.findById(POST_ID))
                     .willReturn(Optional.of(testPost));
 
             // when
@@ -560,7 +560,7 @@ class MatePostServiceTest {
             assertThat(response.getAuthorId()).isEqualTo(testMember.getId());
             assertThat(response.getMatchId()).isEqualTo(testMatch.getId());
 
-            verify(mateRepository).findById(POST_ID);
+            verify(matePostRepository).findById(POST_ID);
         }
 
         @Test
@@ -585,7 +585,7 @@ class MatePostServiceTest {
                     .transport(TransportType.PUBLIC)
                     .build();
 
-            given(mateRepository.findById(POST_ID))
+            given(matePostRepository.findById(POST_ID))
                     .willReturn(Optional.of(testPost));
 
             // when
@@ -593,14 +593,14 @@ class MatePostServiceTest {
 
             // then
             assertThat(response.getRivalTeamName()).isEqualTo("KIA");  // LG 팬의 게시글이므로 KIA가 상대팀
-            verify(mateRepository).findById(POST_ID);
+            verify(matePostRepository).findById(POST_ID);
         }
 
         @Test
         @DisplayName("메이트 게시글 상세 조회 실패 - 존재하지 않는 게시글")
         void getMatePostDetail_FailWithInvalidPostId() {
             // given
-            given(mateRepository.findById(POST_ID))
+            given(matePostRepository.findById(POST_ID))
                     .willReturn(Optional.empty());
 
             // when & then
@@ -608,7 +608,7 @@ class MatePostServiceTest {
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", MATE_POST_NOT_FOUND_BY_ID);
 
-            verify(mateRepository).findById(POST_ID);
+            verify(matePostRepository).findById(POST_ID);
         }
     }
 
@@ -648,7 +648,7 @@ class MatePostServiceTest {
                     .transportType(TransportType.CAR)
                     .build();
 
-            given(mateRepository.findById(1L))
+            given(matePostRepository.findById(1L))
                     .willReturn(Optional.of(originalPost));
             given(matchRepository.findById(request.getMatchId()))
                     .willReturn(Optional.of(testMatch));
@@ -667,7 +667,7 @@ class MatePostServiceTest {
             assertThat(originalPost.getGender()).isEqualTo(Gender.MALE);
             assertThat(originalPost.getTransport()).isEqualTo(TransportType.CAR);
 
-            verify(mateRepository).findById(1L);
+            verify(matePostRepository).findById(1L);
             verify(matchRepository).findById(1L);
         }
 
@@ -686,7 +686,7 @@ class MatePostServiceTest {
                     .transportType(TransportType.CAR)
                     .build();
 
-            given(mateRepository.findById(1L))
+            given(matePostRepository.findById(1L))
                     .willReturn(Optional.empty());
 
             // when & then
@@ -694,7 +694,7 @@ class MatePostServiceTest {
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", MATE_POST_NOT_FOUND_BY_ID);
 
-            verify(mateRepository).findById(1L);
+            verify(matePostRepository).findById(1L);
             verify(matchRepository, never()).findById(any());
         }
 
@@ -730,7 +730,7 @@ class MatePostServiceTest {
                     .transportType(TransportType.CAR)
                     .build();
 
-            given(mateRepository.findById(1L))
+            given(matePostRepository.findById(1L))
                     .willReturn(Optional.of(originalPost));
 
             Long unauthorizedMemberId = 999L;
@@ -740,7 +740,7 @@ class MatePostServiceTest {
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", MATE_POST_UPDATE_NOT_ALLOWED);
 
-            verify(mateRepository).findById(1L);
+            verify(matePostRepository).findById(1L);
             verify(matchRepository, never()).findById(any());
         }
 
@@ -776,7 +776,7 @@ class MatePostServiceTest {
                     .transportType(TransportType.CAR)
                     .build();
 
-            given(mateRepository.findById(1L))
+            given(matePostRepository.findById(1L))
                     .willReturn(Optional.of(completedPost));
 
             // when & then
@@ -784,7 +784,7 @@ class MatePostServiceTest {
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", ALREADY_COMPLETED_POST);
 
-            verify(mateRepository).findById(1L);
+            verify(matePostRepository).findById(1L);
             verify(matchRepository, never()).findById(any());
         }
 
@@ -821,7 +821,7 @@ class MatePostServiceTest {
                     .transportType(TransportType.CAR)
                     .build();
 
-            given(mateRepository.findById(1L))
+            given(matePostRepository.findById(1L))
                     .willReturn(Optional.of(originalPost));
 
             // when & then
@@ -829,7 +829,7 @@ class MatePostServiceTest {
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", TEAM_NOT_FOUND);
 
-            verify(mateRepository).findById(1L);
+            verify(matePostRepository).findById(1L);
             verify(matchRepository, never()).findById(any());
         }
 
@@ -865,7 +865,7 @@ class MatePostServiceTest {
                     .transportType(TransportType.CAR)
                     .build();
 
-            given(mateRepository.findById(1L))
+            given(matePostRepository.findById(1L))
                     .willReturn(Optional.of(originalPost));
             given(matchRepository.findById(request.getMatchId()))
                     .willReturn(Optional.empty());
@@ -875,7 +875,7 @@ class MatePostServiceTest {
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", MATCH_NOT_FOUND_BY_ID);
 
-            verify(mateRepository).findById(1L);
+            verify(matePostRepository).findById(1L);
             verify(matchRepository).findById(1L);
         }
     }
@@ -907,15 +907,15 @@ class MatePostServiceTest {
                     .transport(TransportType.PUBLIC)
                     .build();
 
-            given(mateRepository.findById(POST_ID))
+            given(matePostRepository.findById(POST_ID))
                     .willReturn(Optional.of(matePost));
 
             // when
             matePostService.deleteMatePost(TEST_MEMBER_ID, POST_ID);
 
             // then
-            verify(mateRepository).findById(POST_ID);
-            verify(mateRepository).delete(matePost);
+            verify(matePostRepository).findById(POST_ID);
+            verify(matePostRepository).delete(matePost);
         }
 
         @Test
@@ -942,15 +942,15 @@ class MatePostServiceTest {
                     .visit(visit)
                     .build();
 
-            given(mateRepository.findById(POST_ID))
+            given(matePostRepository.findById(POST_ID))
                     .willReturn(Optional.of(matePost));
 
             // when
             matePostService.deleteMatePost(TEST_MEMBER_ID, POST_ID);
 
             // then
-            verify(mateRepository).findById(POST_ID);
-            verify(mateRepository).delete(matePost);
+            verify(matePostRepository).findById(POST_ID);
+            verify(matePostRepository).delete(matePost);
             assertThat(visit.getPost()).isNull();
         }
 
@@ -976,7 +976,7 @@ class MatePostServiceTest {
                     .build();
 
             Long differentMemberId = 999L;
-            given(mateRepository.findById(POST_ID))
+            given(matePostRepository.findById(POST_ID))
                     .willReturn(Optional.of(matePost));
 
             // when & then
@@ -984,8 +984,8 @@ class MatePostServiceTest {
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", MATE_POST_UPDATE_NOT_ALLOWED);
 
-            verify(mateRepository).findById(POST_ID);
-            verify(mateRepository, never()).delete(any(MatePost.class));
+            verify(matePostRepository).findById(POST_ID);
+            verify(matePostRepository, never()).delete(any(MatePost.class));
         }
     }
 }

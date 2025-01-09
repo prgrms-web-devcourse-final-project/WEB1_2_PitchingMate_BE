@@ -5,6 +5,6 @@ import com.example.mate.domain.matePost.entity.MatePost;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-public interface MateRepositoryCustom {
+public interface MatePostRepositoryCustom {
     Page<MatePost> findMatePostsByFilter(MatePostSearchRequest request, Pageable pageable);
 }

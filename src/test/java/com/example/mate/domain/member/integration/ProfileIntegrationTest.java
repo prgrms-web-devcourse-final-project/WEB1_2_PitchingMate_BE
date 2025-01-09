@@ -22,12 +22,12 @@ import com.example.mate.domain.match.entity.Match;
 import com.example.mate.domain.match.repository.MatchRepository;
 import com.example.mate.domain.matePost.entity.Age;
 import com.example.mate.domain.matePost.entity.MatePost;
-import com.example.mate.domain.matePost.entity.MateReview;
+import com.example.mate.domain.mateReview.entity.MateReview;
 import com.example.mate.domain.matePost.entity.TransportType;
 import com.example.mate.domain.matePost.entity.Visit;
 import com.example.mate.domain.matePost.entity.VisitPart;
-import com.example.mate.domain.matePost.repository.MateRepository;
-import com.example.mate.domain.matePost.repository.MateReviewRepository;
+import com.example.mate.domain.matePost.repository.MatePostRepository;
+import com.example.mate.domain.mateReview.repository.MateReviewRepository;
 import com.example.mate.domain.matePost.repository.VisitPartRepository;
 import com.example.mate.domain.matePost.repository.VisitRepository;
 import com.example.mate.domain.member.entity.Member;
@@ -70,7 +70,7 @@ public class ProfileIntegrationTest {
     private MatchRepository matchRepository;
 
     @Autowired
-    private MateRepository mateRepository;
+    private MatePostRepository matePostRepository;
 
     @Autowired
     private VisitRepository visitRepository;
@@ -199,7 +199,7 @@ public class ProfileIntegrationTest {
     }
 
     private void createMatePost() {
-        matePost = mateRepository.save(MatePost.builder()
+        matePost = matePostRepository.save(MatePost.builder()
                 .author(member1)
                 .teamId(1L)
                 .match(match)
@@ -573,7 +573,7 @@ public class ProfileIntegrationTest {
                     .transport(TransportType.ANY)
                     .build();
 
-            mateRepository.save(post);
+            matePostRepository.save(post);
 
             // when & then
             mockMvc.perform(get("/api/profile/posts/mate")

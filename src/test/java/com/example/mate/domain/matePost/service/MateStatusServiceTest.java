@@ -11,7 +11,7 @@ import com.example.mate.domain.matePost.entity.Age;
 import com.example.mate.domain.matePost.entity.MatePost;
 import com.example.mate.domain.matePost.entity.Status;
 import com.example.mate.domain.matePost.entity.TransportType;
-import com.example.mate.domain.matePost.repository.MateRepository;
+import com.example.mate.domain.matePost.repository.MatePostRepository;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -40,7 +40,7 @@ class MateStatusServiceTest {
     private MatePostService matePostService;
 
     @Mock
-    private MateRepository mateRepository;
+    private MatePostRepository matePostRepository;
 
     @Mock
     private MemberRepository memberRepository;
@@ -99,7 +99,7 @@ class MateStatusServiceTest {
 
             MatePostStatusRequest request = new MatePostStatusRequest(Status.CLOSED, participantIds);
 
-            given(mateRepository.findById(POST_ID))
+            given(matePostRepository.findById(POST_ID))
                     .willReturn(Optional.of(matePost));
             given(memberRepository.findAllById(participantIds))
                     .willReturn(participants);
@@ -110,7 +110,7 @@ class MateStatusServiceTest {
             // then
             assertThat(response.getId()).isEqualTo(POST_ID);
             assertThat(response.getStatus()).isEqualTo(Status.CLOSED);
-            verify(mateRepository).findById(POST_ID);
+            verify(matePostRepository).findById(POST_ID);
             verify(memberRepository).findAllById(participantIds);
         }
 
@@ -120,7 +120,7 @@ class MateStatusServiceTest {
             // given
             List<Long> participantIds = Arrays.asList(2L, 3L);
             MatePostStatusRequest request = new MatePostStatusRequest(Status.CLOSED, participantIds);
-            given(mateRepository.findById(POST_ID))
+            given(matePostRepository.findById(POST_ID))
                     .willReturn(Optional.empty());
 
             // when & then
@@ -128,7 +128,7 @@ class MateStatusServiceTest {
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", MATE_POST_NOT_FOUND_BY_ID);
 
-            verify(mateRepository).findById(POST_ID);
+            verify(matePostRepository).findById(POST_ID);
             verify(memberRepository, never()).findAllById(any());
         }
 
@@ -156,7 +156,7 @@ class MateStatusServiceTest {
             List<Long> participantIds = Arrays.asList(2L, 3L);
             MatePostStatusRequest request = new MatePostStatusRequest(Status.CLOSED, participantIds);
 
-            given(mateRepository.findById(POST_ID))
+            given(matePostRepository.findById(POST_ID))
                     .willReturn(Optional.of(matePost));
 
             // when & then
@@ -164,7 +164,7 @@ class MateStatusServiceTest {
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", MATE_POST_UPDATE_NOT_ALLOWED);
 
-            verify(mateRepository).findById(POST_ID);
+            verify(matePostRepository).findById(POST_ID);
             verify(memberRepository, never()).findAllById(any());
         }
 
@@ -191,7 +191,7 @@ class MateStatusServiceTest {
             List<Long> participantIds = Arrays.asList(2L, 3L);
             MatePostStatusRequest request = new MatePostStatusRequest(Status.VISIT_COMPLETE, participantIds);
 
-            given(mateRepository.findById(POST_ID))
+            given(matePostRepository.findById(POST_ID))
                     .willReturn(Optional.of(matePost));
 
             // when & then
@@ -199,7 +199,7 @@ class MateStatusServiceTest {
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", DIRECT_VISIT_COMPLETE_FORBIDDEN);
 
-            verify(mateRepository).findById(POST_ID);
+            verify(matePostRepository).findById(POST_ID);
             verify(memberRepository, never()).findAllById(any());
         }
 
@@ -226,7 +226,7 @@ class MateStatusServiceTest {
             List<Long> participantIds = Arrays.asList(2L, 3L);
             MatePostStatusRequest request = new MatePostStatusRequest(Status.CLOSED, participantIds);
 
-            given(mateRepository.findById(POST_ID))
+            given(matePostRepository.findById(POST_ID))
                     .willReturn(Optional.of(matePost));
 
             // when & then
@@ -234,7 +234,7 @@ class MateStatusServiceTest {
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", ALREADY_COMPLETED_POST);
 
-            verify(mateRepository).findById(POST_ID);
+            verify(matePostRepository).findById(POST_ID);
             verify(memberRepository, never()).findAllById(any());
         }
 
@@ -263,7 +263,7 @@ class MateStatusServiceTest {
 
             MatePostStatusRequest request = new MatePostStatusRequest(Status.CLOSED, participantIds);
 
-            given(mateRepository.findById(POST_ID))
+            given(matePostRepository.findById(POST_ID))
                     .willReturn(Optional.of(matePost));
             given(memberRepository.findAllById(participantIds))
                     .willReturn(participants);
@@ -273,7 +273,7 @@ class MateStatusServiceTest {
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", INVALID_MATE_POST_PARTICIPANT_IDS);
 
-            verify(mateRepository).findById(POST_ID);
+            verify(matePostRepository).findById(POST_ID);
             verify(memberRepository).findAllById(participantIds);
         }
 
@@ -306,7 +306,7 @@ class MateStatusServiceTest {
 
             MatePostStatusRequest request = new MatePostStatusRequest(Status.CLOSED, participantIds);
 
-            given(mateRepository.findById(POST_ID))
+            given(matePostRepository.findById(POST_ID))
                     .willReturn(Optional.of(matePost));
             given(memberRepository.findAllById(participantIds))
                     .willReturn(participants);
@@ -316,7 +316,7 @@ class MateStatusServiceTest {
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", MATE_POST_MAX_PARTICIPANTS_EXCEEDED);
 
-            verify(mateRepository).findById(POST_ID);
+            verify(matePostRepository).findById(POST_ID);
             verify(memberRepository).findAllById(participantIds);
         }
     }
@@ -368,7 +368,7 @@ class MateStatusServiceTest {
 
             MatePostCompleteRequest request = new MatePostCompleteRequest(participantIds);
 
-            given(mateRepository.findById(POST_ID)).willReturn(Optional.of(matePost));
+            given(matePostRepository.findById(POST_ID)).willReturn(Optional.of(matePost));
             given(memberRepository.findAllById(participantIds)).willReturn(participants);
 
             // when
@@ -379,7 +379,7 @@ class MateStatusServiceTest {
             assertThat(response.getStatus()).isEqualTo(Status.VISIT_COMPLETE);
             assertThat(response.getParticipantIds()).containsExactlyInAnyOrderElementsOf(allParticipantIds);
 
-            verify(mateRepository).findById(POST_ID);
+            verify(matePostRepository).findById(POST_ID);
             verify(memberRepository).findAllById(participantIds);
         }
 
@@ -390,7 +390,7 @@ class MateStatusServiceTest {
             List<Long> participantIds = List.of(1L, 2L);
             MatePostCompleteRequest request = new MatePostCompleteRequest(participantIds);
 
-            given(mateRepository.findById(POST_ID))
+            given(matePostRepository.findById(POST_ID))
                     .willReturn(Optional.empty());
 
             // when & then
@@ -398,7 +398,7 @@ class MateStatusServiceTest {
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", MATE_POST_NOT_FOUND_BY_ID);
 
-            verify(mateRepository).findById(POST_ID);
+            verify(matePostRepository).findById(POST_ID);
             verify(memberRepository, never()).findAllById(any());
         }
 
@@ -421,7 +421,7 @@ class MateStatusServiceTest {
             List<Long> participantIds = List.of(1L, 2L);
             MatePostCompleteRequest request = new MatePostCompleteRequest(participantIds);
 
-            given(mateRepository.findById(POST_ID))
+            given(matePostRepository.findById(POST_ID))
                     .willReturn(Optional.of(matePost));
 
             // when & then
@@ -429,7 +429,7 @@ class MateStatusServiceTest {
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", MATE_POST_UPDATE_NOT_ALLOWED);
 
-            verify(mateRepository).findById(POST_ID);
+            verify(matePostRepository).findById(POST_ID);
             verify(memberRepository, never()).findAllById(any());
         }
 
@@ -457,7 +457,7 @@ class MateStatusServiceTest {
             List<Long> participantIds = List.of(1L, 2L);
             MatePostCompleteRequest request = new MatePostCompleteRequest(participantIds);
 
-            given(mateRepository.findById(POST_ID))
+            given(matePostRepository.findById(POST_ID))
                     .willReturn(Optional.of(matePost));
 
             // when & then
@@ -465,7 +465,7 @@ class MateStatusServiceTest {
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", MATE_POST_COMPLETE_TIME_NOT_ALLOWED);
 
-            verify(mateRepository).findById(POST_ID);
+            verify(matePostRepository).findById(POST_ID);
             verify(memberRepository, never()).findAllById(any());
         }
 
@@ -493,7 +493,7 @@ class MateStatusServiceTest {
             List<Long> participantIds = List.of(1L, 2L);
             MatePostCompleteRequest request = new MatePostCompleteRequest(participantIds);
 
-            given(mateRepository.findById(POST_ID))
+            given(matePostRepository.findById(POST_ID))
                     .willReturn(Optional.of(matePost));
 
             // when & then
@@ -501,7 +501,7 @@ class MateStatusServiceTest {
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", NOT_CLOSED_STATUS_FOR_COMPLETION);
 
-            verify(mateRepository).findById(POST_ID);
+            verify(matePostRepository).findById(POST_ID);
             verify(memberRepository, never()).findAllById(any());
         }
 
@@ -530,7 +530,7 @@ class MateStatusServiceTest {
             List<Member> participants = List.of(createParticipant(1L)); // 한 명만 존재
             MatePostCompleteRequest request = new MatePostCompleteRequest(participantIds);
 
-            given(mateRepository.findById(POST_ID))
+            given(matePostRepository.findById(POST_ID))
                     .willReturn(Optional.of(matePost));
             given(memberRepository.findAllById(participantIds))
                     .willReturn(participants);
@@ -540,7 +540,7 @@ class MateStatusServiceTest {
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", INVALID_MATE_POST_PARTICIPANT_IDS);
 
-            verify(mateRepository).findById(POST_ID);
+            verify(matePostRepository).findById(POST_ID);
             verify(memberRepository).findAllById(participantIds);
         }
 
@@ -571,7 +571,7 @@ class MateStatusServiceTest {
                     .toList();
             MatePostCompleteRequest request = new MatePostCompleteRequest(participantIds);
 
-            given(mateRepository.findById(POST_ID))
+            given(matePostRepository.findById(POST_ID))
                     .willReturn(Optional.of(matePost));
             given(memberRepository.findAllById(participantIds))
                     .willReturn(participants);
@@ -581,7 +581,7 @@ class MateStatusServiceTest {
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", MATE_POST_MAX_PARTICIPANTS_EXCEEDED);
 
-            verify(mateRepository).findById(POST_ID);
+            verify(matePostRepository).findById(POST_ID);
             verify(memberRepository).findAllById(participantIds);
         }
     }

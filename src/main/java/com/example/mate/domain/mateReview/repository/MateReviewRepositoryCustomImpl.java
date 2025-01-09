@@ -1,7 +1,7 @@
-package com.example.mate.domain.matePost.repository;
+package com.example.mate.domain.mateReview.repository;
 
 import com.example.mate.domain.matePost.entity.QMatePost;
-import com.example.mate.domain.matePost.entity.QMateReview;
+import com.example.mate.domain.mateReview.entity.QMateReview;
 import com.example.mate.domain.member.dto.response.MyReviewResponse;
 import com.example.mate.domain.member.entity.QMember;
 import com.querydsl.core.types.OrderSpecifier;

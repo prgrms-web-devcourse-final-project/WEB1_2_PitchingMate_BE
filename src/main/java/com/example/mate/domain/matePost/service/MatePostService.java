@@ -10,11 +10,8 @@ import com.example.mate.domain.match.repository.MatchRepository;
 import com.example.mate.domain.matePost.dto.request.*;
 import com.example.mate.domain.matePost.dto.response.*;
 import com.example.mate.domain.matePost.entity.MatePost;
-import com.example.mate.domain.matePost.entity.MateReview;
 import com.example.mate.domain.matePost.entity.Status;
-import com.example.mate.domain.matePost.entity.Visit;
-import com.example.mate.domain.matePost.repository.MateRepository;
-import com.example.mate.domain.matePost.repository.MateReviewRepository;
+import com.example.mate.domain.matePost.repository.MatePostRepository;
 import com.example.mate.domain.mateChat.repository.MateChatRoomMemberRepository;
 import com.example.mate.domain.mateChat.repository.MateChatRoomRepository;
 import com.example.mate.domain.member.entity.Member;
@@ -40,16 +37,16 @@ public class MatePostService {
 
     private static final String DEFAULT_MATE_POST_IMAGE = "mate_default.svg";
 
-    private final MateRepository mateRepository;
+    private final MatePostRepository matePostRepository;
     private final MatchRepository matchRepository;
     private final MemberRepository memberRepository;
-    private final MateReviewRepository mateReviewRepository;
     private final MateChatRoomRepository mateChatRoomRepository;
     private final MateChatRoomMemberRepository mateChatRoomMemberRepository;
     private final FileService fileService;
 
     public MatePostResponse createMatePost(MatePostCreateRequest request, MultipartFile file, Long memberId) {
-        Member author = findMemberById(memberId);
+        Member author = memberRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(MEMBER_NOT_FOUND_BY_ID));
 
         Match match = findMatchById(request.getMatchId());
 
@@ -68,7 +65,7 @@ public class MatePostService {
                 .gender(request.getGender())
                 .transport(request.getTransportType())
                 .build();
-        MatePost savedPost = mateRepository.save(matePost);
+        MatePost savedPost = matePostRepository.save(matePost);
 
         handleFileUpload(file, matePost);
 
@@ -92,7 +89,7 @@ public class MatePostService {
         LocalDateTime now = LocalDateTime.now();
         List<Status> validStatuses = List.of(Status.OPEN, Status.CLOSED);
 
-        List<MatePost> mainPagePosts = mateRepository.findMainPagePosts(
+        List<MatePost> mainPagePosts = matePostRepository.findMainPagePosts(
                 teamId,
                 now,
                 validStatuses,
@@ -109,7 +106,7 @@ public class MatePostService {
             throw new CustomException(TEAM_NOT_FOUND);
         }
 
-        Page<MatePost> matePostPage = mateRepository.findMatePostsByFilter(request, pageable);
+        Page<MatePost> matePostPage = matePostRepository.findMatePostsByFilter(request, pageable);
 
         List<MatePostSummaryResponse> content = matePostPage.getContent().stream()
                 .map(MatePostSummaryResponse::from)
@@ -197,7 +194,7 @@ public class MatePostService {
         validatePostStatus(matePost.getStatus());
         deleteNonDefaultImage(matePost.getImageUrl());
 
-        mateRepository.delete(matePost);
+        matePostRepository.delete(matePost);
     }
 
     private void validatePostStatus(Status status) {
@@ -259,50 +256,8 @@ public class MatePostService {
         }
     }
 
-    public MateReviewCreateResponse createReview(Long postId, Long reviewerId, MateReviewCreateRequest request) {
-        MatePost matePost = findMatePostById(postId);
-        Member reviewer = findMemberById(reviewerId);
-        Member reviewee = findMemberById(request.getRevieweeId());
-
-        validateReviewEligibility(matePost, reviewer, reviewee);
-
-        MateReview review = matePost.getVisit().createReview(reviewer, reviewee, request);
-        MateReview savedReview = mateReviewRepository.save(review);
-
-        return MateReviewCreateResponse.from(savedReview);
-    }
-
-    private void validateReviewEligibility(MatePost matePost, Member reviewer, Member reviewee) {
-        // 리뷰어와 리뷰 대상자 모두 참여자(또는 방장) 여부 검증
-        validateParticipant(matePost, reviewer);
-        validateParticipant(matePost, reviewee);
-    }
-
-    private void validateParticipant(MatePost matePost, Member member) {
-        boolean isParticipant = isAuthor(matePost, member) ||
-                isVisitParticipant(matePost.getVisit(), member);
-
-        if (!isParticipant) {
-            throw new CustomException(NOT_PARTICIPANT_OR_AUTHOR);
-        }
-    }
-
-    private boolean isAuthor(MatePost matePost, Member member) {
-        return matePost.getAuthor().equals(member);
-    }
-
-    private boolean isVisitParticipant(Visit visit, Member member) {
-        return visit.getParticipants().stream()
-                .anyMatch(part -> part.getMember().equals(member));
-    }
-
-    private Member findMemberById(Long id) {
-        return memberRepository.findById(id)
-                .orElseThrow(() -> new CustomException(MEMBER_NOT_FOUND_BY_ID));
-    }
-
     private MatePost findMatePostById(Long postId) {
-        return mateRepository.findById(postId)
+        return matePostRepository.findById(postId)
                 .orElseThrow(() -> new CustomException(MATE_POST_NOT_FOUND_BY_ID));
     }
 }

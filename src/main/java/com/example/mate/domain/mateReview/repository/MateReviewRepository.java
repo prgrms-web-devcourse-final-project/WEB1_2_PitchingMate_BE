@@ -1,6 +1,6 @@
-package com.example.mate.domain.matePost.repository;
+package com.example.mate.domain.mateReview.repository;
 
-import com.example.mate.domain.matePost.entity.MateReview;
+import com.example.mate.domain.mateReview.entity.MateReview;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

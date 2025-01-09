@@ -1,6 +1,6 @@
-package com.example.mate.domain.matePost.dto.response;
+package com.example.mate.domain.mateReview.dto.response;
 
-import com.example.mate.domain.matePost.entity.MateReview;
+import com.example.mate.domain.mateReview.entity.MateReview;
 import lombok.Builder;
 import lombok.Getter;
 
