@@ -9,10 +9,12 @@ import com.example.mate.domain.goodsPost.repository.GoodsPostRepository;
 import com.example.mate.domain.goodsReview.repository.GoodsReviewRepositoryCustom;
 import com.example.mate.domain.goodsPost.dto.response.GoodsPostSummaryResponse;
 import com.example.mate.domain.match.entity.Match;
-import com.example.mate.domain.mate.dto.response.MatePostSummaryResponse;
-import com.example.mate.domain.mate.entity.MatePost;
-import com.example.mate.domain.mate.entity.MateReview;
-import com.example.mate.domain.mate.repository.*;
+import com.example.mate.domain.matePost.dto.response.MatePostSummaryResponse;
+import com.example.mate.domain.matePost.entity.MatePost;
+import com.example.mate.domain.mateReview.entity.MateReview;
+import com.example.mate.domain.matePost.repository.*;
+import com.example.mate.domain.mateReview.repository.MateReviewRepository;
+import com.example.mate.domain.mateReview.repository.MateReviewRepositoryCustom;
 import com.example.mate.domain.member.dto.response.MyGoodsRecordResponse;
 import com.example.mate.domain.member.dto.response.MyReviewResponse;
 import com.example.mate.domain.member.dto.response.MyTimelineResponse;
@@ -38,7 +40,7 @@ public class ProfileService {
 
     private final MemberRepository memberRepository;
     private final GoodsPostRepository goodsPostRepository;
-    private final MateRepository mateRepository;
+    private final MatePostRepository matePostRepository;
     private final MateReviewRepositoryCustom mateReviewRepositoryCustom;
     private final GoodsReviewRepositoryCustom goodsReviewRepositoryCustom;
     private final VisitPartRepository visitPartRepository;
@@ -195,7 +197,7 @@ public class ProfileService {
     // 작성한 메이트 구인글 페이징 조회
     @Transactional(readOnly = true)
     public PageResponse<MatePostSummaryResponse> getMatePostsPage(Long memberId, Pageable pageable) {
-        Page<MatePost> matePostsPage = mateRepository.findMyMatePosts(memberId, pageable);
+        Page<MatePost> matePostsPage = matePostRepository.findMyMatePosts(memberId, pageable);
         List<MatePostSummaryResponse> content = matePostsPage.getContent().stream()
                 .map(MatePostSummaryResponse::from)
                 .toList();

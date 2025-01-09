@@ -3,7 +3,7 @@ package com.example.mate.domain.mateChat.entity;
 import com.example.mate.common.BaseTimeEntity;
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
-import com.example.mate.domain.mate.entity.MatePost;
+import com.example.mate.domain.matePost.entity.MatePost;
 import jakarta.persistence.*;
 import lombok.*;
 

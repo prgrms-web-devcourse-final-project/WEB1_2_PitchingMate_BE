@@ -1,36 +1,25 @@
 package com.example.mate.domain.member.integration;
 
-import static com.example.mate.domain.match.entity.MatchStatus.SCHEDULED;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import com.example.mate.config.WithAuthMember;
-import com.example.mate.common.security.util.JwtUtil;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.constant.Rating;
 import com.example.mate.domain.goodsPost.dto.response.LocationInfo;
 import com.example.mate.domain.goodsPost.entity.Category;
 import com.example.mate.domain.goodsPost.entity.GoodsPost;
 import com.example.mate.domain.goodsPost.entity.GoodsPostImage;
-import com.example.mate.domain.goodsReview.entity.GoodsReview;
 import com.example.mate.domain.goodsPost.entity.Status;
 import com.example.mate.domain.goodsPost.repository.GoodsPostImageRepository;
 import com.example.mate.domain.goodsPost.repository.GoodsPostRepository;
+import com.example.mate.domain.goodsReview.entity.GoodsReview;
 import com.example.mate.domain.goodsReview.repository.GoodsReviewRepository;
 import com.example.mate.domain.match.entity.Match;
 import com.example.mate.domain.match.repository.MatchRepository;
-import com.example.mate.domain.mate.entity.Age;
-import com.example.mate.domain.mate.entity.MatePost;
-import com.example.mate.domain.mate.entity.MateReview;
-import com.example.mate.domain.mate.entity.TransportType;
-import com.example.mate.domain.mate.entity.Visit;
-import com.example.mate.domain.mate.entity.VisitPart;
-import com.example.mate.domain.mate.repository.MateRepository;
-import com.example.mate.domain.mate.repository.MateReviewRepository;
-import com.example.mate.domain.mate.repository.VisitPartRepository;
-import com.example.mate.domain.mate.repository.VisitRepository;
+import com.example.mate.domain.matePost.entity.*;
+import com.example.mate.domain.matePost.repository.MatePostRepository;
+import com.example.mate.domain.matePost.repository.VisitPartRepository;
+import com.example.mate.domain.matePost.repository.VisitRepository;
+import com.example.mate.domain.mateReview.entity.MateReview;
+import com.example.mate.domain.mateReview.repository.MateReviewRepository;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -49,6 +38,12 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
 import java.util.List;
+
+import static com.example.mate.domain.match.entity.MatchStatus.SCHEDULED;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
@@ -71,7 +66,7 @@ public class ProfileIntegrationTest {
     private MatchRepository matchRepository;
 
     @Autowired
-    private MateRepository mateRepository;
+    private MatePostRepository matePostRepository;
 
     @Autowired
     private VisitRepository visitRepository;
@@ -200,13 +195,13 @@ public class ProfileIntegrationTest {
     }
 
     private void createMatePost() {
-        matePost = mateRepository.save(MatePost.builder()
+        matePost = matePostRepository.save(MatePost.builder()
                 .author(member1)
                 .teamId(1L)
                 .match(match)
                 .title("테스트 제목")
                 .content("테스트 내용")
-                .status(com.example.mate.domain.mate.entity.Status.CLOSED)
+                .status(com.example.mate.domain.matePost.entity.Status.CLOSED)
                 .maxParticipants(3)
                 .age(Age.TWENTIES)
                 .gender(Gender.FEMALE)
@@ -567,14 +562,14 @@ public class ProfileIntegrationTest {
                             .build()))
                     .title("new title")
                     .content("new content")
-                    .status(com.example.mate.domain.mate.entity.Status.OPEN)
+                    .status(com.example.mate.domain.matePost.entity.Status.OPEN)
                     .maxParticipants(10)
                     .age(Age.ALL)
                     .gender(Gender.ANY)
                     .transport(TransportType.ANY)
                     .build();
 
-            mateRepository.save(post);
+            matePostRepository.save(post);
 
             // when & then
             mockMvc.perform(get("/api/profile/posts/mate")

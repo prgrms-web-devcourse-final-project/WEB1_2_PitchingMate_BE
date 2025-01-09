@@ -7,7 +7,7 @@ import com.example.mate.common.response.PageResponse;
 import com.example.mate.common.security.auth.AuthMember;
 import com.example.mate.common.validator.ValidPageable;
 import com.example.mate.domain.goodsPost.dto.response.GoodsPostSummaryResponse;
-import com.example.mate.domain.mate.dto.response.MatePostSummaryResponse;
+import com.example.mate.domain.matePost.dto.response.MatePostSummaryResponse;
 import com.example.mate.domain.member.dto.response.MyGoodsRecordResponse;
 import com.example.mate.domain.member.dto.response.MyReviewResponse;
 import com.example.mate.domain.member.dto.response.MyVisitResponse;
