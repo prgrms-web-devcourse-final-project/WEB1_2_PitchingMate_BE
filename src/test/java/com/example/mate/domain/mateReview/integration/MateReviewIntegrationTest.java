@@ -66,7 +66,6 @@ class MateReviewIntegrationTest {
     private Member author;
     private Member participant;
     private MatePost matePost;
-    private Visit visit;
 
     @BeforeEach
     void setUp() {
@@ -129,7 +128,7 @@ class MateReviewIntegrationTest {
 
         // Visit 생성 및 participant 추가
         matePost.complete(List.of(participant));
-        visit = visitRepository.save(matePost.getVisit());
+        Visit visit = visitRepository.save(matePost.getVisit());
     }
 
     @Test

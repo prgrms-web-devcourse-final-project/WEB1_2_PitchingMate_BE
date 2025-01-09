@@ -133,16 +133,16 @@ public class MatePostIntegrationTest {
                 .build());
     }
 
-    private void performErrorTest(MockMultipartFile data, String errorMessage, int expectedStatus) throws Exception {
+    private void performErrorTest(MockMultipartFile data, String errorMessage) throws Exception {
         matePostRepository.deleteAll();
 
         mockMvc.perform(multipart("/api/mates")
                         .file(data))
-                .andExpect(status().is(expectedStatus))
+                .andExpect(status().is(404))
                 .andExpect(jsonPath("$.status").value("ERROR"))
                 .andExpect(jsonPath("$.message").value(errorMessage))
                 .andExpect(jsonPath("$.data").isEmpty())
-                .andExpect(jsonPath("$.code").value(expectedStatus))
+                .andExpect(jsonPath("$.code").value(404))
                 .andDo(print());
 
         assertThat(matePostRepository.findAll()).isEmpty();
@@ -223,7 +223,7 @@ public class MatePostIntegrationTest {
                     objectMapper.writeValueAsBytes(request)
             );
 
-            performErrorTest(data, MATCH_NOT_FOUND_BY_ID.getMessage(), 404);
+            performErrorTest(data, MATCH_NOT_FOUND_BY_ID.getMessage());
         }
     }
 
