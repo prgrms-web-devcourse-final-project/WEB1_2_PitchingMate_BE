@@ -1,11 +1,5 @@
 package com.example.mate.domain.member.integration;
 
-import static com.example.mate.domain.match.entity.MatchStatus.SCHEDULED;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import com.example.mate.config.WithAuthMember;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.constant.Rating;
@@ -13,23 +7,19 @@ import com.example.mate.domain.goodsPost.dto.response.LocationInfo;
 import com.example.mate.domain.goodsPost.entity.Category;
 import com.example.mate.domain.goodsPost.entity.GoodsPost;
 import com.example.mate.domain.goodsPost.entity.GoodsPostImage;
-import com.example.mate.domain.goodsReview.entity.GoodsReview;
 import com.example.mate.domain.goodsPost.entity.Status;
 import com.example.mate.domain.goodsPost.repository.GoodsPostImageRepository;
 import com.example.mate.domain.goodsPost.repository.GoodsPostRepository;
+import com.example.mate.domain.goodsReview.entity.GoodsReview;
 import com.example.mate.domain.goodsReview.repository.GoodsReviewRepository;
 import com.example.mate.domain.match.entity.Match;
 import com.example.mate.domain.match.repository.MatchRepository;
-import com.example.mate.domain.matePost.entity.Age;
-import com.example.mate.domain.matePost.entity.MatePost;
-import com.example.mate.domain.mateReview.entity.MateReview;
-import com.example.mate.domain.matePost.entity.TransportType;
-import com.example.mate.domain.matePost.entity.Visit;
-import com.example.mate.domain.matePost.entity.VisitPart;
+import com.example.mate.domain.matePost.entity.*;
 import com.example.mate.domain.matePost.repository.MatePostRepository;
-import com.example.mate.domain.mateReview.repository.MateReviewRepository;
 import com.example.mate.domain.matePost.repository.VisitPartRepository;
 import com.example.mate.domain.matePost.repository.VisitRepository;
+import com.example.mate.domain.mateReview.entity.MateReview;
+import com.example.mate.domain.mateReview.repository.MateReviewRepository;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -48,6 +38,12 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
 import java.util.List;
+
+import static com.example.mate.domain.match.entity.MatchStatus.SCHEDULED;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)

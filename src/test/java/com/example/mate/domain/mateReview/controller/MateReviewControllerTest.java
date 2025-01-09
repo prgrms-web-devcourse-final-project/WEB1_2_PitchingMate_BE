@@ -1,16 +1,8 @@
 package com.example.mate.domain.mateReview.controller;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import com.example.mate.common.security.filter.JwtCheckFilter;
 import com.example.mate.config.WithAuthMember;
 import com.example.mate.domain.constant.Rating;
-import com.example.mate.domain.matePost.controller.MatePostController;
 import com.example.mate.domain.mateReview.dto.request.MateReviewCreateRequest;
 import com.example.mate.domain.mateReview.dto.response.MateReviewCreateResponse;
 import com.example.mate.domain.mateReview.service.MateReviewService;
@@ -25,6 +17,13 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(MateReviewController.class)
 @MockBean(JpaMetamodelMappingContext.class)

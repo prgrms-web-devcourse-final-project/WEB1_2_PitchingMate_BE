@@ -10,7 +10,7 @@ import com.example.mate.domain.matePost.entity.Age;
 import com.example.mate.domain.matePost.entity.MatePost;
 import com.example.mate.domain.matePost.entity.Status;
 import com.example.mate.domain.matePost.entity.TransportType;
-import com.example.mate.domain.matePost.repository.MateRepository;
+import com.example.mate.domain.matePost.repository.MatePostRepository;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -46,7 +46,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc(addFilters = false)
 @Transactional
 @WithAuthMember
-public class MateStatusIntegrationTest {
+public class MatePostStatusIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -61,7 +61,7 @@ public class MateStatusIntegrationTest {
     private MatchRepository matchRepository;
 
     @Autowired
-    private MateRepository mateRepository;
+    private MatePostRepository matePostRepository;
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -78,7 +78,7 @@ public class MateStatusIntegrationTest {
     @BeforeEach
     void setUp() {
         // 기존 데이터 정리
-        mateRepository.deleteAll();
+        matePostRepository.deleteAll();
         matchRepository.deleteAll();
         memberRepository.deleteAll();
 
@@ -122,7 +122,7 @@ public class MateStatusIntegrationTest {
     }
 
     private MatePost createMatePost(Match match, Long teamId, Status status) {
-        return mateRepository.save(MatePost.builder()
+        return matePostRepository.save(MatePost.builder()
                 .author(authMember)
                 .teamId(teamId)
                 .match(match)
@@ -159,7 +159,7 @@ public class MateStatusIntegrationTest {
                     .andDo(print());
 
             // DB 검증
-            MatePost updatedPost = mateRepository.findById(openPost.getId()).orElseThrow();
+            MatePost updatedPost = matePostRepository.findById(openPost.getId()).orElseThrow();
             assertThat(updatedPost.getStatus()).isEqualTo(Status.CLOSED);
         }
 
@@ -182,7 +182,7 @@ public class MateStatusIntegrationTest {
                     .andDo(print());
 
             // DB 검증
-            MatePost updatedPost = mateRepository.findById(closedPost.getId()).orElseThrow();
+            MatePost updatedPost = matePostRepository.findById(closedPost.getId()).orElseThrow();
             assertThat(updatedPost.getStatus()).isEqualTo(Status.OPEN);
         }
 
@@ -204,7 +204,7 @@ public class MateStatusIntegrationTest {
                     .andDo(print());
 
             // DB 검증
-            MatePost unchangedPost = mateRepository.findById(openPost.getId()).orElseThrow();
+            MatePost unchangedPost = matePostRepository.findById(openPost.getId()).orElseThrow();
             assertThat(unchangedPost.getStatus()).isEqualTo(Status.OPEN);
         }
 
@@ -226,7 +226,7 @@ public class MateStatusIntegrationTest {
                     .andDo(print());
 
             // DB 검증
-            MatePost unchangedPost = mateRepository.findById(completedPost.getId()).orElseThrow();
+            MatePost unchangedPost = matePostRepository.findById(completedPost.getId()).orElseThrow();
             assertThat(unchangedPost.getStatus()).isEqualTo(Status.VISIT_COMPLETE);
         }
 
@@ -271,7 +271,7 @@ public class MateStatusIntegrationTest {
                     .andDo(print());
 
             // DB 검증
-            MatePost unchangedPost = mateRepository.findById(openPost.getId()).orElseThrow();
+            MatePost unchangedPost = matePostRepository.findById(openPost.getId()).orElseThrow();
             assertThat(unchangedPost.getStatus()).isEqualTo(Status.OPEN);
         }
 
@@ -293,7 +293,7 @@ public class MateStatusIntegrationTest {
                     .andDo(print());
 
             // DB 검증
-            MatePost unchangedPost = mateRepository.findById(openPost.getId()).orElseThrow();
+            MatePost unchangedPost = matePostRepository.findById(openPost.getId()).orElseThrow();
             assertThat(unchangedPost.getStatus()).isEqualTo(Status.OPEN);
         }
     }
@@ -328,7 +328,7 @@ public class MateStatusIntegrationTest {
                     .andDo(print());
 
             // DB 검증
-            MatePost savedPost = mateRepository.findById(closedPost.getId()).orElseThrow();
+            MatePost savedPost = matePostRepository.findById(closedPost.getId()).orElseThrow();
             assertThat(savedPost.getStatus()).isEqualTo(Status.VISIT_COMPLETE);
             assertThat(savedPost.getVisit()).isNotNull();
             assertThat(savedPost.getVisit().getParticipants()).hasSize(3);
@@ -355,7 +355,7 @@ public class MateStatusIntegrationTest {
                     .andDo(print());
 
             // DB 검증
-            MatePost unchangedPost = mateRepository.findById(closedPost.getId()).orElseThrow();
+            MatePost unchangedPost = matePostRepository.findById(closedPost.getId()).orElseThrow();
             assertThat(unchangedPost.getStatus()).isEqualTo(Status.CLOSED);
             assertThat(unchangedPost.getVisit()).isNull();
         }
@@ -381,7 +381,7 @@ public class MateStatusIntegrationTest {
                     .andDo(print());
 
             // DB 검증
-            MatePost unchangedPost = mateRepository.findById(openPost.getId()).orElseThrow();
+            MatePost unchangedPost = matePostRepository.findById(openPost.getId()).orElseThrow();
             assertThat(unchangedPost.getStatus()).isEqualTo(Status.OPEN);
             assertThat(unchangedPost.getVisit()).isNull();
         }
@@ -407,7 +407,7 @@ public class MateStatusIntegrationTest {
                     .andDo(print());
 
             // DB 검증
-            MatePost unchangedPost = mateRepository.findById(futureClosedPost.getId()).orElseThrow();
+            MatePost unchangedPost = matePostRepository.findById(futureClosedPost.getId()).orElseThrow();
             assertThat(unchangedPost.getStatus()).isEqualTo(Status.CLOSED);
             assertThat(unchangedPost.getVisit()).isNull();
         }
@@ -433,7 +433,7 @@ public class MateStatusIntegrationTest {
                 .andDo(print());
 
         // DB 검증
-        MatePost unchangedPost = mateRepository.findById(closedPost.getId()).orElseThrow();
+        MatePost unchangedPost = matePostRepository.findById(closedPost.getId()).orElseThrow();
         assertThat(unchangedPost.getStatus()).isEqualTo(Status.CLOSED);
         assertThat(unchangedPost.getVisit()).isNull();
     }
@@ -459,7 +459,7 @@ public class MateStatusIntegrationTest {
                 .andDo(print());
 
         // DB 검증
-        MatePost unchangedPost = mateRepository.findById(closedPost.getId()).orElseThrow();
+        MatePost unchangedPost = matePostRepository.findById(closedPost.getId()).orElseThrow();
         assertThat(unchangedPost.getStatus()).isEqualTo(Status.CLOSED);
         assertThat(unchangedPost.getVisit()).isNull();
     }
