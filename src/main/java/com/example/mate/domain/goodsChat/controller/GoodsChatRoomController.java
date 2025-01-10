@@ -50,7 +50,7 @@ public class GoodsChatRoomController {
             @Parameter(description = "채팅방 ID", required = true) @PathVariable Long chatRoomId,
             @Parameter(description = "페이징 정보") @ValidPageable(page = 1, size = 20) Pageable pageable
     ) {
-        PageResponse<GoodsChatMessageResponse> response = goodsChatService.getMessagesForChatRoom(chatRoomId, member.getMemberId(), pageable);
+        PageResponse<GoodsChatMessageResponse> response = goodsChatService.getChatRoomMessages(chatRoomId, member.getMemberId(), pageable);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
@@ -90,7 +90,7 @@ public class GoodsChatRoomController {
             @AuthenticationPrincipal AuthMember member,
             @Parameter(description = "채팅방 ID", required = true) @PathVariable Long chatRoomId
     ) {
-        List<MemberSummaryResponse> responses = goodsChatService.getChatRoomMembers(member.getMemberId(), chatRoomId);
+        List<MemberSummaryResponse> responses = goodsChatService.getMembersInChatRoom(member.getMemberId(), chatRoomId);
         return ResponseEntity.ok(ApiResponse.success(responses));
     }
 }
