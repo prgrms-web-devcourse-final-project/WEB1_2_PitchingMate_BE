@@ -13,11 +13,14 @@ import com.example.mate.domain.goodsPost.entity.Category;
 import com.example.mate.domain.goodsPost.entity.GoodsPost;
 import com.example.mate.domain.goodsPost.entity.GoodsPostImage;
 import com.example.mate.domain.goodsPost.entity.Status;
+import com.example.mate.domain.goodsPost.event.GoodsPostEvent;
+import com.example.mate.domain.goodsPost.event.GoodsPostEventPublisher;
 import com.example.mate.domain.goodsPost.repository.GoodsPostImageRepository;
 import com.example.mate.domain.goodsPost.repository.GoodsPostRepository;
 import com.example.mate.domain.member.entity.ActivityType;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
+import com.example.mate.domain.notification.entity.NotificationType;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +40,7 @@ public class GoodsPostService {
     private final GoodsPostRepository goodsPostRepository;
     private final GoodsPostImageRepository imageRepository;
     private final FileService fileService;
+    private final GoodsPostEventPublisher eventPublisher;
 
     public GoodsPostResponse registerGoodsPost(Long memberId, GoodsPostRequest request, List<MultipartFile> files) {
         Member seller = findMemberById(memberId);
@@ -117,6 +121,9 @@ public class GoodsPostService {
 
         seller.updateManner(ActivityType.GOODS);
         buyer.updateManner(ActivityType.GOODS);
+
+        // 거래완료 알림 보내기
+        eventPublisher.publish(GoodsPostEvent.of(goodsPost.getId(), buyer, NotificationType.GOODS_CLOSED));
     }
 
     private void attachImagesToGoodsPost(GoodsPost goodsPost, List<MultipartFile> files) {
