@@ -21,8 +21,12 @@ public class GoodsPostEventHandler {
     @TransactionalEventListener
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handle(GoodsPostEvent event) {
-        notificationService.send(event.notificationType(), NOTIFICATION_MESSAGE, getUrl(event.goodsPostId()),
-                event.receiver());
+        notificationService.send(event.notificationType(), getMessage(event.goodsPostTitle()),
+                getUrl(event.goodsPostId()), event.receiver());
+    }
+
+    private String getMessage(String goodsPostTitle) {
+        return "<" + goodsPostTitle + "> " + NOTIFICATION_MESSAGE;
     }
 
     private String getUrl(Long goodsPostId) {

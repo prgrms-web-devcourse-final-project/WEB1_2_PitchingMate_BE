@@ -31,7 +31,7 @@ public class NotificationResponse {
         return NotificationResponse.builder()
                 .notificationId(notification.getId())
                 .notificationType(notification.getNotificationType().getValue())
-                .content(notification.getNotificationType().generateContent())
+                .content(notification.getContent())
                 .url(notification.getUrl())
                 .isRead(notification.getIsRead())
                 .build();

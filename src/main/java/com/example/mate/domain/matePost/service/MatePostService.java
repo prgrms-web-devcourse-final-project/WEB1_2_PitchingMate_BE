@@ -1,5 +1,16 @@
 package com.example.mate.domain.matePost.service;
 
+import static com.example.mate.common.error.ErrorCode.ALREADY_COMPLETED_POST;
+import static com.example.mate.common.error.ErrorCode.INVALID_MATE_POST_PARTICIPANT_IDS;
+import static com.example.mate.common.error.ErrorCode.MATCH_NOT_FOUND_BY_ID;
+import static com.example.mate.common.error.ErrorCode.MATE_POST_COMPLETE_TIME_NOT_ALLOWED;
+import static com.example.mate.common.error.ErrorCode.MATE_POST_MAX_PARTICIPANTS_EXCEEDED;
+import static com.example.mate.common.error.ErrorCode.MATE_POST_NOT_FOUND_BY_ID;
+import static com.example.mate.common.error.ErrorCode.MATE_POST_UPDATE_NOT_ALLOWED;
+import static com.example.mate.common.error.ErrorCode.MEMBER_NOT_FOUND_BY_ID;
+import static com.example.mate.common.error.ErrorCode.NOT_CLOSED_STATUS_FOR_COMPLETION;
+import static com.example.mate.common.error.ErrorCode.TEAM_NOT_FOUND;
+
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.constant.TeamInfo;
@@ -7,15 +18,28 @@ import com.example.mate.domain.file.FileService;
 import com.example.mate.domain.file.FileValidator;
 import com.example.mate.domain.match.entity.Match;
 import com.example.mate.domain.match.repository.MatchRepository;
-import com.example.mate.domain.matePost.dto.request.*;
-import com.example.mate.domain.matePost.dto.response.*;
-import com.example.mate.domain.matePost.entity.MatePost;
-import com.example.mate.domain.matePost.entity.Status;
-import com.example.mate.domain.matePost.repository.MatePostRepository;
 import com.example.mate.domain.mateChat.repository.MateChatRoomMemberRepository;
 import com.example.mate.domain.mateChat.repository.MateChatRoomRepository;
+import com.example.mate.domain.matePost.dto.request.MatePostCompleteRequest;
+import com.example.mate.domain.matePost.dto.request.MatePostCreateRequest;
+import com.example.mate.domain.matePost.dto.request.MatePostSearchRequest;
+import com.example.mate.domain.matePost.dto.request.MatePostStatusRequest;
+import com.example.mate.domain.matePost.dto.request.MatePostUpdateRequest;
+import com.example.mate.domain.matePost.dto.response.MatePostCompleteResponse;
+import com.example.mate.domain.matePost.dto.response.MatePostDetailResponse;
+import com.example.mate.domain.matePost.dto.response.MatePostResponse;
+import com.example.mate.domain.matePost.dto.response.MatePostSummaryResponse;
+import com.example.mate.domain.matePost.entity.MatePost;
+import com.example.mate.domain.matePost.entity.Status;
+import com.example.mate.domain.matePost.event.MatePostEvent;
+import com.example.mate.domain.matePost.event.MatePostEventPublisher;
+import com.example.mate.domain.matePost.repository.MatePostRepository;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
+import com.example.mate.domain.notification.entity.NotificationType;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -23,12 +47,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-
-import static com.example.mate.common.error.ErrorCode.*;
 
 @Service
 @Transactional
@@ -43,6 +61,7 @@ public class MatePostService {
     private final MateChatRoomRepository mateChatRoomRepository;
     private final MateChatRoomMemberRepository mateChatRoomMemberRepository;
     private final FileService fileService;
+    private final MatePostEventPublisher eventPublisher;
 
     public MatePostResponse createMatePost(MatePostCreateRequest request, MultipartFile file, Long memberId) {
         Member author = memberRepository.findById(memberId)
@@ -180,7 +199,12 @@ public class MatePostService {
         validatePostStatus(matePost.getStatus());
 
         if (request.getStatus() == Status.CLOSED) {
-            findAndValidateParticipants(request.getParticipantIds(), matePost.getMaxParticipants());
+            List<Member> participants = findAndValidateParticipants(request.getParticipantIds(),
+                    matePost.getMaxParticipants());
+
+            // 모집완료 알림 보내기
+            participants.forEach(receiver -> eventPublisher.publish(
+                    MatePostEvent.of(matePost.getId(), matePost.getTitle(), receiver, NotificationType.MATE_CLOSED)));
         }
         matePost.changeStatus(request.getStatus());
 
@@ -210,7 +234,8 @@ public class MatePostService {
         validateCompletionTime(matePost);
         validateCompletionStatus(matePost);
 
-        List<Member> participants = findAndValidateParticipants(request.getParticipantIds(), matePost.getMaxParticipants());
+        List<Member> participants = findAndValidateParticipants(request.getParticipantIds(),
+                matePost.getMaxParticipants());
         List<Member> allParticipants = new ArrayList<>(participants);
         allParticipants.add(matePost.getAuthor());
 

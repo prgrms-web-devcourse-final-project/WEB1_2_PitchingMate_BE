@@ -129,7 +129,8 @@ public class GoodsPostService {
         buyer.updateManner(ActivityType.GOODS);
 
         // 거래완료 알림 보내기
-        eventPublisher.publish(GoodsPostEvent.of(goodsPost.getId(), buyer, NotificationType.GOODS_CLOSED));
+        eventPublisher.publish(
+                GoodsPostEvent.of(goodsPost.getId(), goodsPost.getTitle(), buyer, NotificationType.GOODS_CLOSED));
     }
 
     private void attachImagesToGoodsPost(GoodsPost goodsPost, List<MultipartFile> files) {
