@@ -240,6 +240,10 @@ public class MatePostService {
         allParticipants.add(matePost.getAuthor());
 
         matePost.complete(allParticipants);
+
+        // 직관완료 알림 보내기
+        participants.forEach(receiver -> eventPublisher.publish(
+                MatePostEvent.of(matePost.getId(), matePost.getTitle(), receiver, NotificationType.MATE_COMPLETE)));
         return MatePostCompleteResponse.from(matePost);
     }
 
