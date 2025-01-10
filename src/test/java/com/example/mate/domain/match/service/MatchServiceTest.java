@@ -15,6 +15,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -45,14 +47,18 @@ class MatchServiceTest {
         // Given
         LocalDateTime now = LocalDateTime.now();
         List<Match> matches = createTestMatches();
-        when(matchRepository.findMainBannerMatches(any(LocalDateTime.class))).thenReturn(matches);
+        when(matchRepository.findMainBannerMatches(any(LocalDateTime.class), any(Pageable.class)))
+                .thenReturn(matches);
 
         // When
         List<MatchResponse> result = matchService.getMainBannerMatches();
 
         // Then
         assertThat(result).hasSize(5);
-        verify(matchRepository).findMainBannerMatches(any(LocalDateTime.class));
+        verify(matchRepository).findMainBannerMatches(
+                any(LocalDateTime.class),
+                eq(PageRequest.of(0, 5))
+        );
     }
 
     @Test
@@ -61,15 +67,22 @@ class MatchServiceTest {
         // Given
         Long teamId = 1L;
         List<Match> matches = createTestMatches().subList(0, 3);
-        when(matchRepository.findTop3TeamMatchesAfterNow(eq(teamId), any(LocalDateTime.class)))
-                .thenReturn(matches);
+        when(matchRepository.findTop3TeamMatchesAfterNow(
+                eq(teamId),
+                any(LocalDateTime.class),
+                any(Pageable.class)
+        )).thenReturn(matches);
 
         // When
         List<MatchResponse> result = matchService.getTeamMatches(teamId);
 
         // Then
         assertThat(result).hasSize(3);
-        verify(matchRepository).findTop3TeamMatchesAfterNow(eq(teamId), any(LocalDateTime.class));
+        verify(matchRepository).findTop3TeamMatchesAfterNow(
+                eq(teamId),
+                any(LocalDateTime.class),
+                eq(PageRequest.of(0, 3))
+        );
     }
 
     @Test

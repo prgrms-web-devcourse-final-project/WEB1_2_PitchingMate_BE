@@ -1,11 +1,5 @@
 package com.example.mate.domain.member.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.verify;
-
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
 import com.example.mate.common.jwt.JwtToken;
@@ -19,10 +13,10 @@ import com.example.mate.domain.goodsPost.entity.Status;
 import com.example.mate.domain.goodsPost.repository.GoodsPostRepository;
 import com.example.mate.domain.goodsReview.entity.GoodsReview;
 import com.example.mate.domain.goodsReview.repository.GoodsReviewRepository;
-import com.example.mate.domain.mate.entity.MateReview;
-import com.example.mate.domain.mate.entity.VisitPart;
-import com.example.mate.domain.mate.repository.MateReviewRepository;
-import com.example.mate.domain.mate.repository.VisitPartRepository;
+import com.example.mate.domain.matePost.entity.VisitPart;
+import com.example.mate.domain.matePost.repository.VisitPartRepository;
+import com.example.mate.domain.mateReview.entity.MateReview;
+import com.example.mate.domain.mateReview.repository.MateReviewRepository;
 import com.example.mate.domain.member.dto.request.JoinRequest;
 import com.example.mate.domain.member.dto.request.MemberInfoUpdateRequest;
 import com.example.mate.domain.member.dto.request.MemberLoginRequest;
@@ -34,7 +28,6 @@ import com.example.mate.domain.member.entity.Follow;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.FollowRepository;
 import com.example.mate.domain.member.repository.MemberRepository;
-import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -46,6 +39,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class MemberServiceTest {
