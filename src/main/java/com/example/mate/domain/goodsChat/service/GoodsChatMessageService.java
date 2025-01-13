@@ -6,12 +6,9 @@ import com.example.mate.domain.constant.MessageType;
 import com.example.mate.domain.goodsChat.document.GoodsChatMessage;
 import com.example.mate.domain.goodsChat.dto.request.GoodsChatMessageRequest;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatMessageResponse;
-import com.example.mate.domain.goodsChat.entity.GoodsChatPart;
-import com.example.mate.domain.goodsChat.entity.GoodsChatPartId;
 import com.example.mate.domain.goodsChat.entity.GoodsChatRoom;
 import com.example.mate.domain.goodsChat.event.GoodsChatEvent;
 import com.example.mate.domain.goodsChat.repository.GoodsChatMessageRepository;
-import com.example.mate.domain.goodsChat.repository.GoodsChatPartRepository;
 import com.example.mate.domain.goodsChat.repository.GoodsChatRoomRepository;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
@@ -28,7 +25,6 @@ public class GoodsChatMessageService {
 
     private final MemberRepository memberRepository;
     private final GoodsChatRoomRepository chatRoomRepository;
-    private final GoodsChatPartRepository chatPartRepository;
     private final GoodsChatMessageRepository messageRepository;
     private final SimpMessagingTemplate messagingTemplate;
 
@@ -36,26 +32,23 @@ public class GoodsChatMessageService {
     private static final String MEMBER_LEAVE_MESSAGE = "님이 대화를 떠났습니다.";
 
     public void sendMessage(GoodsChatMessageRequest message) {
-        Member sender = findMemberById(message.getSenderId());
+        Member member = findMemberById(message.getSenderId());
         GoodsChatRoom chatRoom = findByChatRoomById(message.getRoomId());
-        GoodsChatPart chatPart = findByChatPartById(sender.getId(), chatRoom.getId());
+        GoodsChatMessage chatMessage = createChatMessage(chatRoom.getId(), member.getId(), message.getMessage(), message.getType());
 
-        // DB에 메시지 저장
-        GoodsChatMessage chatMessage
-                = messageRepository.save(createChatMessage(message.getMessage(), chatPart, message.getType()));
+        // 채팅 데이터 저장 & 최신 채팅 내역 업데이트
+        GoodsChatMessage savedMessage = messageRepository.save(chatMessage);
         chatRoom.updateLastChat(chatMessage.getContent(), chatMessage.getSentAt());
 
-        GoodsChatMessageResponse response = GoodsChatMessageResponse.of(chatMessage, chatPart.getMember());
+        GoodsChatMessageResponse response = GoodsChatMessageResponse.of(savedMessage, member);
         sendToSubscribers(message.getRoomId(), response);
     }
 
     // 입장 및 퇴장 메시지 전송
     public void sendChatEventMessage(GoodsChatEvent event) {
         Member member = event.member();
-        Long roomId = event.chatRoomId();
-
-        GoodsChatRoom chatRoom = findByChatRoomById(roomId);
-        GoodsChatPart chatPart = findByChatPartById(member.getId(), roomId);
+        Long chatRoomId = event.chatRoomId();
+        GoodsChatRoom chatRoom = findByChatRoomById(chatRoomId);
 
         // 메시지 생성
         String message = member.getNickname();
@@ -63,19 +56,20 @@ public class GoodsChatMessageService {
             case ENTER -> message += MEMBER_ENTER_MESSAGE;
             case LEAVE -> message += MEMBER_LEAVE_MESSAGE;
         }
+        GoodsChatMessage chatMessage = createChatMessage(member.getId(), chatRoomId, message, event.type());
 
-        // Message DB에 저장
-        GoodsChatMessage chatMessage = messageRepository.save(createChatMessage(message, chatPart, event.type()));
+        // 채팅 데이터 저장 & 최신 채팅 내역 업데이트
+        GoodsChatMessage savedMessage = messageRepository.save(chatMessage);
         chatRoom.updateLastChat(message, chatMessage.getSentAt());
 
         // 이벤트 메시지 전송
-        sendToSubscribers(roomId, GoodsChatMessageResponse.of(chatMessage, chatPart.getMember()));
+        sendToSubscribers(chatRoomId, GoodsChatMessageResponse.of(savedMessage, member));
     }
 
-    private GoodsChatMessage createChatMessage(String message, GoodsChatPart chatPart, MessageType type) {
+    private GoodsChatMessage createChatMessage(Long chatRoomId, Long memberId, String message, MessageType type) {
         return GoodsChatMessage.builder()
-                .chatRoomId(chatPart.getGoodsChatRoom().getId())
-                .memberId(chatPart.getMember().getId())
+                .chatRoomId(chatRoomId)
+                .memberId(memberId)
                 .sentAt(LocalDateTime.now())
                 .content(message)
                 .messageType(type)
@@ -92,12 +86,7 @@ public class GoodsChatMessageService {
                 .orElseThrow(() -> new CustomException(ErrorCode.GOODS_CHAT_ROOM_NOT_FOUND));
     }
 
-    private GoodsChatPart findByChatPartById(Long memberId, Long chatRoomId) {
-        return chatPartRepository.findById(new GoodsChatPartId(memberId, chatRoomId))
-                .orElseThrow(() -> new CustomException(ErrorCode.GOODS_CHAT_NOT_FOUND_CHAT_PART));
-    }
-
-    private void sendToSubscribers(Long roomId, GoodsChatMessageResponse message) {
-        messagingTemplate.convertAndSend("/sub/chat/goods/" + roomId, message);
+    private void sendToSubscribers(Long chatRoomId, GoodsChatMessageResponse message) {
+        messagingTemplate.convertAndSend("/sub/chat/goods/" + chatRoomId, message);
     }
 }
