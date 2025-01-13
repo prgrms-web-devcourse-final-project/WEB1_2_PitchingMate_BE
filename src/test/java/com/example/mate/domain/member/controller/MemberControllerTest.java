@@ -3,7 +3,7 @@ package com.example.mate.domain.member.controller;
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
 import com.example.mate.common.security.filter.JwtCheckFilter;
-import com.example.mate.config.WithAuthMember;
+import com.example.mate.config.securityConfig.WithAuthMember;
 import com.example.mate.domain.member.dto.request.JoinRequest;
 import com.example.mate.domain.member.dto.request.MemberInfoUpdateRequest;
 import com.example.mate.domain.member.dto.request.MemberLoginRequest;

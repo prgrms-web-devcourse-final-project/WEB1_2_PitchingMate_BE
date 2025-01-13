@@ -10,9 +10,9 @@ import static org.mockito.Mockito.when;
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
 import com.example.mate.domain.constant.MessageType;
+import com.example.mate.domain.goodsChat.document.GoodsChatMessage;
 import com.example.mate.domain.goodsChat.dto.request.GoodsChatMessageRequest;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatMessageResponse;
-import com.example.mate.domain.goodsChat.entity.GoodsChatMessage;
 import com.example.mate.domain.goodsChat.entity.GoodsChatPart;
 import com.example.mate.domain.goodsChat.entity.GoodsChatPartId;
 import com.example.mate.domain.goodsChat.entity.GoodsChatRoom;
@@ -78,7 +78,8 @@ class GoodsChatMessageServiceTest {
     private GoodsChatMessage createGoodsChatMessage(String message, GoodsChatPart chatPart, MessageType type) {
         return GoodsChatMessage.builder()
                 .content(message)
-                .goodsChatPart(chatPart)
+                .chatRoomId(chatPart.getGoodsChatRoom().getId())
+                .memberId(chatPart.getMember().getId())
                 .messageType(type)
                 .sentAt(LocalDateTime.now())
                 .build();

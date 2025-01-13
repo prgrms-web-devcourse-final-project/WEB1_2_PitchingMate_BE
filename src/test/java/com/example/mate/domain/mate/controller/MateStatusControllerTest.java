@@ -18,9 +18,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.mate.common.error.CustomException;
-import com.example.mate.common.error.ErrorCode;
 import com.example.mate.common.security.filter.JwtCheckFilter;
-import com.example.mate.config.WithAuthMember;
+import com.example.mate.config.securityConfig.WithAuthMember;
 import com.example.mate.domain.mate.dto.request.MatePostCompleteRequest;
 import com.example.mate.domain.mate.dto.request.MatePostStatusRequest;
 import com.example.mate.domain.mate.dto.response.MatePostCompleteResponse;

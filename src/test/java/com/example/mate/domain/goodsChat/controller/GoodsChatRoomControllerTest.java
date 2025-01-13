@@ -14,8 +14,7 @@ import com.example.mate.common.error.ErrorCode;
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.common.security.util.JwtUtil;
 import com.example.mate.common.security.filter.JwtCheckFilter;
-import com.example.mate.common.security.util.JwtUtil;
-import com.example.mate.config.WithAuthMember;
+import com.example.mate.config.securityConfig.WithAuthMember;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatMessageResponse;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatRoomResponse;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatRoomSummaryResponse;
@@ -140,14 +139,14 @@ class GoodsChatRoomControllerTest {
         PageRequest pageable = PageRequest.of(0, 10);
 
         GoodsChatMessageResponse firstMessage = GoodsChatMessageResponse.builder()
-                .chatMessageId(1L)
+                .chatMessageId("1")
                 .message("first message")
                 .senderId(memberId)
                 .sentAt(LocalDateTime.now().minusMinutes(10))
                 .build();
 
         GoodsChatMessageResponse secondMessage = GoodsChatMessageResponse.builder()
-                .chatMessageId(2L)
+                .chatMessageId("2")
                 .message("second message")
                 .senderId(memberId)
                 .sentAt(LocalDateTime.now())
@@ -158,7 +157,7 @@ class GoodsChatRoomControllerTest {
                 List.of(secondMessage, firstMessage)
         );
 
-        when(goodsChatService.getMessagesForChatRoom(chatRoomId, memberId, pageable)).thenReturn(pageResponse);
+        when(goodsChatService.getChatRoomMessages(chatRoomId, memberId, pageable)).thenReturn(pageResponse);
 
         // when & then
         mockMvc.perform(get("/api/goods/chat/{chatRoomId}/message", chatRoomId)
@@ -173,7 +172,7 @@ class GoodsChatRoomControllerTest {
                 .andExpect(jsonPath("$.data.content[1].message").value(firstMessage.getMessage()))
                 .andExpect(jsonPath("$.data.content[1].chatMessageId").value(firstMessage.getChatMessageId()));
 
-        verify(goodsChatService).getMessagesForChatRoom(chatRoomId, memberId, pageable);
+        verify(goodsChatService).getChatRoomMessages(chatRoomId, memberId, pageable);
     }
 
     @Test
@@ -185,14 +184,14 @@ class GoodsChatRoomControllerTest {
         Long goodsPostId = 1L;
 
         GoodsChatMessageResponse firstMessage = GoodsChatMessageResponse.builder()
-                .chatMessageId(1L)
+                .chatMessageId("1")
                 .message("first message")
                 .senderId(memberId)
                 .sentAt(LocalDateTime.now().minusMinutes(10))
                 .build();
 
         GoodsChatMessageResponse secondMessage = GoodsChatMessageResponse.builder()
-                .chatMessageId(2L)
+                .chatMessageId("2")
                 .message("second message")
                 .senderId(memberId)
                 .sentAt(LocalDateTime.now())
@@ -277,14 +276,14 @@ class GoodsChatRoomControllerTest {
         PageRequest pageable = PageRequest.of(0, 20);
 
         GoodsChatMessageResponse firstMessage = GoodsChatMessageResponse.builder()
-                .chatMessageId(1L)
+                .chatMessageId("1")
                 .message("First message")
                 .senderId(memberId)
                 .sentAt(LocalDateTime.now().minusMinutes(10))
                 .build();
 
         GoodsChatMessageResponse secondMessage = GoodsChatMessageResponse.builder()
-                .chatMessageId(2L)
+                .chatMessageId("2")
                 .message("Second message")
                 .senderId(memberId)
                 .sentAt(LocalDateTime.now())
@@ -295,7 +294,7 @@ class GoodsChatRoomControllerTest {
                 List.of(secondMessage, firstMessage)
         );
 
-        when(goodsChatService.getMessagesForChatRoom(chatRoomId, memberId, pageable)).thenReturn(pageResponse);
+        when(goodsChatService.getChatRoomMessages(chatRoomId, memberId, pageable)).thenReturn(pageResponse);
 
         // when & then
         mockMvc.perform(get("/api/goods/chat/{chatRoomId}/message", chatRoomId)
@@ -310,7 +309,7 @@ class GoodsChatRoomControllerTest {
                 .andExpect(jsonPath("$.data.content[1].chatMessageId").value(firstMessage.getChatMessageId()))
                 .andExpect(jsonPath("$.data.content[1].message").value(firstMessage.getMessage()));
 
-        verify(goodsChatService).getMessagesForChatRoom(chatRoomId, memberId, pageable);
+        verify(goodsChatService).getChatRoomMessages(chatRoomId, memberId, pageable);
     }
 
     @Test
@@ -350,7 +349,7 @@ class GoodsChatRoomControllerTest {
 
         List<MemberSummaryResponse> memberList = List.of(member, anotherMember);
 
-        when(goodsChatService.getChatRoomMembers(memberId, chatRoomId)).thenReturn(memberList);
+        when(goodsChatService.getMembersInChatRoom(memberId, chatRoomId)).thenReturn(memberList);
 
         // when & then
         mockMvc.perform(get("/api/goods/chat/{chatRoomId}/members", chatRoomId))
@@ -365,7 +364,7 @@ class GoodsChatRoomControllerTest {
                 .andExpect(jsonPath("$.data[1].nickname").value(anotherMember.getNickname()))
                 .andExpect(jsonPath("$.data[1].imageUrl").value(anotherMember.getImageUrl()));
 
-        verify(goodsChatService).getChatRoomMembers(memberId, chatRoomId);
+        verify(goodsChatService).getMembersInChatRoom(memberId, chatRoomId);
     }
 
     @Test
@@ -375,7 +374,7 @@ class GoodsChatRoomControllerTest {
         Long memberId = 1L;
         Long chatRoomId = 2L;
 
-        when(goodsChatService.getChatRoomMembers(memberId, chatRoomId))
+        when(goodsChatService.getMembersInChatRoom(memberId, chatRoomId))
                 .thenThrow(new CustomException(ErrorCode.GOODS_CHAT_NOT_FOUND_CHAT_PART));
 
         // when & then
@@ -385,6 +384,6 @@ class GoodsChatRoomControllerTest {
                 .andExpect(jsonPath("$.code").value(ErrorCode.GOODS_CHAT_NOT_FOUND_CHAT_PART.getStatus().value()))
                 .andExpect(jsonPath("$.message").value(ErrorCode.GOODS_CHAT_NOT_FOUND_CHAT_PART.getMessage()));
 
-        verify(goodsChatService).getChatRoomMembers(memberId, chatRoomId);
+        verify(goodsChatService).getMembersInChatRoom(memberId, chatRoomId);
     }
 }

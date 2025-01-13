@@ -8,12 +8,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.example.mate.common.config.S3Config;
 import com.example.mate.common.error.ErrorCode;
-import com.example.mate.config.WithAuthMember;
-import com.example.mate.common.security.util.JwtUtil;
+import com.example.mate.config.securityConfig.WithAuthMember;
 import com.example.mate.domain.constant.Gender;
-import com.example.mate.domain.file.FileService;
 import com.example.mate.domain.member.entity.Follow;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.FollowRepository;
@@ -26,7 +23,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;

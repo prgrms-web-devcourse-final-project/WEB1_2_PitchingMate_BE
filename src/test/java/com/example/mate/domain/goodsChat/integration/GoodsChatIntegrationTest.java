@@ -10,11 +10,20 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.example.mate.common.response.ApiResponse;
 import com.example.mate.common.response.PageResponse;
-import com.example.mate.common.security.util.JwtUtil;
-import com.example.mate.config.WithAuthMember;
+import com.example.mate.config.mongoConfig.AcceptanceTestWithMongo;
+import com.example.mate.config.securityConfig.WithAuthMember;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.constant.MessageType;
 import com.example.mate.domain.file.FileUtils;
+import com.example.mate.domain.goodsChat.document.GoodsChatMessage;
+import com.example.mate.domain.goodsChat.dto.response.GoodsChatMessageResponse;
+import com.example.mate.domain.goodsChat.dto.response.GoodsChatRoomResponse;
+import com.example.mate.domain.goodsChat.entity.GoodsChatPart;
+import com.example.mate.domain.goodsChat.entity.GoodsChatPartId;
+import com.example.mate.domain.goodsChat.entity.GoodsChatRoom;
+import com.example.mate.domain.goodsChat.repository.GoodsChatMessageRepository;
+import com.example.mate.domain.goodsChat.repository.GoodsChatPartRepository;
+import com.example.mate.domain.goodsChat.repository.GoodsChatRoomRepository;
 import com.example.mate.domain.goodsPost.dto.response.LocationInfo;
 import com.example.mate.domain.goodsPost.entity.Category;
 import com.example.mate.domain.goodsPost.entity.GoodsPost;
@@ -22,15 +31,6 @@ import com.example.mate.domain.goodsPost.entity.GoodsPostImage;
 import com.example.mate.domain.goodsPost.entity.Role;
 import com.example.mate.domain.goodsPost.entity.Status;
 import com.example.mate.domain.goodsPost.repository.GoodsPostRepository;
-import com.example.mate.domain.goodsChat.dto.response.GoodsChatMessageResponse;
-import com.example.mate.domain.goodsChat.dto.response.GoodsChatRoomResponse;
-import com.example.mate.domain.goodsChat.entity.GoodsChatMessage;
-import com.example.mate.domain.goodsChat.entity.GoodsChatPart;
-import com.example.mate.domain.goodsChat.entity.GoodsChatPartId;
-import com.example.mate.domain.goodsChat.entity.GoodsChatRoom;
-import com.example.mate.domain.goodsChat.repository.GoodsChatMessageRepository;
-import com.example.mate.domain.goodsChat.repository.GoodsChatPartRepository;
-import com.example.mate.domain.goodsChat.repository.GoodsChatRoomRepository;
 import com.example.mate.domain.member.dto.response.MemberSummaryResponse;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
@@ -46,7 +46,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -58,7 +57,7 @@ import org.springframework.transaction.annotation.Transactional;
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
 @Transactional
-public class GoodsChatIntegrationTest {
+public class GoodsChatIntegrationTest extends AcceptanceTestWithMongo {
 
     @Autowired private MockMvc mockMvc;
     @Autowired private MemberRepository memberRepository;
@@ -258,12 +257,10 @@ public class GoodsChatIntegrationTest {
             GoodsChatMessage actualMessage = actualMessages.get(i);
 
             assertThat(expectedMessage.getChatMessageId()).isEqualTo(actualMessage.getId());
-            assertThat(expectedMessage.getRoomId()).isEqualTo(actualMessage.getGoodsChatPart().getGoodsChatRoom().getId());
-            assertThat(expectedMessage.getSenderId()).isEqualTo(actualMessage.getGoodsChatPart().getMember().getId());
-            assertThat(expectedMessage.getSenderNickname()).isEqualTo(actualMessage.getGoodsChatPart().getMember().getNickname());
+            assertThat(expectedMessage.getRoomId()).isEqualTo(actualMessage.getChatRoomId());
+            assertThat(expectedMessage.getSenderId()).isEqualTo(actualMessage.getMemberId());
             assertThat(expectedMessage.getMessage()).isEqualTo(actualMessage.getContent());
             assertThat(expectedMessage.getMessageType()).isEqualTo(actualMessage.getMessageType().getValue());
-            assertThat(expectedMessage.getSenderImageUrl()).isEqualTo(FileUtils.getThumbnailImageUrl(actualMessage.getGoodsChatPart().getMember().getImageUrl()));
             assertThat(expectedMessage.getSentAt()).isEqualToIgnoringNanos(actualMessage.getSentAt()); // 시간 비교, 나노초는 무시
         }
     }
@@ -394,7 +391,8 @@ public class GoodsChatIntegrationTest {
     private GoodsChatMessage createChatMessage(GoodsChatPart goodsChatPart, String content) {
         return messageRepository.save(
                 GoodsChatMessage.builder()
-                        .goodsChatPart(goodsChatPart)
+                        .chatRoomId(goodsChatPart.getGoodsChatRoom().getId())
+                        .memberId(goodsChatPart.getMember().getId())
                         .content(content)
                         .messageType(MessageType.TALK)
                         .sentAt(LocalDateTime.now())
