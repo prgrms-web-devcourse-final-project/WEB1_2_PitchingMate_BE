@@ -1,4 +1,4 @@
-package com.example.mate.config;
+package com.example.mate.config.securityConfig;
 
 import com.example.mate.common.security.auth.AuthMember;
 import java.util.Arrays;
