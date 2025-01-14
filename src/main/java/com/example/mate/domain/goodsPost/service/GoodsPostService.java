@@ -13,11 +13,14 @@ import com.example.mate.domain.goodsPost.entity.Category;
 import com.example.mate.domain.goodsPost.entity.GoodsPost;
 import com.example.mate.domain.goodsPost.entity.GoodsPostImage;
 import com.example.mate.domain.goodsPost.entity.Status;
+import com.example.mate.domain.goodsPost.event.GoodsPostEvent;
+import com.example.mate.domain.goodsPost.event.GoodsPostEventPublisher;
 import com.example.mate.domain.goodsPost.repository.GoodsPostImageRepository;
 import com.example.mate.domain.goodsPost.repository.GoodsPostRepository;
 import com.example.mate.domain.member.entity.ActivityType;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
+import com.example.mate.domain.notification.entity.NotificationType;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -38,6 +41,7 @@ public class GoodsPostService {
     private final GoodsPostRepository goodsPostRepository;
     private final GoodsPostImageRepository imageRepository;
     private final FileService fileService;
+    private final GoodsPostEventPublisher eventPublisher;
 
     public GoodsPostResponse registerGoodsPost(Long memberId, GoodsPostRequest request, List<MultipartFile> files) {
         Member seller = findMemberById(memberId);
@@ -55,7 +59,8 @@ public class GoodsPostService {
         return GoodsPostResponse.of(savedPost);
     }
 
-    public GoodsPostResponse updateGoodsPost(Long memberId, Long goodsPostId, GoodsPostRequest request, List<MultipartFile> files) {
+    public GoodsPostResponse updateGoodsPost(Long memberId, Long goodsPostId, GoodsPostRequest request,
+                                             List<MultipartFile> files) {
         Member seller = findMemberById(memberId);
         GoodsPost goodsPost = findGoodsPostById(goodsPostId);
 
@@ -97,14 +102,17 @@ public class GoodsPostService {
     @Transactional(readOnly = true)
     public List<GoodsPostSummaryResponse> getMainGoodsPosts(Long teamId) {
         validateTeamInfo(teamId);
-        return mapToGoodsPostSummaryResponses(goodsPostRepository.findMainGoodsPosts(teamId, Status.OPEN, PageRequest.of(0, 4)));
+        return mapToGoodsPostSummaryResponses(
+                goodsPostRepository.findMainGoodsPosts(teamId, Status.OPEN, PageRequest.of(0, 4)));
     }
 
     @Transactional(readOnly = true)
-    public PageResponse<GoodsPostSummaryResponse> getPageGoodsPosts(Long teamId, String categoryVal, Pageable pageable) {
+    public PageResponse<GoodsPostSummaryResponse> getPageGoodsPosts(Long teamId, String categoryVal,
+                                                                    Pageable pageable) {
         validateTeamInfo(teamId);
         Category category = Category.from(categoryVal);
-        Page<GoodsPost> pageGoodsPosts = goodsPostRepository.findPageGoodsPosts(teamId, Status.OPEN, category, pageable);
+        Page<GoodsPost> pageGoodsPosts = goodsPostRepository.findPageGoodsPosts(teamId, Status.OPEN, category,
+                pageable);
 
         return PageResponse.from(pageGoodsPosts, mapToGoodsPostSummaryResponses(pageGoodsPosts.getContent()));
     }
@@ -119,6 +127,10 @@ public class GoodsPostService {
 
         seller.updateManner(ActivityType.GOODS);
         buyer.updateManner(ActivityType.GOODS);
+
+        // 거래완료 알림 보내기
+        eventPublisher.publish(
+                GoodsPostEvent.of(goodsPost.getId(), goodsPost.getTitle(), buyer, NotificationType.GOODS_CLOSED));
     }
 
     private void attachImagesToGoodsPost(GoodsPost goodsPost, List<MultipartFile> files) {
@@ -130,7 +142,8 @@ public class GoodsPostService {
         return IntStream.range(0, files.size())
                 .mapToObj(i -> GoodsPostImage.builder()
                         // 첫번째 사진일 경우 썸네일과 함께 저장
-                        .imageUrl(i == 0 ? fileService.uploadImageWithThumbnail(files.get(i)) : fileService.uploadFile(files.get(i)))
+                        .imageUrl(i == 0 ? fileService.uploadImageWithThumbnail(files.get(i))
+                                : fileService.uploadFile(files.get(i)))
                         .post(savedPost)
                         .build())
                 .collect(Collectors.toList());

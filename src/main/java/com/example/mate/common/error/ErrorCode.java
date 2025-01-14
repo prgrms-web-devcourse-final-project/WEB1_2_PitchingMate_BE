@@ -145,7 +145,10 @@ public enum ErrorCode {
     // 채팅 기능 관련 에러
     CHAT_NOT_AVAILABLE(HttpStatus.BAD_REQUEST, "CHAT009", "2명 이상의 사용자가 있어야 채팅이 가능합니다."),
     MESSAGE_CONTENT_EMPTY(HttpStatus.BAD_REQUEST, "CHAT010", "메시지 내용을 입력해주세요."),
-    INVALID_MESSAGE_TYPE(HttpStatus.BAD_REQUEST, "CHAT011", "잘못된 메시지 타입입니다.");
+    INVALID_MESSAGE_TYPE(HttpStatus.BAD_REQUEST, "CHAT011", "잘못된 메시지 타입입니다."),
+
+    // Notification
+    NOTIFICATION_SEND_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "N001", "알림 전송에 실패했습니다.");
 
     private final HttpStatus status;
     private final String code;
