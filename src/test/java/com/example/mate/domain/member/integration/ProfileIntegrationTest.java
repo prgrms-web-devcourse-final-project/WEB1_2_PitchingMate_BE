@@ -195,13 +195,13 @@ public class ProfileIntegrationTest {
     }
 
     private void createMatePost() {
-        matePost = mateRepository.save(MatePost.builder()
+        matePost = matePostRepository.save(MatePost.builder()
                 .author(member1)
                 .teamId(1L)
                 .match(match)
                 .title("테스트 제목")
                 .content("테스트 내용")
-                .status(com.example.mate.domain.mate.entity.Status.CLOSED)
+                .status(com.example.mate.domain.matePost.entity.Status.CLOSED)
                 .maxParticipants(3)
                 .age(Age.TWENTIES)
                 .gender(Gender.FEMALE)
@@ -562,14 +562,14 @@ public class ProfileIntegrationTest {
                             .build()))
                     .title("new title")
                     .content("new content")
-                    .status(com.example.mate.domain.mate.entity.Status.OPEN)
+                    .status(com.example.mate.domain.matePost.entity.Status.OPEN)
                     .maxParticipants(10)
                     .age(Age.ALL)
                     .gender(Gender.ANY)
                     .transport(TransportType.ANY)
                     .build();
 
-            mateRepository.save(post);
+            matePostRepository.save(post);
 
             // when & then
             mockMvc.perform(get("/api/profile/posts/mate")
