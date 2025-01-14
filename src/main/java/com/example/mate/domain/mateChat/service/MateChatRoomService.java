@@ -4,11 +4,11 @@ import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.constant.Gender;
-import com.example.mate.domain.mate.entity.Age;
-import com.example.mate.domain.mate.entity.MatePost;
-import com.example.mate.domain.mate.entity.Status;
-import com.example.mate.domain.mate.repository.MateRepository;
-import com.example.mate.domain.mate.repository.VisitPartRepository;
+import com.example.mate.domain.matePost.entity.Age;
+import com.example.mate.domain.matePost.entity.MatePost;
+import com.example.mate.domain.matePost.entity.Status;
+import com.example.mate.domain.matePost.repository.MatePostRepository;
+import com.example.mate.domain.matePost.repository.VisitPartRepository;
 import com.example.mate.domain.mateChat.dto.response.MateChatMessageResponse;
 import com.example.mate.domain.mateChat.dto.response.MateChatRoomListResponse;
 import com.example.mate.domain.mateChat.dto.response.MateChatRoomResponse;
@@ -43,7 +43,7 @@ public class MateChatRoomService {
     private final MateChatRoomRepository chatRoomRepository;
     private final MateChatRoomMemberRepository chatRoomMemberRepository;
     private final MateChatMessageRepository chatMessageRepository;
-    private final MateRepository mateRepository;
+    private final MatePostRepository matePostRepository;
     private final MemberRepository memberRepository;
     private final VisitPartRepository visitPartRepository;
     private final MateChatRoomMemberRepository mateChatRoomMemberRepository;
@@ -54,7 +54,7 @@ public class MateChatRoomService {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND_BY_ID));
 
-        MatePost matePost = mateRepository.findById(postId)
+        MatePost matePost = matePostRepository.findById(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MATE_POST_NOT_FOUND_BY_ID));
 
         // 1. 입장 가능 여부 검증

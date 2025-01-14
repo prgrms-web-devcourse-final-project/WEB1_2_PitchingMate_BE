@@ -19,10 +19,10 @@ import com.example.mate.domain.goodsPost.entity.Status;
 import com.example.mate.domain.goodsPost.repository.GoodsPostRepository;
 import com.example.mate.domain.goodsReview.entity.GoodsReview;
 import com.example.mate.domain.goodsReview.repository.GoodsReviewRepository;
-import com.example.mate.domain.mate.entity.MateReview;
-import com.example.mate.domain.mate.entity.VisitPart;
-import com.example.mate.domain.mate.repository.MateReviewRepository;
-import com.example.mate.domain.mate.repository.VisitPartRepository;
+import com.example.mate.domain.matePost.entity.VisitPart;
+import com.example.mate.domain.matePost.repository.VisitPartRepository;
+import com.example.mate.domain.mateReview.entity.MateReview;
+import com.example.mate.domain.mateReview.repository.MateReviewRepository;
 import com.example.mate.domain.member.dto.request.JoinRequest;
 import com.example.mate.domain.member.dto.request.MemberInfoUpdateRequest;
 import com.example.mate.domain.member.dto.request.MemberLoginRequest;
@@ -34,6 +34,7 @@ import com.example.mate.domain.member.entity.Follow;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.FollowRepository;
 import com.example.mate.domain.member.repository.MemberRepository;
+import com.example.mate.domain.notification.service.NotificationService;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -73,6 +74,9 @@ class MemberServiceTest {
 
     @Mock
     private FileService fileService;
+
+    @Mock
+    private NotificationService notificationService;
 
     @Mock
     private JwtUtil jwtUtil;

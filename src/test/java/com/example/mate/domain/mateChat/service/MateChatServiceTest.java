@@ -3,12 +3,12 @@ package com.example.mate.domain.mateChat.service;
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
 import com.example.mate.domain.constant.Gender;
-import com.example.mate.domain.mate.entity.Age;
-import com.example.mate.domain.mate.entity.MatePost;
-import com.example.mate.domain.mate.entity.Status;
-import com.example.mate.domain.mate.entity.Visit;
-import com.example.mate.domain.mate.repository.MateRepository;
-import com.example.mate.domain.mate.repository.VisitPartRepository;
+import com.example.mate.domain.matePost.entity.Age;
+import com.example.mate.domain.matePost.entity.MatePost;
+import com.example.mate.domain.matePost.entity.Status;
+import com.example.mate.domain.matePost.entity.Visit;
+import com.example.mate.domain.matePost.repository.MatePostRepository;
+import com.example.mate.domain.matePost.repository.VisitPartRepository;
 import com.example.mate.domain.mateChat.dto.response.MateChatRoomResponse;
 import com.example.mate.domain.mateChat.entity.MateChatRoom;
 import com.example.mate.domain.mateChat.entity.MateChatRoomMember;
@@ -48,7 +48,7 @@ class MateChatServiceTest {
     @Mock
     private MateChatMessageRepository chatMessageRepository;
     @Mock
-    private MateRepository mateRepository;
+    private MatePostRepository matePostRepository;
     @Mock
     private MemberRepository memberRepository;
     @Mock
@@ -70,7 +70,7 @@ class MateChatServiceTest {
         MateChatRoomMember chatRoomMember = createChatRoomMember(1L, chatRoom, testMember, true, true);
 
         when(memberRepository.findById(testMember.getId())).thenReturn(Optional.of(testMember));
-        when(mateRepository.findById(matePost.getId())).thenReturn(Optional.of(matePost));
+        when(matePostRepository.findById(matePost.getId())).thenReturn(Optional.of(matePost));
         when(chatRoomRepository.findByMatePostId(matePost.getId())).thenReturn(Optional.empty());
         when(chatRoomRepository.save(any(MateChatRoom.class))).thenReturn(chatRoom);
         when(chatRoomMemberRepository.save(any(MateChatRoomMember.class))).thenReturn(chatRoomMember);
@@ -106,7 +106,7 @@ class MateChatServiceTest {
         MatePost matePost = createMatePost(1L, authorMember, Age.FORTIES, Gender.ANY, Status.OPEN);
 
         when(memberRepository.findById(testMember.getId())).thenReturn(Optional.of(testMember));
-        when(mateRepository.findById(matePost.getId())).thenReturn(Optional.of(matePost));
+        when(matePostRepository.findById(matePost.getId())).thenReturn(Optional.of(matePost));
 
         // When & Then
         assertThrows(CustomException.class, () ->
@@ -123,7 +123,7 @@ class MateChatServiceTest {
         MatePost matePost = createMatePost(1L, authorMember, Age.ALL, Gender.FEMALE, Status.OPEN);
 
         when(memberRepository.findById(testMember.getId())).thenReturn(Optional.of(testMember));
-        when(mateRepository.findById(matePost.getId())).thenReturn(Optional.of(matePost));
+        when(matePostRepository.findById(matePost.getId())).thenReturn(Optional.of(matePost));
 
         // When & Then
         assertThrows(CustomException.class, () ->
@@ -235,7 +235,7 @@ class MateChatServiceTest {
         MatePost matePost = createMatePost(1L, authorMember, Age.ALL, Gender.ANY, Status.VISIT_COMPLETE, visit);
 
         when(memberRepository.findById(testMember.getId())).thenReturn(Optional.of(testMember));
-        when(mateRepository.findById(matePost.getId())).thenReturn(Optional.of(matePost));
+        when(matePostRepository.findById(matePost.getId())).thenReturn(Optional.of(matePost));
         when(visitPartRepository.existsByVisitAndMember(visit.getId(), testMember.getId()))
                 .thenReturn(false);
 

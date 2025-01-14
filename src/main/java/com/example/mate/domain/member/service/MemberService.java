@@ -9,8 +9,8 @@ import com.example.mate.domain.file.FileValidator;
 import com.example.mate.domain.goodsPost.entity.Status;
 import com.example.mate.domain.goodsPost.repository.GoodsPostRepository;
 import com.example.mate.domain.goodsReview.repository.GoodsReviewRepository;
-import com.example.mate.domain.mate.repository.MateReviewRepository;
-import com.example.mate.domain.mate.repository.VisitPartRepository;
+import com.example.mate.domain.mateReview.repository.MateReviewRepository;
+import com.example.mate.domain.matePost.repository.VisitPartRepository;
 import com.example.mate.domain.member.dto.request.JoinRequest;
 import com.example.mate.domain.member.dto.request.MemberInfoUpdateRequest;
 import com.example.mate.domain.member.dto.request.MemberLoginRequest;
@@ -21,6 +21,7 @@ import com.example.mate.domain.member.dto.response.MyProfileResponse;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.FollowRepository;
 import com.example.mate.domain.member.repository.MemberRepository;
+import com.example.mate.domain.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -44,6 +45,7 @@ public class MemberService {
     private final JwtUtil jwtUtil;
     private final FileService fileService;
     private final LogoutRedisService logoutRedisService;
+    private final NotificationService notificationService;
 
     // CATCH Mi 회원가입 기능
     public JoinResponse join(JoinRequest request) {
@@ -55,6 +57,10 @@ public class MemberService {
     @Transactional(readOnly = true)
     public MemberLoginResponse loginByEmail(MemberLoginRequest request) {
         Member member = findByEmail(request.getEmail());
+
+        // 로그인 후 알림 구독
+        notificationService.subscribe(member.getId(), "");
+
         return MemberLoginResponse.from(member, jwtUtil.createTokens(member));
     }
 

@@ -22,6 +22,7 @@ import com.example.mate.domain.goodsPost.entity.Category;
 import com.example.mate.domain.goodsPost.entity.GoodsPost;
 import com.example.mate.domain.goodsPost.entity.GoodsPostImage;
 import com.example.mate.domain.goodsPost.entity.Status;
+import com.example.mate.domain.goodsPost.event.GoodsPostEventPublisher;
 import com.example.mate.domain.goodsPost.repository.GoodsPostImageRepository;
 import com.example.mate.domain.goodsPost.repository.GoodsPostRepository;
 import com.example.mate.domain.member.entity.Member;
@@ -59,6 +60,9 @@ class GoodsPostServiceTest {
 
     @Mock
     private FileService fileService;
+
+    @Mock
+    private GoodsPostEventPublisher eventPublisher;
 
     private Member member;
 

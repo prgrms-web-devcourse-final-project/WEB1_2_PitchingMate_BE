@@ -57,7 +57,7 @@ public enum ErrorCode {
     ALREADY_COMPLETED_POST(HttpStatus.FORBIDDEN, "MP009", "이미 직관완료한 게시글은 수정하거나 삭제할 수 없습니다."),
     MATE_POST_PARTICIPANTS_NOT_FOUND(HttpStatus.BAD_REQUEST, "MP010", "직관 참여자 목록이 비어있습니다."),
     VISIT_COMPLETE_POST_DELETE_FORBIDDEN(HttpStatus.FORBIDDEN, "MP0011", "직관 완료된 게시글은 삭제할 수 없습니다"),
-    MATE_POST_MAX_PARTICIPANTS_EXCEEDED(HttpStatus.BAD_REQUEST, "MP0012", "참여자 수가 최대 모집 인원을 초과했습니다"),
+    MATE_POST_MAX_PARTICIPANTS_EXCEEDED(HttpStatus.BAD_REQUEST, "MP0012", "방장을 포함한 참여자 수가 최대 모집 인원을 초과했습니다"),
     INVALID_MATE_POST_PARTICIPANT_IDS(HttpStatus.BAD_REQUEST, "MP013", "존재하지 않는 회원이 참여자 목록에 포함되어 있습니다"),
 
     // Goods
@@ -145,7 +145,10 @@ public enum ErrorCode {
     // 채팅 기능 관련 에러
     CHAT_NOT_AVAILABLE(HttpStatus.BAD_REQUEST, "CHAT009", "2명 이상의 사용자가 있어야 채팅이 가능합니다."),
     MESSAGE_CONTENT_EMPTY(HttpStatus.BAD_REQUEST, "CHAT010", "메시지 내용을 입력해주세요."),
-    INVALID_MESSAGE_TYPE(HttpStatus.BAD_REQUEST, "CHAT011", "잘못된 메시지 타입입니다.");
+    INVALID_MESSAGE_TYPE(HttpStatus.BAD_REQUEST, "CHAT011", "잘못된 메시지 타입입니다."),
+
+    // Notification
+    NOTIFICATION_SEND_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "N001", "알림 전송에 실패했습니다.");
 
     private final HttpStatus status;
     private final String code;

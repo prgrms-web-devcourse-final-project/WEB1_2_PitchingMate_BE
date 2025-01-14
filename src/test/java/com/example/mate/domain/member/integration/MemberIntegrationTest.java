@@ -15,11 +15,12 @@ import com.example.mate.domain.goodsPost.repository.GoodsPostRepository;
 import com.example.mate.domain.goodsReview.repository.GoodsReviewRepository;
 import com.example.mate.domain.match.entity.Match;
 import com.example.mate.domain.match.repository.MatchRepository;
-import com.example.mate.domain.mate.entity.*;
-import com.example.mate.domain.mate.repository.MateRepository;
-import com.example.mate.domain.mate.repository.MateReviewRepository;
-import com.example.mate.domain.mate.repository.VisitPartRepository;
-import com.example.mate.domain.mate.repository.VisitRepository;
+import com.example.mate.domain.matePost.entity.*;
+import com.example.mate.domain.matePost.repository.MatePostRepository;
+import com.example.mate.domain.mateReview.repository.MateReviewRepository;
+import com.example.mate.domain.matePost.repository.VisitPartRepository;
+import com.example.mate.domain.matePost.repository.VisitRepository;
+import com.example.mate.domain.mateReview.entity.MateReview;
 import com.example.mate.domain.member.dto.request.JoinRequest;
 import com.example.mate.domain.member.dto.request.MemberInfoUpdateRequest;
 import com.example.mate.domain.member.dto.request.MemberLoginRequest;
@@ -55,7 +56,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static com.example.mate.domain.match.entity.MatchStatus.SCHEDULED;
-import static com.example.mate.domain.mate.entity.Status.CLOSED;
+import static com.example.mate.domain.matePost.entity.Status.CLOSED;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
@@ -91,7 +92,7 @@ class MemberIntegrationTest {
     private MatchRepository matchRepository;
 
     @Autowired
-    private MateRepository mateRepository;
+    private MatePostRepository matePostRepository;
 
     @Autowired
     private VisitRepository visitRepository;
@@ -231,7 +232,7 @@ class MemberIntegrationTest {
     }
 
     private MatePost createMatePost(Member author, Match match) {
-        return mateRepository.save(MatePost.builder()
+        return matePostRepository.save(MatePost.builder()
                 .author(author)
                 .teamId(1L)
                 .match(match)
