@@ -4,14 +4,10 @@ import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.constant.MessageType;
-import com.example.mate.domain.goodsPost.entity.GoodsPost;
-import com.example.mate.domain.goodsPost.entity.Role;
-import com.example.mate.domain.goodsPost.entity.Status;
-import com.example.mate.domain.goodsPost.repository.GoodsPostRepository;
+import com.example.mate.domain.goodsChat.document.GoodsChatMessage;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatMessageResponse;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatRoomResponse;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatRoomSummaryResponse;
-import com.example.mate.domain.goodsChat.entity.GoodsChatMessage;
 import com.example.mate.domain.goodsChat.entity.GoodsChatPart;
 import com.example.mate.domain.goodsChat.entity.GoodsChatPartId;
 import com.example.mate.domain.goodsChat.entity.GoodsChatRoom;
@@ -20,6 +16,10 @@ import com.example.mate.domain.goodsChat.event.GoodsChatEventPublisher;
 import com.example.mate.domain.goodsChat.repository.GoodsChatMessageRepository;
 import com.example.mate.domain.goodsChat.repository.GoodsChatPartRepository;
 import com.example.mate.domain.goodsChat.repository.GoodsChatRoomRepository;
+import com.example.mate.domain.goodsPost.entity.GoodsPost;
+import com.example.mate.domain.goodsPost.entity.Role;
+import com.example.mate.domain.goodsPost.entity.Status;
+import com.example.mate.domain.goodsPost.repository.GoodsPostRepository;
 import com.example.mate.domain.member.dto.response.MemberSummaryResponse;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
@@ -44,29 +44,36 @@ public class GoodsChatService {
     private final GoodsChatMessageRepository messageRepository;
     private final GoodsChatEventPublisher eventPublisher;
 
+    // 채팅방 생성 & 기존 채팅방 입장
     public GoodsChatRoomResponse getOrCreateGoodsChatRoom(Long buyerId, Long goodsPostId) {
+        // 구매자, 판매글, 판매자 조회 및 검증
         Member buyer = findMemberById(buyerId);
         GoodsPost goodsPost = findGoodsPostById(goodsPostId);
         Member seller = goodsPost.getSeller();
 
-        validateCreateChatRoom(goodsPost, buyer, seller);
+        // 판매글 유효성 검증
+        validateChatRoomCreation(goodsPost, buyer, seller);
 
-        // 구매자가 채팅방이 존재하면 기존 채팅방을 반환하고, 없다면 새로 생성하여 반환
+        // 기존 채팅방이 있으면 반환, 없으면 새 채팅방 생성
         return chatRoomRepository.findExistingChatRoom(goodsPostId, buyerId, Role.BUYER)
-                .map(this::buildChatRoomResponse)
+                .map(chatRoom -> getChatRoomWithMessages(chatRoom, PageRequest.of(0, 20)))
                 .orElseGet(() -> createChatRoom(goodsPost, buyer, seller));
     }
 
-    // 기존 채팅방 & 채팅 내역 반환 (최신 20개)
-    private GoodsChatRoomResponse buildChatRoomResponse(GoodsChatRoom chatRoom) {
-        Page<GoodsChatMessage> messages = messageRepository.getChatMessages(chatRoom.getId(), PageRequest.of(0, 20));
+    // 채팅방과 채팅 내역 반환
+    private GoodsChatRoomResponse getChatRoomWithMessages(GoodsChatRoom chatRoom, Pageable pageable) {
+        Page<GoodsChatMessage> messages = messageRepository.getChatMessages(chatRoom.getId(), pageable);
         List<GoodsChatMessageResponse> content = messages.getContent().stream()
-                .map(GoodsChatMessageResponse::of)
+                .map(message -> {
+                    Long memberId = message.getMemberId();
+                    Member member = findMemberById(memberId);
+                    return GoodsChatMessageResponse.of(message, member);
+                })
                 .toList();
         return GoodsChatRoomResponse.of(chatRoom, PageResponse.from(messages, content));
     }
 
-    // 새로운 채팅방 반환
+    // 새 채팅방 생성
     private GoodsChatRoomResponse createChatRoom(GoodsPost goodsPost, Member buyer, Member seller) {
         GoodsChatRoom goodsChatRoom = GoodsChatRoom.builder()
                 .goodsPost(goodsPost)
@@ -76,13 +83,14 @@ public class GoodsChatService {
         savedChatRoom.addChatParticipant(buyer, Role.BUYER);
         savedChatRoom.addChatParticipant(seller, Role.SELLER);
 
-        // 새로운 채팅방 생성 - 입장 메시지 전송
+        // 입장 메시지 이벤트 전송
         eventPublisher.publish(GoodsChatEvent.from(goodsChatRoom.getId(), buyer, MessageType.ENTER));
 
         return GoodsChatRoomResponse.of(savedChatRoom, null);
     }
 
-    private void validateCreateChatRoom(GoodsPost goodsPost, Member seller, Member buyer) {
+    // 채팅방 생성 유효성 검증
+    private void validateChatRoomCreation(GoodsPost goodsPost, Member seller, Member buyer) {
         if (goodsPost.getStatus() == Status.CLOSED) {
             throw new CustomException(ErrorCode.GOODS_CHAT_CLOSED_POST);
         }
@@ -91,58 +99,62 @@ public class GoodsChatService {
         }
     }
 
+    // 단순 채팅 내역 조회
     @Transactional(readOnly = true)
-    public PageResponse<GoodsChatMessageResponse> getMessagesForChatRoom(Long chatRoomId, Long memberId, Pageable pageable) {
-        validateMemberParticipation(memberId, chatRoomId);
+    public PageResponse<GoodsChatMessageResponse> getChatRoomMessages(Long chatRoomId, Long memberId, Pageable pageable) {
+        validateMemberInChatRoom(memberId, chatRoomId);
         Page<GoodsChatMessage> chatMessagePage = messageRepository.getChatMessages(chatRoomId, pageable);
+
         List<GoodsChatMessageResponse> content = chatMessagePage.getContent().stream()
-                .map(GoodsChatMessageResponse::of)
+                .map(message -> {
+                    Member member = findMemberById(message.getMemberId());
+                    return GoodsChatMessageResponse.of(message, member);
+                })
                 .toList();
         return PageResponse.from(chatMessagePage, content);
     }
 
-    private void validateMemberParticipation(Long memberId, Long chatRoomId) {
+    private void validateMemberInChatRoom(Long memberId, Long chatRoomId) {
         if (!partRepository.existsById(new GoodsChatPartId(memberId, chatRoomId))) {
             throw new CustomException(ErrorCode.GOODS_CHAT_NOT_FOUND_CHAT_PART);
         }
     }
 
+    // 채팅 목록 조회
     @Transactional(readOnly = true)
     public PageResponse<GoodsChatRoomSummaryResponse> getGoodsChatRooms(Long memberId, Pageable pageable) {
         Member member = findMemberById(memberId);
         Page<GoodsChatRoom> chatRoomPage = chatRoomRepository.findChatRoomPageByMemberId(memberId, pageable);
-        List<GoodsChatRoomSummaryResponse> content = chatRoomPage.getContent().stream()
+
+        List<GoodsChatRoomSummaryResponse> summaries = chatRoomPage.getContent().stream()
                 .map(chatRoom -> GoodsChatRoomSummaryResponse.of(chatRoom, getOpponentMember(chatRoom, member)))
                 .toList();
 
-        return PageResponse.from(chatRoomPage, content);
+        return PageResponse.from(chatRoomPage, summaries);
     }
 
-    // 채팅 참여 테이블에서 상대방 회원 정보를 찾음
-    private Member getOpponentMember(GoodsChatRoom chatRoom, Member member) {
+    // 상대방 회원 조회
+    private Member getOpponentMember(GoodsChatRoom chatRoom, Member currentUser) {
         return chatRoom.getChatParts().stream()
-                .filter(part -> part.getMember() != member)
-                .findAny()
                 .map(GoodsChatPart::getMember)
+                .filter(member -> !member.equals(currentUser))
+                .findFirst()
                 .orElseThrow(() -> new CustomException(ErrorCode.GOODS_CHAT_OPPONENT_NOT_FOUND));
     }
 
+    // 채팅방 입장
     @Transactional(readOnly = true)
     public GoodsChatRoomResponse getGoodsChatRoomInfo(Long memberId, Long chatRoomId) {
-        validateMemberParticipation(memberId, chatRoomId);
+        validateMemberInChatRoom(memberId, chatRoomId);
         GoodsChatRoom chatRoom = findChatRoomById(chatRoomId);
 
-        Page<GoodsChatMessage> messages = messageRepository.getChatMessages(chatRoom.getId(), PageRequest.of(0, 20));
-        List<GoodsChatMessageResponse> content = messages.getContent().stream()
-                .map(GoodsChatMessageResponse::of)
-                .toList();
-
-        return GoodsChatRoomResponse.of(chatRoom, PageResponse.from(messages, content));
+        return getChatRoomWithMessages(chatRoom, PageRequest.of(0, 20));
     }
 
+    // 채팅방 참여 인원 조회
     @Transactional(readOnly = true)
-    public List<MemberSummaryResponse> getChatRoomMembers(Long memberId, Long chatRoomId) {
-        validateMemberParticipation(memberId, chatRoomId);
+    public List<MemberSummaryResponse> getMembersInChatRoom(Long memberId, Long chatRoomId) {
+        validateMemberInChatRoom(memberId, chatRoomId);
         List<GoodsChatPart> goodsChatParts = partRepository.findAllWithMemberByChatRoomId(chatRoomId);
 
         return goodsChatParts.stream()
@@ -150,6 +162,7 @@ public class GoodsChatService {
                 .collect(Collectors.toList());
     }
 
+    // 채팅방 나가기 & 채팅 정보 삭제
     public void deactivateGoodsChatPart(Long memberId, Long chatRoomId) {
         Member member = findMemberById(memberId);
         GoodsChatPart goodsChatPart = partRepository.findById(new GoodsChatPartId(memberId, chatRoomId))
@@ -160,8 +173,14 @@ public class GoodsChatService {
             eventPublisher.publish(GoodsChatEvent.from(chatRoomId, member, MessageType.LEAVE));
         } else {
             // 모두 나갔다면 채팅방, 채팅 참여, 채팅 삭제
-            chatRoomRepository.deleteById(chatRoomId);
+            deleteChatRoom(chatRoomId);
         }
+    }
+
+    // 채팅방 삭제
+    private void deleteChatRoom(Long chatRoomId) {
+        chatRoomRepository.deleteById(chatRoomId);
+        messageRepository.deleteAllByChatRoomId(chatRoomId); // 메시지 삭제
     }
 
     private GoodsChatRoom findChatRoomById(Long chatRoomId) {

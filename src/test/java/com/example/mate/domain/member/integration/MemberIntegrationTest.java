@@ -2,7 +2,7 @@ package com.example.mate.domain.member.integration;
 
 import com.example.mate.common.jwt.JwtToken;
 import com.example.mate.common.security.util.JwtUtil;
-import com.example.mate.config.WithAuthMember;
+import com.example.mate.config.securityConfig.WithAuthMember;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.constant.Rating;
 import com.example.mate.domain.file.FileUtils;

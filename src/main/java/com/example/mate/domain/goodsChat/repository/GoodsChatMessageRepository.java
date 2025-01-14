@@ -1,19 +1,19 @@
 package com.example.mate.domain.goodsChat.repository;
 
-import com.example.mate.domain.goodsChat.entity.GoodsChatMessage;
+import com.example.mate.domain.goodsChat.document.GoodsChatMessage;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.Query;
 
-public interface GoodsChatMessageRepository extends JpaRepository<GoodsChatMessage, Long> {
+public interface GoodsChatMessageRepository extends MongoRepository<GoodsChatMessage, String> {
 
-    @Query("""
-        SELECT cm
-        FROM GoodsChatMessage cm
-        WHERE cm.goodsChatPart.goodsChatRoom.id = :chatRoomId
-        ORDER BY cm.sentAt DESC
-        """)
-    Page<GoodsChatMessage> getChatMessages(@Param("chatRoomId") Long chatRoomId, Pageable pageable);
+    /**
+     * 특정 채팅방의 메시지를 페이징 처리하여 조회합니다.
+     * 메시지는 전송된 시간(sent_at) 기준으로 오름차순으로 정렬됩니다.
+     */
+    @Query(value = "{ 'chat_room_id': ?0 }", sort = "{ 'sent_at': -1 }")
+    Page<GoodsChatMessage> getChatMessages(Long chatRoomId, Pageable pageable);
+
+    void deleteAllByChatRoomId(Long chatRoomId);
 }

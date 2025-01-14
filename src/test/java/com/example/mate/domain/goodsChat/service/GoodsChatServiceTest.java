@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -13,17 +14,10 @@ import com.example.mate.common.error.ErrorCode;
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.constant.MessageType;
 import com.example.mate.domain.file.FileUtils;
-import com.example.mate.domain.goodsPost.entity.Category;
-import com.example.mate.domain.goodsPost.entity.GoodsPost;
-import com.example.mate.domain.goodsPost.entity.GoodsPostImage;
-import com.example.mate.domain.goodsPost.entity.Location;
-import com.example.mate.domain.goodsPost.entity.Role;
-import com.example.mate.domain.goodsPost.entity.Status;
-import com.example.mate.domain.goodsPost.repository.GoodsPostRepository;
+import com.example.mate.domain.goodsChat.document.GoodsChatMessage;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatMessageResponse;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatRoomResponse;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatRoomSummaryResponse;
-import com.example.mate.domain.goodsChat.entity.GoodsChatMessage;
 import com.example.mate.domain.goodsChat.entity.GoodsChatPart;
 import com.example.mate.domain.goodsChat.entity.GoodsChatPartId;
 import com.example.mate.domain.goodsChat.entity.GoodsChatRoom;
@@ -32,6 +26,13 @@ import com.example.mate.domain.goodsChat.event.GoodsChatEventPublisher;
 import com.example.mate.domain.goodsChat.repository.GoodsChatMessageRepository;
 import com.example.mate.domain.goodsChat.repository.GoodsChatPartRepository;
 import com.example.mate.domain.goodsChat.repository.GoodsChatRoomRepository;
+import com.example.mate.domain.goodsPost.entity.Category;
+import com.example.mate.domain.goodsPost.entity.GoodsPost;
+import com.example.mate.domain.goodsPost.entity.GoodsPostImage;
+import com.example.mate.domain.goodsPost.entity.Location;
+import com.example.mate.domain.goodsPost.entity.Role;
+import com.example.mate.domain.goodsPost.entity.Status;
+import com.example.mate.domain.goodsPost.repository.GoodsPostRepository;
 import com.example.mate.domain.member.dto.response.MemberSummaryResponse;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
@@ -69,7 +70,7 @@ class GoodsChatServiceTest {
     private  GoodsChatPartRepository partRepository;
 
     @Mock
-    private  GoodsChatMessageRepository messageRepository;
+    private GoodsChatMessageRepository messageRepository;
 
     @Mock
     private GoodsChatEventPublisher eventPublisher;
@@ -119,10 +120,13 @@ class GoodsChatServiceTest {
                 .build();
     }
 
-    private GoodsChatMessage createMessage(GoodsChatRoom chatRoom, Long id, int idx, String content, LocalDateTime sentAt) {
+    private GoodsChatMessage createMessage(GoodsChatRoom chatRoom, String id, int idx, String content, LocalDateTime sentAt) {
+        GoodsChatPart goodsChatPart = chatRoom.getChatParts().get(idx);
+
         return GoodsChatMessage.builder()
                 .id(id)
-                .goodsChatPart(chatRoom.getChatParts().get(idx))
+                .memberId(goodsChatPart.getMember().getId())
+                .chatRoomId(chatRoom.getId())
                 .content(content)
                 .sentAt(sentAt)
                 .messageType(MessageType.TALK)
@@ -149,13 +153,12 @@ class GoodsChatServiceTest {
             existingChatRoom.addChatParticipant(buyer, Role.BUYER);
             existingChatRoom.addChatParticipant(seller, Role.SELLER);
 
-            GoodsChatMessage message = createMessage(existingChatRoom, 1L, 0, "test Message", LocalDateTime.now());
+            GoodsChatMessage message = createMessage(existingChatRoom, "1", 0, "test Message", LocalDateTime.now());
             PageImpl<GoodsChatMessage> goodsChatMessages = new PageImpl<>(List.of(message));
 
             when(memberRepository.findById(buyerId)).thenReturn(Optional.of(buyer));
             when(goodsPostRepository.findById(goodsPostId)).thenReturn(Optional.of(goodsPost));
-            when(chatRoomRepository.findExistingChatRoom(goodsPostId, buyerId, Role.BUYER))
-                    .thenReturn(Optional.of(existingChatRoom));
+            when(chatRoomRepository.findExistingChatRoom(goodsPostId, buyerId, Role.BUYER)).thenReturn(Optional.of(existingChatRoom));
             when(messageRepository.getChatMessages(existingChatRoom.getId(), PageRequest.of(0, 20))).thenReturn(goodsChatMessages);
 
             // when
@@ -166,7 +169,7 @@ class GoodsChatServiceTest {
             assertThat(result.getGoodsPostId()).isEqualTo(goodsPost.getId());
             assertThat(result.getPostStatus()).isEqualTo(goodsPost.getStatus().getValue());
 
-            verify(memberRepository).findById(buyerId);
+            verify(memberRepository, times(2)).findById(buyerId);
             verify(goodsPostRepository).findById(goodsPostId);
             verify(chatRoomRepository).findExistingChatRoom(goodsPostId, buyerId, Role.BUYER);
             verify(chatRoomRepository, never()).save(any());
@@ -278,16 +281,17 @@ class GoodsChatServiceTest {
 
             Pageable pageable = PageRequest.of(0, 10);
 
-            GoodsChatMessage firstMessage = createMessage(chatRoom, 1L, 0, "first message", LocalDateTime.now().minusMinutes(10));
-            GoodsChatMessage secondMessage = createMessage(chatRoom, 2L, 1, "second message", LocalDateTime.now());
+            GoodsChatMessage firstMessage = createMessage(chatRoom, "1", 0, "first message", LocalDateTime.now().minusMinutes(10));
+            GoodsChatMessage secondMessage = createMessage(chatRoom, "2", 1, "second message", LocalDateTime.now());
 
             Page<GoodsChatMessage> messagePage = new PageImpl<>(List.of(secondMessage, firstMessage));
 
             when(partRepository.existsById(goodsChatPartId)).thenReturn(true);
             when(messageRepository.getChatMessages(chatRoomId, pageable)).thenReturn(messagePage);
+            when(memberRepository.findById(2L)).thenReturn(Optional.of(member));
 
             // when
-            PageResponse<GoodsChatMessageResponse> result = goodsChatService.getMessagesForChatRoom(chatRoomId, memberId, pageable);
+            PageResponse<GoodsChatMessageResponse> result = goodsChatService.getChatRoomMessages(chatRoomId, memberId, pageable);
 
             // then
             assertThat(result.getContent()).hasSize(2);
@@ -313,7 +317,7 @@ class GoodsChatServiceTest {
             when(partRepository.existsById(goodsChatPartId)).thenReturn(false);
 
             // when
-            assertThatThrownBy(() -> goodsChatService.getMessagesForChatRoom(chatRoomId, memberId, pageable))
+            assertThatThrownBy(() -> goodsChatService.getChatRoomMessages(chatRoomId, memberId, pageable))
                     .isInstanceOf(CustomException.class)
                     .hasMessage(ErrorCode.GOODS_CHAT_NOT_FOUND_CHAT_PART.getMessage());
 
@@ -343,14 +347,15 @@ class GoodsChatServiceTest {
             chatRoom.addChatParticipant(member, Role.BUYER);
             chatRoom.addChatParticipant(member, Role.SELLER);
 
-            GoodsChatMessage firstMessage = createMessage(chatRoom, 1L, 0, "first message", LocalDateTime.now().minusMinutes(10));
-            GoodsChatMessage secondMessage = createMessage(chatRoom, 2L, 1, "second message", LocalDateTime.now());
+            GoodsChatMessage firstMessage = createMessage(chatRoom, "1", 0, "first message", LocalDateTime.now().minusMinutes(10));
+            GoodsChatMessage secondMessage = createMessage(chatRoom, "2", 1, "second message", LocalDateTime.now());
 
             Page<GoodsChatMessage> messages = new PageImpl<>(List.of(secondMessage, firstMessage));
 
             when(partRepository.existsById(goodsChatPartId)).thenReturn(true);
             when(chatRoomRepository.findByChatRoomId(chatRoomId)).thenReturn(Optional.of(chatRoom));
             when(messageRepository.getChatMessages(chatRoomId, PageRequest.of(0, 20))).thenReturn(messages);
+            when(memberRepository.findById(1L)).thenReturn(Optional.of(member));
 
             // when
             GoodsChatRoomResponse goodsChatRoomInfo = goodsChatService.getGoodsChatRoomInfo(memberId, chatRoomId);
@@ -514,16 +519,18 @@ class GoodsChatServiceTest {
             Pageable pageable = PageRequest.of(0, 20);
             GoodsChatPartId goodsChatPartId = new GoodsChatPartId(buyerId, chatRoomId);
 
-            GoodsChatMessage firstMessage = createMessage(chatRoom, 1L, 0, "First message", LocalDateTime.now().minusMinutes(10));
-            GoodsChatMessage secondMessage = createMessage(chatRoom, 2L, 1, "Second message", LocalDateTime.now());
+            GoodsChatMessage firstMessage = createMessage(chatRoom, "1", 0, "First message", LocalDateTime.now().minusMinutes(10));
+            GoodsChatMessage secondMessage = createMessage(chatRoom, "2", 1, "Second message", LocalDateTime.now());
 
             Page<GoodsChatMessage> messagePage = new PageImpl<>(List.of(secondMessage, firstMessage), pageable, 2);
 
             when(partRepository.existsById(goodsChatPartId)).thenReturn(true);
             when(messageRepository.getChatMessages(chatRoomId, pageable)).thenReturn(messagePage);
+            when(memberRepository.findById(1L)).thenReturn(Optional.of(buyer));
+            when(memberRepository.findById(2L)).thenReturn(Optional.of(seller));
 
             // when
-            PageResponse<GoodsChatMessageResponse> result = goodsChatService.getMessagesForChatRoom(chatRoomId, buyerId, pageable);
+            PageResponse<GoodsChatMessageResponse> result = goodsChatService.getChatRoomMessages(chatRoomId, buyerId, pageable);
 
             // then
             assertThat(result.getContent()).hasSize(2);
@@ -557,7 +564,7 @@ class GoodsChatServiceTest {
             when(partRepository.existsById(goodsChatPartId)).thenReturn(false);
 
             // when
-            assertThatThrownBy(() -> goodsChatService.getMessagesForChatRoom(chatRoomId, buyerId, pageable))
+            assertThatThrownBy(() -> goodsChatService.getChatRoomMessages(chatRoomId, buyerId, pageable))
                     .isInstanceOf(CustomException.class)
                     .hasMessage(ErrorCode.GOODS_CHAT_NOT_FOUND_CHAT_PART.getMessage());
 
@@ -699,7 +706,7 @@ class GoodsChatServiceTest {
             when(partRepository.findAllWithMemberByChatRoomId(chatRoomId)).thenReturn(goodsChatRoom.getChatParts());
 
             // when
-            List<MemberSummaryResponse> result = goodsChatService.getChatRoomMembers(memberId, chatRoomId);
+            List<MemberSummaryResponse> result = goodsChatService.getMembersInChatRoom(memberId, chatRoomId);
 
             // then
             assertThat(result).hasSize(2);
@@ -722,7 +729,7 @@ class GoodsChatServiceTest {
             when(partRepository.existsById(new GoodsChatPartId(memberId, chatRoomId))).thenReturn(false);
 
             // when & then
-            assertThatThrownBy(() -> goodsChatService.getChatRoomMembers(memberId, chatRoomId))
+            assertThatThrownBy(() -> goodsChatService.getMembersInChatRoom(memberId, chatRoomId))
                     .isInstanceOf(CustomException.class)
                     .hasMessage(ErrorCode.GOODS_CHAT_NOT_FOUND_CHAT_PART.getMessage());
 
