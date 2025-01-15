@@ -3,7 +3,7 @@ package com.example.mate.domain.member.controller;
 import com.example.mate.common.response.ApiResponse;
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.common.security.auth.AuthMember;
-import com.example.mate.common.validator.ValidPageable;
+import com.example.mate.common.util.validator.ValidPageable;
 import com.example.mate.domain.member.dto.response.MemberSummaryResponse;
 import com.example.mate.domain.member.service.FollowService;
 import io.swagger.v3.oas.annotations.Operation;

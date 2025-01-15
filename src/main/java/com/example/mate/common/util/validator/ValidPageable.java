@@ -1,4 +1,4 @@
-package com.example.mate.common.validator;
+package com.example.mate.common.util.validator;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;

@@ -56,7 +56,7 @@ public class GoodsChatMessageService {
             case ENTER -> message += MEMBER_ENTER_MESSAGE;
             case LEAVE -> message += MEMBER_LEAVE_MESSAGE;
         }
-        GoodsChatMessage chatMessage = createChatMessage(member.getId(), chatRoomId, message, event.type());
+        GoodsChatMessage chatMessage = createChatMessage(chatRoomId, member.getId(), message, event.type());
 
         // 채팅 데이터 저장 & 최신 채팅 내역 업데이트
         GoodsChatMessage savedMessage = messageRepository.save(chatMessage);
