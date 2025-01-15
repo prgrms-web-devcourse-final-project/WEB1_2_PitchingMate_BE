@@ -1,4 +1,4 @@
-package com.example.mate.common.validator;
+package com.example.mate.common.util.validator;
 
 import org.springframework.core.MethodParameter;
 import org.springframework.data.domain.PageRequest;
