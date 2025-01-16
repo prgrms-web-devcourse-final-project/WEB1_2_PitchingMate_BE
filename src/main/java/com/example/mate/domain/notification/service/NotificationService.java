@@ -2,15 +2,20 @@ package com.example.mate.domain.notification.service;
 
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
+import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.member.entity.Member;
+import com.example.mate.domain.member.repository.MemberRepository;
 import com.example.mate.domain.notification.dto.response.NotificationResponse;
 import com.example.mate.domain.notification.entity.Notification;
 import com.example.mate.domain.notification.entity.NotificationType;
 import com.example.mate.domain.notification.repository.EmitterRepository;
 import com.example.mate.domain.notification.repository.NotificationRepository;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -22,6 +27,7 @@ public class NotificationService {
 
     private final EmitterRepository emitterRepository;
     private final NotificationRepository notificationRepository;
+    private final MemberRepository memberRepository;
 
     private static final Long DEFAULT_TIMEOUT = 60L * 1000 * 60; // 연결 지속시간 1시간
 
@@ -83,7 +89,32 @@ public class NotificationService {
                 String.valueOf(receiver.getId()));
         emitters.forEach((key, emitter) -> {
             emitterRepository.saveEventCache(key, notification);
-            sendNotification(emitter, eventId, key, NotificationResponse.from(notification));
+            sendNotification(emitter, eventId, key, NotificationResponse.of(notification, eventId));
         });
+    }
+
+    // 알림 페이징 조회
+    @Transactional(readOnly = true)
+    public PageResponse<NotificationResponse> getNotificationsPage(String type, Long memberId, Pageable pageable) {
+        validateMemberId(memberId);
+
+        Page<Notification> notificationsPage;
+        switch (type) {
+            case "mate" ->
+                    notificationsPage = notificationRepository.findMateNotificationsByReceiverId(memberId, pageable);
+            case "goods" ->
+                    notificationsPage = notificationRepository.findGoodsNotificationsByReceiverId(memberId, pageable);
+            default -> notificationsPage = notificationRepository.findNotificationsByReceiverId(memberId, pageable);
+        }
+        List<NotificationResponse> content = notificationsPage.getContent().stream()
+                .map(notification -> NotificationResponse.of(notification, null))
+                .toList();
+
+        return PageResponse.from(notificationsPage, content);
+    }
+
+    private void validateMemberId(Long memberId) {
+        memberRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND_BY_ID));
     }
 }
