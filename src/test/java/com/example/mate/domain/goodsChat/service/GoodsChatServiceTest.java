@@ -2,7 +2,9 @@ package com.example.mate.domain.goodsChat.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.within;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -32,6 +34,8 @@ import com.example.mate.domain.goodsPost.entity.GoodsPostImage;
 import com.example.mate.domain.goodsPost.entity.Location;
 import com.example.mate.domain.goodsPost.entity.Role;
 import com.example.mate.domain.goodsPost.entity.Status;
+import com.example.mate.domain.goodsPost.event.GoodsPostEvent;
+import com.example.mate.domain.goodsPost.event.GoodsPostEventPublisher;
 import com.example.mate.domain.goodsPost.repository.GoodsPostRepository;
 import com.example.mate.domain.member.dto.response.MemberSummaryResponse;
 import com.example.mate.domain.member.entity.Member;
@@ -73,7 +77,10 @@ class GoodsChatServiceTest {
     private GoodsChatMessageRepository messageRepository;
 
     @Mock
-    private GoodsChatEventPublisher eventPublisher;
+    private GoodsChatEventPublisher chatEventPublisher;
+
+    @Mock
+    private GoodsPostEventPublisher postEventPublisher;
 
     private Member createMember(Long id, String name, String nickname) {
         return Member.builder()
@@ -207,7 +214,7 @@ class GoodsChatServiceTest {
             verify(goodsPostRepository).findById(goodsPostId);
             verify(chatRoomRepository).findExistingChatRoom(goodsPostId, buyerId, Role.BUYER);
             verify(chatRoomRepository).save(any(GoodsChatRoom.class));
-            verify(eventPublisher).publish(any(GoodsChatEvent.class));
+            verify(chatEventPublisher).publish(any(GoodsChatEvent.class));
         }
 
         @Test
@@ -605,7 +612,7 @@ class GoodsChatServiceTest {
                 verify(memberRepository).findById(memberId);
                 verify(partRepository).findById(new GoodsChatPartId(memberId, chatRoomId));
                 verify(chatRoomRepository, never()).deleteById(chatRoomId);
-                verify(eventPublisher).publish(any(GoodsChatEvent.class));
+                verify(chatEventPublisher).publish(any(GoodsChatEvent.class));
             }
 
             @Test
@@ -637,7 +644,7 @@ class GoodsChatServiceTest {
                 verify(memberRepository).findById(memberId);
                 verify(partRepository).findById(new GoodsChatPartId(memberId, chatRoomId));
                 verify(chatRoomRepository).deleteById(chatRoomId);
-                verify(eventPublisher, never()).publish(any(GoodsChatEvent.class));
+                verify(chatEventPublisher, never()).publish(any(GoodsChatEvent.class));
             }
 
             @Test
@@ -657,7 +664,7 @@ class GoodsChatServiceTest {
                 verify(memberRepository).findById(memberId);
                 verify(partRepository, never()).findById(any(GoodsChatPartId.class));
                 verify(chatRoomRepository, never()).deleteById(anyLong());
-                verify(eventPublisher, never()).publish(any(GoodsChatEvent.class));
+                verify(chatEventPublisher, never()).publish(any(GoodsChatEvent.class));
             }
 
             @Test
@@ -679,7 +686,7 @@ class GoodsChatServiceTest {
                 verify(memberRepository).findById(memberId);
                 verify(partRepository).findById(new GoodsChatPartId(memberId, chatRoomId));
                 verify(chatRoomRepository, never()).deleteById(chatRoomId);
-                verify(eventPublisher, never()).publish(any(GoodsChatEvent.class));
+                verify(chatEventPublisher, never()).publish(any(GoodsChatEvent.class));
             }
         }
     }
@@ -735,6 +742,70 @@ class GoodsChatServiceTest {
 
             verify(partRepository).existsById(new GoodsChatPartId(memberId, chatRoomId));
             verify(partRepository, never()).findAllWithMemberByChatRoomId(chatRoomId);
+        }
+    }
+
+    @Nested
+    @DisplayName("굿즈거래 판매글 거래완료 테스트")
+    class GoodsPostServiceCompleteTransactionTest {
+
+        @Test
+        @DisplayName("굿즈거래 판매글 거래완료 성공")
+        void complete_goods_post_transaction_success() {
+            // given
+            Member seller = createMember(2L, "test seller", "test seller nickname");
+            Member buyer = createMember(1L, "test buyer", "test buyer nickname");
+            GoodsPost goodsPost = createGoodsPost(1L, seller, null, Status.OPEN);
+
+            GoodsChatRoom goodsChatRoom = createGoodsChatRoom(1L, goodsPost);
+            goodsChatRoom.addChatParticipant(buyer, Role.BUYER);
+            goodsChatRoom.addChatParticipant(seller, Role.SELLER);
+
+            given(memberRepository.findById(seller.getId())).willReturn(Optional.of(seller));
+            given(chatRoomRepository.findByChatRoomId(goodsChatRoom.getId())).willReturn(Optional.of(goodsChatRoom));
+
+            // when
+            goodsChatService.completeTransaction(seller.getId(), goodsChatRoom.getId());
+
+            // then
+            assertThat(goodsPost.getStatus()).isEqualTo(Status.CLOSED);
+            assertThat(goodsPost.getBuyer()).isEqualTo(buyer);
+            assertThat(seller.getManner()).isCloseTo(0.302f, within(0.0001f));
+            assertThat(buyer.getManner()).isCloseTo(0.302f, within(0.0001f));
+
+            verify(memberRepository).findById(seller.getId());
+            verify(chatRoomRepository).findByChatRoomId(goodsChatRoom.getId());
+            verify(chatEventPublisher).publish(any(GoodsChatEvent.class));
+            verify(postEventPublisher).publish(any(GoodsPostEvent.class));
+        }
+
+        @Test
+        @DisplayName("굿즈거래 판매글 거래완료 실패 - 이미 거래완료 상태인 판매글")
+        void complete_goods_post_transaction_failed_with_closed_status() {
+            // given
+            Member seller = createMember(2L, "test seller", "test seller nickname");
+            Member buyer = createMember(1L, "test buyer", "test buyer nickname");
+            GoodsPost goodsPost = createGoodsPost(1L, seller, null, Status.OPEN);
+
+            GoodsChatRoom goodsChatRoom = createGoodsChatRoom(1L, goodsPost);
+            goodsChatRoom.addChatParticipant(buyer, Role.BUYER);
+            goodsChatRoom.addChatParticipant(seller, Role.SELLER);
+
+            // 판매글의 거래상태를 완료로 변경
+            goodsPost.completeTransaction(buyer);
+
+            given(memberRepository.findById(seller.getId())).willReturn(Optional.of(seller));
+            given(chatRoomRepository.findByChatRoomId(goodsChatRoom.getId())).willReturn(Optional.of(goodsChatRoom));
+
+            // when & then
+            assertThatThrownBy(() -> goodsChatService.completeTransaction(seller.getId(), goodsChatRoom.getId()))
+                    .isInstanceOf(CustomException.class)
+                    .hasMessage(ErrorCode.GOODS_ALREADY_COMPLETED.getMessage());
+
+            verify(memberRepository).findById(seller.getId());
+            verify(chatRoomRepository).findByChatRoomId(goodsChatRoom.getId());
+            verify(chatEventPublisher, never()).publish(any(GoodsChatEvent.class));
+            verify(postEventPublisher, never()).publish(any(GoodsPostEvent.class));
         }
     }
 }

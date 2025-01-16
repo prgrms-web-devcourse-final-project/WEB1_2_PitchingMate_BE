@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.within;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -68,7 +67,6 @@ public class GoodsPostIntegrationTest {
 
     private Member member;
     private GoodsPost goodsPost;
-
 
     @BeforeEach
     void setUp() {
@@ -347,52 +345,6 @@ public class GoodsPostIntegrationTest {
         assertThat(firstResponse.getPrice()).isEqualTo(3_000);
         assertThat(firstResponse.getCategory()).isEqualTo(Category.ACCESSORY.getValue());
         assertThat(firstResponse.getImageUrl()).isEqualTo(FileUtils.getThumbnailImageUrl("upload/test_img_url 3"));
-    }
-
-    @Test
-    @DisplayName("굿즈 판매글 거래 완료 통합 테스트")
-    @WithAuthMember
-    void complete_goods_post_integration_test() throws Exception {
-        // given
-        Long memberId = member.getId(); // 판매자 ID
-        Long goodsPostId = goodsPost.getId(); // 판매글 ID
-        Member buyer = memberRepository.save(Member.builder()
-                .name("구매자")
-                .email("buyer@gmail.com")
-                .nickname("구매자닉네임")
-                .imageUrl("upload/buyer.jpg")
-                .gender(Gender.MALE)
-                .age(30)
-                .manner(0.5f)
-                .build());
-
-        // when
-        MockHttpServletResponse result = mockMvc.perform(post("/api/goods/{goodsPostId}/complete", goodsPostId)
-                        .param("buyerId", String.valueOf(buyer.getId())))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andReturn()
-                .getResponse();
-        result.setCharacterEncoding("UTF-8");
-
-        ApiResponse<Void> apiResponse = objectMapper.readValue(result.getContentAsString(), new TypeReference<>() {
-        });
-
-        // then
-        assertThat(apiResponse.getCode()).isEqualTo(200);
-        assertThat(apiResponse.getStatus()).isEqualTo("SUCCESS");
-
-        GoodsPost completedPost = goodsPostRepository.findById(goodsPostId).orElseThrow();
-        assertThat(completedPost.getStatus()).isEqualTo(Status.CLOSED);
-        assertThat(completedPost.getBuyer()).isNotNull();
-        assertThat(completedPost.getSeller().getManner()).isCloseTo(0.302f, within(0.0001f));
-
-        Member resultBuyer = completedPost.getBuyer();
-        assertThat(resultBuyer.getId()).isEqualTo(buyer.getId());
-        assertThat(resultBuyer.getName()).isEqualTo(buyer.getName());
-        assertThat(resultBuyer.getEmail()).isEqualTo(buyer.getEmail());
-        assertThat(resultBuyer.getNickname()).isEqualTo(buyer.getNickname());
-        assertThat(resultBuyer.getManner()).isCloseTo(0.502f, within(0.0001f));
     }
 
     private Member createMember() {

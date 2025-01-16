@@ -6,6 +6,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -385,5 +386,24 @@ class GoodsChatRoomControllerTest {
                 .andExpect(jsonPath("$.message").value(ErrorCode.GOODS_CHAT_NOT_FOUND_CHAT_PART.getMessage()));
 
         verify(goodsChatService).getMembersInChatRoom(memberId, chatRoomId);
+    }
+
+    @Test
+    @DisplayName("굿즈 거래완료 - API 테스트")
+    void complete_goods_post_success() throws Exception {
+        // given
+        Long memberId = 1L;
+        Long chatRoomId = 1L;
+
+        willDoNothing().given(goodsChatService).completeTransaction(memberId, chatRoomId);
+
+        // when & then
+        mockMvc.perform(post("/api/goods/chat/{chatRoomId}/complete", chatRoomId))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("SUCCESS"))
+                .andExpect(jsonPath("$.code").value(200));
+
+        verify(goodsChatService).completeTransaction(memberId, chatRoomId);
     }
 }

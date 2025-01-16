@@ -28,8 +28,11 @@ public class GoodsChatMessageService {
     private final GoodsChatMessageRepository messageRepository;
     private final SimpMessagingTemplate messagingTemplate;
 
+    private static final String GOODS_CHAT_SUBSCRIBE_PATH = "/sub/chat/goods/";
+
     private static final String MEMBER_ENTER_MESSAGE = "님이 대화를 시작했습니다.";
     private static final String MEMBER_LEAVE_MESSAGE = "님이 대화를 떠났습니다.";
+    private static final String MEMBER_TRANSACTION_MESSAGE = "님이 거래를 완료했습니다. 상품에 대한 거래후기를 남겨주세요!";
 
     public void sendMessage(GoodsChatMessageRequest message) {
         Member member = findMemberById(message.getSenderId());
@@ -44,7 +47,7 @@ public class GoodsChatMessageService {
         sendToSubscribers(message.getRoomId(), response);
     }
 
-    // 입장 및 퇴장 메시지 전송
+    // 이벤트 메시지 전송
     public void sendChatEventMessage(GoodsChatEvent event) {
         Member member = event.member();
         Long chatRoomId = event.chatRoomId();
@@ -55,6 +58,7 @@ public class GoodsChatMessageService {
         switch (event.type()) {
             case ENTER -> message += MEMBER_ENTER_MESSAGE;
             case LEAVE -> message += MEMBER_LEAVE_MESSAGE;
+            case GOODS -> message += MEMBER_TRANSACTION_MESSAGE;
         }
         GoodsChatMessage chatMessage = createChatMessage(chatRoomId, member.getId(), message, event.type());
 
@@ -87,6 +91,6 @@ public class GoodsChatMessageService {
     }
 
     private void sendToSubscribers(Long chatRoomId, GoodsChatMessageResponse message) {
-        messagingTemplate.convertAndSend("/sub/chat/goods/" + chatRoomId, message);
+        messagingTemplate.convertAndSend(GOODS_CHAT_SUBSCRIBE_PATH + chatRoomId, message);
     }
 }

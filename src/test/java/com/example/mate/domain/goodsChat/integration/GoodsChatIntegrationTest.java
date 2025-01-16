@@ -1,6 +1,7 @@
 package com.example.mate.domain.goodsChat.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -123,7 +124,7 @@ public class GoodsChatIntegrationTest extends AcceptanceTestWithMongo {
         GoodsChatRoomResponse actualResponse = apiResponse.getData();
 
         // then
-        GoodsChatRoom actualChatRoom = chatRoomRepository.findById(actualResponse.getChatRoomId()).orElse(null);
+        GoodsChatRoom actualChatRoom = chatRoomRepository.findById(actualResponse.getChatRoomId()).orElseThrow();
         GoodsPost actualPost = actualChatRoom.getGoodsPost();
         assertThat(actualPost.getId()).isEqualTo(goodsPost.getId());
         assertThat(actualPost.getContent()).isEqualTo(goodsPost.getContent());
@@ -182,7 +183,7 @@ public class GoodsChatIntegrationTest extends AcceptanceTestWithMongo {
         GoodsChatRoomResponse response = apiResponse.getData();
 
         // then
-        GoodsChatRoom actualChatRoom = chatRoomRepository.findById(chatRoomId).orElse(null);
+        GoodsChatRoom actualChatRoom = chatRoomRepository.findById(chatRoomId).orElseThrow();
         GoodsPost actualPost = actualChatRoom.getGoodsPost();
 
         assertThat(response.getChatRoomId()).isEqualTo(chatRoomId);
@@ -345,6 +346,39 @@ public class GoodsChatIntegrationTest extends AcceptanceTestWithMongo {
             assertThat(actualMember.getNickname()).isEqualTo(expectedMember.getNickname());
             assertThat(actualMember.getImageUrl()).isEqualTo(FileUtils.getThumbnailImageUrl(expectedMember.getImageUrl()));
         }
+    }
+
+    @Test
+    @DisplayName("굿즈 거래완료 통합 테스트")
+    @WithAuthMember
+    void complete_goods_post_integration_test() throws Exception {
+        // given
+        Long chatRoomId = chatRoom.getId();
+
+        // when
+        MockHttpServletResponse result = mockMvc.perform(post("/api/goods/chat/{chatRoomId}/complete", chatRoomId))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse();
+        result.setCharacterEncoding("UTF-8");
+
+        ApiResponse<Void> apiResponse = objectMapper.readValue(result.getContentAsString(), new TypeReference<>() {});
+
+        // then
+        assertThat(apiResponse.getCode()).isEqualTo(200);
+        assertThat(apiResponse.getStatus()).isEqualTo("SUCCESS");
+
+
+        GoodsPost completedPost = chatRoomRepository.findByChatRoomId(chatRoomId).orElseThrow().getGoodsPost();
+        assertThat(completedPost.getStatus()).isEqualTo(Status.CLOSED);
+        assertThat(completedPost.getBuyer()).isNotNull();
+
+        Member resultBuyer = completedPost.getBuyer();
+        assertThat(resultBuyer.getId()).isEqualTo(buyer.getId());
+        assertThat(resultBuyer.getName()).isEqualTo(buyer.getName());
+        assertThat(resultBuyer.getEmail()).isEqualTo(buyer.getEmail());
+        assertThat(resultBuyer.getNickname()).isEqualTo(buyer.getNickname());
     }
 
     private Member createMember(String name, String nickname, String email) {
