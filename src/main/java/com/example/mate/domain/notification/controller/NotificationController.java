@@ -3,7 +3,7 @@ package com.example.mate.domain.notification.controller;
 import com.example.mate.common.response.ApiResponse;
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.common.security.auth.AuthMember;
-import com.example.mate.common.validator.ValidPageable;
+import com.example.mate.common.util.validator.ValidPageable;
 import com.example.mate.domain.notification.dto.response.NotificationResponse;
 import com.example.mate.domain.notification.service.NotificationService;
 import io.swagger.v3.oas.annotations.Operation;
