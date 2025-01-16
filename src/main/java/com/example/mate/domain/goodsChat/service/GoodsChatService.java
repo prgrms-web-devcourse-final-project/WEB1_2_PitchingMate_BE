@@ -19,10 +19,14 @@ import com.example.mate.domain.goodsChat.repository.GoodsChatRoomRepository;
 import com.example.mate.domain.goodsPost.entity.GoodsPost;
 import com.example.mate.domain.goodsPost.entity.Role;
 import com.example.mate.domain.goodsPost.entity.Status;
+import com.example.mate.domain.goodsPost.event.GoodsPostEvent;
+import com.example.mate.domain.goodsPost.event.GoodsPostEventPublisher;
 import com.example.mate.domain.goodsPost.repository.GoodsPostRepository;
 import com.example.mate.domain.member.dto.response.MemberSummaryResponse;
+import com.example.mate.domain.member.entity.ActivityType;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
+import com.example.mate.domain.notification.entity.NotificationType;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -42,7 +46,8 @@ public class GoodsChatService {
     private final GoodsChatRoomRepository chatRoomRepository;
     private final GoodsChatPartRepository partRepository;
     private final GoodsChatMessageRepository messageRepository;
-    private final GoodsChatEventPublisher eventPublisher;
+    private final GoodsChatEventPublisher chatEventPublisher;
+    private final GoodsPostEventPublisher notificationEventPublisher;
 
     // 채팅방 생성 & 기존 채팅방 입장
     public GoodsChatRoomResponse getOrCreateGoodsChatRoom(Long buyerId, Long goodsPostId) {
@@ -84,7 +89,7 @@ public class GoodsChatService {
         savedChatRoom.addChatParticipant(seller, Role.SELLER);
 
         // 입장 메시지 이벤트 전송
-        eventPublisher.publish(GoodsChatEvent.from(goodsChatRoom.getId(), buyer, MessageType.ENTER));
+        chatEventPublisher.publish(GoodsChatEvent.from(goodsChatRoom.getId(), buyer, MessageType.ENTER));
 
         return GoodsChatRoomResponse.of(savedChatRoom, null);
     }
@@ -170,10 +175,39 @@ public class GoodsChatService {
 
         if (!goodsChatPart.leaveAndCheckRoomStatus()) {
             // 퇴장 메시지 전송
-            eventPublisher.publish(GoodsChatEvent.from(chatRoomId, member, MessageType.LEAVE));
+            chatEventPublisher.publish(GoodsChatEvent.from(chatRoomId, member, MessageType.LEAVE));
         } else {
             // 모두 나갔다면 채팅방, 채팅 참여, 채팅 삭제
             deleteChatRoom(chatRoomId);
+        }
+    }
+
+    public void completeTransaction(Long sellerId, Long chatRoomId) {
+        Member seller = findMemberById(sellerId);
+        GoodsChatRoom chatRoom = findChatRoomById(chatRoomId);
+        Member buyer = getOpponentMember(chatRoom, seller);
+        GoodsPost goodsPost = chatRoom.getGoodsPost();
+
+        validateTransactionEligibility(seller, buyer, goodsPost);
+        goodsPost.completeTransaction(buyer);
+
+        seller.updateManner(ActivityType.GOODS);
+        buyer.updateManner(ActivityType.GOODS);
+
+        // 거래완료 알림 및 채팅 메시지 전송
+        chatEventPublisher.publish(GoodsChatEvent.from(chatRoomId, seller, MessageType.GOODS));
+        notificationEventPublisher.publish(GoodsPostEvent.of(goodsPost.getId(), goodsPost.getTitle(), buyer, NotificationType.GOODS_CLOSED));
+    }
+
+    private void validateTransactionEligibility(Member seller, Member buyer, GoodsPost goodsPost) {
+        if (!goodsPost.getSeller().equals(seller)) {
+            throw new CustomException(ErrorCode.GOODS_MODIFICATION_NOT_ALLOWED);
+        }
+        if (seller.equals(buyer)) {
+            throw new CustomException(ErrorCode.SELLER_CANNOT_BE_BUYER);
+        }
+        if (goodsPost.getStatus() == Status.CLOSED) {
+            throw new CustomException(ErrorCode.GOODS_ALREADY_COMPLETED);
         }
     }
 

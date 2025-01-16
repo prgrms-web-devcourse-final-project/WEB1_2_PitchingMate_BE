@@ -34,7 +34,7 @@ public class GoodsChatRoomController {
     private final GoodsChatService goodsChatService;
 
     @PostMapping
-    @Operation(summary = "굿즈거래 채팅방 입장 및 생성", description = "굿즈 거래 게시글에 대한 채팅방을 생성하거나 기존 채팅방 정보를 조회합니다.")
+    @Operation(summary = "굿즈거래 채팅방 입장 및 생성", description = "굿즈거래 게시글에 대한 채팅방을 생성하거나 기존 채팅방 정보를 조회합니다.")
     public ResponseEntity<ApiResponse<GoodsChatRoomResponse>> createGoodsChatRoom(
             @AuthenticationPrincipal AuthMember member,
             @Parameter(description = "판매글 ID", required = true) @RequestParam Long goodsPostId
@@ -75,7 +75,7 @@ public class GoodsChatRoomController {
     }
 
     @GetMapping("/{chatRoomId}")
-    @Operation(summary = "굿즈거래 채팅방 입장", description = "굿즈 거래 채팅방의 정보를 조회합니다.")
+    @Operation(summary = "굿즈거래 채팅방 입장", description = "굿즈거래 채팅방의 정보를 조회합니다.")
     public ResponseEntity<ApiResponse<GoodsChatRoomResponse>> getGoodsChatRoomInfo(
             @AuthenticationPrincipal AuthMember member,
             @Parameter(description = "채팅방 ID", required = true) @PathVariable Long chatRoomId
@@ -92,5 +92,15 @@ public class GoodsChatRoomController {
     ) {
         List<MemberSummaryResponse> responses = goodsChatService.getMembersInChatRoom(member.getMemberId(), chatRoomId);
         return ResponseEntity.ok(ApiResponse.success(responses));
+    }
+
+    @PostMapping("/{chatRoomId}/complete")
+    @Operation(summary = "굿즈 거래 완료", description = "굿즈거래 채팅방에서 굿즈거래를 거래완료 처리합니다.")
+    public ResponseEntity<ApiResponse<Void>> completeGoodsPost(
+            @AuthenticationPrincipal AuthMember member,
+            @Parameter(description = "채팅방 ID", required = true) @PathVariable Long chatRoomId
+    ) {
+        goodsChatService.completeTransaction(member.getMemberId(), chatRoomId);
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 }
