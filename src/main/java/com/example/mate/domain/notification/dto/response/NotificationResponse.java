@@ -27,13 +27,17 @@ public class NotificationResponse {
     @Schema(description = "알림 확인 여부", example = "false")
     private Boolean isRead;
 
-    public static NotificationResponse from(Notification notification) {
+    @Schema(description = "이벤트 ID", example = "1_1736919132500")
+    private String eventId;
+
+    public static NotificationResponse of(Notification notification, String eventId) {
         return NotificationResponse.builder()
                 .notificationId(notification.getId())
                 .notificationType(notification.getNotificationType().getValue())
                 .content(notification.getContent())
                 .url(notification.getUrl())
                 .isRead(notification.getIsRead())
+                .eventId(eventId)
                 .build();
     }
 }
