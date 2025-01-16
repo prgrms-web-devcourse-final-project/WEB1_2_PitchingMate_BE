@@ -182,33 +182,27 @@ public class GoodsChatService {
         }
     }
 
+    // 굿즈 거래완료
     public void completeTransaction(Long sellerId, Long chatRoomId) {
         Member seller = findMemberById(sellerId);
         GoodsChatRoom chatRoom = findChatRoomById(chatRoomId);
         Member buyer = getOpponentMember(chatRoom, seller);
         GoodsPost goodsPost = chatRoom.getGoodsPost();
 
-        validateTransactionEligibility(seller, buyer, goodsPost);
-        goodsPost.completeTransaction(buyer);
+        if (!goodsPost.getSeller().equals(seller)) {
+            throw new CustomException(ErrorCode.GOODS_MODIFICATION_NOT_ALLOWED);
+        }
+        if (goodsPost.getStatus() == Status.CLOSED) {
+            throw new CustomException(ErrorCode.GOODS_ALREADY_COMPLETED);
+        }
 
+        goodsPost.completeTransaction(buyer);
         seller.updateManner(ActivityType.GOODS);
         buyer.updateManner(ActivityType.GOODS);
 
         // 거래완료 알림 및 채팅 메시지 전송
         chatEventPublisher.publish(GoodsChatEvent.from(chatRoomId, seller, MessageType.GOODS));
         notificationEventPublisher.publish(GoodsPostEvent.of(goodsPost.getId(), goodsPost.getTitle(), buyer, NotificationType.GOODS_CLOSED));
-    }
-
-    private void validateTransactionEligibility(Member seller, Member buyer, GoodsPost goodsPost) {
-        if (!goodsPost.getSeller().equals(seller)) {
-            throw new CustomException(ErrorCode.GOODS_MODIFICATION_NOT_ALLOWED);
-        }
-        if (seller.equals(buyer)) {
-            throw new CustomException(ErrorCode.SELLER_CANNOT_BE_BUYER);
-        }
-        if (goodsPost.getStatus() == Status.CLOSED) {
-            throw new CustomException(ErrorCode.GOODS_ALREADY_COMPLETED);
-        }
     }
 
     // 채팅방 삭제
