@@ -1,10 +1,14 @@
 package com.example.mate.domain.notification.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import com.example.mate.common.error.CustomException;
+import com.example.mate.common.error.ErrorCode;
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.member.entity.Member;
@@ -227,6 +231,70 @@ class NotificationServiceTest {
 
             verify(memberRepository).findById(memberId);
             verify(notificationRepository).findGoodsNotificationsByReceiverId(memberId, pageable);
+        }
+    }
+
+    @Nested
+    @DisplayName("알림 읽음 상태 변경")
+    class ReadNotification {
+
+        @Test
+        @DisplayName("알림 읽음 상태 변경 성공")
+        void read_notification_success() {
+            // given
+            Member member = createTestMember();
+            Long memberId = 1L;
+            Notification notification = createTestNotification(NotificationType.MATE_COMPLETE, member);
+            Long notificationId = 1L;
+
+            given(notificationRepository.findById(memberId)).willReturn(Optional.of(notification));
+
+            // when
+            notificationService.readNotification(memberId, notificationId);
+
+            // then
+            verify(notificationRepository, times(1)).findById(notificationId);
+        }
+
+        @Test
+        @DisplayName("알림 읽음 상태 변경 실패 - 존재하지 않는 알림 ID일 경우")
+        void read_notification_fail_notification_not_found() {
+            // given
+            Member member = createTestMember();
+            Long memberId = 1L;
+            Long notificationId = 999L;
+
+            given(notificationRepository.findById(notificationId)).willReturn(Optional.empty());
+
+            // when
+            assertThatThrownBy(() -> notificationService.readNotification(memberId, notificationId))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NOTIFICATION_NOT_FOUND);
+
+            // then
+            verify(notificationRepository, times(1)).findById(notificationId);
+        }
+
+        @Test
+        @DisplayName("알림 읽음 상태 변경 실패 - 다른 회원의 알림일 경우")
+        void read_notification_fail_invalid_receiver() {
+            // given
+            Member member = createTestMember();
+            Member invalidReceiver = Member.builder()
+                    .id(2L)
+                    .build();
+            Notification notification = createTestNotification(NotificationType.MATE_COMPLETE, member);
+            Long notificationId = 1L;
+
+            given(notificationRepository.findById(notificationId)).willReturn(Optional.of(notification));
+
+            // when
+            assertThatThrownBy(() -> notificationService.readNotification(invalidReceiver.getId(), notificationId))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_RECEIVER);
+
+            // then
+            verify(notificationRepository, times(1)).findById(notificationId);
         }
     }
 }
