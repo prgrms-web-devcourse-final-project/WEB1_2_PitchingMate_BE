@@ -147,7 +147,7 @@ class NotificationServiceTest {
             Pageable pageable = PageRequest.of(0, 10);
 
             given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
-            given(notificationRepository.findNotificationsByReceiverId(memberId, pageable))
+            given(notificationRepository.findNotificationsPage(type, memberId, pageable))
                     .willReturn(notificationPage);
 
             // when
@@ -164,7 +164,7 @@ class NotificationServiceTest {
                     notification1.getNotificationType().getValue());
 
             verify(memberRepository).findById(memberId);
-            verify(notificationRepository).findNotificationsByReceiverId(memberId, pageable);
+            verify(notificationRepository).findNotificationsPage(type, memberId, pageable);
         }
 
         @Test
@@ -180,7 +180,7 @@ class NotificationServiceTest {
             Pageable pageable = PageRequest.of(0, 10);
 
             given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
-            given(notificationRepository.findMateNotificationsByReceiverId(memberId, pageable))
+            given(notificationRepository.findNotificationsPage(type, memberId, pageable))
                     .willReturn(notificationPage);
 
             // when
@@ -197,7 +197,7 @@ class NotificationServiceTest {
                     notification1.getNotificationType().getValue());
 
             verify(memberRepository).findById(memberId);
-            verify(notificationRepository).findMateNotificationsByReceiverId(memberId, pageable);
+            verify(notificationRepository).findNotificationsPage(type, memberId, pageable);
         }
 
         @Test
@@ -213,7 +213,7 @@ class NotificationServiceTest {
             Pageable pageable = PageRequest.of(0, 10);
 
             given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
-            given(notificationRepository.findGoodsNotificationsByReceiverId(memberId, pageable))
+            given(notificationRepository.findNotificationsPage(type, memberId, pageable))
                     .willReturn(notificationPage);
 
             // when
@@ -230,7 +230,7 @@ class NotificationServiceTest {
                     notification1.getNotificationType().getValue());
 
             verify(memberRepository).findById(memberId);
-            verify(notificationRepository).findGoodsNotificationsByReceiverId(memberId, pageable);
+            verify(notificationRepository).findNotificationsPage(type, memberId, pageable);
         }
     }
 
