@@ -148,7 +148,9 @@ public enum ErrorCode {
     INVALID_MESSAGE_TYPE(HttpStatus.BAD_REQUEST, "CHAT011", "잘못된 메시지 타입입니다."),
 
     // Notification
-    NOTIFICATION_SEND_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "N001", "알림 전송에 실패했습니다.");
+    NOTIFICATION_SEND_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "N001", "알림 전송에 실패했습니다."),
+    NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "N002", "존재하지 않는 알림입니다."),
+    INVALID_RECEIVER(HttpStatus.BAD_REQUEST, "N003", "알림 회원이 일치하지 않습니다.");
 
     private final HttpStatus status;
     private final String code;
