@@ -99,14 +99,7 @@ public class NotificationService {
     public PageResponse<NotificationResponse> getNotificationsPage(String type, Long memberId, Pageable pageable) {
         validateMemberId(memberId);
 
-        Page<Notification> notificationsPage;
-        switch (type) {
-            case "mate" ->
-                    notificationsPage = notificationRepository.findMateNotificationsByReceiverId(memberId, pageable);
-            case "goods" ->
-                    notificationsPage = notificationRepository.findGoodsNotificationsByReceiverId(memberId, pageable);
-            default -> notificationsPage = notificationRepository.findNotificationsByReceiverId(memberId, pageable);
-        }
+        Page<Notification> notificationsPage = notificationRepository.findNotificationsPage(type, memberId, pageable);
         List<NotificationResponse> content = notificationsPage.getContent().stream()
                 .map(notification -> NotificationResponse.of(notification, null))
                 .toList();
