@@ -81,7 +81,7 @@ class MateChatServiceTest {
 
         when(chatRoomMemberRepository.countByChatRoomIdAndIsActiveTrue(any()))
                 .thenReturn(2);
-        when(chatMessageRepository.findByChatRoomIdAndCreatedAtAfterOrderByCreatedAtDesc(any(), any(), any()))
+        when(chatMessageRepository.findByRoomIdAndSendTimeAfter(any(), any(), any()))
                 .thenReturn(Page.empty());
 
         // When
