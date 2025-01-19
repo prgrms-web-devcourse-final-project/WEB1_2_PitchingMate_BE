@@ -1,6 +1,6 @@
 package com.example.mate.domain.mateReview.integration;
 
-import com.example.mate.config.WithAuthMember;
+import com.example.mate.config.securityConfig.WithAuthMember;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.constant.Rating;
 import com.example.mate.domain.match.entity.Match;
