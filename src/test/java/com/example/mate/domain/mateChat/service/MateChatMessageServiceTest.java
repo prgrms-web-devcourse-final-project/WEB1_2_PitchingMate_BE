@@ -2,9 +2,9 @@ package com.example.mate.domain.mateChat.service;
 
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
+import com.example.mate.domain.mateChat.document.MateChatMessage;
 import com.example.mate.domain.mateChat.dto.request.MateChatMessageRequest;
 import com.example.mate.domain.mateChat.dto.response.MateChatMessageResponse;
-import com.example.mate.domain.mateChat.entity.MateChatMessage;
 import com.example.mate.domain.mateChat.entity.MateChatRoom;
 import com.example.mate.domain.mateChat.event.MateChatEvent;
 import com.example.mate.domain.mateChat.message.MessageType;
@@ -63,8 +63,8 @@ class MateChatMessageServiceTest {
 
     private MateChatMessage createMateChatMessage(MateChatRoom chatRoom, Member sender, String content, MessageType type) {
         return MateChatMessage.builder()
-                .mateChatRoom(chatRoom)
-                .sender(sender)
+                .roomId(chatRoom.getId())
+                .senderId(sender.getId())
                 .content(content)
                 .type(type)
                 .sendTime(LocalDateTime.now())
