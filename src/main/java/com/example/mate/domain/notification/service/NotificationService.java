@@ -13,6 +13,7 @@ import com.example.mate.domain.notification.repository.NotificationRepository;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -98,14 +99,7 @@ public class NotificationService {
     public PageResponse<NotificationResponse> getNotificationsPage(String type, Long memberId, Pageable pageable) {
         validateMemberId(memberId);
 
-        Page<Notification> notificationsPage;
-        switch (type) {
-            case "mate" ->
-                    notificationsPage = notificationRepository.findMateNotificationsByReceiverId(memberId, pageable);
-            case "goods" ->
-                    notificationsPage = notificationRepository.findGoodsNotificationsByReceiverId(memberId, pageable);
-            default -> notificationsPage = notificationRepository.findNotificationsByReceiverId(memberId, pageable);
-        }
+        Page<Notification> notificationsPage = notificationRepository.findNotificationsPage(type, memberId, pageable);
         List<NotificationResponse> content = notificationsPage.getContent().stream()
                 .map(notification -> NotificationResponse.of(notification, null))
                 .toList();
@@ -116,5 +110,21 @@ public class NotificationService {
     private void validateMemberId(Long memberId) {
         memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND_BY_ID));
+    }
+
+    // 회원 알림 읽음 처리
+    public void readNotification(Long memberId, Long notificationId) {
+        Notification notification = validateNotification(memberId, notificationId);
+        notification.changeIsRead(true);
+    }
+
+    private Notification validateNotification(Long memberId, Long notificationId) {
+        Notification notification = notificationRepository.findById(notificationId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOTIFICATION_NOT_FOUND));
+
+        if (!Objects.equals(notification.getReceiver().getId(), memberId)) {
+            throw new CustomException(ErrorCode.INVALID_RECEIVER);
+        }
+        return notification;
     }
 }

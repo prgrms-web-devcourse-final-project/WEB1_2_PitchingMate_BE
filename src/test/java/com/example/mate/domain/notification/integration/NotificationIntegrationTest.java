@@ -1,7 +1,9 @@
 package com.example.mate.domain.notification.integration;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -16,6 +18,7 @@ import com.example.mate.domain.notification.entity.NotificationType;
 import com.example.mate.domain.notification.repository.EmitterRepository;
 import com.example.mate.domain.notification.repository.NotificationRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -156,6 +159,74 @@ public class NotificationIntegrationTest {
                     .andExpect(jsonPath("$.data.content[0].notificationType").value(
                             NotificationType.GOODS_CLOSED.getValue()))
                     .andExpect(jsonPath("$.code").value(200));
+        }
+    }
+
+    @Nested
+    @DisplayName("알림 읽음 상태 변경")
+    class ReadNotification {
+
+        @Test
+        @DisplayName("알림 읽음 상태 변경 성공")
+        @WithAuthMember
+        void read_notification_success() throws Exception {
+            // given
+            Long notificationId = notification1.getId();
+
+            // when & then
+            mockMvc.perform(post("/api/notifications/{notificationId}", notificationId))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value("SUCCESS"));
+
+            assertThat(notification1.getIsRead()).isTrue();
+        }
+
+        @Test
+        @DisplayName("알림 읽음 상태 변경 실패 - 존재하지 않는 알림 ID일 경우")
+        @WithAuthMember
+        void read_notification_fail_notification_not_found() throws Exception {
+            // given
+            Long notificationId = notification1.getId() + 999L;
+
+            // when & then
+            mockMvc.perform(post("/api/notifications/{notificationId}", notificationId))
+                    .andDo(print())
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.status").value("ERROR"));
+
+            assertThat(notification1.getIsRead()).isFalse();
+        }
+
+        @Test
+        @DisplayName("알림 읽음 상태 변경 실패 - 다른 회원의 알림일 경우")
+        @WithAuthMember
+        void read_notification_fail_invalid_receiver() throws Exception {
+            // given
+            Member invalidMember = memberRepository.save(Member.builder()
+                    .name("홍길동")
+                    .email("test2@gmail.com")
+                    .nickname("테스터2")
+                    .imageUrl("upload/test.jpg")
+                    .gender(Gender.FEMALE)
+                    .age(25)
+                    .manner(0.3f)
+                    .build());
+
+            Notification notification = notificationRepository.save(Notification.builder()
+                    .notificationType(NotificationType.MATE_CLOSED)
+                    .content("알림")
+                    .url("http://test.com")
+                    .receiver(invalidMember)
+                    .build());
+
+            // when & then
+            mockMvc.perform(post("/api/notifications/{notificationId}", notification.getId()))
+                    .andDo(print())
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.status").value("ERROR"));
+
+            assertThat(notification1.getIsRead()).isFalse();
         }
     }
 
