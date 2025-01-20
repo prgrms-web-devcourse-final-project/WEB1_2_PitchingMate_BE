@@ -1,4 +1,4 @@
-package com.example.mate.common.validator;
+package com.example.mate.common.util.validator;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;

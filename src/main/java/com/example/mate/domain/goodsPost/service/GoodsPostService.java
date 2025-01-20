@@ -97,28 +97,23 @@ public class GoodsPostService {
     @Transactional(readOnly = true)
     public List<GoodsPostSummaryResponse> getMainGoodsPosts(Long teamId) {
         validateTeamInfo(teamId);
-        return mapToGoodsPostSummaryResponses(goodsPostRepository.findMainGoodsPosts(teamId, Status.OPEN, PageRequest.of(0, 4)));
+
+        Status status = Status.OPEN;
+        Pageable pageable = PageRequest.of(0, 4);
+
+        List<GoodsPost> mainGoodsPosts = goodsPostRepository.findMainGoodsPosts(teamId, status, pageable);
+        return mapToGoodsPostSummaryResponses(mainGoodsPosts);
     }
 
     @Transactional(readOnly = true)
     public PageResponse<GoodsPostSummaryResponse> getPageGoodsPosts(Long teamId, String categoryVal, Pageable pageable) {
         validateTeamInfo(teamId);
+
         Category category = Category.from(categoryVal);
-        Page<GoodsPost> pageGoodsPosts = goodsPostRepository.findPageGoodsPosts(teamId, Status.OPEN, category, pageable);
+        Status status = Status.OPEN;
 
+        Page<GoodsPost> pageGoodsPosts = goodsPostRepository.findPageGoodsPosts(teamId, status, category, pageable);
         return PageResponse.from(pageGoodsPosts, mapToGoodsPostSummaryResponses(pageGoodsPosts.getContent()));
-    }
-
-    public void completeTransaction(Long sellerId, Long goodsPostId, Long buyerId) {
-        Member seller = findMemberById(sellerId);
-        Member buyer = findMemberById(buyerId);
-        GoodsPost goodsPost = findGoodsPostById(goodsPostId);
-
-        validateTransactionEligibility(seller, buyer, goodsPost);
-        goodsPost.completeTransaction(buyer);
-
-        seller.updateManner(ActivityType.GOODS);
-        buyer.updateManner(ActivityType.GOODS);
     }
 
     private void attachImagesToGoodsPost(GoodsPost goodsPost, List<MultipartFile> files) {
@@ -130,7 +125,8 @@ public class GoodsPostService {
         return IntStream.range(0, files.size())
                 .mapToObj(i -> GoodsPostImage.builder()
                         // 첫번째 사진일 경우 썸네일과 함께 저장
-                        .imageUrl(i == 0 ? fileService.uploadImageWithThumbnail(files.get(i)) : fileService.uploadFile(files.get(i)))
+                        .imageUrl(i == 0 ? fileService.uploadImageWithThumbnail(files.get(i))
+                                : fileService.uploadFile(files.get(i)))
                         .post(savedPost)
                         .build())
                 .collect(Collectors.toList());
@@ -175,18 +171,6 @@ public class GoodsPostService {
     private void validateOwnership(Member seller, GoodsPost goodsPost) {
         if (goodsPost.getSeller() != seller) {
             throw new CustomException(ErrorCode.GOODS_MODIFICATION_NOT_ALLOWED);
-        }
-    }
-
-    private void validateTransactionEligibility(Member seller, Member buyer, GoodsPost goodsPost) {
-        if (!goodsPost.getSeller().equals(seller)) {
-            throw new CustomException(ErrorCode.GOODS_MODIFICATION_NOT_ALLOWED);
-        }
-        if (seller.equals(buyer)) {
-            throw new CustomException(ErrorCode.SELLER_CANNOT_BE_BUYER);
-        }
-        if (goodsPost.getStatus() == Status.CLOSED) {
-            throw new CustomException(ErrorCode.GOODS_ALREADY_COMPLETED);
         }
     }
 }

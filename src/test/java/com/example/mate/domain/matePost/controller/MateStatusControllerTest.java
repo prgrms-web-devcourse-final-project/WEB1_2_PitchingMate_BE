@@ -19,7 +19,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.security.filter.JwtCheckFilter;
-import com.example.mate.config.WithAuthMember;
+import com.example.mate.config.securityConfig.WithAuthMember;
 import com.example.mate.domain.matePost.dto.request.MatePostCompleteRequest;
 import com.example.mate.domain.matePost.dto.request.MatePostStatusRequest;
 import com.example.mate.domain.matePost.dto.response.MatePostCompleteResponse;

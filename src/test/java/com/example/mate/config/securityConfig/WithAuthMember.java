@@ -1,4 +1,4 @@
-package com.example.mate.config;
+package com.example.mate.config.securityConfig;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

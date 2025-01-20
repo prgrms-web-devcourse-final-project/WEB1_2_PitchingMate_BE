@@ -64,6 +64,7 @@ dependencies {
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     testImplementation 'org.assertj:assertj-core:3.24.2'
+    testImplementation 'de.bwaldvogel:mongo-java-server:1.46.0'
 
     // querydsl for spring boot 3.x
     implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'

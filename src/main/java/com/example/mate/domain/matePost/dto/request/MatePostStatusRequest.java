@@ -1,6 +1,6 @@
 package com.example.mate.domain.matePost.dto.request;
 
-import com.example.mate.common.validator.ValidEnum;
+import com.example.mate.common.util.validator.ValidEnum;
 import com.example.mate.domain.matePost.entity.Status;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;

@@ -3,7 +3,7 @@ package com.example.mate.domain.matePost.controller;
 import com.example.mate.common.response.ApiResponse;
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.common.security.auth.AuthMember;
-import com.example.mate.common.validator.ValidPageable;
+import com.example.mate.common.util.validator.ValidPageable;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.matePost.dto.request.*;
 import com.example.mate.domain.matePost.dto.response.*;

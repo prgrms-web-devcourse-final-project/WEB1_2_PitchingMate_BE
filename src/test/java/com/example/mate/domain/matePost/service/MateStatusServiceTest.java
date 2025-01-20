@@ -1,5 +1,20 @@
 package com.example.mate.domain.matePost.service;
 
+import static com.example.mate.common.error.ErrorCode.ALREADY_COMPLETED_POST;
+import static com.example.mate.common.error.ErrorCode.DIRECT_VISIT_COMPLETE_FORBIDDEN;
+import static com.example.mate.common.error.ErrorCode.INVALID_MATE_POST_PARTICIPANT_IDS;
+import static com.example.mate.common.error.ErrorCode.MATE_POST_COMPLETE_TIME_NOT_ALLOWED;
+import static com.example.mate.common.error.ErrorCode.MATE_POST_MAX_PARTICIPANTS_EXCEEDED;
+import static com.example.mate.common.error.ErrorCode.MATE_POST_NOT_FOUND_BY_ID;
+import static com.example.mate.common.error.ErrorCode.MATE_POST_UPDATE_NOT_ALLOWED;
+import static com.example.mate.common.error.ErrorCode.NOT_CLOSED_STATUS_FOR_COMPLETION;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+
 import com.example.mate.common.error.CustomException;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.match.entity.Match;
@@ -11,9 +26,16 @@ import com.example.mate.domain.matePost.entity.Age;
 import com.example.mate.domain.matePost.entity.MatePost;
 import com.example.mate.domain.matePost.entity.Status;
 import com.example.mate.domain.matePost.entity.TransportType;
+import com.example.mate.domain.matePost.event.MatePostEventPublisher;
 import com.example.mate.domain.matePost.repository.MatePostRepository;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -21,17 +43,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.time.LocalDateTime;
-import java.util.*;
-
-import static com.example.mate.common.error.ErrorCode.*;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class MateStatusServiceTest {
@@ -44,6 +55,9 @@ class MateStatusServiceTest {
 
     @Mock
     private MemberRepository memberRepository;
+
+    @Mock
+    private MatePostEventPublisher eventPublisher;
 
     private static final Long TEST_MEMBER_ID = 1L;
 

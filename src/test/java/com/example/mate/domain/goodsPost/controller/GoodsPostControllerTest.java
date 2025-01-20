@@ -9,14 +9,13 @@ import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.common.security.filter.JwtCheckFilter;
-import com.example.mate.config.WithAuthMember;
+import com.example.mate.config.securityConfig.WithAuthMember;
 import com.example.mate.domain.goodsPost.dto.request.GoodsPostRequest;
 import com.example.mate.domain.goodsPost.dto.response.GoodsPostResponse;
 import com.example.mate.domain.goodsPost.dto.response.GoodsPostSummaryResponse;
@@ -270,25 +269,5 @@ class GoodsPostControllerTest {
                 .andExpect(jsonPath("$.code").value(200));
 
         verify(goodsPostService).getPageGoodsPosts(teamId, categoryVal, pageRequest);
-    }
-
-    @Test
-    @DisplayName("굿즈 판매글 거래 완료 - API 테스트")
-    void complete_goods_post_success() throws Exception {
-        // given
-        Long memberId = 1L;
-        Long goodsPostId = 1L;
-        Long buyerId = 2L;
-
-        willDoNothing().given(goodsPostService).completeTransaction(memberId, goodsPostId, buyerId);
-
-        // when & then
-        mockMvc.perform(post("/api/goods/{goodsPostId}/complete", goodsPostId).param("buyerId", String.valueOf(buyerId)))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("SUCCESS"))
-                .andExpect(jsonPath("$.code").value(200));
-
-        verify(goodsPostService).completeTransaction(memberId, goodsPostId, buyerId);
     }
 }

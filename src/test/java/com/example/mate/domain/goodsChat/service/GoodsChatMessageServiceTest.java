@@ -10,15 +10,13 @@ import static org.mockito.Mockito.when;
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
 import com.example.mate.domain.constant.MessageType;
+import com.example.mate.domain.goodsChat.document.GoodsChatMessage;
 import com.example.mate.domain.goodsChat.dto.request.GoodsChatMessageRequest;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatMessageResponse;
-import com.example.mate.domain.goodsChat.entity.GoodsChatMessage;
 import com.example.mate.domain.goodsChat.entity.GoodsChatPart;
-import com.example.mate.domain.goodsChat.entity.GoodsChatPartId;
 import com.example.mate.domain.goodsChat.entity.GoodsChatRoom;
 import com.example.mate.domain.goodsChat.event.GoodsChatEvent;
 import com.example.mate.domain.goodsChat.repository.GoodsChatMessageRepository;
-import com.example.mate.domain.goodsChat.repository.GoodsChatPartRepository;
 import com.example.mate.domain.goodsChat.repository.GoodsChatRoomRepository;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
@@ -44,9 +42,6 @@ class GoodsChatMessageServiceTest {
 
     @Mock
     private GoodsChatRoomRepository chatRoomRepository;
-
-    @Mock
-    private GoodsChatPartRepository chatPartRepository;
 
     @Mock
     private GoodsChatMessageRepository messageRepository;
@@ -78,7 +73,8 @@ class GoodsChatMessageServiceTest {
     private GoodsChatMessage createGoodsChatMessage(String message, GoodsChatPart chatPart, MessageType type) {
         return GoodsChatMessage.builder()
                 .content(message)
-                .goodsChatPart(chatPart)
+                .chatRoomId(chatPart.getGoodsChatRoom().getId())
+                .memberId(chatPart.getMember().getId())
                 .messageType(type)
                 .sentAt(LocalDateTime.now())
                 .build();
@@ -103,7 +99,6 @@ class GoodsChatMessageServiceTest {
 
             when(memberRepository.findById(memberId)).thenReturn(Optional.of(member));
             when(chatRoomRepository.findById(chatRoomId)).thenReturn(Optional.of(chatRoom));
-            when(chatPartRepository.findById(new GoodsChatPartId(memberId, chatRoomId))).thenReturn(Optional.of(chatPart));
             when(messageRepository.save(any(GoodsChatMessage.class))).thenReturn(chatMessage);
 
             // when
@@ -112,7 +107,6 @@ class GoodsChatMessageServiceTest {
             // then
             verify(memberRepository).findById(memberId);
             verify(chatRoomRepository).findById(chatRoomId);
-            verify(chatPartRepository).findById(new GoodsChatPartId(memberId, chatRoomId));
             verify(messageRepository).save(any(GoodsChatMessage.class));
             verify(messagingTemplate).convertAndSend(eq("/sub/chat/goods/" + chatRoomId), any(GoodsChatMessageResponse.class));
         }
@@ -135,7 +129,6 @@ class GoodsChatMessageServiceTest {
             // then
             verify(memberRepository).findById(memberId);
             verify(chatRoomRepository, never()).findById(chatRoomId);
-            verify(chatPartRepository, never()).findById(new GoodsChatPartId(memberId, chatRoomId));
             verify(messageRepository, never()).save(any(GoodsChatMessage.class));
             verify(messagingTemplate, never()).convertAndSend(eq("/sub/chat/goods/" + chatRoomId), any(GoodsChatMessageResponse.class));
         }
@@ -149,21 +142,18 @@ class GoodsChatMessageServiceTest {
             GoodsChatMessageRequest request = new GoodsChatMessageRequest(chatRoomId, memberId, "Hello World", MessageType.TALK);
 
             Member member = createMember(memberId, "Test User", "test_user");
-            GoodsChatRoom chatRoom = createGoodsChatRoom(chatRoomId);
 
             when(memberRepository.findById(memberId)).thenReturn(Optional.of(member));
-            when(chatRoomRepository.findById(chatRoomId)).thenReturn(Optional.of(chatRoom));
-            when(chatPartRepository.findById(new GoodsChatPartId(memberId, chatRoomId))).thenReturn(Optional.empty());
+            when(chatRoomRepository.findById(chatRoomId)).thenReturn(Optional.empty());
 
             // when
             assertThatThrownBy(() -> goodsChatMessageService.sendMessage(request))
                     .isExactlyInstanceOf(CustomException.class)
-                    .hasMessage(ErrorCode.GOODS_CHAT_NOT_FOUND_CHAT_PART.getMessage());
+                    .hasMessage(ErrorCode.GOODS_CHAT_ROOM_NOT_FOUND.getMessage());
 
             // then
             verify(memberRepository).findById(memberId);
             verify(chatRoomRepository).findById(chatRoomId);
-            verify(chatPartRepository).findById(new GoodsChatPartId(memberId, chatRoomId));
             verify(messageRepository, never()).save(any(GoodsChatMessage.class));
             verify(messagingTemplate, never()).convertAndSend(eq("/sub/chat/goods/" + chatRoomId), any(GoodsChatMessageResponse.class));
         }
@@ -188,7 +178,6 @@ class GoodsChatMessageServiceTest {
             // then
             verify(memberRepository).findById(memberId);
             verify(chatRoomRepository).findById(chatRoomId);
-            verify(chatPartRepository, never()).findById(new GoodsChatPartId(memberId, chatRoomId));
             verify(messageRepository, never()).save(any(GoodsChatMessage.class));
             verify(messagingTemplate, never()).convertAndSend(eq("/sub/chat/goods/" + chatRoomId), any(GoodsChatMessageResponse.class));
         }
@@ -215,7 +204,6 @@ class GoodsChatMessageServiceTest {
                     = createGoodsChatMessage(member.getNickname() + "님이 대화를 시작했습니다.", chatPart, event.type());
 
             when(chatRoomRepository.findById(chatRoomId)).thenReturn(Optional.of(chatRoom));
-            when(chatPartRepository.findById(new GoodsChatPartId(memberId, chatRoomId))).thenReturn(Optional.of(chatPart));
             when(messageRepository.save(any(GoodsChatMessage.class))).thenReturn(chatMessage);
 
             // when
@@ -223,7 +211,6 @@ class GoodsChatMessageServiceTest {
 
             // then
             verify(chatRoomRepository).findById(chatRoomId);
-            verify(chatPartRepository).findById(new GoodsChatPartId(memberId, chatRoomId));
             verify(messageRepository).save(any(GoodsChatMessage.class));
             verify(messagingTemplate).convertAndSend(eq("/sub/chat/goods/" + chatRoomId), any(GoodsChatMessageResponse.class));
         }
@@ -245,7 +232,6 @@ class GoodsChatMessageServiceTest {
                     = createGoodsChatMessage(member.getNickname() + "님이 대화를 떠났습니다.", chatPart, event.type());
 
             when(chatRoomRepository.findById(chatRoomId)).thenReturn(Optional.of(chatRoom));
-            when(chatPartRepository.findById(new GoodsChatPartId(memberId, chatRoomId))).thenReturn(Optional.of(chatPart));
             when(messageRepository.save(any(GoodsChatMessage.class))).thenReturn(chatMessage);
 
             // when
@@ -253,7 +239,6 @@ class GoodsChatMessageServiceTest {
 
             // then
             verify(chatRoomRepository).findById(chatRoomId);
-            verify(chatPartRepository).findById(new GoodsChatPartId(memberId, chatRoomId));
             verify(messageRepository).save(any(GoodsChatMessage.class));
             verify(messagingTemplate).convertAndSend(eq("/sub/chat/goods/" + chatRoomId), any(GoodsChatMessageResponse.class));
         }
@@ -277,33 +262,6 @@ class GoodsChatMessageServiceTest {
 
             // then
             verify(chatRoomRepository).findById(chatRoomId);
-            verify(chatPartRepository, never()).findById(new GoodsChatPartId(memberId, chatRoomId));
-            verify(messageRepository, never()).save(any(GoodsChatMessage.class));
-            verify(messagingTemplate, never()).convertAndSend(eq("/sub/chat/goods/" + chatRoomId), any(GoodsChatMessageResponse.class));
-        }
-
-        @Test
-        @DisplayName("시스템 메시지 전송 실패 - 해당 채팅방에 참가한 회원이 아닌 경우")
-        void sendChatEventMessage_should_throw_custom_exception_for_non_participant() {
-            // given
-            Long memberId = 1L;
-            Long chatRoomId = 1L;
-
-            Member member = createMember(memberId, "Test User", "test_user");
-            GoodsChatEvent event = new GoodsChatEvent(chatRoomId, member, MessageType.LEAVE);
-            GoodsChatRoom chatRoom = createGoodsChatRoom(event.chatRoomId());
-
-            when(chatRoomRepository.findById(chatRoomId)).thenReturn(Optional.of(chatRoom));
-            when(chatPartRepository.findById(new GoodsChatPartId(memberId, chatRoomId))).thenReturn(Optional.empty());
-
-            // when
-            assertThatThrownBy(() -> goodsChatMessageService.sendChatEventMessage(event))
-                    .isExactlyInstanceOf(CustomException.class)
-                    .hasMessage(ErrorCode.GOODS_CHAT_NOT_FOUND_CHAT_PART.getMessage());
-
-            // then
-            verify(chatRoomRepository).findById(chatRoomId);
-            verify(chatPartRepository).findById(new GoodsChatPartId(memberId, chatRoomId));
             verify(messageRepository, never()).save(any(GoodsChatMessage.class));
             verify(messagingTemplate, never()).convertAndSend(eq("/sub/chat/goods/" + chatRoomId), any(GoodsChatMessageResponse.class));
         }

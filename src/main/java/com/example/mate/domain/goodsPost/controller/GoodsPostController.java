@@ -3,7 +3,7 @@ package com.example.mate.domain.goodsPost.controller;
 import com.example.mate.common.response.ApiResponse;
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.common.security.auth.AuthMember;
-import com.example.mate.common.validator.ValidPageable;
+import com.example.mate.common.util.validator.ValidPageable;
 import com.example.mate.domain.goodsPost.dto.request.GoodsPostRequest;
 import com.example.mate.domain.goodsPost.dto.response.GoodsPostResponse;
 import com.example.mate.domain.goodsPost.dto.response.GoodsPostSummaryResponse;
@@ -94,16 +94,5 @@ public class GoodsPostController {
         PageResponse<GoodsPostSummaryResponse> pageGoodsPosts = goodsPostService.getPageGoodsPosts(teamId, category, pageable);
 
         return ResponseEntity.ok(ApiResponse.success(pageGoodsPosts));
-    }
-
-    @PostMapping("/{goodsPostId}/complete")
-    @Operation(summary = "굿즈 거래 완료", description = "굿즈거래 채팅방에서 굿즈거래를 거래완료 처리합니다.")
-    public ResponseEntity<ApiResponse<Void>> completeGoodsPost(
-            @AuthenticationPrincipal AuthMember member,
-            @Parameter(description = "판매글 ID", required = true) @PathVariable Long goodsPostId,
-            @Parameter(description = "구매자 ID", required = true) @RequestParam Long buyerId
-    ) {
-        goodsPostService.completeTransaction(member.getMemberId(), goodsPostId, buyerId);
-        return ResponseEntity.ok(ApiResponse.success(null));
     }
 }
