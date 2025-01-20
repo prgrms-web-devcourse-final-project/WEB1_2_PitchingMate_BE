@@ -208,7 +208,6 @@ class MateChatServiceTest {
         MateChatRoomMember chatRoomMember = createChatRoomMember(1L, chatRoom, testMember, true, true);
 
         List<MateChatRoomMember> activeMembers = List.of(chatRoomMember);
-        when(memberRepository.findById(testMember.getId())).thenReturn(Optional.of(testMember));
         when(chatRoomMemberRepository.findByChatRoomIdAndMemberId(chatRoom.getId(), testMember.getId()))
                 .thenReturn(Optional.of(chatRoomMember));
         when(chatRoomMemberRepository.findActiveMembers(chatRoom.getId())).thenReturn(activeMembers);

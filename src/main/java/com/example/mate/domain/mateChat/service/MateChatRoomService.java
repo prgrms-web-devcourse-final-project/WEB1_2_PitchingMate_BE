@@ -200,8 +200,6 @@ public class MateChatRoomService {
         chatRoomMemberRepository.findByChatRoomIdAndMemberId(roomId, memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.CHAT_ROOM_MEMBER_NOT_FOUND));
 
-//        validateChatRoomAccess(roomId, memberId);
-
         // 2. 활성화된 채팅방 멤버 조회
         List<MateChatRoomMember> activeMembers = chatRoomMemberRepository.findActiveMembers(roomId);
 
