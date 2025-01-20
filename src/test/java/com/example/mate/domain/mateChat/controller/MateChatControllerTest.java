@@ -198,7 +198,7 @@ public class MateChatControllerTest {
 
     private PageResponse<MateChatMessageResponse> createMockChatMessagesResponse() {
         MateChatMessageResponse message = MateChatMessageResponse.builder()
-                .messageId(1L)
+                .messageId("1")
                 .roomId(1L)
                 .senderId(1L)
                 .senderNickname("Test User")

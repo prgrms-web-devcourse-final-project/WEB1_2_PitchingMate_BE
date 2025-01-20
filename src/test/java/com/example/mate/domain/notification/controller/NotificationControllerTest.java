@@ -2,12 +2,19 @@ package com.example.mate.domain.notification.controller;
 
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willDoNothing;
+import static org.mockito.BDDMockito.willThrow;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.example.mate.common.error.CustomException;
+import com.example.mate.common.error.ErrorCode;
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.common.security.filter.JwtCheckFilter;
 import com.example.mate.config.securityConfig.WithAuthMember;
@@ -216,6 +223,46 @@ class NotificationControllerTest {
                     .andExpect(jsonPath("$.data.pageNumber").value(response.getPageNumber()))
                     .andExpect(jsonPath("$.data.pageSize").value(response.getPageSize()))
                     .andExpect(jsonPath("$.code").value(200));
+        }
+    }
+
+    @Nested
+    @DisplayName("알림 읽음 상태 변경")
+    class ReadNotification {
+
+        @Test
+        @DisplayName("알림 읽음 상태 변경 성공")
+        void read_notification_success() throws Exception {
+            // given
+            Long memberId = 1L;
+            Long notificationId = 1L;
+
+            willDoNothing().given(notificationService).readNotification(memberId, notificationId);
+
+            // when & then
+            mockMvc.perform(post("/api/notifications/{notificationId}", notificationId))
+                    .andExpect(status().isOk())
+                    .andDo(print());
+
+            verify(notificationService, times(1)).readNotification(memberId, notificationId);
+        }
+
+        @Test
+        @DisplayName("알림 읽음 상태 변경 실패 - 존재하지 않는 알림 ID일 경우")
+        void read_notification_fail_notification_not_found() throws Exception {
+            // given
+            Long memberId = 1L;
+            Long notificationId = 999L;
+
+            willThrow(new CustomException(ErrorCode.NOTIFICATION_NOT_FOUND))
+                    .given(notificationService).readNotification(memberId, notificationId);
+
+            // when & then
+            mockMvc.perform(post("/api/notifications/{notificationId}", notificationId))
+                    .andExpect(status().isNotFound())
+                    .andDo(print());
+
+            verify(notificationService, times(1)).readNotification(memberId, notificationId);
         }
     }
 }

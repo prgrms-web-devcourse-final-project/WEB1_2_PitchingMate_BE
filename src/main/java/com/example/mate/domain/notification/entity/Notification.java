@@ -1,5 +1,6 @@
 package com.example.mate.domain.notification.entity;
 
+import com.example.mate.common.BaseTimeEntity;
 import com.example.mate.domain.member.entity.Member;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -21,7 +22,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "notification")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Notification {
+public class Notification extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -52,5 +53,9 @@ public class Notification {
         this.url = url;
         this.receiver = receiver;
         this.isRead = false;
+    }
+
+    public void changeIsRead(Boolean isRead) {
+        this.isRead = isRead;
     }
 }

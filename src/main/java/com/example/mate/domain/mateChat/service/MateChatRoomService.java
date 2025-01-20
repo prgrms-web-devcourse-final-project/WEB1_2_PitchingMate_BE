@@ -4,6 +4,8 @@ import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.constant.Gender;
+import com.example.mate.domain.mateChat.document.MateChatMessage;
+import com.example.mate.domain.mateChat.repository.MateChatMessageRepository;
 import com.example.mate.domain.matePost.entity.Age;
 import com.example.mate.domain.matePost.entity.MatePost;
 import com.example.mate.domain.matePost.entity.Status;
@@ -12,13 +14,11 @@ import com.example.mate.domain.matePost.repository.VisitPartRepository;
 import com.example.mate.domain.mateChat.dto.response.MateChatMessageResponse;
 import com.example.mate.domain.mateChat.dto.response.MateChatRoomListResponse;
 import com.example.mate.domain.mateChat.dto.response.MateChatRoomResponse;
-import com.example.mate.domain.mateChat.entity.MateChatMessage;
 import com.example.mate.domain.mateChat.entity.MateChatRoom;
 import com.example.mate.domain.mateChat.entity.MateChatRoomMember;
 import com.example.mate.domain.mateChat.event.MateChatEvent;
 import com.example.mate.domain.mateChat.event.MateChatEventPublisher;
 import com.example.mate.domain.mateChat.message.MessageType;
-import com.example.mate.domain.mateChat.repository.MateChatMessageRepository;
 import com.example.mate.domain.mateChat.repository.MateChatRoomMemberRepository;
 import com.example.mate.domain.mateChat.repository.MateChatRoomRepository;
 import com.example.mate.domain.member.dto.response.MemberSummaryResponse;
@@ -28,13 +28,19 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
+
+import static com.example.mate.common.error.ErrorCode.CHAT_ROOM_MEMBER_NOT_FOUND;
+import static org.springframework.data.domain.Sort.Direction.DESC;
 
 @Service
 @Transactional
@@ -46,7 +52,6 @@ public class MateChatRoomService {
     private final MatePostRepository matePostRepository;
     private final MemberRepository memberRepository;
     private final VisitPartRepository visitPartRepository;
-    private final MateChatRoomMemberRepository mateChatRoomMemberRepository;
     private final MateChatEventPublisher eventPublisher;
 
     // 메이트 게시글에서 채팅방 생성/입장
@@ -192,11 +197,11 @@ public class MateChatRoomService {
     public List<MemberSummaryResponse> getChatRoomMembers(Long roomId, Long memberId) {
 
         // 1. 채팅방 접근 권한 검증
-        validateChatRoomAccess(roomId, memberId);
+        chatRoomMemberRepository.findByChatRoomIdAndMemberId(roomId, memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.CHAT_ROOM_MEMBER_NOT_FOUND));
 
         // 2. 활성화된 채팅방 멤버 조회
-        List<MateChatRoomMember> activeMembers = mateChatRoomMemberRepository.findActiveMembers(roomId);
-
+        List<MateChatRoomMember> activeMembers = chatRoomMemberRepository.findActiveMembers(roomId);
 
         // 3. MemberSummaryResponse로 변환하여 반환
         return activeMembers.stream()
@@ -262,23 +267,33 @@ public class MateChatRoomService {
         // 활성화된 멤버가 2명 이상인 경우는 정상적으로 채팅방 유지
     }
 
-    // 채팅 메시지 조회
+    // 채팅 메세지 조회
     @Transactional(readOnly = true)
-    public PageResponse<MateChatMessageResponse> getChatMessages(Long roomId, Long memberId, Pageable pageable) {
-        validateChatRoomAccess(roomId, memberId);
-        MateChatRoomMember member = chatRoomMemberRepository.findByChatRoomIdAndMemberId(roomId, memberId)
-                .orElseThrow(() -> new CustomException(ErrorCode.CHAT_ROOM_MEMBER_NOT_FOUND));
+    public PageResponse<MateChatMessageResponse> getChatMessages(Long chatRoomId, Long senderId, Pageable pageable) {
+        MateChatRoomMember chatRoomMember = chatRoomMemberRepository.findByChatRoomIdAndMemberId(chatRoomId, senderId)
+                .orElseThrow(() -> new CustomException(CHAT_ROOM_MEMBER_NOT_FOUND));
 
+        Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(DESC, "sendTime"));
+        Page<MateChatMessage> messagePage = chatMessageRepository.findByRoomIdAndSendTimeAfter(
+                chatRoomId,
+                chatRoomMember.getLastEnteredAt(),
+                sortedPageable
+        );
 
-        Page<MateChatMessage> messagePage = chatMessageRepository
-                .findByChatRoomIdAndCreatedAtAfterOrderByCreatedAtDesc(
-                        roomId,
-                        member.getLastEnteredAt(),
-                        pageable
-                );
+        // 발신자 ID 수집 및 조회
+        Set<Long> senderIds = messagePage.getContent().stream()
+                .map(MateChatMessage::getSenderId)
+                .collect(Collectors.toSet());
 
+        Map<Long, Member> senderMap = memberRepository.findAllById(senderIds).stream()
+                .collect(Collectors.toMap(Member::getId, member -> member));
+
+        // senderMap을 사용하여 메시지 변환
         List<MateChatMessageResponse> messages = messagePage.getContent().stream()
-                .map(MateChatMessageResponse::of)
+                .map(message -> {
+                    Member sender = senderMap.get(message.getSenderId());
+                    return MateChatMessageResponse.from(message, sender);
+                })
                 .toList();
 
         return PageResponse.from(messagePage, messages);
@@ -308,18 +323,6 @@ public class MateChatRoomService {
 
     private void sendLeaveMessage(Long roomId, Member member) {
         eventPublisher.publish(MateChatEvent.from(roomId, member, MessageType.LEAVE));
-    }
-
-    private void validateChatRoomAccess(Long roomId, Long memberId) {
-        memberRepository.findById(memberId)
-                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND_BY_ID));
-
-        MateChatRoomMember member = chatRoomMemberRepository.findByChatRoomIdAndMemberId(roomId, memberId)
-                .orElseThrow(() -> new CustomException(ErrorCode.CHAT_ROOM_MEMBER_NOT_FOUND));
-
-        if (!member.getIsActive()) {
-            throw new CustomException(ErrorCode.CHAT_ROOM_ACCESS_DENIED);
-        }
     }
 
     private boolean isAuthor(MateChatRoom chatRoom, Member member) {

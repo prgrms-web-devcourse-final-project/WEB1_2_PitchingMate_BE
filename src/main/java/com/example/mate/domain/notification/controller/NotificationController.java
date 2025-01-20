@@ -15,6 +15,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -45,5 +47,15 @@ public class NotificationController {
         PageResponse<NotificationResponse> response = notificationService.getNotificationsPage(type,
                 authMember.getMemberId(), pageable);
         return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @Operation(summary = "알림 읽음 상태 변경", description = "알림 페이지에서 해당 알림을 읽음 상태로 변경합니다.")
+    @PostMapping("/api/notifications/{notificationId}")
+    public ResponseEntity<ApiResponse<Void>> readNotification(
+            @Parameter(description = "회원 로그인 정보") @AuthenticationPrincipal AuthMember authMember,
+            @Parameter(description = "알림 ID") @PathVariable Long notificationId
+    ) {
+        notificationService.readNotification(authMember.getMemberId(), notificationId);
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 }
