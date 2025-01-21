@@ -13,6 +13,10 @@ spring:
         await-termination: true
         await-termination-period: 10s
 
+  data:
+    mongodb:
+      auto-index-creation: true
+
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
