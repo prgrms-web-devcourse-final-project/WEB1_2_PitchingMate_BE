@@ -87,6 +87,7 @@ class GoodsChatServiceTest {
                 .id(id)
                 .name(name)
                 .nickname(nickname)
+                .teamId(1L)
                 .build();
     }
 

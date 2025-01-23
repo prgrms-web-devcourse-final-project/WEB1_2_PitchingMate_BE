@@ -84,6 +84,7 @@ class MemberControllerTest {
                 .followerCount(20)
                 .reviewsCount(5)
                 .goodsSoldCount(15)
+                .isFollowing(false)
                 .build();
     }
 
@@ -250,10 +251,11 @@ class MemberControllerTest {
     @DisplayName("다른 회원 프로필 조회")
     void find_member_info_success() throws Exception {
         // given
-        Long memberId = 1L;
+        Long memberId = 2L;
+        Long loginId = 1L;
         MemberProfileResponse response = createMemberProfileResponse();
 
-        given(memberService.getMemberProfile(memberId)).willReturn(response);
+        given(memberService.getMemberProfile(memberId, loginId)).willReturn(response);
 
         // when & then
         mockMvc.perform(get("/api/members/{memberId}", memberId)

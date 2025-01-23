@@ -363,7 +363,6 @@ public class GoodsChatIntegrationTest extends AcceptanceTestWithMongo {
         assertThat(apiResponse.getCode()).isEqualTo(200);
         assertThat(apiResponse.getStatus()).isEqualTo("SUCCESS");
 
-
         GoodsPost completedPost = chatRoomRepository.findByChatRoomId(chatRoomId).orElseThrow().getGoodsPost();
         assertThat(completedPost.getStatus()).isEqualTo(Status.CLOSED);
         assertThat(completedPost.getBuyer()).isNotNull();
@@ -384,6 +383,7 @@ public class GoodsChatIntegrationTest extends AcceptanceTestWithMongo {
                 .gender(Gender.FEMALE)
                 .age(25)
                 .manner(0.3f)
+                .teamId(1L)
                 .build());
     }
 
