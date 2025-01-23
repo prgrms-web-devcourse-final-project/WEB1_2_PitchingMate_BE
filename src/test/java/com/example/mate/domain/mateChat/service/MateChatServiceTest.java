@@ -252,6 +252,7 @@ class MateChatServiceTest {
                 .age(age)
                 .gender(gender)
                 .nickname("nickname" + id)
+                .teamId(1L)
                 .build();
     }
 

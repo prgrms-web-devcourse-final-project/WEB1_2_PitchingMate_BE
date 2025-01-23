@@ -62,6 +62,7 @@ class FollowControllerTest {
                 .nickname("tester1")
                 .memberId(1L)
                 .imageUrl("tester1.png")
+                .teamName("KIA")
                 .build();
     }
 
