@@ -297,6 +297,7 @@ class MemberServiceTest {
         void get_member_profile_success() {
             // given
             Long memberId = 1L;
+            Long loginId = 2L;
             int followCount = 10;
             int followerCount = 20;
             int goodsReviewsCount = 7;
@@ -311,9 +312,10 @@ class MemberServiceTest {
             given(mateReviewRepository.countByRevieweeId(memberId)).willReturn(mateReviewsCount);
             given(goodsPostRepository.countGoodsPostsBySellerIdAndStatus(memberId, Status.CLOSED)).
                     willReturn(goodsSoldCount);
+            given(followRepository.existsByFollowerIdAndFollowingId(loginId, memberId)).willReturn(true);
 
             // when
-            MemberProfileResponse result = memberService.getMemberProfile(memberId);
+            MemberProfileResponse result = memberService.getMemberProfile(memberId, loginId);
 
             // then
             assertThat(result).isNotNull();
@@ -322,6 +324,7 @@ class MemberServiceTest {
             assertThat(result.getFollowerCount()).isEqualTo(followerCount);
             assertThat(result.getReviewsCount()).isEqualTo(reviewsCount);
             assertThat(result.getGoodsSoldCount()).isEqualTo(goodsSoldCount);
+            assertThat(result.getIsFollowing()).isEqualTo(true);
         }
 
         @Test
@@ -329,11 +332,12 @@ class MemberServiceTest {
         void get_member_profile_fail_member_id_not_found() {
             // given
             Long memberId = 1L;
+            Long loginId = 2L;
 
             given(memberRepository.findByIdAndNotDeleted(memberId)).willReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> memberService.getMemberProfile(memberId))
+            assertThatThrownBy(() -> memberService.getMemberProfile(memberId, loginId))
                     .isInstanceOf(CustomException.class)
                     .hasMessage(ErrorCode.MEMBER_NOT_FOUND_BY_ID.getMessage());
         }

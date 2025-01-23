@@ -60,14 +60,22 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class GoodsChatIntegrationTest extends AcceptanceTestWithMongo {
 
-    @Autowired private MockMvc mockMvc;
-    @Autowired private MemberRepository memberRepository;
-    @Autowired private GoodsPostRepository goodsPostRepository;
-    @Autowired private GoodsChatRoomRepository chatRoomRepository;
-    @Autowired private GoodsChatPartRepository chatPartRepository;
-    @Autowired private GoodsChatMessageRepository messageRepository;
-    @Autowired private ObjectMapper objectMapper;
-    @Autowired private JdbcTemplate jdbcTemplate;
+    @Autowired
+    private MockMvc mockMvc;
+    @Autowired
+    private MemberRepository memberRepository;
+    @Autowired
+    private GoodsPostRepository goodsPostRepository;
+    @Autowired
+    private GoodsChatRoomRepository chatRoomRepository;
+    @Autowired
+    private GoodsChatPartRepository chatPartRepository;
+    @Autowired
+    private GoodsChatMessageRepository messageRepository;
+    @Autowired
+    private ObjectMapper objectMapper;
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
 
     private Member seller;
@@ -115,12 +123,15 @@ public class GoodsChatIntegrationTest extends AcceptanceTestWithMongo {
                 .andExpect(jsonPath("$.data.category").value(goodsPost.getCategory().getValue()))
                 .andExpect(jsonPath("$.data.price").value(goodsPost.getPrice()))
                 .andExpect(jsonPath("$.data.postStatus").value(goodsPost.getStatus().getValue()))
-                .andExpect(jsonPath("$.data.imageUrl").value(FileUtils.getThumbnailImageUrl(goodsPost.getGoodsPostImages().get(0).getImageUrl())))
+                .andExpect(jsonPath("$.data.imageUrl").value(
+                        FileUtils.getThumbnailImageUrl(goodsPost.getGoodsPostImages().get(0).getImageUrl())))
                 .andReturn()
                 .getResponse();
 
         result.setCharacterEncoding("UTF-8");
-        ApiResponse<GoodsChatRoomResponse> apiResponse = objectMapper.readValue(result.getContentAsString(), new TypeReference<>() {});
+        ApiResponse<GoodsChatRoomResponse> apiResponse = objectMapper.readValue(result.getContentAsString(),
+                new TypeReference<>() {
+                });
         GoodsChatRoomResponse actualResponse = apiResponse.getData();
 
         // then
@@ -179,7 +190,9 @@ public class GoodsChatIntegrationTest extends AcceptanceTestWithMongo {
                 .getResponse();
 
         result.setCharacterEncoding("UTF-8");
-        ApiResponse<GoodsChatRoomResponse> apiResponse = objectMapper.readValue(result.getContentAsString(), new TypeReference<>() {});
+        ApiResponse<GoodsChatRoomResponse> apiResponse = objectMapper.readValue(result.getContentAsString(),
+                new TypeReference<>() {
+                });
         GoodsChatRoomResponse response = apiResponse.getData();
 
         // then
@@ -216,8 +229,10 @@ public class GoodsChatIntegrationTest extends AcceptanceTestWithMongo {
                 .andExpect(jsonPath("$.data.content[0].opponentNickname").value(seller.getNickname()))
                 .andExpect(jsonPath("$.data.content[0].lastChatContent").value(chatRoom.getLastChatContent()))
                 .andExpect(jsonPath("$.data.content[0].placeName").value(goodsPost.getLocation().getPlaceName()))
-                .andExpect(jsonPath("$.data.content[0].goodsMainImageUrl").value(FileUtils.getThumbnailImageUrl(goodsPost.getMainImageUrl())))
-                .andExpect(jsonPath("$.data.content[0].opponentImageUrl").value(FileUtils.getThumbnailImageUrl(seller.getImageUrl())))
+                .andExpect(jsonPath("$.data.content[0].goodsMainImageUrl").value(
+                        FileUtils.getThumbnailImageUrl(goodsPost.getMainImageUrl())))
+                .andExpect(jsonPath("$.data.content[0].opponentImageUrl").value(
+                        FileUtils.getThumbnailImageUrl(seller.getImageUrl())))
                 .andReturn()
                 .getResponse();
     }
@@ -244,7 +259,9 @@ public class GoodsChatIntegrationTest extends AcceptanceTestWithMongo {
                 .getResponse();
 
         response.setCharacterEncoding("UTF-8");
-        ApiResponse<PageResponse<GoodsChatMessageResponse>> apiResponse = objectMapper.readValue(response.getContentAsString(), new TypeReference<>() {});
+        ApiResponse<PageResponse<GoodsChatMessageResponse>> apiResponse = objectMapper.readValue(
+                response.getContentAsString(), new TypeReference<>() {
+                });
         List<GoodsChatMessageResponse> expectMessages = apiResponse.getData().getContent();
 
         // 실제 데이터 조회
@@ -281,7 +298,8 @@ public class GoodsChatIntegrationTest extends AcceptanceTestWithMongo {
         GoodsChatRoom goodsChatRoom = chatRoomRepository.findById(chatRoomId).orElseThrow();
         assertThat(goodsChatRoom.isRoomActive()).isFalse();
 
-        GoodsChatPart goodsChatPart = chatPartRepository.findById(new GoodsChatPartId(memberId, chatRoomId)).orElseThrow();
+        GoodsChatPart goodsChatPart = chatPartRepository.findById(new GoodsChatPartId(memberId, chatRoomId))
+                .orElseThrow();
         assertThat(goodsChatPart.getIsActive()).isFalse();
     }
 
@@ -329,7 +347,9 @@ public class GoodsChatIntegrationTest extends AcceptanceTestWithMongo {
         response.setCharacterEncoding("UTF-8");
 
         // then
-        ApiResponse<List<MemberSummaryResponse>> apiResponse = objectMapper.readValue(response.getContentAsString(), new TypeReference<>() {});
+        ApiResponse<List<MemberSummaryResponse>> apiResponse = objectMapper.readValue(response.getContentAsString(),
+                new TypeReference<>() {
+                });
         List<MemberSummaryResponse> actualMembers = apiResponse.getData();
 
         // 실제 데이터 조회
@@ -344,7 +364,8 @@ public class GoodsChatIntegrationTest extends AcceptanceTestWithMongo {
 
             assertThat(actualMember.getMemberId()).isEqualTo(expectedMember.getId());
             assertThat(actualMember.getNickname()).isEqualTo(expectedMember.getNickname());
-            assertThat(actualMember.getImageUrl()).isEqualTo(FileUtils.getThumbnailImageUrl(expectedMember.getImageUrl()));
+            assertThat(actualMember.getImageUrl()).isEqualTo(
+                    FileUtils.getThumbnailImageUrl(expectedMember.getImageUrl()));
         }
     }
 
@@ -363,12 +384,12 @@ public class GoodsChatIntegrationTest extends AcceptanceTestWithMongo {
                 .getResponse();
         result.setCharacterEncoding("UTF-8");
 
-        ApiResponse<Void> apiResponse = objectMapper.readValue(result.getContentAsString(), new TypeReference<>() {});
+        ApiResponse<Void> apiResponse = objectMapper.readValue(result.getContentAsString(), new TypeReference<>() {
+        });
 
         // then
         assertThat(apiResponse.getCode()).isEqualTo(200);
         assertThat(apiResponse.getStatus()).isEqualTo("SUCCESS");
-
 
         GoodsPost completedPost = chatRoomRepository.findByChatRoomId(chatRoomId).orElseThrow().getGoodsPost();
         assertThat(completedPost.getStatus()).isEqualTo(Status.CLOSED);
@@ -390,6 +411,7 @@ public class GoodsChatIntegrationTest extends AcceptanceTestWithMongo {
                 .gender(Gender.FEMALE)
                 .age(25)
                 .manner(0.3f)
+                .teamId(1L)
                 .build());
     }
 

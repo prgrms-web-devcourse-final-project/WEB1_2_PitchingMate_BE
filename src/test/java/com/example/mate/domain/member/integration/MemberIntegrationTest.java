@@ -362,11 +362,12 @@ class MemberIntegrationTest {
 
     @Test
     @DisplayName("다른 회원 프로필 조회 성공")
+    @WithAuthMember(userId = "customUser", memberId = 1L)
     void find_member_info_success() throws Exception {
-        mockMvc.perform(get("/api/members/" + member.getId()))
+        mockMvc.perform(get("/api/members/" + member2.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
-                .andExpect(jsonPath("$.data.nickname").value("tester"))
+                .andExpect(jsonPath("$.data.nickname").value("tester2"))
                 .andExpect(jsonPath("$.data.imageUrl").value(FileUtils.getThumbnailImageUrl("default.jpg")))
                 .andExpect(jsonPath("$.data.manner").value(0.300F))
                 .andDo(print());

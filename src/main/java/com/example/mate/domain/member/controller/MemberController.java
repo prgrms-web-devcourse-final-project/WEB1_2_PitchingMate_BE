@@ -64,8 +64,9 @@ public class MemberController {
     @Operation(summary = "다른 회원 프로필 조회", description = "다른 회원의 프로필 페이지를 조회합니다.")
     @GetMapping("/{memberId}")
     public ResponseEntity<ApiResponse<MemberProfileResponse>> findMemberInfo(
+            @Parameter(description = "회원 로그인 정보") @AuthenticationPrincipal AuthMember authMember,
             @Parameter(description = "회원 ID") @PathVariable Long memberId) {
-        return ResponseEntity.ok(ApiResponse.success(memberService.getMemberProfile(memberId)));
+        return ResponseEntity.ok(ApiResponse.success(memberService.getMemberProfile(memberId, authMember.getMemberId())));
     }
 
     @Operation(summary = "회원 내 정보 수정", description = "프로필 사진 및 회원 정보를 수정합니다.")

@@ -271,7 +271,9 @@ class FollowServiceTest {
             assertThat(response.getTotalElements()).isEqualTo(2);
             assertThat(response.getContent()).hasSize(2);
             assertThat(response.getContent().get(0).getNickname()).isEqualTo("tester1");
+            assertThat(response.getContent().get(0).getTeamName()).isEqualTo("KIA");
             assertThat(response.getContent().get(1).getNickname()).isEqualTo("tester2");
+            assertThat(response.getContent().get(1).getTeamName()).isEqualTo("LG");
 
             verify(memberRepository, times(1)).findById(memberId);
             verify(followRepository, times(1))
@@ -325,7 +327,9 @@ class FollowServiceTest {
             assertThat(response.getTotalElements()).isEqualTo(2);
             assertThat(response.getContent()).hasSize(2);
             assertThat(response.getContent().get(0).getNickname()).isEqualTo("tester1");
+            assertThat(response.getContent().get(0).getTeamName()).isEqualTo("KIA");
             assertThat(response.getContent().get(1).getNickname()).isEqualTo("tester2");
+            assertThat(response.getContent().get(1).getTeamName()).isEqualTo("LG");
 
             verify(memberRepository, times(1)).findById(memberId);
             verify(followRepository, times(1))
