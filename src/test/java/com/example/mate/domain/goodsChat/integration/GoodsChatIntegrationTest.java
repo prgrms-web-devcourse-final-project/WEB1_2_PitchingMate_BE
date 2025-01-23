@@ -1,7 +1,6 @@
 package com.example.mate.domain.goodsChat.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.within;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -10,7 +9,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.mate.common.response.ApiResponse;
-import com.example.mate.common.response.PageResponse;
 import com.example.mate.config.mongoConfig.AcceptanceTestWithMongo;
 import com.example.mate.config.securityConfig.WithAuthMember;
 import com.example.mate.domain.constant.Gender;
@@ -47,7 +45,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -152,9 +149,9 @@ public class GoodsChatIntegrationTest extends AcceptanceTestWithMongo {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
                 .andExpect(jsonPath("$.code").value(200))
-                .andExpect(jsonPath("$.data.content").isArray())
-                .andExpect(jsonPath("$.data.content[0].message").value("test message"))
-                .andExpect(jsonPath("$.data.content[1].message").value("test message"))
+                .andExpect(jsonPath("$.data").isArray())
+                .andExpect(jsonPath("$.data[0].message").value("test message"))
+                .andExpect(jsonPath("$.data[1].message").value("test message"))
                 .andReturn()
                 .getResponse();
     }
@@ -172,9 +169,9 @@ public class GoodsChatIntegrationTest extends AcceptanceTestWithMongo {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
                 .andExpect(jsonPath("$.code").value(200))
-                .andExpect(jsonPath("$.data.initialMessages.content").isArray())
-                .andExpect(jsonPath("$.data.initialMessages.content[0].message").value("test message"))
-                .andExpect(jsonPath("$.data.initialMessages.content[1].message").value("test message"))
+                .andExpect(jsonPath("$.data.initialMessages").isArray())
+                .andExpect(jsonPath("$.data.initialMessages[0].message").value("test message"))
+                .andExpect(jsonPath("$.data.initialMessages[1].message").value("test message"))
                 .andReturn()
                 .getResponse();
 
@@ -229,27 +226,24 @@ public class GoodsChatIntegrationTest extends AcceptanceTestWithMongo {
         // given
         Long chatRoomId = chatRoom.getId();
         Long buyerId = buyer.getId();
-        Pageable pageable = PageRequest.of(0, 20);
+        int size = 20;
 
         // when & then
-        MockHttpServletResponse response = mockMvc.perform(get("/api/goods/chat/{chatRoomId}/message", chatRoomId)
-                        .param("page", String.valueOf(pageable.getPageNumber()))
-                        .param("size", String.valueOf(pageable.getPageSize())))
+        MockHttpServletResponse response = mockMvc.perform(get("/api/goods/chat/{chatRoomId}/message", chatRoomId))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
                 .andExpect(jsonPath("$.code").value(200))
-                .andExpect(jsonPath("$.data.content").isArray())
+                .andExpect(jsonPath("$.data").isArray())
                 .andReturn()
                 .getResponse();
 
         response.setCharacterEncoding("UTF-8");
-        ApiResponse<PageResponse<GoodsChatMessageResponse>> apiResponse = objectMapper.readValue(response.getContentAsString(), new TypeReference<>() {});
-        List<GoodsChatMessageResponse> expectMessages = apiResponse.getData().getContent();
+        ApiResponse<List<GoodsChatMessageResponse>> apiResponse = objectMapper.readValue(response.getContentAsString(), new TypeReference<>() {});
+        List<GoodsChatMessageResponse> expectMessages = apiResponse.getData();
 
         // 실제 데이터 조회
-        Page<GoodsChatMessage> chatMessages = messageRepository.getChatMessages(chatRoomId, pageable);
-        List<GoodsChatMessage> actualMessages = chatMessages.getContent();
+        List<GoodsChatMessage> actualMessages = messageRepository.getChatMessages(chatRoomId, null, size);
 
         assertThat(expectMessages.size()).isEqualTo(actualMessages.size());
 

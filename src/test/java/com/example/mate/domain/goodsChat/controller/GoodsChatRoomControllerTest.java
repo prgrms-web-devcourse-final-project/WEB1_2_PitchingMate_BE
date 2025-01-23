@@ -13,8 +13,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.example.mate.common.error.CustomException;
 import com.example.mate.common.error.ErrorCode;
 import com.example.mate.common.response.PageResponse;
-import com.example.mate.common.security.util.JwtUtil;
 import com.example.mate.common.security.filter.JwtCheckFilter;
+import com.example.mate.common.security.util.JwtUtil;
 import com.example.mate.config.securityConfig.WithAuthMember;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatMessageResponse;
 import com.example.mate.domain.goodsChat.dto.response.GoodsChatRoomResponse;
@@ -132,12 +132,11 @@ class GoodsChatRoomControllerTest {
     }
 
     @Test
-    @DisplayName("채팅 내역 조회 성공 - 회원이 채팅방에 참여한 경우 메시지를 페이지로 반환한다.")
+    @DisplayName("채팅 내역 조회 성공 - 회원이 채팅방에 참여한 경우 채팅방 정보와 최신 메시지를 리스트로 반환한다.")
     void getMessagesForChatRoom_should_return_messages() throws Exception {
         // given
         Long chatRoomId = 1L;
         Long memberId = 1L;
-        PageRequest pageable = PageRequest.of(0, 10);
 
         GoodsChatMessageResponse firstMessage = GoodsChatMessageResponse.builder()
                 .chatMessageId("1")
@@ -153,27 +152,22 @@ class GoodsChatRoomControllerTest {
                 .sentAt(LocalDateTime.now())
                 .build();
 
-        PageResponse<GoodsChatMessageResponse> pageResponse = PageResponse.from(
-                new PageImpl<>(List.of(secondMessage, firstMessage), pageable, 2),
-                List.of(secondMessage, firstMessage)
-        );
+        List<GoodsChatMessageResponse> pageResponse = List.of(secondMessage, firstMessage);
 
-        when(goodsChatService.getChatRoomMessages(chatRoomId, memberId, pageable)).thenReturn(pageResponse);
+        when(goodsChatService.getChatRoomMessages(chatRoomId, memberId, null)).thenReturn(pageResponse);
 
         // when & then
-        mockMvc.perform(get("/api/goods/chat/{chatRoomId}/message", chatRoomId)
-                        .param("page", "0")
-                        .param("size", "10"))
+        mockMvc.perform(get("/api/goods/chat/{chatRoomId}/message", chatRoomId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
                 .andExpect(jsonPath("$.code").value(200))
-                .andExpect(jsonPath("$.data.content").isArray())
-                .andExpect(jsonPath("$.data.content[0].message").value(secondMessage.getMessage()))
-                .andExpect(jsonPath("$.data.content[0].chatMessageId").value(secondMessage.getChatMessageId()))
-                .andExpect(jsonPath("$.data.content[1].message").value(firstMessage.getMessage()))
-                .andExpect(jsonPath("$.data.content[1].chatMessageId").value(firstMessage.getChatMessageId()));
+                .andExpect(jsonPath("$.data").isArray())
+                .andExpect(jsonPath("$.data[0].message").value(secondMessage.getMessage()))
+                .andExpect(jsonPath("$.data[0].chatMessageId").value(secondMessage.getChatMessageId()))
+                .andExpect(jsonPath("$.data[1].message").value(firstMessage.getMessage()))
+                .andExpect(jsonPath("$.data[1].chatMessageId").value(firstMessage.getChatMessageId()));
 
-        verify(goodsChatService).getChatRoomMessages(chatRoomId, memberId, pageable);
+        verify(goodsChatService).getChatRoomMessages(chatRoomId, memberId, null);
     }
 
     @Test
@@ -209,7 +203,7 @@ class GoodsChatRoomControllerTest {
                 .price(10000)
                 .postStatus("OPEN")
                 .imageUrl("/images/test.jpg")
-                .initialMessages(PageResponse.from(new PageImpl<>(List.of(message)), message))
+                .initialMessages(message)
                 .build();
 
         when(goodsChatService.getGoodsChatRoomInfo(memberId, chatRoomId)).thenReturn(existingChatRoomResponse);
@@ -220,11 +214,11 @@ class GoodsChatRoomControllerTest {
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data.chatRoomId").value(chatRoomId))
                 .andExpect(jsonPath("$.data.goodsPostId").value(goodsPostId))
-                .andExpect(jsonPath("$.data.initialMessages.content").isArray())
-                .andExpect(jsonPath("$.data.initialMessages.content[0].chatMessageId").value(secondMessage.getChatMessageId()))
-                .andExpect(jsonPath("$.data.initialMessages.content[0].message").value(secondMessage.getMessage()))
-                .andExpect(jsonPath("$.data.initialMessages.content[1].chatMessageId").value(firstMessage.getChatMessageId()))
-                .andExpect(jsonPath("$.data.initialMessages.content[1].message").value(firstMessage.getMessage()));
+                .andExpect(jsonPath("$.data.initialMessages").isArray())
+                .andExpect(jsonPath("$.data.initialMessages[0].chatMessageId").value(secondMessage.getChatMessageId()))
+                .andExpect(jsonPath("$.data.initialMessages[0].message").value(secondMessage.getMessage()))
+                .andExpect(jsonPath("$.data.initialMessages[1].chatMessageId").value(firstMessage.getChatMessageId()))
+                .andExpect(jsonPath("$.data.initialMessages[1].message").value(firstMessage.getMessage()));
     }
 
     @Test
@@ -274,7 +268,6 @@ class GoodsChatRoomControllerTest {
         // given
         Long chatRoomId = 1L;
         Long memberId = 1L;
-        PageRequest pageable = PageRequest.of(0, 20);
 
         GoodsChatMessageResponse firstMessage = GoodsChatMessageResponse.builder()
                 .chatMessageId("1")
@@ -290,27 +283,22 @@ class GoodsChatRoomControllerTest {
                 .sentAt(LocalDateTime.now())
                 .build();
 
-        PageResponse<GoodsChatMessageResponse> pageResponse = PageResponse.from(
-                new PageImpl<>(List.of(secondMessage, firstMessage), pageable, 2),
-                List.of(secondMessage, firstMessage)
-        );
+        List<GoodsChatMessageResponse> responses = (List.of(secondMessage, firstMessage));
 
-        when(goodsChatService.getChatRoomMessages(chatRoomId, memberId, pageable)).thenReturn(pageResponse);
+        when(goodsChatService.getChatRoomMessages(chatRoomId, memberId, null)).thenReturn(responses);
 
         // when & then
-        mockMvc.perform(get("/api/goods/chat/{chatRoomId}/message", chatRoomId)
-                        .param("page", "0")
-                        .param("size", "20"))
+        mockMvc.perform(get("/api/goods/chat/{chatRoomId}/message", chatRoomId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
                 .andExpect(jsonPath("$.code").value(200))
-                .andExpect(jsonPath("$.data.content").isArray())
-                .andExpect(jsonPath("$.data.content[0].chatMessageId").value(secondMessage.getChatMessageId()))
-                .andExpect(jsonPath("$.data.content[0].message").value(secondMessage.getMessage()))
-                .andExpect(jsonPath("$.data.content[1].chatMessageId").value(firstMessage.getChatMessageId()))
-                .andExpect(jsonPath("$.data.content[1].message").value(firstMessage.getMessage()));
+                .andExpect(jsonPath("$.data").isArray())
+                .andExpect(jsonPath("$.data[0].chatMessageId").value(secondMessage.getChatMessageId()))
+                .andExpect(jsonPath("$.data[0].message").value(secondMessage.getMessage()))
+                .andExpect(jsonPath("$.data[1].chatMessageId").value(firstMessage.getChatMessageId()))
+                .andExpect(jsonPath("$.data[1].message").value(firstMessage.getMessage()));
 
-        verify(goodsChatService).getChatRoomMessages(chatRoomId, memberId, pageable);
+        verify(goodsChatService).getChatRoomMessages(chatRoomId, memberId, null);
     }
 
     @Test

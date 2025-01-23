@@ -161,12 +161,12 @@ class GoodsChatServiceTest {
             existingChatRoom.addChatParticipant(seller, Role.SELLER);
 
             GoodsChatMessage message = createMessage(existingChatRoom, "1", 0, "test Message", LocalDateTime.now());
-            PageImpl<GoodsChatMessage> goodsChatMessages = new PageImpl<>(List.of(message));
+            List<GoodsChatMessage> goodsChatMessages = List.of(message);
 
             when(memberRepository.findById(buyerId)).thenReturn(Optional.of(buyer));
             when(goodsPostRepository.findById(goodsPostId)).thenReturn(Optional.of(goodsPost));
             when(chatRoomRepository.findExistingChatRoom(goodsPostId, buyerId, Role.BUYER)).thenReturn(Optional.of(existingChatRoom));
-            when(messageRepository.getChatMessages(existingChatRoom.getId(), PageRequest.of(0, 20))).thenReturn(goodsChatMessages);
+            when(messageRepository.getChatMessages(existingChatRoom.getId(), null, 20)).thenReturn(goodsChatMessages);
 
             // when
             GoodsChatRoomResponse result = goodsChatService.getOrCreateGoodsChatRoom(buyerId, goodsPostId);
@@ -286,30 +286,28 @@ class GoodsChatServiceTest {
             chatRoom.addChatParticipant(member, Role.BUYER);
             chatRoom.addChatParticipant(member, Role.SELLER);
 
-            Pageable pageable = PageRequest.of(0, 10);
-
             GoodsChatMessage firstMessage = createMessage(chatRoom, "1", 0, "first message", LocalDateTime.now().minusMinutes(10));
             GoodsChatMessage secondMessage = createMessage(chatRoom, "2", 1, "second message", LocalDateTime.now());
 
-            Page<GoodsChatMessage> messagePage = new PageImpl<>(List.of(secondMessage, firstMessage));
+            List<GoodsChatMessage> messages = List.of(secondMessage, firstMessage);
 
             when(partRepository.existsById(goodsChatPartId)).thenReturn(true);
-            when(messageRepository.getChatMessages(chatRoomId, pageable)).thenReturn(messagePage);
+            when(messageRepository.getChatMessages(chatRoomId, null, 20)).thenReturn(messages);
             when(memberRepository.findById(2L)).thenReturn(Optional.of(member));
 
             // when
-            PageResponse<GoodsChatMessageResponse> result = goodsChatService.getChatRoomMessages(chatRoomId, memberId, pageable);
+            List<GoodsChatMessageResponse> result = goodsChatService.getChatRoomMessages(chatRoomId, memberId, null);
 
             // then
-            assertThat(result.getContent()).hasSize(2);
-            assertThat(result.getContent().get(0).getMessage()).isEqualTo(secondMessage.getContent());
-            assertThat(result.getContent().get(0).getChatMessageId()).isEqualTo(secondMessage.getId());
-            assertThat(result.getContent().get(0).getSenderId()).isEqualTo(memberId);
-            assertThat(result.getContent().get(1).getMessage()).isEqualTo(firstMessage.getContent());
-            assertThat(result.getContent().get(1).getChatMessageId()).isEqualTo(firstMessage.getId());
+            assertThat(result).hasSize(2);
+            assertThat(result.get(0).getMessage()).isEqualTo(secondMessage.getContent());
+            assertThat(result.get(0).getChatMessageId()).isEqualTo(secondMessage.getId());
+            assertThat(result.get(0).getSenderId()).isEqualTo(memberId);
+            assertThat(result.get(1).getMessage()).isEqualTo(firstMessage.getContent());
+            assertThat(result.get(1).getChatMessageId()).isEqualTo(firstMessage.getId());
 
             verify(partRepository).existsById(goodsChatPartId);
-            verify(messageRepository).getChatMessages(chatRoomId, pageable);
+            verify(messageRepository).getChatMessages(chatRoomId, null, 20);
         }
 
         @Test
@@ -319,18 +317,17 @@ class GoodsChatServiceTest {
             Long chatRoomId = 1L;
             Long memberId = 2L;
             GoodsChatPartId goodsChatPartId = new GoodsChatPartId(memberId, chatRoomId);
-            Pageable pageable = PageRequest.of(0, 10);
 
             when(partRepository.existsById(goodsChatPartId)).thenReturn(false);
 
             // when
-            assertThatThrownBy(() -> goodsChatService.getChatRoomMessages(chatRoomId, memberId, pageable))
+            assertThatThrownBy(() -> goodsChatService.getChatRoomMessages(chatRoomId, memberId, null))
                     .isInstanceOf(CustomException.class)
                     .hasMessage(ErrorCode.GOODS_CHAT_NOT_FOUND_CHAT_PART.getMessage());
 
             // then
             verify(partRepository).existsById(goodsChatPartId);
-            verify(messageRepository, never()).getChatMessages(chatRoomId, pageable);
+            verify(messageRepository, never()).getChatMessages(chatRoomId, null, 20);
         }
     }
 
@@ -357,11 +354,11 @@ class GoodsChatServiceTest {
             GoodsChatMessage firstMessage = createMessage(chatRoom, "1", 0, "first message", LocalDateTime.now().minusMinutes(10));
             GoodsChatMessage secondMessage = createMessage(chatRoom, "2", 1, "second message", LocalDateTime.now());
 
-            Page<GoodsChatMessage> messages = new PageImpl<>(List.of(secondMessage, firstMessage));
+            List<GoodsChatMessage> messages = List.of(secondMessage, firstMessage);
 
             when(partRepository.existsById(goodsChatPartId)).thenReturn(true);
             when(chatRoomRepository.findByChatRoomId(chatRoomId)).thenReturn(Optional.of(chatRoom));
-            when(messageRepository.getChatMessages(chatRoomId, PageRequest.of(0, 20))).thenReturn(messages);
+            when(messageRepository.getChatMessages(chatRoomId, null, 20)).thenReturn(messages);
             when(memberRepository.findById(1L)).thenReturn(Optional.of(member));
 
             // when
@@ -378,14 +375,14 @@ class GoodsChatServiceTest {
             assertThat(goodsChatRoomInfo.getChatRoomStatus()).isEqualTo(chatRoom.getIsActive().toString());
             assertThat(goodsChatRoomInfo.getImageUrl()).isEqualTo(FileUtils.getThumbnailImageUrl(goodsPost.getMainImageUrl()));
 
-            assertThat(goodsChatRoomInfo.getInitialMessages().getContent())
+            assertThat(goodsChatRoomInfo.getInitialMessages())
                     .hasSize(2)
                     .extracting(GoodsChatMessageResponse::getMessage)
                     .containsExactly("second message", "first message");
 
             verify(partRepository).existsById(goodsChatPartId);
             verify(chatRoomRepository).findByChatRoomId(chatRoomId);
-            verify(messageRepository).getChatMessages(chatRoomId, PageRequest.of(0, 20));
+            verify(messageRepository).getChatMessages(chatRoomId, null, 20);
         }
 
         @Test
@@ -409,7 +406,7 @@ class GoodsChatServiceTest {
             // then
             verify(partRepository).existsById(goodsChatPartId);
             verify(chatRoomRepository, never()).findByChatRoomId(chatRoomId);
-            verify(messageRepository, never()).getChatMessages(chatRoomId, PageRequest.of(0, 20));
+            verify(messageRepository, never()).getChatMessages(chatRoomId, null, 20);
         }
 
         @Test
@@ -433,7 +430,7 @@ class GoodsChatServiceTest {
             // then
             verify(partRepository).existsById(goodsChatPartId);
             verify(chatRoomRepository).findByChatRoomId(chatRoomId);
-            verify(messageRepository, never()).getChatMessages(chatRoomId, PageRequest.of(0, 20));
+            verify(messageRepository, never()).getChatMessages(chatRoomId, null, 20);
         }
     }
 
@@ -523,33 +520,32 @@ class GoodsChatServiceTest {
             Long chatRoomId = chatRoom.getId();
             Long buyerId = buyer.getId();
 
-            Pageable pageable = PageRequest.of(0, 20);
             GoodsChatPartId goodsChatPartId = new GoodsChatPartId(buyerId, chatRoomId);
 
             GoodsChatMessage firstMessage = createMessage(chatRoom, "1", 0, "First message", LocalDateTime.now().minusMinutes(10));
             GoodsChatMessage secondMessage = createMessage(chatRoom, "2", 1, "Second message", LocalDateTime.now());
 
-            Page<GoodsChatMessage> messagePage = new PageImpl<>(List.of(secondMessage, firstMessage), pageable, 2);
+            List<GoodsChatMessage> messages = List.of(secondMessage, firstMessage);
 
             when(partRepository.existsById(goodsChatPartId)).thenReturn(true);
-            when(messageRepository.getChatMessages(chatRoomId, pageable)).thenReturn(messagePage);
+            when(messageRepository.getChatMessages(chatRoomId, null, 20)).thenReturn(messages);
             when(memberRepository.findById(1L)).thenReturn(Optional.of(buyer));
             when(memberRepository.findById(2L)).thenReturn(Optional.of(seller));
 
             // when
-            PageResponse<GoodsChatMessageResponse> result = goodsChatService.getChatRoomMessages(chatRoomId, buyerId, pageable);
+            List<GoodsChatMessageResponse> result = goodsChatService.getChatRoomMessages(chatRoomId, buyerId, null);
 
             // then
-            assertThat(result.getContent()).hasSize(2);
-            assertThat(result.getContent().get(0).getMessage()).isEqualTo(secondMessage.getContent());
-            assertThat(result.getContent().get(0).getChatMessageId()).isEqualTo(secondMessage.getId());
-            assertThat(result.getContent().get(0).getSentAt()).isEqualTo(secondMessage.getSentAt());
-            assertThat(result.getContent().get(1).getMessage()).isEqualTo(firstMessage.getContent());
-            assertThat(result.getContent().get(1).getChatMessageId()).isEqualTo(firstMessage.getId());
-            assertThat(result.getContent().get(1).getSentAt()).isEqualTo(firstMessage.getSentAt());
+            assertThat(result).hasSize(2);
+            assertThat(result.get(0).getMessage()).isEqualTo(secondMessage.getContent());
+            assertThat(result.get(0).getChatMessageId()).isEqualTo(secondMessage.getId());
+            assertThat(result.get(0).getSentAt()).isEqualTo(secondMessage.getSentAt());
+            assertThat(result.get(1).getMessage()).isEqualTo(firstMessage.getContent());
+            assertThat(result.get(1).getChatMessageId()).isEqualTo(firstMessage.getId());
+            assertThat(result.get(1).getSentAt()).isEqualTo(firstMessage.getSentAt());
 
             verify(partRepository).existsById(goodsChatPartId);
-            verify(messageRepository).getChatMessages(chatRoomId, pageable);
+            verify(messageRepository).getChatMessages(chatRoomId, null, 20);
         }
 
         @Test
@@ -565,19 +561,18 @@ class GoodsChatServiceTest {
             Long chatRoomId = chatRoom.getId();
             Long buyerId = buyer.getId();
 
-            Pageable pageable = PageRequest.of(0, 20);
             GoodsChatPartId goodsChatPartId = new GoodsChatPartId(buyerId, chatRoomId);
 
             when(partRepository.existsById(goodsChatPartId)).thenReturn(false);
 
             // when
-            assertThatThrownBy(() -> goodsChatService.getChatRoomMessages(chatRoomId, buyerId, pageable))
+            assertThatThrownBy(() -> goodsChatService.getChatRoomMessages(chatRoomId, buyerId, null))
                     .isInstanceOf(CustomException.class)
                     .hasMessage(ErrorCode.GOODS_CHAT_NOT_FOUND_CHAT_PART.getMessage());
 
             // then
             verify(partRepository).existsById(goodsChatPartId);
-            verify(messageRepository, never()).getChatMessages(anyLong(), any(Pageable.class));
+            verify(messageRepository, never()).getChatMessages(chatRoomId, null, 20);
         }
 
         @Nested
