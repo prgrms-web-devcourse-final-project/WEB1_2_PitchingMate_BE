@@ -23,9 +23,10 @@ public class MemberProfileResponse {
     private Integer followerCount;
     private Integer reviewsCount;
     private Integer goodsSoldCount;
+    private Boolean isFollowing;
 
     public static MemberProfileResponse of(Member member, int followingCount, int followerCount,
-                                           int reviewsCount, int goodsSoldCount) {
+                                           int reviewsCount, int goodsSoldCount, boolean isFollowing) {
         return MemberProfileResponse.builder()
                 .nickname(member.getNickname())
                 .imageUrl(FileUtils.getThumbnailImageUrl(member.getImageUrl()))
@@ -36,6 +37,7 @@ public class MemberProfileResponse {
                 .followerCount(followerCount)
                 .reviewsCount(reviewsCount)
                 .goodsSoldCount(goodsSoldCount)
+                .isFollowing(isFollowing)
                 .build();
     }
 }

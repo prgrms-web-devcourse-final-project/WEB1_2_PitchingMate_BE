@@ -88,8 +88,20 @@ public class MemberService {
 
     // 다른 회원 프로필 조회
     @Transactional(readOnly = true)
-    public MemberProfileResponse getMemberProfile(Long memberId) {
-        return getProfile(memberId, MemberProfileResponse.class);
+    public MemberProfileResponse getMemberProfile(Long memberId, Long loginId) {
+        return getProfileResponse(memberId, loginId);
+    }
+
+    private MemberProfileResponse getProfileResponse(Long memberId, Long loginId) {
+        Member member = findByMemberIdActive(memberId);
+        int followCount = followRepository.countByFollowerId(memberId);
+        int followerCount = followRepository.countByFollowingId(memberId);
+        int reviewsCount = goodsReviewRepository.countByRevieweeId(memberId) +
+                mateReviewRepository.countByRevieweeId(memberId);
+        int goodsSoldCount = goodsPostRepository.countGoodsPostsBySellerIdAndStatus(memberId, Status.CLOSED);
+        boolean isFollowing = followRepository.existsByFollowerIdAndFollowingId(loginId, memberId);
+
+        return MemberProfileResponse.of(member, followCount, followerCount, reviewsCount, goodsSoldCount, isFollowing);
     }
 
     // 회원 정보 수정
@@ -140,11 +152,6 @@ public class MemberService {
         int reviewsCount = goodsReviewRepository.countByRevieweeId(memberId) +
                 mateReviewRepository.countByRevieweeId(memberId);
         int goodsSoldCount = goodsPostRepository.countGoodsPostsBySellerIdAndStatus(memberId, Status.CLOSED);
-
-        if (responseType == MemberProfileResponse.class) { // MemberProfileResponse가 요청된 경우, 불필요한 조회를 생략하고 바로 리턴
-            return responseType.cast(
-                    MemberProfileResponse.of(member, followCount, followerCount, reviewsCount, goodsSoldCount));
-        }
 
         if (responseType == MyProfileResponse.class) { // MyProfileResponse가 요청된 경우, 추가적인 조회를 수행
             int goodsBoughtCount = goodsPostRepository.countGoodsPostsByBuyerIdAndStatus(memberId, Status.CLOSED);
