@@ -47,6 +47,7 @@ public class GoodsChatService {
     private final GoodsChatRoomRepository chatRoomRepository;
     private final GoodsChatPartRepository partRepository;
     private final GoodsChatMessageRepository messageRepository;
+    private final GoodsChatCacheManager goodsChatCacheManager;
     private final GoodsChatEventPublisher chatEventPublisher;
     private final GoodsPostEventPublisher notificationEventPublisher;
 
@@ -73,10 +74,35 @@ public class GoodsChatService {
 
     // 채팅방 정보와 채팅 내역 반환
     private GoodsChatRoomResponse getChatRoomWithMessages(GoodsChatRoom chatRoom) {
-        List<GoodsChatMessage> chatMessages = messageRepository.getChatMessages(chatRoom.getId(), null, 20);
+        List<GoodsChatMessage> chatMessages = fetchMessagesFromCacheOrDB(chatRoom.getId(), null, 20);
         List<GoodsChatMessageResponse> chatMessageResponses = mapMessagesToResponses(chatMessages);
-
         return GoodsChatRoomResponse.of(chatRoom, chatMessageResponses);
+    }
+
+    // 채팅 내역 조회
+    private List<GoodsChatMessage> fetchMessagesFromCacheOrDB(Long chatRoomId, LocalDateTime lastSentAt, int size) {
+        // 1. redis 캐싱 데이터 조회
+        List<GoodsChatMessage> chatMessages = goodsChatCacheManager.fetchMessagesFromCache(chatRoomId, lastSentAt, size);
+
+        // 2. 데이터가 비어있는 경우, DB 에서 size 만큼 조회
+        if (chatMessages.isEmpty()) {
+            chatMessages = messageRepository.getChatMessages(chatRoomId, lastSentAt, size);
+            // 2-1. redis 저장
+            goodsChatCacheManager.storeMessagesInCache(chatRoomId, chatMessages);
+        }
+        // 3. 데이터가 size 보다 적은 경우
+        else if (chatMessages.size() < size) {
+            // 3-1. 캐싱 데이터의 마지막 보낸 시간 추출
+            lastSentAt = chatMessages.get(chatMessages.size() - 1).getSentAt();
+
+            // 3-2. 부족한 개수만큼 DB 에서 조회 후 추가
+            List<GoodsChatMessage> remainMessages = messageRepository.getChatMessages(chatRoomId, lastSentAt, size - chatMessages.size());
+            chatMessages.addAll(remainMessages);
+
+            // 3-3. redis 저장
+            goodsChatCacheManager.storeMessagesInCache(chatRoomId, remainMessages);
+        }
+        return chatMessages;
     }
 
     // 메시지 발신자 정보 조회 및 DTO 매핑
@@ -111,7 +137,7 @@ public class GoodsChatService {
     @Transactional(readOnly = true)
     public List<GoodsChatMessageResponse> getChatRoomMessages(Long chatRoomId, Long memberId, LocalDateTime lastSentAt) {
         validateMemberInChatRoom(memberId, chatRoomId);
-        List<GoodsChatMessage> chatMessages = messageRepository.getChatMessages(chatRoomId, lastSentAt, 20);
+        List<GoodsChatMessage> chatMessages = fetchMessagesFromCacheOrDB(chatRoomId, lastSentAt, 20);
 
         return mapMessagesToResponses(chatMessages);
     }
@@ -205,7 +231,8 @@ public class GoodsChatService {
     // 채팅방 삭제
     private void deleteChatRoom(Long chatRoomId) {
         chatRoomRepository.deleteById(chatRoomId);
-        messageRepository.deleteAllByChatRoomId(chatRoomId); // 메시지 삭제
+        messageRepository.deleteAllByChatRoomId(chatRoomId);        // 메시지 삭제
+        goodsChatCacheManager.evictMessagesFromCache(chatRoomId);   // 캐시 무효화
     }
 
     private GoodsChatRoom findChatRoomById(Long chatRoomId) {

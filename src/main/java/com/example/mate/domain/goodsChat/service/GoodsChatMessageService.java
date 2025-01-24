@@ -26,7 +26,9 @@ public class GoodsChatMessageService {
     private final MemberRepository memberRepository;
     private final GoodsChatRoomRepository chatRoomRepository;
     private final GoodsChatMessageRepository messageRepository;
+    private final GoodsChatCacheManager goodsChatCacheManager;
     private final SimpMessagingTemplate messagingTemplate;
+
 
     private static final String GOODS_CHAT_SUBSCRIBE_PATH = "/sub/chat/goods/";
 
@@ -42,6 +44,9 @@ public class GoodsChatMessageService {
         // 채팅 데이터 저장 & 최신 채팅 내역 업데이트
         GoodsChatMessage savedMessage = messageRepository.save(chatMessage);
         chatRoom.updateLastChat(chatMessage.getContent(), chatMessage.getSentAt());
+
+        // redis 캐시 저장
+        goodsChatCacheManager.storeMessageInCache(message.getRoomId(), savedMessage);
 
         GoodsChatMessageResponse response = GoodsChatMessageResponse.of(savedMessage, member);
         sendToSubscribers(message.getRoomId(), response);
@@ -65,6 +70,9 @@ public class GoodsChatMessageService {
         // 채팅 데이터 저장 & 최신 채팅 내역 업데이트
         GoodsChatMessage savedMessage = messageRepository.save(chatMessage);
         chatRoom.updateLastChat(message, chatMessage.getSentAt());
+
+        // redis 캐시 저장
+        goodsChatCacheManager.storeMessageInCache(chatRoomId, savedMessage);
 
         // 이벤트 메시지 전송
         sendToSubscribers(chatRoomId, GoodsChatMessageResponse.of(savedMessage, member));
