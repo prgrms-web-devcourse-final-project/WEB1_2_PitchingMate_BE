@@ -36,6 +36,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -113,6 +114,7 @@ class MemberIntegrationTest {
     private LogoutRedisService logoutRedisService;
 
     @MockBean
+    @Qualifier("jwtTokenRedisTemplate")
     private RedisTemplate<String, String> redisTemplate;
 
     @MockBean
