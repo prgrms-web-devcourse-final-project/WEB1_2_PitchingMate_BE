@@ -12,6 +12,7 @@ import com.example.mate.domain.member.dto.response.MemberSummaryResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -38,19 +39,19 @@ public class GoodsChatRoomController {
     public ResponseEntity<ApiResponse<GoodsChatRoomResponse>> createGoodsChatRoom(
             @AuthenticationPrincipal AuthMember member,
             @Parameter(description = "판매글 ID", required = true) @RequestParam Long goodsPostId
-            ) {
+    ) {
         GoodsChatRoomResponse response = goodsChatService.getOrCreateGoodsChatRoom(member.getMemberId(), goodsPostId);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @GetMapping("/{chatRoomId}/message")
     @Operation(summary = "굿즈거래 채팅방 메시지 조회", description = "지정된 채팅방의 메시지를 페이징 처리하여 조회합니다.")
-    public ResponseEntity<ApiResponse<PageResponse<GoodsChatMessageResponse>>> getGoodsChatRoomMessages(
+    public ResponseEntity<ApiResponse<List<GoodsChatMessageResponse>>> getGoodsChatRoomMessages(
             @AuthenticationPrincipal AuthMember member,
             @Parameter(description = "채팅방 ID", required = true) @PathVariable Long chatRoomId,
-            @Parameter(description = "페이징 정보") @ValidPageable(page = 1, size = 20) Pageable pageable
+            @Parameter(description = "마지막 채팅 메시지 전송 시간") @RequestParam(required = false) LocalDateTime lastSentAt
     ) {
-        PageResponse<GoodsChatMessageResponse> response = goodsChatService.getChatRoomMessages(chatRoomId, member.getMemberId(), pageable);
+        List<GoodsChatMessageResponse> response = goodsChatService.getChatRoomMessages(chatRoomId, member.getMemberId(), lastSentAt);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 

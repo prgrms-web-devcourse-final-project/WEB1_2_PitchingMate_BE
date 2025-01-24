@@ -1,10 +1,10 @@
 package com.example.mate.domain.goodsChat.dto.response;
 
-import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.constant.TeamInfo;
 import com.example.mate.domain.file.FileUtils;
-import com.example.mate.domain.goodsPost.entity.GoodsPost;
 import com.example.mate.domain.goodsChat.entity.GoodsChatRoom;
+import com.example.mate.domain.goodsPost.entity.GoodsPost;
+import java.util.List;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -25,9 +25,9 @@ public class GoodsChatRoomResponse {
     private final String imageUrl;
     private final Long goodsSellerId;
 
-    private final PageResponse<GoodsChatMessageResponse> initialMessages;
+    private final List<GoodsChatMessageResponse> initialMessages;
 
-    public static GoodsChatRoomResponse of(GoodsChatRoom chatRoom, PageResponse<GoodsChatMessageResponse> initialMessages) {
+    public static GoodsChatRoomResponse of(GoodsChatRoom chatRoom, List<GoodsChatMessageResponse> initialMessages) {
         GoodsPost goodsPost = chatRoom.getGoodsPost();
         String mainImageUrl = goodsPost.getMainImageUrl();
         String teamName = getTeamName(goodsPost);
