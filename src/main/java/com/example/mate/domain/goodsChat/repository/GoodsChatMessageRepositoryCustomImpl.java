@@ -4,7 +4,6 @@ import com.example.mate.domain.goodsChat.document.GoodsChatMessage;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -12,7 +11,6 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 
 @RequiredArgsConstructor
-@Slf4j
 public class GoodsChatMessageRepositoryCustomImpl implements GoodsChatMessageRepositoryCustom {
 
     private final MongoTemplate mongoTemplate;
@@ -38,9 +36,7 @@ public class GoodsChatMessageRepositoryCustomImpl implements GoodsChatMessageRep
     private Criteria createCriteria(Long chatRoomId, LocalDateTime lastSentAt) {
         Criteria criteria = Criteria.where("chat_room_id").is(chatRoomId);
 
-        log.info("last sent at : {}", lastSentAt);
-
-        // lastSentAt == null 일 경우, 최신 메시지 조회
+        // lastSentAt 가 null 일 경우, 최신 메시지 조회
         if (lastSentAt != null) {
             criteria = criteria.and("sent_at").lt(lastSentAt);
         }

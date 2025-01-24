@@ -28,6 +28,7 @@ import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
 import com.example.mate.domain.notification.entity.NotificationType;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -49,7 +50,7 @@ public class GoodsChatService {
     private final GoodsChatEventPublisher chatEventPublisher;
     private final GoodsPostEventPublisher notificationEventPublisher;
 
-    // 채팅방 생성 & 기존 채팅방 입장
+    // 판매글에서 채팅방 입장 - 채팅방 생성 or 기존 채팅방 입장
     public GoodsChatRoomResponse getOrCreateGoodsChatRoom(Long buyerId, Long goodsPostId) {
         // 구매자, 판매글, 판매자 조회 및 검증
         Member buyer = findMemberById(buyerId);
@@ -80,13 +81,14 @@ public class GoodsChatService {
 
     // 메시지 발신자 정보 조회 및 DTO 매핑
     private List<GoodsChatMessageResponse> mapMessagesToResponses(List<GoodsChatMessage> chatMessages) {
-        return chatMessages.stream()
-                .map(message -> {
-                    Long memberId = message.getMemberId();
-                    Member member = findMemberById(memberId);
-                    return GoodsChatMessageResponse.of(message, member);
-                })
-                .toList();
+        List<GoodsChatMessageResponse> goodsChatMessageResponses = new ArrayList<>();
+
+        for (GoodsChatMessage chatMessage : chatMessages) {
+            Long memberId = chatMessage.getMemberId();
+            Member member = findMemberById(memberId);
+            goodsChatMessageResponses.add(GoodsChatMessageResponse.of(chatMessage, member));
+        }
+        return goodsChatMessageResponses;
     }
 
     // 새 채팅방 생성
@@ -142,7 +144,7 @@ public class GoodsChatService {
                 .orElseThrow(() -> new CustomException(ErrorCode.GOODS_CHAT_OPPONENT_NOT_FOUND));
     }
 
-    // 채팅방 입장
+    // 채팅방 목록에서 채팅방 입장 - 기존 채팅방 입장
     @Transactional(readOnly = true)
     public GoodsChatRoomResponse getGoodsChatRoomInfo(Long memberId, Long chatRoomId) {
         validateMemberInChatRoom(memberId, chatRoomId);
