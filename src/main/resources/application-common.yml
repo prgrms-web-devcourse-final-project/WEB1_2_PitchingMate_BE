@@ -13,10 +13,6 @@ spring:
         await-termination: true
         await-termination-period: 10s
 
-  data:
-    mongodb:
-      auto-index-creation: true
-
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
@@ -25,8 +21,6 @@ springdoc:
   packages-to-scan: com.example.mate
   default-consumes-media-type: application/json
   default-produces-media-type: application/json
-
-
 
 oauth:
   naver_client_id: ${NAVER_CLIENT_ID}
