@@ -4,6 +4,7 @@ import com.example.mate.domain.goodsChat.document.GoodsChatMessage;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -26,25 +27,7 @@ public class GoodsChatCacheManager {
 
     // Redis Sorted Set 에 메시지를 저장
     public void storeMessageInCache(Long chatRoomId, GoodsChatMessage message) {
-        String cacheKey = formatCacheKey(chatRoomId);
-        Double score = convertToScore(message.getSentAt());
-        redisTemplate.opsForZSet().add(cacheKey, message, score);
-        setTTL(cacheKey);
-    }
-
-    // Redis Sorted Set 에서 lastSentAt 이전의 메시지 size 만큼 조회
-    public List<GoodsChatMessage> fetchMessagesFromCache(Long chatRoomId, LocalDateTime lastSentAt, int size) {
-        String cacheKey = formatCacheKey(chatRoomId);
-        Set<GoodsChatMessage> messages;
-
-        // lastSentAt이 null 인 경우, 가장 최근 메시지 조회
-        if (lastSentAt == null) {
-             messages = redisTemplate.opsForZSet().reverseRange(cacheKey, 0, size - 1);
-        } else {
-            Double score = convertToScore(lastSentAt);
-            messages = redisTemplate.opsForZSet().rangeByScore(cacheKey, Double.NEGATIVE_INFINITY, score, 1, 20);
-        }
-        return new ArrayList<>(messages);
+        storeMessagesInCache(chatRoomId, List.of(message));
     }
 
     // Redis Sorted Set 에 메시지 List 저장
@@ -55,6 +38,33 @@ public class GoodsChatCacheManager {
             redisTemplate.opsForZSet().add(cacheKey, message, score);
         }
         setTTL(formatCacheKey(chatRoomId));
+    }
+
+    /**
+     * Redis 에서 특정 채팅방의 메시지를 lastSentAt 기준으로 최신순으로 정렬하여 조회합니다.
+     * @param chatRoomId 채팅방 ID (해당 채팅방의 메시지를 조회합니다.)
+     * @param lastSentAt 메시지를 조회할 기준 시간 (null 일 경우 가장 최근 메시지를 조회합니다.)
+     * @param size 조회할 메시지의 개수
+     * @return 최신순으로 정렬된 조회된 메시지 List (메시지가 없으면 빈 리스트를 반환합니다.)
+     */
+    public List<GoodsChatMessage> fetchMessagesFromCache(Long chatRoomId, LocalDateTime lastSentAt, int size) {
+        String cacheKey = formatCacheKey(chatRoomId);
+        Set<GoodsChatMessage> messages;
+
+        // lastSentAt이 null 인 경우, 가장 최근 메시지 조회
+        if (lastSentAt == null) {
+             messages = redisTemplate.opsForZSet().reverseRange(cacheKey, 0, size - 1);
+        // lastSentAt을 기준으로 이전의 메시지를 최신순으로 정렬하여 조회
+        } else {
+            Double score = convertToScore(lastSentAt);
+            messages = redisTemplate.opsForZSet().reverseRangeByScore(cacheKey, Double.NEGATIVE_INFINITY, score, 1, size);
+        }
+
+        if (messages == null || messages.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return new ArrayList<>(messages);
     }
 
     // Redis Sorted Set 에서 모든 메시지를 삭제
@@ -72,6 +82,7 @@ public class GoodsChatCacheManager {
         return String.format(CACHE_KEY_FORMAT, chatRoomId);
     }
 
+    // LocalDateTime 을 Redis Sorted Set 에서 사용하는 score 값으로 변환
     private Double convertToScore(LocalDateTime sentAt) {
         return (double) sentAt.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
     }
