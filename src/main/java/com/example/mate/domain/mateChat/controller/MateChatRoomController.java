@@ -18,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -59,12 +60,12 @@ public class MateChatRoomController {
 
     @GetMapping("/{chatroomId}/messages")
     @Operation(summary = "채팅방 메세지 조회", description = "메시지 내역을 조회합니다.")
-    public ResponseEntity<ApiResponse<PageResponse<MateChatMessageResponse>>> getChatMessages(
+    public ResponseEntity<ApiResponse<List<MateChatMessageResponse>>> getChatMessages(
             @Parameter(description = "채팅방 ID") @PathVariable Long chatroomId,
             @AuthenticationPrincipal AuthMember member,
-            @Parameter(description = "페이지 정보") @ValidPageable(page = 1) Pageable pageable
-    ) {
-        PageResponse<MateChatMessageResponse> messages = chatRoomService.getChatMessages(chatroomId, member.getMemberId(), pageable);
+            @Parameter(description = "마지막 채팅 보낸 시간") @RequestParam LocalDateTime lastSentAt
+            ) {
+        List<MateChatMessageResponse> messages = chatRoomService.getChatMessages(chatroomId, member.getMemberId(), lastSentAt);
         return ResponseEntity.ok(ApiResponse.success(messages));
     }
 
