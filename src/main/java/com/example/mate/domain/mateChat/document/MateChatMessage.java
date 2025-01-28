@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
 @CompoundIndexes({
-        @CompoundIndex(name = "idx_chat_room_id_sent_at", def = "{ 'chat_room_id': 1, 'sent_at': -1 }")
+        @CompoundIndex(name = "idx_chat_room_id_sent_at", def = "{ 'room_id': 1, 'send_time': -1 }")
 }
 )
 public class MateChatMessage extends BaseTimeEntity {
