@@ -36,11 +36,14 @@ public class MateChatMessageRepositoryCustomImpl implements MateChatMessageRepos
 
     private Criteria createCriteria(Long roomId, LocalDateTime lastEnterTime, LocalDateTime lastSentAt) {
         Criteria criteria = Criteria.where("room_id").is(roomId);
-        criteria.and("send_time").gt(lastEnterTime);
 
-        // lastSentAt 이 null 일 경우, 최신 메시지 조회
         if (lastSentAt != null) {
-            criteria = criteria.and("send_time").lt(lastSentAt);
+            criteria.andOperator(
+                    Criteria.where("send_time").gt(lastEnterTime),
+                    Criteria.where("send_time").lt(lastSentAt)
+            );
+        } else {
+            criteria.and("send_time").gt(lastEnterTime);
         }
 
         return criteria;
