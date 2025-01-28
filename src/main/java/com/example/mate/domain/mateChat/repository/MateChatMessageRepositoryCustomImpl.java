@@ -15,7 +15,6 @@ public class MateChatMessageRepositoryCustomImpl implements MateChatMessageRepos
 
     private final MongoTemplate mongoTemplate;
 
-
     /**
      * 주어진 chatRoomId의 메시지 중에서
      * lastEnterTime 이후에 보내졌으며
