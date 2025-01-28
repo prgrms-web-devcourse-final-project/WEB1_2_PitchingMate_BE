@@ -63,7 +63,7 @@ public class MateChatRoomController {
     public ResponseEntity<ApiResponse<List<MateChatMessageResponse>>> getChatMessages(
             @Parameter(description = "채팅방 ID") @PathVariable Long chatroomId,
             @AuthenticationPrincipal AuthMember member,
-            @Parameter(description = "마지막 채팅 보낸 시간") @RequestParam LocalDateTime lastSentAt
+            @Parameter(description = "마지막 채팅 보낸 시간") @RequestParam(required = false) LocalDateTime lastSentAt
             ) {
         List<MateChatMessageResponse> messages = chatRoomService.getChatMessages(chatroomId, member.getMemberId(), lastSentAt);
         return ResponseEntity.ok(ApiResponse.success(messages));

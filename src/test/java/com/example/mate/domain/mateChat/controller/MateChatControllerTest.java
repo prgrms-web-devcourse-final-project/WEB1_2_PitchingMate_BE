@@ -118,20 +118,17 @@ public class MateChatControllerTest {
     @DisplayName("메이트 채팅방 메시지 조회 성공")
     void getChatMessages() throws Exception {
         // given
-        List<MateChatMessageResponse> pageResponse = createMockChatMessagesResponse();
+        List<MateChatMessageResponse> messageList = createMockChatMessagesResponse();
         given(chatRoomService.getChatMessages(anyLong(), any(), any()))
-                .willReturn(pageResponse);
+                .willReturn(messageList);
 
         // when & then
         mockMvc.perform(get("/api/mates/chat/{chatroomId}/messages", 1L)
-                        .param("page", "0")
-                        .param("size", "20"))
+                        )
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
                 .andExpect(jsonPath("$.code").value(200))
-                .andExpect(jsonPath("$.data.content[0].messageId").value(1L))
-                .andExpect(jsonPath("$.data.totalPages").value(1))
                 .andExpect(jsonPath("$.timestamp").isNotEmpty());
 
         verify(chatRoomService).getChatMessages(anyLong(), any(), any());
