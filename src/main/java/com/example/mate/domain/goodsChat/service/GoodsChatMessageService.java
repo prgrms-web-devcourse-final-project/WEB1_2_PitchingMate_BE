@@ -29,9 +29,7 @@ public class GoodsChatMessageService {
     private final GoodsChatCacheManager goodsChatCacheManager;
     private final SimpMessagingTemplate messagingTemplate;
 
-
     private static final String GOODS_CHAT_SUBSCRIBE_PATH = "/sub/chat/goods/";
-
     private static final String MEMBER_ENTER_MESSAGE = "님이 대화를 시작했습니다.";
     private static final String MEMBER_LEAVE_MESSAGE = "님이 대화를 떠났습니다.";
     private static final String MEMBER_TRANSACTION_MESSAGE = "님이 거래를 완료했습니다. 상품에 대한 거래후기를 남겨주세요!";

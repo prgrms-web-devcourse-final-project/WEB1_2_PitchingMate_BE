@@ -96,11 +96,11 @@ public class GoodsChatService {
             lastSentAt = chatMessages.get(chatMessages.size() - 1).getSentAt();
 
             // 3-2. 부족한 개수만큼 DB 에서 조회 후 추가
-            List<GoodsChatMessage> remainMessages = messageRepository.getChatMessages(chatRoomId, lastSentAt, size - chatMessages.size());
-            chatMessages.addAll(remainMessages);
+            List<GoodsChatMessage> additionalMessages = messageRepository.getChatMessages(chatRoomId, lastSentAt, size - chatMessages.size());
+            chatMessages.addAll(additionalMessages);
 
             // 3-3. redis 저장
-            goodsChatCacheManager.storeMessagesInCache(chatRoomId, remainMessages);
+            goodsChatCacheManager.storeMessagesInCache(chatRoomId, additionalMessages);
         }
         return chatMessages;
     }
