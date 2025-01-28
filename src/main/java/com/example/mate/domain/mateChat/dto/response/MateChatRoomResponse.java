@@ -1,10 +1,11 @@
 package com.example.mate.domain.mateChat.dto.response;
 
-import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.mateChat.entity.MateChatRoom;
 import com.example.mate.domain.mateChat.entity.MateChatRoomMember;
 import lombok.Builder;
 import lombok.Getter;
+
+import java.util.List;
 
 @Getter
 @Builder
@@ -17,12 +18,12 @@ public class MateChatRoomResponse {
     private Boolean isMessageable;
     private Boolean isAuthorLeft;
     private Boolean isAuthor;
-    private PageResponse<MateChatMessageResponse> initialMessages;
+    private List<MateChatMessageResponse> initialMessages;
 
     public static MateChatRoomResponse from(
             MateChatRoom chatRoom,
             MateChatRoomMember member,
-            PageResponse<MateChatMessageResponse> messages) {
+            List<MateChatMessageResponse> messages) {
         return MateChatRoomResponse.builder()
                 .roomId(chatRoom.getId())
                 .matePostId(chatRoom.getMatePost().getId())
