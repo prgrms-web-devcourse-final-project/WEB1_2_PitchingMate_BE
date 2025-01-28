@@ -93,7 +93,7 @@ public class GoodsChatCacheManagerTest {
         Double score = (double) lastSentAt.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
 
         Set<GoodsChatMessage> mockMessages = new LinkedHashSet<>(Arrays.asList(message2, message1));
-        when(zSetOperations.rangeByScore(eq(cacheKey), eq(Double.NEGATIVE_INFINITY), eq(score), eq(1L), eq(20L)))
+        when(zSetOperations.reverseRangeByScore(eq(cacheKey), eq(Double.NEGATIVE_INFINITY), eq(score), eq(1L), eq(20L)))
                 .thenReturn(mockMessages);
 
         // when
@@ -102,7 +102,7 @@ public class GoodsChatCacheManagerTest {
         // then
         assertThat(result).hasSize(2);
         assertThat(result).containsExactly(message2, message1);
-        verify(zSetOperations).rangeByScore(eq(cacheKey), eq(Double.NEGATIVE_INFINITY), eq(score), eq(1L), eq(20L));
+        verify(zSetOperations).reverseRangeByScore(eq(cacheKey), eq(Double.NEGATIVE_INFINITY), eq(score), eq(1L), eq(20L));
     }
 
     @Test
