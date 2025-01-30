@@ -5,12 +5,6 @@ import com.example.mate.common.error.ErrorCode;
 import com.example.mate.common.response.PageResponse;
 import com.example.mate.domain.constant.Gender;
 import com.example.mate.domain.mateChat.document.MateChatMessage;
-import com.example.mate.domain.mateChat.repository.MateChatMessageRepository;
-import com.example.mate.domain.matePost.entity.Age;
-import com.example.mate.domain.matePost.entity.MatePost;
-import com.example.mate.domain.matePost.entity.Status;
-import com.example.mate.domain.matePost.repository.MatePostRepository;
-import com.example.mate.domain.matePost.repository.VisitPartRepository;
 import com.example.mate.domain.mateChat.dto.response.MateChatMessageResponse;
 import com.example.mate.domain.mateChat.dto.response.MateChatRoomListResponse;
 import com.example.mate.domain.mateChat.dto.response.MateChatRoomResponse;
@@ -19,16 +13,20 @@ import com.example.mate.domain.mateChat.entity.MateChatRoomMember;
 import com.example.mate.domain.mateChat.event.MateChatEvent;
 import com.example.mate.domain.mateChat.event.MateChatEventPublisher;
 import com.example.mate.domain.mateChat.message.MessageType;
+import com.example.mate.domain.mateChat.repository.MateChatMessageRepository;
 import com.example.mate.domain.mateChat.repository.MateChatRoomMemberRepository;
 import com.example.mate.domain.mateChat.repository.MateChatRoomRepository;
+import com.example.mate.domain.matePost.entity.Age;
+import com.example.mate.domain.matePost.entity.MatePost;
+import com.example.mate.domain.matePost.entity.Status;
+import com.example.mate.domain.matePost.repository.MatePostRepository;
+import com.example.mate.domain.matePost.repository.VisitPartRepository;
 import com.example.mate.domain.member.dto.response.MemberSummaryResponse;
 import com.example.mate.domain.member.entity.Member;
 import com.example.mate.domain.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,7 +38,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.example.mate.common.error.ErrorCode.CHAT_ROOM_MEMBER_NOT_FOUND;
-import static org.springframework.data.domain.Sort.Direction.DESC;
 
 @Service
 @Transactional
@@ -109,8 +106,8 @@ public class MateChatRoomService {
         }
 
         // 4. 메시지 조회
-        PageResponse<MateChatMessageResponse> initialMessages =
-                getChatMessages(chatRoom.getId(), member.getId(), PageRequest.of(0, 20));
+        List<MateChatMessageResponse> initialMessages =
+                getChatMessages(chatRoom.getId(), member.getId(), chatRoomMember.getLastEnteredAt());
 
         return MateChatRoomResponse.from(chatRoom, chatRoomMember, initialMessages);
     }
@@ -269,19 +266,18 @@ public class MateChatRoomService {
 
     // 채팅 메세지 조회
     @Transactional(readOnly = true)
-    public PageResponse<MateChatMessageResponse> getChatMessages(Long chatRoomId, Long senderId, Pageable pageable) {
+    public List<MateChatMessageResponse> getChatMessages(Long chatRoomId, Long senderId, LocalDateTime lastSentAt) {
         MateChatRoomMember chatRoomMember = chatRoomMemberRepository.findByChatRoomIdAndMemberId(chatRoomId, senderId)
                 .orElseThrow(() -> new CustomException(CHAT_ROOM_MEMBER_NOT_FOUND));
 
-        Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(DESC, "sendTime"));
-        Page<MateChatMessage> messagePage = chatMessageRepository.findByRoomIdAndSendTimeAfter(
+        List<MateChatMessage> messageList = chatMessageRepository.getChatMessages(
                 chatRoomId,
                 chatRoomMember.getLastEnteredAt(),
-                sortedPageable
+                lastSentAt
         );
 
         // 발신자 ID 수집 및 조회
-        Set<Long> senderIds = messagePage.getContent().stream()
+        Set<Long> senderIds = messageList.stream()
                 .map(MateChatMessage::getSenderId)
                 .collect(Collectors.toSet());
 
@@ -289,14 +285,12 @@ public class MateChatRoomService {
                 .collect(Collectors.toMap(Member::getId, member -> member));
 
         // senderMap을 사용하여 메시지 변환
-        List<MateChatMessageResponse> messages = messagePage.getContent().stream()
+        return messageList.stream()
                 .map(message -> {
                     Member sender = senderMap.get(message.getSenderId());
                     return MateChatMessageResponse.from(message, sender);
                 })
                 .toList();
-
-        return PageResponse.from(messagePage, messages);
     }
 
     // 내 채팅방 목록 조회

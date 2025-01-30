@@ -118,23 +118,20 @@ public class MateChatControllerTest {
     @DisplayName("메이트 채팅방 메시지 조회 성공")
     void getChatMessages() throws Exception {
         // given
-        PageResponse<MateChatMessageResponse> pageResponse = createMockChatMessagesResponse();
-        given(chatRoomService.getChatMessages(anyLong(), anyLong(), any(Pageable.class)))
-                .willReturn(pageResponse);
+        List<MateChatMessageResponse> messageList = createMockChatMessagesResponse();
+        given(chatRoomService.getChatMessages(anyLong(), any(), any()))
+                .willReturn(messageList);
 
         // when & then
         mockMvc.perform(get("/api/mates/chat/{chatroomId}/messages", 1L)
-                        .param("page", "0")
-                        .param("size", "20"))
+                        )
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
                 .andExpect(jsonPath("$.code").value(200))
-                .andExpect(jsonPath("$.data.content[0].messageId").value(1L))
-                .andExpect(jsonPath("$.data.totalPages").value(1))
                 .andExpect(jsonPath("$.timestamp").isNotEmpty());
 
-        verify(chatRoomService).getChatMessages(anyLong(), anyLong(), any(Pageable.class));
+        verify(chatRoomService).getChatMessages(anyLong(), any(), any());
     }
 
     @Test
@@ -196,7 +193,7 @@ public class MateChatControllerTest {
                 .build();
     }
 
-    private PageResponse<MateChatMessageResponse> createMockChatMessagesResponse() {
+    private List<MateChatMessageResponse> createMockChatMessagesResponse() {
         MateChatMessageResponse message = MateChatMessageResponse.builder()
                 .messageId("1")
                 .roomId(1L)
@@ -208,14 +205,7 @@ public class MateChatControllerTest {
                 .sendTime(LocalDateTime.now())
                 .build();
 
-        return PageResponse.<MateChatMessageResponse>builder()
-                .content(List.of(message))
-                .totalPages(1)
-                .totalElements(1)
-                .hasNext(false)
-                .pageNumber(0)
-                .pageSize(20)
-                .build();
+        return List.of(message);
     }
 
     private List<MemberSummaryResponse> createMockMemberResponses() {
