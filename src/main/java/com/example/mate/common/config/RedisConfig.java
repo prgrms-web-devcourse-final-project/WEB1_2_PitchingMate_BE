@@ -2,6 +2,7 @@ package com.example.mate.common.config;
 
 import com.example.mate.domain.goodsChat.document.GoodsChatMessage;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.data.redis.RedisProperties;
@@ -35,15 +36,22 @@ public class RedisConfig {
 
     @Bean
     public RedisTemplate<String, GoodsChatMessage> goodsChatCacheRedisTemplate() {
+        // LocalDateTime 직렬화를 위한 CustomSerializer 생성
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
-        objectMapper.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL);
-        GenericJackson2JsonRedisSerializer genericJackson2JsonRedisSerializer = new GenericJackson2JsonRedisSerializer(objectMapper);
 
+        // 타입 검증을 위한 BasicPolymorphicTypeValidator
+        BasicPolymorphicTypeValidator validator = BasicPolymorphicTypeValidator.builder()
+                .allowIfSubType(GoodsChatMessage.class)
+                .build();
+        objectMapper.activateDefaultTyping(validator, ObjectMapper.DefaultTyping.NON_FINAL);
+        GenericJackson2JsonRedisSerializer customSerializer = new GenericJackson2JsonRedisSerializer(objectMapper);
+
+        // RedisTemplate 설정
         RedisTemplate<String, GoodsChatMessage> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(redisConnectionFactory());
         redisTemplate.setKeySerializer(new StringRedisSerializer());
-        redisTemplate.setValueSerializer(genericJackson2JsonRedisSerializer);
+        redisTemplate.setValueSerializer(customSerializer);
         return redisTemplate;
     }
 }
