@@ -30,6 +30,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.transaction.support.TransactionCallback;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @ExtendWith(MockitoExtension.class)
 class GoodsChatMessageServiceTest {
@@ -48,6 +50,9 @@ class GoodsChatMessageServiceTest {
 
     @Mock
     private SimpMessagingTemplate messagingTemplate;
+
+    @Mock
+    private TransactionTemplate mongoTransactionTemplate;
 
     private Member createMember(Long id, String name, String nickname) {
         return Member.builder()
@@ -100,6 +105,10 @@ class GoodsChatMessageServiceTest {
             when(memberRepository.findById(memberId)).thenReturn(Optional.of(member));
             when(chatRoomRepository.findById(chatRoomId)).thenReturn(Optional.of(chatRoom));
             when(messageRepository.save(any(GoodsChatMessage.class))).thenReturn(chatMessage);
+            when(mongoTransactionTemplate.execute(any())).thenAnswer(invocation -> {
+                TransactionCallback<?> callback = invocation.getArgument(0);
+                return callback.doInTransaction(null);
+            });
 
             // when
             goodsChatMessageService.sendMessage(request);
@@ -205,6 +214,10 @@ class GoodsChatMessageServiceTest {
 
             when(chatRoomRepository.findById(chatRoomId)).thenReturn(Optional.of(chatRoom));
             when(messageRepository.save(any(GoodsChatMessage.class))).thenReturn(chatMessage);
+            when(mongoTransactionTemplate.execute(any())).thenAnswer(invocation -> {
+                TransactionCallback<?> callback = invocation.getArgument(0);
+                return callback.doInTransaction(null);
+            });
 
             // when
             goodsChatMessageService.sendChatEventMessage(event);
@@ -233,6 +246,10 @@ class GoodsChatMessageServiceTest {
 
             when(chatRoomRepository.findById(chatRoomId)).thenReturn(Optional.of(chatRoom));
             when(messageRepository.save(any(GoodsChatMessage.class))).thenReturn(chatMessage);
+            when(mongoTransactionTemplate.execute(any())).thenAnswer(invocation -> {
+                TransactionCallback<?> callback = invocation.getArgument(0);
+                return callback.doInTransaction(null);
+            });
 
             // when
             goodsChatMessageService.sendChatEventMessage(event);
