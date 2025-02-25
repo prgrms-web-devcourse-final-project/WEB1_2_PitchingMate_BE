@@ -6,12 +6,14 @@ import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.MongoDatabaseFactory;
+import org.springframework.data.mongodb.MongoTransactionManager;
 import org.springframework.data.mongodb.core.convert.DbRefResolver;
 import org.springframework.data.mongodb.core.convert.DefaultDbRefResolver;
 import org.springframework.data.mongodb.core.convert.DefaultMongoTypeMapper;
 import org.springframework.data.mongodb.core.convert.MappingMongoConverter;
 import org.springframework.data.mongodb.core.convert.MongoCustomConversions;
 import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @Configuration
 public class MongoConfig {
@@ -35,5 +37,15 @@ public class MongoConfig {
         ));
 
         return converter;
+    }
+
+    @Bean(name = "mongoTransactionManager")
+    public MongoTransactionManager transactionManager(MongoDatabaseFactory mongoDatabaseFactory) {
+        return new MongoTransactionManager(mongoDatabaseFactory);
+    }
+
+    @Bean(name = "mongoTransactionTemplate")
+    public TransactionTemplate transactionTemplate(MongoTransactionManager mongoTransactionManager) {
+        return new TransactionTemplate(mongoTransactionManager);
     }
 }
