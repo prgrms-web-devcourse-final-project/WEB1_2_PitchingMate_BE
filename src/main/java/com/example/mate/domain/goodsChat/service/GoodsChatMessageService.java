@@ -26,10 +26,10 @@ public class GoodsChatMessageService {
     private final MemberRepository memberRepository;
     private final GoodsChatRoomRepository chatRoomRepository;
     private final GoodsChatMessageRepository messageRepository;
+    private final GoodsChatCacheManager goodsChatCacheManager;
     private final SimpMessagingTemplate messagingTemplate;
 
     private static final String GOODS_CHAT_SUBSCRIBE_PATH = "/sub/chat/goods/";
-
     private static final String MEMBER_ENTER_MESSAGE = "님이 대화를 시작했습니다.";
     private static final String MEMBER_LEAVE_MESSAGE = "님이 대화를 떠났습니다.";
     private static final String MEMBER_TRANSACTION_MESSAGE = "님이 거래를 완료했습니다. 상품에 대한 거래후기를 남겨주세요!";
@@ -42,6 +42,9 @@ public class GoodsChatMessageService {
         // 채팅 데이터 저장 & 최신 채팅 내역 업데이트
         GoodsChatMessage savedMessage = messageRepository.save(chatMessage);
         chatRoom.updateLastChat(chatMessage.getContent(), chatMessage.getSentAt());
+
+        // redis 캐시 저장
+        goodsChatCacheManager.storeMessageInCache(message.getRoomId(), savedMessage);
 
         GoodsChatMessageResponse response = GoodsChatMessageResponse.of(savedMessage, member);
         sendToSubscribers(message.getRoomId(), response);
@@ -65,6 +68,9 @@ public class GoodsChatMessageService {
         // 채팅 데이터 저장 & 최신 채팅 내역 업데이트
         GoodsChatMessage savedMessage = messageRepository.save(chatMessage);
         chatRoom.updateLastChat(message, chatMessage.getSentAt());
+
+        // redis 캐시 저장
+        goodsChatCacheManager.storeMessageInCache(chatRoomId, savedMessage);
 
         // 이벤트 메시지 전송
         sendToSubscribers(chatRoomId, GoodsChatMessageResponse.of(savedMessage, member));
