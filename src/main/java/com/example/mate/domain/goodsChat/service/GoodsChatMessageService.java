@@ -40,7 +40,6 @@ public class GoodsChatMessageService {
     public void sendMessage(GoodsChatMessageRequest message) {
         Member member = findMemberById(message.getSenderId());
         GoodsChatRoom chatRoom = findByChatRoomById(message.getRoomId());
-
         saveAndSendMessage(chatRoom, member, message.getMessage(), message.getType());
     }
 
@@ -70,17 +69,15 @@ public class GoodsChatMessageService {
         chatRoom.updateLastChat(message, chatMessage.getSentAt());
 
         // MongoDB 트랜잭션
-        mongoTransactionTemplate.execute(status -> {
+        mongoTransactionTemplate.executeWithoutResult(status -> {
             // 채팅 메시지 저장
             GoodsChatMessage savedMessage = messageRepository.save(chatMessage);
 
             // redis 캐시 저장
-            goodsChatCacheManager.storeMessageInCache(chatRoomId, savedMessage);
+            goodsChatCacheManager.storeMessageInCache(savedMessage.getChatRoomId(), savedMessage);
 
             // 메시지 전송
             sendToSubscribers(savedMessage.getChatRoomId(), GoodsChatMessageResponse.of(savedMessage, member));
-
-            return null;
         });
     }
 
