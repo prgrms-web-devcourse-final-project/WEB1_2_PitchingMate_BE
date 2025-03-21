@@ -27,6 +27,7 @@ public class GoodsChatMessageService {
     private final MemberRepository memberRepository;
     private final GoodsChatRoomRepository chatRoomRepository;
     private final GoodsChatMessageRepository messageRepository;
+    private final GoodsChatCacheManager goodsChatCacheManager;
     private final SimpMessagingTemplate messagingTemplate;
     private final TransactionTemplate mongoTransactionTemplate;
 
@@ -72,6 +73,9 @@ public class GoodsChatMessageService {
         mongoTransactionTemplate.execute(status -> {
             // 채팅 메시지 저장
             GoodsChatMessage savedMessage = messageRepository.save(chatMessage);
+
+            // redis 캐시 저장
+            goodsChatCacheManager.storeMessageInCache(chatRoomId, savedMessage);
 
             // 메시지 전송
             sendToSubscribers(savedMessage.getChatRoomId(), GoodsChatMessageResponse.of(savedMessage, member));

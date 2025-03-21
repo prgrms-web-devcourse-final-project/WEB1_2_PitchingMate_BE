@@ -82,6 +82,9 @@ class GoodsChatServiceTest {
     @Mock
     private GoodsPostEventPublisher postEventPublisher;
 
+    @Mock
+    private GoodsChatCacheManager goodsChatCacheManager;
+
     private Member createMember(Long id, String name, String nickname) {
         return Member.builder()
                 .id(id)

@@ -23,6 +23,7 @@ import com.example.mate.domain.goodsChat.entity.GoodsChatRoom;
 import com.example.mate.domain.goodsChat.repository.GoodsChatMessageRepository;
 import com.example.mate.domain.goodsChat.repository.GoodsChatPartRepository;
 import com.example.mate.domain.goodsChat.repository.GoodsChatRoomRepository;
+import com.example.mate.domain.goodsChat.service.GoodsChatCacheManager;
 import com.example.mate.domain.goodsPost.dto.response.LocationInfo;
 import com.example.mate.domain.goodsPost.entity.Category;
 import com.example.mate.domain.goodsPost.entity.GoodsPost;
@@ -45,6 +46,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -65,7 +67,7 @@ public class GoodsChatIntegrationTest extends AcceptanceTestWithMongo {
     @Autowired private GoodsChatMessageRepository messageRepository;
     @Autowired private ObjectMapper objectMapper;
     @Autowired private JdbcTemplate jdbcTemplate;
-
+    @MockBean private GoodsChatCacheManager goodsChatCacheManager;
 
     private Member seller;
     private Member buyer;

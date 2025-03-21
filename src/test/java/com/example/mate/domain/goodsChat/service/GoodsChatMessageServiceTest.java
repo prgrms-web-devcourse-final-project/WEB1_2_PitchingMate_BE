@@ -54,6 +54,9 @@ class GoodsChatMessageServiceTest {
     @Mock
     private TransactionTemplate mongoTransactionTemplate;
 
+    @Mock
+    private GoodsChatCacheManager goodsChatCacheManager;
+
     private Member createMember(Long id, String name, String nickname) {
         return Member.builder()
                 .id(id)
