@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @Service
 @RequiredArgsConstructor
@@ -28,26 +29,18 @@ public class GoodsChatMessageService {
     private final GoodsChatMessageRepository messageRepository;
     private final GoodsChatCacheManager goodsChatCacheManager;
     private final SimpMessagingTemplate messagingTemplate;
+    private final TransactionTemplate mongoTransactionTemplate;
 
     private static final String GOODS_CHAT_SUBSCRIBE_PATH = "/sub/chat/goods/";
     private static final String MEMBER_ENTER_MESSAGE = "님이 대화를 시작했습니다.";
     private static final String MEMBER_LEAVE_MESSAGE = "님이 대화를 떠났습니다.";
     private static final String MEMBER_TRANSACTION_MESSAGE = "님이 거래를 완료했습니다. 상품에 대한 거래후기를 남겨주세요!";
 
+    // 채팅 메시지 전송
     public void sendMessage(GoodsChatMessageRequest message) {
         Member member = findMemberById(message.getSenderId());
         GoodsChatRoom chatRoom = findByChatRoomById(message.getRoomId());
-        GoodsChatMessage chatMessage = createChatMessage(chatRoom.getId(), member.getId(), message.getMessage(), message.getType());
-
-        // 채팅 데이터 저장 & 최신 채팅 내역 업데이트
-        GoodsChatMessage savedMessage = messageRepository.save(chatMessage);
-        chatRoom.updateLastChat(chatMessage.getContent(), chatMessage.getSentAt());
-
-        // redis 캐시 저장
-        goodsChatCacheManager.storeMessageInCache(message.getRoomId(), savedMessage);
-
-        GoodsChatMessageResponse response = GoodsChatMessageResponse.of(savedMessage, member);
-        sendToSubscribers(message.getRoomId(), response);
+        saveAndSendMessage(chatRoom, member, message.getMessage(), message.getType());
     }
 
     // 이벤트 메시지 전송
@@ -63,17 +56,29 @@ public class GoodsChatMessageService {
             case LEAVE -> message += MEMBER_LEAVE_MESSAGE;
             case GOODS -> message += MEMBER_TRANSACTION_MESSAGE;
         }
-        GoodsChatMessage chatMessage = createChatMessage(chatRoomId, member.getId(), message, event.type());
 
-        // 채팅 데이터 저장 & 최신 채팅 내역 업데이트
-        GoodsChatMessage savedMessage = messageRepository.save(chatMessage);
+        saveAndSendMessage(chatRoom, member, message, event.type());
+    }
+
+    // 메시지 저장 및 전송
+    private void saveAndSendMessage(GoodsChatRoom chatRoom, Member member, String message, MessageType type) {
+        // 채팅 도큐먼트 생성
+        GoodsChatMessage chatMessage = createChatMessage(chatRoom.getId(), member.getId(), message, type);
+
+        // 최신 채팅 내역 업데이트
         chatRoom.updateLastChat(message, chatMessage.getSentAt());
 
-        // redis 캐시 저장
-        goodsChatCacheManager.storeMessageInCache(chatRoomId, savedMessage);
+        // MongoDB 트랜잭션
+        mongoTransactionTemplate.executeWithoutResult(status -> {
+            // 채팅 메시지 저장
+            GoodsChatMessage savedMessage = messageRepository.save(chatMessage);
 
-        // 이벤트 메시지 전송
-        sendToSubscribers(chatRoomId, GoodsChatMessageResponse.of(savedMessage, member));
+            // redis 캐시 저장
+            goodsChatCacheManager.storeMessageInCache(savedMessage.getChatRoomId(), savedMessage);
+
+            // 메시지 전송
+            sendToSubscribers(savedMessage.getChatRoomId(), GoodsChatMessageResponse.of(savedMessage, member));
+        });
     }
 
     private GoodsChatMessage createChatMessage(Long chatRoomId, Long memberId, String message, MessageType type) {
